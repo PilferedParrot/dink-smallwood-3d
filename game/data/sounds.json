@@ -1,0 +1,276 @@
+{
+  "music": {
+    "1": {
+      "path": "assets/sound/1.ogg",
+      "format": "ogg",
+      "source": "Sound/1.ogg",
+      "license": "FreeDink audio replacement; see licenses/AUDIO-REPLACEMENTS.txt",
+      "source_directory": "third_party/freedink-audio-source/src/1.mid"
+    },
+    "1003": {
+      "path": "assets/sound/1003.ogg",
+      "format": "ogg",
+      "source": "Sound/1003.mid",
+      "license": "Original Dink data; see licenses/FREEDINK-DATA-COPYRIGHT.txt",
+      "generated_from": "Sound/1003.mid"
+    },
+    "104": {
+      "path": "assets/sound/104.ogg",
+      "format": "ogg",
+      "source": "Sound/104.mid",
+      "license": "GPL-3.0-or-later FreeDink music replacement; see licenses/AUDIO-REPLACEMENTS.txt",
+      "generated_from": "Sound/104.mid",
+      "source_directory": "third_party/freedink-audio-source/src/104.mid"
+    },
+    "105": {
+      "path": "assets/sound/105.ogg",
+      "format": "ogg",
+      "source": "Sound/105.mid",
+      "license": "GPL-3.0-or-later FreeDink music replacement; see licenses/AUDIO-REPLACEMENTS.txt",
+      "generated_from": "Sound/105.mid",
+      "source_directory": "third_party/freedink-audio-source/src/105.mid"
+    },
+    "106": {
+      "path": "assets/sound/106.ogg",
+      "format": "ogg",
+      "source": "Sound/106.ogg",
+      "license": "FreeDink audio replacement; see licenses/AUDIO-REPLACEMENTS.txt",
+      "source_directory": "third_party/freedink-audio-source/src/106.mid"
+    },
+    "12": {
+      "path": "assets/sound/12.ogg",
+      "format": "ogg",
+      "source": "Sound/12.mid",
+      "license": "GPL-3.0-or-later FreeDink music replacement; see licenses/AUDIO-REPLACEMENTS.txt",
+      "generated_from": "Sound/12.mid",
+      "source_directory": "third_party/freedink-audio-source/src/12.mid"
+    },
+    "13": {
+      "path": "assets/sound/13.ogg",
+      "format": "ogg",
+      "source": "Sound/13.mid",
+      "license": "FreeDink audio replacement; see licenses/AUDIO-REPLACEMENTS.txt",
+      "generated_from": "Sound/13.mid",
+      "source_directory": "third_party/freedink-audio-source/src/13.mid"
+    },
+    "18": {
+      "path": "assets/sound/18.ogg",
+      "format": "ogg",
+      "source": "Sound/18.mid",
+      "license": "GPL-3.0-or-later FreeDink music replacement; see licenses/AUDIO-REPLACEMENTS.txt",
+      "generated_from": "Sound/18.mid",
+      "source_directory": "third_party/freedink-audio-source/src/18.mid"
+    },
+    "2": {
+      "path": "assets/sound/2.ogg",
+      "format": "ogg",
+      "source": "Sound/2.mid",
+      "license": "Original Dink data; see licenses/FREEDINK-DATA-COPYRIGHT.txt",
+      "generated_from": "Sound/2.mid"
+    },
+    "5": {
+      "path": "assets/sound/5.ogg",
+      "format": "ogg",
+      "source": "Sound/5.ogg",
+      "license": "GPL-3.0-or-later FreeDink music replacement; see licenses/AUDIO-REPLACEMENTS.txt",
+      "source_directory": "third_party/freedink-audio-source/src/5.mid"
+    },
+    "7": {
+      "path": "assets/sound/7.ogg",
+      "format": "ogg",
+      "source": "Sound/7.mid",
+      "license": "GPL-3.0-or-later FreeDink music replacement; see licenses/AUDIO-REPLACEMENTS.txt",
+      "generated_from": "Sound/7.mid",
+      "source_directory": "third_party/freedink-audio-source/src/7.mid"
+    },
+    "dance": {
+      "path": "assets/sound/dance.ogg",
+      "format": "ogg",
+      "source": "Sound/dance.mid",
+      "license": "Original Dink data; see licenses/FREEDINK-DATA-COPYRIGHT.txt",
+      "generated_from": "Sound/dance.mid"
+    },
+    "denube": {
+      "path": "assets/sound/denube.ogg",
+      "format": "ogg",
+      "source": "Sound/denube.ogg",
+      "license": "FreeDink audio replacement; see licenses/AUDIO-REPLACEMENTS.txt",
+      "source_directory": "third_party/freedink-audio-source/src/denube.mid"
+    },
+    "insper": {
+      "path": "assets/sound/insper.ogg",
+      "format": "ogg",
+      "source": "Sound/insper.mid",
+      "license": "Original Dink data; see licenses/FREEDINK-DATA-COPYRIGHT.txt",
+      "generated_from": "Sound/insper.mid"
+    },
+    "lively": {
+      "path": "assets/sound/lively.ogg",
+      "format": "ogg",
+      "source": "Sound/lively.mid",
+      "license": "Original Dink data; see licenses/FREEDINK-DATA-COPYRIGHT.txt",
+      "generated_from": "Sound/lively.mid"
+    },
+    "love": {
+      "path": "assets/sound/love.ogg",
+      "format": "ogg",
+      "source": "Sound/love.mid",
+      "license": "Original Dink data; see licenses/FREEDINK-DATA-COPYRIGHT.txt",
+      "generated_from": "Sound/love.mid"
+    },
+    "lovin": {
+      "path": "assets/sound/lovin.ogg",
+      "format": "ogg",
+      "source": "Sound/lovin.ogg",
+      "license": "FreeDink audio replacement; see licenses/AUDIO-REPLACEMENTS.txt",
+      "source_directory": "third_party/freedink-audio-source/src/lovin.mid"
+    }
+  },
+  "effects": {
+    "arrow": {
+      "path": "assets/sound/arrow.wav",
+      "format": "wav",
+      "source": "Sound/arrow.wav",
+      "license": "FreeDink audio replacement; see licenses/AUDIO-REPLACEMENTS.txt"
+    },
+    "axe": {
+      "path": "assets/sound/axe.wav",
+      "format": "wav",
+      "source": "Sound/axe.wav",
+      "license": "FreeDink audio replacement; see licenses/AUDIO-REPLACEMENTS.txt",
+      "source_directory": "third_party/freedink-audio-source/src/axe.wav"
+    },
+    "bhit": {
+      "path": "assets/sound/bhit.wav",
+      "format": "wav",
+      "source": "Sound/bhit.wav",
+      "license": "FreeDink audio replacement; see licenses/AUDIO-REPLACEMENTS.txt"
+    },
+    "bird1": {
+      "path": "assets/sound/bird1.wav",
+      "format": "wav",
+      "source": "Sound/bird1.wav",
+      "license": "FreeDink audio replacement; see licenses/AUDIO-REPLACEMENTS.txt",
+      "source_directory": "third_party/freedink-audio-source/src/bird1.wav"
+    },
+    "bow1": {
+      "path": "assets/sound/bow1.wav",
+      "format": "wav",
+      "source": "Sound/bow1.wav",
+      "license": "FreeDink audio replacement; see licenses/AUDIO-REPLACEMENTS.txt"
+    },
+    "burn": {
+      "path": "assets/sound/burn.wav",
+      "format": "wav",
+      "source": "Sound/burn.wav",
+      "license": "FreeDink audio replacement; see licenses/AUDIO-REPLACEMENTS.txt",
+      "source_directory": "third_party/freedink-audio-source/src/burn.wav"
+    },
+    "fire": {
+      "path": "assets/sound/fire.wav",
+      "format": "wav",
+      "source": "Sound/fire.wav",
+      "license": "FreeDink audio replacement; see licenses/AUDIO-REPLACEMENTS.txt",
+      "source_directory": "third_party/freedink-audio-source/src/fire.wav"
+    },
+    "gold": {
+      "path": "assets/sound/gold.wav",
+      "format": "wav",
+      "source": "Sound/gold.wav",
+      "license": "FreeDink audio replacement; see licenses/AUDIO-REPLACEMENTS.txt",
+      "source_directory": "third_party/freedink-audio-source/src/gold.wav"
+    },
+    "grunt1": {
+      "path": "assets/sound/grunt1.wav",
+      "format": "wav",
+      "source": "Sound/grunt1.wav",
+      "license": "FreeDink audio replacement; see licenses/AUDIO-REPLACEMENTS.txt"
+    },
+    "grunt2": {
+      "path": "assets/sound/grunt2.wav",
+      "format": "wav",
+      "source": "Sound/grunt2.wav",
+      "license": "FreeDink audio replacement; see licenses/AUDIO-REPLACEMENTS.txt"
+    },
+    "high2": {
+      "path": "assets/sound/high2.wav",
+      "format": "wav",
+      "source": "Sound/high2.wav",
+      "license": "FreeDink audio replacement; see licenses/AUDIO-REPLACEMENTS.txt"
+    },
+    "intro": {
+      "path": "assets/sound/intro.wav",
+      "format": "wav",
+      "source": "Sound/intro.wav",
+      "license": "FreeDink audio replacement; see licenses/AUDIO-REPLACEMENTS.txt",
+      "source_directory": "third_party/freedink-audio-source/src/intro.wav"
+    },
+    "nono": {
+      "path": "assets/sound/nono.wav",
+      "format": "wav",
+      "source": "Sound/nono.wav",
+      "license": "FreeDink audio replacement; see licenses/AUDIO-REPLACEMENTS.txt",
+      "source_directory": "third_party/freedink-audio-source/src/nono.wav"
+    },
+    "open": {
+      "path": "assets/sound/open.wav",
+      "format": "wav",
+      "source": "Sound/open.wav",
+      "license": "FreeDink audio replacement; see licenses/AUDIO-REPLACEMENTS.txt",
+      "source_directory": "third_party/freedink-audio-source/src/open.wav"
+    },
+    "punch": {
+      "path": "assets/sound/punch.wav",
+      "format": "wav",
+      "source": "Sound/punch.wav",
+      "license": "FreeDink audio replacement; see licenses/AUDIO-REPLACEMENTS.txt"
+    },
+    "save": {
+      "path": "assets/sound/save.wav",
+      "format": "wav",
+      "source": "Sound/save.wav",
+      "license": "FreeDink audio replacement; see licenses/AUDIO-REPLACEMENTS.txt",
+      "source_directory": "third_party/freedink-audio-source/src/save.wav"
+    },
+    "secret": {
+      "path": "assets/sound/secret.wav",
+      "format": "wav",
+      "source": "Sound/secret.wav",
+      "license": "Original Dink data; see licenses/FREEDINK-DATA-COPYRIGHT.txt"
+    },
+    "sel1": {
+      "path": "assets/sound/sel1.wav",
+      "format": "wav",
+      "source": "Sound/sel1.wav",
+      "license": "FreeDink audio replacement; see licenses/AUDIO-REPLACEMENTS.txt",
+      "source_directory": "third_party/freedink-audio-source/src/sel1.wav"
+    },
+    "stairs": {
+      "path": "assets/sound/stairs.wav",
+      "format": "wav",
+      "source": "Sound/stairs.wav",
+      "license": "FreeDink audio replacement; see licenses/AUDIO-REPLACEMENTS.txt",
+      "source_directory": "third_party/freedink-audio-source/src/stairs.wav"
+    },
+    "swing": {
+      "path": "assets/sound/swing.wav",
+      "format": "wav",
+      "source": "Sound/swing.wav",
+      "license": "FreeDink audio replacement; see licenses/AUDIO-REPLACEMENTS.txt"
+    },
+    "sword2": {
+      "path": "assets/sound/sword2.wav",
+      "format": "wav",
+      "source": "Sound/sword2.wav",
+      "license": "FreeDink audio replacement; see licenses/AUDIO-REPLACEMENTS.txt"
+    },
+    "wscream": {
+      "path": "assets/sound/wscream.wav",
+      "format": "wav",
+      "source": "Sound/wscream.wav",
+      "license": "FreeDink audio replacement; see licenses/AUDIO-REPLACEMENTS.txt",
+      "source_directory": "third_party/freedink-audio-source/src/wscream.wav"
+    }
+  },
+  "soundfont": "/usr/share/sounds/sf2/FluidR3_GM.sf2"
+}

@@ -1,0 +1,25 @@
+; PilferedParrot's independently implemented 3D adaptation.
+config_version=5
+
+[application]
+config/name="Dink Smallwood 3D"
+run/main_scene="res://main.tscn"
+config/features=PackedStringArray("4.6", "GL Compatibility")
+config/description="An unofficial Dink Smallwood adaptation by PilferedParrot."
+config/version="0.1.0"
+
+[display]
+window/size/viewport_width=1280
+window/size/viewport_height=800
+window/size/window_width_override=1280
+window/size/window_height_override=800
+window/stretch/mode="canvas_items"
+
+[rendering]
+renderer/rendering_method="gl_compatibility"
+renderer/rendering_method.mobile="gl_compatibility"
+textures/default_filters/use_nearest_mipmap_filter=false
+environment/defaults/default_clear_color=Color(0.025,0.045,0.037,1)
+
+[audio]
+driver/enable_input=false

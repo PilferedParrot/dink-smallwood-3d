@@ -1,0 +1,70 @@
+{
+  "global": {},
+  "scripts": {
+    "s1-h2-o": {
+      "Tell her where she can stick 'Quackers'": "Tell her you cannot help",
+      "You know, all drowning away your problems on the weekend": "Those bottles are quite a collection.",
+      "waking up with guys you don't even know.": "Do you collect them?",
+      "Ahh the regrets, right Ethel?": "They must have some stories behind them, right Ethel?"
+    },
+    "s1-h3-l": {
+      "Is your father upset because you won't satisfy him?": "Is your father upset because you will not do what he says?",
+      "You know I hate to do this to you baby.": "I should not be doing this."
+    },
+    "s1-blove": {
+      "`6Hhhmph,  chicks!": "`6Hhhmph, people!"
+    },
+    "s1-mh-m": {
+      "Can I like create chicks right in front of me and stuff?": "Can I create a feast right in front of me and stuff?"
+    },
+    "s1-wand2": {
+      "`9I hear your Mom's a slut.  But that's just the word on": "`9I heard someone has been spreading ugly rumors about your mom.  That's just",
+      "`9the street.  Ha Ha Ha": "`9what I heard.  I should not have repeated it.",
+      "`9Ha Ha .. Ha ..": "`9Sorry.",
+      "`9 ... Ha ... ": "`9...",
+      "Ha Ha Ha ...": "That is not funny.",
+      "`9 .. Ha Ha ..": "`9You're right.  Sorry."
+    },
+    "s2-na1": {
+      "This must be the woman's bed.  Looks dirty.": "This must be Nadine's bed.  It looks lived-in."
+    },
+    "s2-bar": {
+      "`4Woman, serve those men!": "`4Barkeep, another round!",
+      "`4Get to work you stupid wench!": "`4Barkeep, could you help those customers?"
+    },
+    "s2-wench": {
+      "Hey wench!  How much is the beer here?": "Hey bartender, how much is the beer here?",
+      "How much for you?": "What do you recommend?",
+      "`#I'm not for sale, you lout!": "`#Try the beer, you lout!",
+      "Come on honey, I got three gold jingling in my pocket!": "Fine, then make it a beer.",
+      "`#Get LOST!": "`#Coming right up."
+    },
+    "s2-auntp": {
+      "Encourage her to continue getting beaten by Jack": "Ask why she stays with Jack",
+      "Yes, he's good at it.  I hope to learn much from him.": "No one deserves that.  I hope he never hurts you again.",
+      "Ask for a bigger bed": "Ask about getting a larger bed",
+      "What if you traded them in for one big one we could share?": "Do you know where I could get a larger bed?",
+      "`#I'm your aunt, Dink!": "`#I do not know.  Ask the carpenter.",
+      "And?": "Right.  I will ask around.",
+      "You stupid whore.": "You're being dismissive.",
+      "`6You ok, baby?": "`6Are you hurt?",
+      "`6You shouldn't make me so mad.": "`6I was wrong to lose my temper."
+    },
+    "s2-jack": {
+      "Coerce Jack into hitting Maria again": "Tell Jack that Maria needs help",
+      "`6My bitch wife?": "`6Maria?",
+      "Yup.  Better lay a bit o law into her, if you know what I mean.": "You need to stop hurting her.",
+      "`6Ok.": "`6Whatever.",
+      "Haw!  Good one Jack!": "Jack, stop!",
+      "`6Now go clean up.": "`6You need to leave.",
+      "Get a clue, honey.  How do you think I kept my mom in line?  Haw!": "I should have stepped in sooner."
+    },
+    "s7-mil": {
+      "`6..you little bitch...if I only had the strength to...": "`6..you coward...if I only had the strength to..."
+    },
+    "spice": {
+      "Let's not discuss that now Sporty.  Let's talk about you ..": "I'm Dink.  I wanted to ask about your group.",
+      "all five of you and me!!": "All five of you."
+    }
+  }
+}

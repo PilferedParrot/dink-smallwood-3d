@@ -1,0 +1,26 @@
+name: Check game and data
+on: [push, pull_request]
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install test tools
+        run: python -m pip install -r requirements-dev.txt
+      - name: Install Godot
+        run: |
+          curl -fL https://github.com/godotengine/godot/releases/download/4.6.1-stable/Godot_v4.6.1-stable_linux.x86_64.zip -o /tmp/godot.zip
+          unzip /tmp/godot.zip -d /tmp/godot
+          echo '/tmp/godot' >> "$GITHUB_PATH"
+          echo 'GODOT=/tmp/godot/Godot_v4.6.1-stable_linux.x86_64' >> "$GITHUB_ENV"
+      - name: Import assets
+        run: "$GODOT --headless --path game --editor --import"
+      - name: Test compiler, assets, UI and VM
+        run: python -m pytest -q
+      - name: Exercise new game and save/load
+        run: timeout 45 "$GODOT" --headless --path game -- --smoke-test

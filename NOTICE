@@ -1,0 +1,17 @@
+Dink Smallwood 3D
+Copyright 2026 PilferedParrot Global Industries contributors
+
+An unofficial, modified adaptation. Not the original Dink Smallwood or GNU FreeDink.
+New implementation: https://github.com/PilferedParrot/dink-smallwood-3d
+Project support: https://www.patreon.com/PilferedParrot
+
+Original Dink Smallwood: Copyright (C) 1997, 1998, 1999, 2002, 2003 Seth A. Robinson.
+Artwork: Justin Martin. Story and level design: Seth A. Robinson, Greg Smith,
+and Justin Martin. Additional level design: Chris Bakker.
+v1.08 game fixes: Talmadge Bradley III.
+GNU FreeDink contributors supplied free replacements for proprietary audio.
+See licenses/ for the original data license, per-file audio attribution and terms.
+
+New code is Apache-2.0. Retain required license and attribution notices.
+Supporting the project is optional; no payment or patronage is required.
+Third-party assets retain their own licenses; Apache-2.0 does not replace them.
