@@ -1,7 +1,9 @@
 # Architecture and provenance
 
-The Godot host is an independent Apache-2.0 implementation. It renders imported
-Dink bitmap frames as animated sprites in a 3D scene. It does not embed or link
+The Godot host is an independent Apache-2.0 implementation. The default scene runs
+`fps_game.gd`, a first-person campaign host, and `fp_world.gd`, which builds solid
+3D scenery and characters from the Blender GLB library. The older sprite host
+remains as the campaign simulation base and for regression tests. It does not embed or link
 GNU FreeDink's engine. The original campaign, images, and music are separate data
 with their original licenses; see `licenses/` and `third_party/`.
 
@@ -25,3 +27,9 @@ Behavior references used to verify data formats and scripting semantics:
 Tests cover compiler semantics, script context, modal controller navigation,
 original map offsets, animation metadata, and game behavior. Imported screen
 coverage is distinct from an end-to-end campaign playthrough.
+
+The editor sprite rectangle at byte offset 124 is image trimming (`alt`),
+not a collision rectangle. It is stored as `clip_rect`; physical bounds come
+from the sequence frame metadata in Dink.ini. Verified against the upstream
+[FreeDink 109.6 source](https://ftp.gnu.org/gnu/freedink/freedink-109.6.tar.gz),
+`src/editor_screen.h` and `src/live_screen.cpp`.

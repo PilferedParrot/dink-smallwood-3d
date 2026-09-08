@@ -1,61 +1,59 @@
 # Dink Smallwood 3D
 
-An unofficial Godot adaptation by **[PilferedParrot](https://github.com/PilferedParrot)**.
-Dink's original artwork and animations become a 3D diorama, with an adjustable
-camera, larger menus, controller navigation, save/load, an adventure journal, and
-revised dialogue. Music and effects come from the freely licensed FreeDink data.
+An unofficial, first-person Godot 4 adaptation of *Dink Smallwood*, made by
+[PilferedParrot](https://github.com/PilferedParrot). It uses the original
+campaign data, ground art, dialogue, and FreeDink replacement audio alongside a
+new 3D renderer, modeled scenery, mouse and controller controls, and first-person
+combat.
 
-**Development version 0.1.** This is an active campaign port. The full original
-world and campaign scripts are imported; an uninterrupted start-to-finish
-playthrough has not been certified. Characters and scenery use the original
-rendered sprite frames in a 3D scene, rather than newly modeled characters.
-See [implementation notes](docs/IMPLEMENTATION.md) and
-[script coverage](docs/DINKC_SUPPORT.md).
+This is version 0.2.0. It is a development release, not a finished remake. The
+opening through Aunt Maria's letter and world map has been exercised in a
+continuous automated route. All 644 map areas are imported, but a complete
+start-to-finish playthrough has not been certified. See the
+[0.2.0 release notes](docs/RELEASE_NOTES_0.2.0.md) and
+[first-person implementation notes](docs/FIRST_PERSON.md).
 
-[Support our work on Patreon](https://www.patreon.com/PilferedParrot) ·
-[Downloads](https://github.com/PilferedParrot/dink-smallwood-3d/releases) ·
-[Report a problem](https://github.com/PilferedParrot/dink-smallwood-3d/issues)
+![Stonebrook in first person](docs/images/first-person-stonebrook.png)
 
-![Stonebrook in the Godot adaptation](docs/images/stonebrook.png)
+## Play on Linux or Windows
 
-## Play
+Download the version 0.2.0 archive for your platform, extract it, and run:
 
-Download a release archive, extract the folder, and run `DinkSmallwood3D.x86_64`
-on Linux or `DinkSmallwood3D.exe` on Windows. The game runs offline and needs no
-account. Patreon and source links open your browser only when selected.
+| Platform | File |
+| --- | --- |
+| Linux x86-64 | [dink-smallwood-3d-0.2.0-linux-x86_64.zip](https://github.com/PilferedParrot/dink-smallwood-3d/releases/download/v0.2.0/dink-smallwood-3d-0.2.0-linux-x86_64.zip) → `DinkSmallwood3D.x86_64` |
+| Windows x86-64 | [dink-smallwood-3d-0.2.0-windows-x86_64.zip](https://github.com/PilferedParrot/dink-smallwood-3d/releases/download/v0.2.0/dink-smallwood-3d-0.2.0-windows-x86_64.zip) → `DinkSmallwood3D.exe` |
 
-From this checkout, install **Godot 4.6.1** and run `./play.sh`, or import
-`game/project.godot` in the editor. Set `GODOT=/path/to/godot` if needed.
+The game runs offline and does not need an account. Saves and settings are kept
+in Godot's application-data directory, separate from the extracted game folder.
+Use **Pause → Save adventure**. Saving is unavailable while a scripted
+conversation is in progress.
 
-| Action | Keyboard | Controller |
+From a source checkout, install Godot 4.6.1 and run `./play.sh`. You can set
+`GODOT=/path/to/godot` if Godot is not on your `PATH`.
+
+## Controls
+
+| Action | Keyboard and mouse | Controller |
 | --- | --- | --- |
-| Move | WASD / arrows | Left stick |
-| Talk / confirm | E / Enter | A / bottom face button |
-| Attack / use equipped item | Space | X / left face button |
-| Magic | Q | Y / top face button |
-| Equipment | I | Back / Select |
+| Move and look | WASD and mouse | Left and right sticks |
+| Attack | Left mouse | Right trigger / X |
+| Magic | Right mouse or Q | Left trigger / Y |
+| Talk / confirm | E or Enter | A |
+| Jump / sprint | Space / Shift | Right / left stick click |
+| Equipment / quick slots | I; 1–9 | Back / Select; LB / RB |
 | Pause | Escape | Start |
-| Camera elevation | R | Right stick click |
-| Menus | Arrows, Enter, Escape | D-pad / left stick, A, B |
+| World map, once received | M | Start → World map |
 
-Use **Pause → Save adventure** to save. Saves and settings use Godot's application
-data directory, independently of the installation folder. Saving during a scripted
-conversation is disabled to avoid losing an unfinished interaction.
+Controller labels use the Xbox layout. Other Godot-recognized controllers use
+the corresponding button positions. Settings include field of view, mouse and
+stick sensitivity, dead zone, inverted vertical look, audio levels, and reduced
+camera movement.
 
 ## Build and verify
 
-The generated game data and assets are included. Python, FreeDink, and Blender
-are not needed to play. To rebuild imported data on Debian/Ubuntu with the
-`freedink-data` package installed:
-
-```sh
-python3 tools/import_assets.py /usr/share/games/dink/dink
-python3 tools/compile_story.py /usr/share/games/dink/dink/Story --overrides tools/dialogue_overrides.json
-```
-
-MIDI conversion uses FluidSynth, FFmpeg, and a General MIDI soundfont; use
-`--soundfont /path/to/font.sf2` to select one. The music sources and their
-attributions accompany the project.
+The generated game data and assets are included, so Python, FreeDink, and Blender
+are not required to play. For development:
 
 ```sh
 python3 -m venv .venv
@@ -66,31 +64,38 @@ export GODOT=/path/to/godot
 "$GODOT" --headless --path game -- --smoke-test
 ```
 
-Godot export templates matching 4.6.1 are required to build executables:
+Godot 4.6.1 export templates are needed for release builds:
 
 ```sh
 mkdir -p builds/linux builds/windows
 "$GODOT" --headless --path game --export-release Linux
 "$GODOT" --headless --path game --export-release Windows
+python3 tools/package_release.py
 ```
 
-Distribute `LICENSE`, `NOTICE`, `licenses/`, and `third_party/` with executables.
+To regenerate the 3D asset library, use
+`blender --background --python tools/build_3d_assets.py`. The editable Blender
+file is `art/dink_asset_library.blend` and generated models are in
+`game/assets/models/`.
 
-## Dialogue and attribution
+To reimport original game data on Debian or Ubuntu with `freedink-data`
+installed:
 
-[Dialogue changes](docs/DIALOGUE_CHANGES.md) remove targeted gendered insults,
-sexual harassment, incest jokes, and victim-blaming. Exact replacements are
-scoped to individual scripts and recorded in the compiler report.
+```sh
+python3 tools/import_assets.py /usr/share/games/dink/dink
+python3 tools/compile_story.py /usr/share/games/dink/dink/Story --overrides tools/dialogue_overrides.json
+```
 
-New implementation code is **Apache-2.0**, matching PilferedParrot Interface.
-You may use, modify, and redistribute it, including commercially, under that
-license. Retain the license and required attribution notices. Supporting the
-project is optional.
+## Credits and licenses
 
-Original Dink Smallwood is by **Seth A. Robinson**, with artwork by **Justin Martin**
-and story/world contributions from **Greg Smith**, **Chris Bakker**, and others
-listed in [NOTICE](NOTICE). GNU FreeDink contributors supplied free audio
-replacements. Third-party art, campaign data, music, and sound retain their own
-licenses; Apache-2.0 does not replace them. See [licenses/](licenses/).
+New implementation code is Apache-2.0. Original *Dink Smallwood* is by Seth A.
+Robinson, with artwork by Justin Martin and story and world contributions from
+Greg Smith, Chris Bakker, and others listed in [NOTICE](NOTICE). GNU FreeDink
+contributors supplied the free audio replacements. Third-party art, campaign
+data, music, and sound retain their own licenses; see [licenses/](licenses/).
 
 This project is not endorsed by Robinson Technologies, GNU FreeDink, or Godot.
+
+[Source](https://github.com/PilferedParrot/dink-smallwood-3d) ·
+[Issues](https://github.com/PilferedParrot/dink-smallwood-3d/issues) ·
+[Patreon](https://www.patreon.com/PilferedParrot)

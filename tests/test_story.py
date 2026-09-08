@@ -28,6 +28,41 @@ def test_unsupported_syntax_is_reported_and_retained():
     assert any(x['op'] == 'unsupported' for x in out['scripts']['x']['procedures']['main']['code'])
 
 
+def test_s1_h2_o_eof_brace_repair_keeps_unfreeze_in_talk():
+    source = '''void talk() {
+        if (&result == 3) {
+            say_stop("line", 1);
+        }
+
+}
+
+  unfreeze(&current_sprite);
+  unfreeze(1);
+}
+'''
+    out = parse_story(source, 's1-h2-o')
+    procedures = out['scripts']['s1-h2-o']['procedures']
+    assert '__top__' not in procedures
+    names = [item['name'] for item in procedures['talk']['code'] if item['op'] == 'call']
+    assert names[-2:] == ['unfreeze', 'unfreeze']
+    calls = [item for item in procedures['talk']['code'] if item.get('name') == 'unfreeze']
+    assert [item['line'] for item in calls] == [i + 1 for i, line in enumerate(source.splitlines()) if 'unfreeze(' in line]
+    assert any('EOF extra closing brace' in item['reason'] for item in out['report']['recoveries'])
+
+
+def test_eof_brace_repair_is_scoped_to_s1_h2_o():
+    source = '''void talk() {
+}
+
+  unfreeze(&current_sprite);
+  unfreeze(1);
+}
+'''
+    out = parse_story(source, 'unrelated-script')
+    assert '__top__' in out['scripts']['unrelated-script']['procedures']
+    assert not any('EOF extra closing brace' in item['reason'] for item in out['report']['recoveries'])
+
+
 def test_choice_positions_and_script_scoped_overrides():
     source = '''void main() {
         choice_start()

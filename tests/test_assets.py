@@ -23,6 +23,34 @@ def test_map_screen_reads_96_tiles_before_sprite_table():
     assert result["sprites"][0]["x"] == 11
 
 
+def test_map_screen_reads_script_after_the_complete_sprite_table():
+    data = bytearray(SCREEN_SIZE)
+    script = 20 + 97 * 80 + 240 + 101 * 220
+    data[script:script + 8] = b"findduck"
+    result = parse_map_screen(bytes(data), 1)
+    assert result["script"] == "findduck"
+
+
+def test_map_screen_treats_leading_nul_as_an_empty_script():
+    data = bytearray(SCREEN_SIZE)
+    script = 20 + 97 * 80 + 240 + 101 * 220
+    data[script:script + 9] = b"\0indduck\0"
+    result = parse_map_screen(bytes(data), 1)
+    assert result["script"] == ""
+
+
+def test_map_sprite_alt_rectangle_is_clip_rect_not_physical_hardbox():
+    data = bytearray(SCREEN_SIZE)
+    sprite = 20 + 97 * 80 + 240
+    struct.pack_into("<6i", data, sprite, 320, 200, 64, 2, 1, 100)
+    data[sprite + 24] = 1
+    struct.pack_into("<4i", data, sprite + 124, 0, 134, 332, 260)
+    result = parse_map_screen(bytes(data), 1)
+    record = result["sprites"][0]
+    assert record["clip_rect"] == [0, 134, 332, 260]
+    assert "hardbox" not in record
+
+
 def test_installed_freedink_screen_one_mother_layout():
     path = Path("/usr/share/games/dink/dink/Map.dat")
     if not path.exists():
@@ -30,6 +58,17 @@ def test_installed_freedink_screen_one_mother_layout():
     result = parse_map_screen(path.read_bytes(), 1)
     mother = next(sprite for sprite in result["sprites"] if sprite["index"] == 26)
     assert (mother["x"], mother["y"], mother["script"]) == (202, 157, "s1-h1-m")
+
+
+def test_installed_freedink_opening_screen_scripts():
+    path = Path("/usr/share/games/dink/dink/Map.dat")
+    dink = Path("/usr/share/games/dink/dink/Dink.dat")
+    if not path.exists() or not dink.exists():
+        pytest.skip("FreeDink data package is not installed")
+    result = parse_maps(dink, path)
+    assert result["screens"]["409"]["script"] == ""
+    assert result["screens"]["440"]["script"] == "findduck"
+    assert result["screens"]["441"]["script"] == "findduck"
 
 
 def test_hard_dat_preserves_all_800_tile_masks():

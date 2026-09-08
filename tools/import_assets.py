@@ -66,6 +66,7 @@ def parse_map_screen(data, number):
         rotation, special, brain = (i32(data,p+28), i32(data,p+32), i32(data,p+36))
         script = _read_string(data,p+40,14)
         speed, base_walk, base_idle, base_attack, base_hit, timing, que, hard = [i32(data,p+92+4*j) for j in range(8)]
+        # editor_sprite.alt trims the image; collision comes from Dink.ini.
         alt = [i32(data,p+124+4*j) for j in range(4)]
         warp = [i32(data,p+140+4*j) for j in range(4)]
         extra = [i32(data,p+156+4*j) for j in range(5)]
@@ -77,10 +78,14 @@ def parse_map_screen(data, number):
                 "type":vals[4],"size":vals[5],"rotation":rotation,"special":special,"brain":brain,
                 "script":script,"speed":speed,"base_walk":base_walk,"base_idle":base_idle,
                 "base_attack":base_attack,"base_hit":base_hit,"base_die":base_die,"timing":timing,"que":que,"hard":hard,
-                "hardbox":alt,"warp": {"map":warp[1],"x":warp[2],"y":warp[3]} if warp[0] else None,
+                "clip_rect":alt,"warp": {"map":warp[1],"x":warp[2],"y":warp[3]} if warp[0] else None,
                 "vision":stats[6],"nohit":stats[7],"touch_damage":stats[8],"gold":stats[0],"hitpoints":stats[1],"strength":stats[2],"defense":stats[3],"exp":stats[4],"sound":stats[5]})
         p += 220
-    return {"tiles":tiles[:96], "tiles_extra":tiles[96], "sprites":sprites, "script":_read_string(data,off+30204,21)}
+    # The screen script follows the complete 101-entry sprite table and is a
+    # fixed-width C string.  Residual bytes after a leading NUL are cleared
+    # storage, not a second spelling of the script.
+    script = _read_string(data, off + 30240, 21)
+    return {"tiles":tiles[:96], "tiles_extra":tiles[96], "sprites":sprites, "script":script}
 
 def parse_maps(dink_path, map_path, hard_path=None):
     idx=parse_dink_dat(dink_path); b=Path(map_path).read_bytes()

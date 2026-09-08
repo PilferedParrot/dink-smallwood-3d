@@ -10,10 +10,16 @@ var column: VBoxContainer
 var hud: Label
 var hint: Label
 var toast: Label
+var crosshair: Label
+var health_bar: ProgressBar
+var mana_bar: ProgressBar
+var compass_label: Label
+var toast_timer: Timer
 var dialogue_mode := false
 var page := "title"
 var text_scale := 1.0
 var menu_theme: Theme
+var controller_active := false
 const CREAM := Color("eadfc2")
 const GOLD := Color("d4ad62")
 const GREEN := Color("182d27")
@@ -22,10 +28,12 @@ func _ready() -> void:
 	layer = 10
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	_ensure_controller_navigation()
+	controller_active = not Input.get_connected_joypads().is_empty()
 	root = Control.new()
 	root.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	# Keep clicks and pointer events inside a menu from reaching the 3D world.
-	root.mouse_filter = Control.MOUSE_FILTER_STOP
+	# Let mouse input reach the first-person camera during gameplay.
+	root.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(root)
 	menu_theme = Theme.new()
 	menu_theme.default_font_size = 22
@@ -51,6 +59,33 @@ func _ready() -> void:
 	hud.add_theme_constant_override("shadow_offset_x", 2)
 	hud.add_theme_constant_override("shadow_offset_y", 2)
 	root.add_child(hud)
+	health_bar = _make_bar(Color("a94f42"))
+	health_bar.position = Vector2(28, 124)
+	health_bar.size = Vector2(190, 14)
+	root.add_child(health_bar)
+	mana_bar = _make_bar(Color("4f7891"))
+	mana_bar.position = Vector2(28, 144)
+	mana_bar.size = Vector2(190, 10)
+	root.add_child(mana_bar)
+	compass_label = Label.new()
+	compass_label.anchor_left = 0.5
+	compass_label.anchor_right = 0.5
+	compass_label.offset_left = -30
+	compass_label.offset_top = 24
+	compass_label.add_theme_color_override("font_color", GOLD)
+	compass_label.add_theme_font_size_override("font_size", 18)
+	compass_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	root.add_child(compass_label)
+	crosshair = Label.new()
+	crosshair.text = "+"
+	crosshair.set_anchors_and_offsets_preset(Control.PRESET_CENTER)
+	crosshair.offset_left = -8; crosshair.offset_right = 8
+	crosshair.offset_top = -14; crosshair.offset_bottom = 14
+	crosshair.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	crosshair.add_theme_color_override("font_color", Color(1, 0.94, 0.72, 0.82))
+	crosshair.add_theme_font_size_override("font_size", 24)
+	crosshair.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	root.add_child(crosshair)
 	hint = Label.new()
 	hint.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_WIDE)
 	hint.offset_top = -48
@@ -63,6 +98,11 @@ func _ready() -> void:
 	toast.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	toast.add_theme_color_override("font_color", GOLD)
 	root.add_child(toast)
+	toast_timer = Timer.new()
+	toast_timer.one_shot = true
+	toast_timer.wait_time = 4.0
+	toast_timer.timeout.connect(_clear_toast)
+	add_child(toast_timer)
 	overlay = ColorRect.new()
 	overlay.color = Color(0.01, 0.025, 0.018, 0.78)
 	overlay.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
@@ -77,7 +117,7 @@ func _ready() -> void:
 	panel.offset_right = 0
 	panel.offset_top = 0
 	panel.offset_bottom = 0
-	panel.custom_minimum_size = Vector2(560, 420)
+	panel.custom_minimum_size = Vector2(420, 300)
 	var style := StyleBoxFlat.new()
 	style.bg_color = Color("15241f")
 	style.border_color = Color("8c7950")
@@ -92,26 +132,79 @@ func _ready() -> void:
 	root.add_child(panel)
 	var scroll := ScrollContainer.new()
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	scroll.follow_focus = true
 	panel.add_child(scroll)
 	column = VBoxContainer.new()
 	column.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	column.add_theme_constant_override("separation", 12)
 	scroll.add_child(column)
+	_set_playing_visuals(false)
+
+func _make_bar(fill: Color) -> ProgressBar:
+	var bar := ProgressBar.new()
+	bar.max_value = 100
+	bar.show_percentage = false
+	bar.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var bg := StyleBoxFlat.new()
+	bg.bg_color = Color("26342c"); bg.set_corner_radius_all(4)
+	var fg := StyleBoxFlat.new()
+	fg.bg_color = fill; fg.set_corner_radius_all(4)
+	bar.add_theme_stylebox_override("background", bg)
+	bar.add_theme_stylebox_override("fill", fg)
+	return bar
+
+func _set_playing_visuals(playing: bool) -> void:
+	if is_instance_valid(crosshair): crosshair.visible = playing
+	if is_instance_valid(health_bar): health_bar.visible = playing
+	if is_instance_valid(mana_bar): mana_bar.visible = playing
+	if is_instance_valid(compass_label): compass_label.visible = playing
+
+func _layout_for(next_page: String) -> void:
+	if next_page == "title":
+		panel.anchor_left = 0.055; panel.anchor_right = 0.43
+		panel.anchor_top = 0.10; panel.anchor_bottom = 0.90
+		overlay.color = Color(0.01, 0.025, 0.018, 0.32)
+	elif next_page == "dialogue":
+		panel.anchor_left = 0.055; panel.anchor_right = 0.945
+		panel.anchor_top = 0.60; panel.anchor_bottom = 0.97
+		overlay.color = Color(0.01, 0.025, 0.018, 0.18)
+	else:
+		panel.anchor_left = 0.14; panel.anchor_right = 0.86
+		panel.anchor_top = 0.07; panel.anchor_bottom = 0.93
+		overlay.color = Color(0.01, 0.025, 0.018, 0.70)
 
 func _ensure_controller_navigation() -> void:
-	var buttons := {"ui_accept": JOY_BUTTON_A, "ui_cancel": JOY_BUTTON_B}
+	var buttons := {"ui_accept": JOY_BUTTON_A, "ui_cancel": JOY_BUTTON_B, "ui_up": JOY_BUTTON_DPAD_UP, "ui_down": JOY_BUTTON_DPAD_DOWN, "ui_left": JOY_BUTTON_DPAD_LEFT, "ui_right": JOY_BUTTON_DPAD_RIGHT}
 	for action in buttons:
 		if not InputMap.has_action(action): InputMap.add_action(action)
 		var event := InputEventJoypadButton.new()
+		event.device = -1
 		event.button_index = buttons[action]
-		InputMap.action_add_event(action, event)
-	var axes := {"ui_up": -1.0, "ui_down": 1.0}
+		if not InputMap.action_has_event(action, event): InputMap.action_add_event(action, event)
+	var axes := {"ui_up": [JOY_AXIS_LEFT_Y, -1.0], "ui_down": [JOY_AXIS_LEFT_Y, 1.0], "ui_left": [JOY_AXIS_LEFT_X, -1.0], "ui_right": [JOY_AXIS_LEFT_X, 1.0]}
 	for action in axes:
 		if not InputMap.has_action(action): InputMap.add_action(action)
 		var event := InputEventJoypadMotion.new()
-		event.axis = JOY_AXIS_LEFT_Y
-		event.axis_value = axes[action]
-		InputMap.action_add_event(action, event)
+		event.device = -1
+		event.axis = axes[action][0]
+		event.axis_value = axes[action][1]
+		if not InputMap.action_has_event(action, event): InputMap.action_add_event(action, event)
+
+func _input(event: InputEvent) -> void:
+	if event is InputEventJoypadButton and event.pressed or event is InputEventJoypadMotion and absf(event.axis_value) > 0.25:
+		controller_active = true
+	elif event is InputEventKey and event.pressed or event is InputEventMouseButton and event.pressed or event is InputEventMouseMotion and event.relative.length() > 2.0:
+		controller_active = false
+	else:
+		return
+	_update_hint()
+
+func _update_hint() -> void:
+	if not is_instance_valid(hint): return
+	if controller_active:
+		hint.text = "LS  Move   RS  Aim   RT / X  Attack   LT / Y  Magic   A  Talk   LB / RB  Weapon   Back  Equipment   Start  Pause"
+	else:
+		hint.text = "WASD  Move     Mouse  Aim     Left click  Attack     Right click  Magic     E  Talk     I  Equipment     Esc  Pause"
 
 func _clear(title: String, next_page: String) -> void:
 	for child in column.get_children():
@@ -121,6 +214,8 @@ func _clear(title: String, next_page: String) -> void:
 	dialogue_mode = false
 	page = next_page
 	root.mouse_filter = Control.MOUSE_FILTER_STOP
+	_layout_for(next_page)
+	_set_playing_visuals(false)
 	overlay.show()
 	panel.show()
 	_label(title, 32, GOLD)
@@ -169,7 +264,7 @@ func set_text_scale(value: float) -> void:
 
 func show_title(has_save: bool) -> void:
 	_clear("DINK SMALLWOOD", "title")
-	_label("A NEW DIMENSION", 20, GOLD)
+	_label("FIRST-PERSON ADVENTURE · VERSION 0.2", 16, GOLD)
 	_label("A familiar world. A different perspective.\nA 3D adaptation by PilferedParrot.", 20)
 	if has_save:
 		_button("Continue adventure", "continue")
@@ -177,7 +272,7 @@ func show_title(has_save: bool) -> void:
 	_button("Settings & controls", "settings")
 	_button("Credits & support", "credits")
 	_button("Quit", "quit")
-	_label("Unofficial adaptation · Development release 0.1\nOriginal artwork and FreeDink sound", 16, Color("9dad95"))
+	_label("Unofficial adaptation · Development release 0.2\nBlender-built world and FreeDink sound", 16, Color("9dad95"))
 	_focus()
 
 func show_pause() -> void:
@@ -187,14 +282,22 @@ func show_pause() -> void:
 	_button("Load saved adventure", "load")
 	_button("Equipment", "inventory")
 	_button("Adventure journal", "journal")
+	_button("World map", "map")
 	_button("Settings & controls", "settings")
 	_button("Credits & support", "credits")
 	_button("Title screen", "title")
 	_focus()
 
 func show_hud(stats: Dictionary) -> void:
-	hud.text = "DINK   •   Health %d / %d   •   Level %d   •   Gold %d\n%s" % [stats.get("life",10),stats.get("lifemax",10),stats.get("level",1),stats.get("gold",0),stats.get("location", "Stonebrook")]
-	hint.text = "Move  WASD / Left stick     Talk  E / A     Attack  Space / X     Magic  Q / Y     Menu  Esc / Start"
+	var life := float(stats.get("life", 10)); var life_max := maxf(float(stats.get("lifemax", 10)), 1.0)
+	var mana := float(stats.get("magic_level", 0)); var mana_max := maxf(float(stats.get("magic_cost", 100)), 1.0)
+	health_bar.value = clampf(life / life_max * 100.0, 0.0, 100.0)
+	mana_bar.value = clampf(mana / mana_max * 100.0, 0.0, 100.0)
+	hud.text = "DINK   •   Health %d / %d   •   Level %d   •   Gold %d\n%s" % [life,life_max,stats.get("level",1),stats.get("gold",0),stats.get("location", "Stonebrook")]
+	var weapon := str(stats.get("weapon", stats.get("weapon_name", "")))
+	if not weapon.is_empty(): hud.text += "\nWeapon: " + weapon
+	compass_label.text = str(stats.get("compass", ""))
+	_update_hint()
 
 func show_dialogue(text: String, speaker: String = "Dink") -> void:
 	_clear(speaker, "dialogue")
@@ -239,13 +342,14 @@ func close_menu() -> void:
 	panel.hide()
 	overlay.hide()
 	page = "game"
+	_set_playing_visuals(true)
+
+func _clear_toast() -> void:
+	toast.text = ""
 
 func notify(text: String) -> void:
 	toast.text = text
-	var previous := text
-	await get_tree().create_timer(4.0).timeout
-	if toast.text == previous:
-		toast.text = ""
+	toast_timer.start()
 
 func show_inventory(items: Array, magic_items: Array) -> void:
 	_clear("Your equipment", "inventory")
@@ -267,19 +371,25 @@ func show_journal(text: String) -> void:
 
 func show_settings(settings: Dictionary) -> void:
 	_clear("Make yourself comfortable", "settings")
-	_label("Move: WASD / arrows / left stick\nTalk / confirm: E / A    Attack: Space / X\nMagic: Q / Y    Equipment: I / Back\nPause: Esc / Start    Camera: R / right stick\nMenus: arrows / D-pad, Enter / A, Esc / B", 18)
-	for setting in [["master", "Master volume", 0.0, 1.0, 0.1], ["music", "Music volume", 0.0, 1.0, 0.1], ["sfx", "Sound effects", 0.0, 1.0, 0.1], ["text_scale", "Text size", 0.85, 1.3, 0.05], ["camera_angle", "Camera elevation", 35.0, 70.0, 5.0]]:
+	_label("Move: WASD / left stick    Aim: mouse / right stick\nAttack: left click / RT / X    Magic: right click / LT / Y\nTalk: E / A    Jump: Space / right stick click    Sprint: Shift / left stick click    Equipment: I / Back (Select)\nQuick weapons: 1–9 / LB and RB    Pause: Esc / Start\nWorld map: M or Pause → World map (once received)\nMenus: arrows / D-pad / left stick, Enter / A, Esc / B\nController labels use the Xbox layout; other mapped gamepads use the same button positions.", 18)
+	for setting in [["master", "Master volume", 0.0, 1.0, 0.1, 0.8], ["music", "Music volume", 0.0, 1.0, 0.1, 0.55], ["sfx", "Sound effects", 0.0, 1.0, 0.1, 0.8], ["text_scale", "Text size", 0.85, 1.3, 0.05, 1.0], ["mouse_sensitivity", "Mouse sensitivity", 0.0005, 0.006, 0.0005, 0.002], ["fov", "Field of view", 60.0, 105.0, 1.0, 80.0], ["controller_sensitivity", "Controller look sensitivity", 0.5, 4.0, 0.1, 2.0], ["controller_deadzone", "Controller stick dead zone", 0.05, 0.4, 0.05, 0.2]]:
 		var key: String = setting[0]
 		_label(setting[1], 18, GOLD)
 		var slider := HSlider.new()
 		slider.min_value = setting[2]
 		slider.max_value = setting[3]
 		slider.step = setting[4]
-		slider.value = float(settings.get(key, 1.0))
+		slider.value = float(settings.get(key, setting[5]))
 		slider.custom_minimum_size.y = roundi(30.0 * text_scale)
 		slider.focus_mode = Control.FOCUS_ALL
 		slider.value_changed.connect(_setting_changed.bind(key))
 		column.add_child(slider)
+	var invert := CheckButton.new()
+	invert.text = "Invert controller vertical look"
+	invert.focus_mode = Control.FOCUS_ALL
+	invert.button_pressed = settings.get("controller_invert_y", false)
+	invert.toggled.connect(_controller_invert_changed)
+	column.add_child(invert)
 	var reduced := CheckButton.new()
 	reduced.text = "Reduce camera movement"
 	reduced.focus_mode = Control.FOCUS_ALL
@@ -294,6 +404,9 @@ func _setting_changed(value: float, key: String) -> void:
 
 func _reduced_motion_changed(value: bool) -> void:
 	action_requested.emit("setting", {"key": "reduced_motion", "value": value})
+
+func _controller_invert_changed(value: bool) -> void:
+	action_requested.emit("setting", {"key": "controller_invert_y", "value": value})
 
 func show_credits() -> void:
 	_clear("A shared adventure", "credits")

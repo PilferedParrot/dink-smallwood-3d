@@ -1,0 +1,499 @@
+{
+  "coordinate_system": "Godot Y-up, front -Z",
+  "assets": [
+    {
+      "name": "oak_tree",
+      "path": "models/oak_tree.glb",
+      "dimensions_m": [
+        5.053,
+        6.03,
+        3.674
+      ],
+      "base_y_m": -0.0,
+      "mesh_nodes": 3,
+      "front": "-Z",
+      "up": "+Y"
+    },
+    {
+      "name": "pine_tree",
+      "path": "models/pine_tree.glb",
+      "dimensions_m": [
+        2.268,
+        5.925,
+        2.381
+      ],
+      "base_y_m": -0.0,
+      "mesh_nodes": 3,
+      "front": "-Z",
+      "up": "+Y"
+    },
+    {
+      "name": "dead_tree",
+      "path": "models/dead_tree.glb",
+      "dimensions_m": [
+        3.187,
+        4.72,
+        2.01
+      ],
+      "base_y_m": -0.0,
+      "mesh_nodes": 1,
+      "front": "-Z",
+      "up": "+Y"
+    },
+    {
+      "name": "bush",
+      "path": "models/bush.glb",
+      "dimensions_m": [
+        2.327,
+        1.55,
+        1.8
+      ],
+      "base_y_m": 0.0,
+      "mesh_nodes": 1,
+      "front": "-Z",
+      "up": "+Y"
+    },
+    {
+      "name": "rock",
+      "path": "models/rock.glb",
+      "dimensions_m": [
+        2.092,
+        1.1,
+        1.8
+      ],
+      "base_y_m": 0.0,
+      "mesh_nodes": 1,
+      "front": "-Z",
+      "up": "+Y"
+    },
+    {
+      "name": "cottage",
+      "path": "models/cottage.glb",
+      "dimensions_m": [
+        6.18,
+        5.349,
+        5.136
+      ],
+      "base_y_m": 0.0,
+      "mesh_nodes": 5,
+      "front": "-Z",
+      "up": "+Y"
+    },
+    {
+      "name": "inn",
+      "path": "models/inn.glb",
+      "dimensions_m": [
+        7.38,
+        5.74,
+        5.473
+      ],
+      "base_y_m": 0.0,
+      "mesh_nodes": 5,
+      "front": "-Z",
+      "up": "+Y"
+    },
+    {
+      "name": "castle",
+      "path": "models/castle.glb",
+      "dimensions_m": [
+        4.664,
+        6.0,
+        4.664
+      ],
+      "base_y_m": 0.0,
+      "mesh_nodes": 3,
+      "front": "-Z",
+      "up": "+Y"
+    },
+    {
+      "name": "tower",
+      "path": "models/tower.glb",
+      "dimensions_m": [
+        4.664,
+        6.0,
+        4.664
+      ],
+      "base_y_m": 0.0,
+      "mesh_nodes": 3,
+      "front": "-Z",
+      "up": "+Y"
+    },
+    {
+      "name": "fence",
+      "path": "models/fence.glb",
+      "dimensions_m": [
+        4.5,
+        1.6,
+        0.251
+      ],
+      "base_y_m": -0.0,
+      "mesh_nodes": 2,
+      "front": "-Z",
+      "up": "+Y"
+    },
+    {
+      "name": "barrel",
+      "path": "models/barrel.glb",
+      "dimensions_m": [
+        1.37,
+        1.3,
+        1.37
+      ],
+      "base_y_m": -0.0,
+      "mesh_nodes": 2,
+      "front": "-Z",
+      "up": "+Y"
+    },
+    {
+      "name": "crate",
+      "path": "models/crate.glb",
+      "dimensions_m": [
+        1.08,
+        1.0,
+        1.0
+      ],
+      "base_y_m": 0.0,
+      "mesh_nodes": 2,
+      "front": "-Z",
+      "up": "+Y"
+    },
+    {
+      "name": "table",
+      "path": "models/table.glb",
+      "dimensions_m": [
+        2.4,
+        1.09,
+        1.25
+      ],
+      "base_y_m": 0.0,
+      "mesh_nodes": 2,
+      "front": "-Z",
+      "up": "+Y"
+    },
+    {
+      "name": "chair",
+      "path": "models/chair.glb",
+      "dimensions_m": [
+        1.05,
+        2.025,
+        1.0
+      ],
+      "base_y_m": -0.0,
+      "mesh_nodes": 2,
+      "front": "-Z",
+      "up": "+Y"
+    },
+    {
+      "name": "bed",
+      "path": "models/bed.glb",
+      "dimensions_m": [
+        2.4,
+        2.15,
+        1.25
+      ],
+      "base_y_m": 0.0,
+      "mesh_nodes": 3,
+      "front": "-Z",
+      "up": "+Y"
+    },
+    {
+      "name": "chest",
+      "path": "models/chest.glb",
+      "dimensions_m": [
+        1.9,
+        1.6,
+        1.442
+      ],
+      "base_y_m": 0.0,
+      "mesh_nodes": 4,
+      "front": "-Z",
+      "up": "+Y"
+    },
+    {
+      "name": "sign",
+      "path": "models/sign.glb",
+      "dimensions_m": [
+        1.6,
+        1.875,
+        0.15
+      ],
+      "base_y_m": 0.0,
+      "mesh_nodes": 2,
+      "front": "-Z",
+      "up": "+Y"
+    },
+    {
+      "name": "well",
+      "path": "models/well.glb",
+      "dimensions_m": [
+        3.3,
+        3.712,
+        2.939
+      ],
+      "base_y_m": 0.0,
+      "mesh_nodes": 7,
+      "front": "-Z",
+      "up": "+Y"
+    },
+    {
+      "name": "fountain",
+      "path": "models/fountain.glb",
+      "dimensions_m": [
+        2.6,
+        1.495,
+        2.6
+      ],
+      "base_y_m": 0.0,
+      "mesh_nodes": 3,
+      "front": "-Z",
+      "up": "+Y"
+    },
+    {
+      "name": "bridge",
+      "path": "models/bridge.glb",
+      "dimensions_m": [
+        3.18,
+        1.402,
+        2.5
+      ],
+      "base_y_m": 0.0,
+      "mesh_nodes": 2,
+      "front": "-Z",
+      "up": "+Y"
+    },
+    {
+      "name": "cave_entrance",
+      "path": "models/cave_entrance.glb",
+      "dimensions_m": [
+        4.755,
+        4.0,
+        2.5
+      ],
+      "base_y_m": 0.0,
+      "mesh_nodes": 2,
+      "front": "-Z",
+      "up": "+Y"
+    },
+    {
+      "name": "gravestone",
+      "path": "models/gravestone.glb",
+      "dimensions_m": [
+        0.8,
+        1.7,
+        0.26
+      ],
+      "base_y_m": 0.0,
+      "mesh_nodes": 1,
+      "front": "-Z",
+      "up": "+Y"
+    },
+    {
+      "name": "mushroom",
+      "path": "models/mushroom.glb",
+      "dimensions_m": [
+        0.951,
+        0.87,
+        1.0
+      ],
+      "base_y_m": -0.0,
+      "mesh_nodes": 2,
+      "front": "-Z",
+      "up": "+Y"
+    },
+    {
+      "name": "flowers",
+      "path": "models/flowers.glb",
+      "dimensions_m": [
+        0.967,
+        0.78,
+        0.26
+      ],
+      "base_y_m": -0.0,
+      "mesh_nodes": 3,
+      "front": "-Z",
+      "up": "+Y"
+    },
+    {
+      "name": "torch",
+      "path": "models/torch.glb",
+      "dimensions_m": [
+        0.396,
+        2.225,
+        0.396
+      ],
+      "base_y_m": -0.0,
+      "mesh_nodes": 2,
+      "front": "-Z",
+      "up": "+Y"
+    },
+    {
+      "name": "pig",
+      "path": "models/pig.glb",
+      "dimensions_m": [
+        1.579,
+        1.2,
+        2.075
+      ],
+      "base_y_m": -0.0,
+      "mesh_nodes": 14,
+      "front": "-Z",
+      "up": "+Y"
+    },
+    {
+      "name": "duck",
+      "path": "models/duck.glb",
+      "dimensions_m": [
+        1.497,
+        1.63,
+        2.31
+      ],
+      "base_y_m": 0.0,
+      "mesh_nodes": 12,
+      "front": "-Z",
+      "up": "+Y"
+    },
+    {
+      "name": "pillbug",
+      "path": "models/pillbug.glb",
+      "dimensions_m": [
+        1.642,
+        0.826,
+        1.63
+      ],
+      "base_y_m": -0.0,
+      "mesh_nodes": 22,
+      "front": "-Z",
+      "up": "+Y"
+    },
+    {
+      "name": "bonca",
+      "path": "models/bonca.glb",
+      "dimensions_m": [
+        1.902,
+        2.74,
+        3.755
+      ],
+      "base_y_m": -0.0,
+      "mesh_nodes": 12,
+      "front": "-Z",
+      "up": "+Y"
+    },
+    {
+      "name": "slime",
+      "path": "models/slime.glb",
+      "dimensions_m": [
+        1.427,
+        1.1,
+        1.3
+      ],
+      "base_y_m": 0.0,
+      "mesh_nodes": 3,
+      "front": "-Z",
+      "up": "+Y"
+    },
+    {
+      "name": "dragon",
+      "path": "models/dragon.glb",
+      "dimensions_m": [
+        2.565,
+        1.92,
+        2.19
+      ],
+      "base_y_m": -0.0,
+      "mesh_nodes": 6,
+      "front": "-Z",
+      "up": "+Y"
+    },
+    {
+      "name": "knight",
+      "path": "models/knight.glb",
+      "dimensions_m": [
+        1.107,
+        2.07,
+        0.663
+      ],
+      "base_y_m": -0.0,
+      "mesh_nodes": 8,
+      "front": "-Z",
+      "up": "+Y"
+    },
+    {
+      "name": "man",
+      "path": "models/man.glb",
+      "dimensions_m": [
+        1.107,
+        2.07,
+        0.663
+      ],
+      "base_y_m": -0.0,
+      "mesh_nodes": 9,
+      "front": "-Z",
+      "up": "+Y"
+    },
+    {
+      "name": "woman",
+      "path": "models/woman.glb",
+      "dimensions_m": [
+        1.107,
+        2.27,
+        0.974
+      ],
+      "base_y_m": -0.0,
+      "mesh_nodes": 11,
+      "front": "-Z",
+      "up": "+Y"
+    },
+    {
+      "name": "wizard",
+      "path": "models/wizard.glb",
+      "dimensions_m": [
+        1.107,
+        2.305,
+        0.977
+      ],
+      "base_y_m": -0.0,
+      "mesh_nodes": 11,
+      "front": "-Z",
+      "up": "+Y"
+    },
+    {
+      "name": "bow",
+      "path": "models/bow.glb",
+      "dimensions_m": [
+        1.669,
+        1.669,
+        1.211
+      ],
+      "base_y_m": 0.0,
+      "mesh_nodes": 2,
+      "front": "-Z",
+      "up": "+Y"
+    },
+    {
+      "name": "sword",
+      "path": "models/sword.glb",
+      "dimensions_m": [
+        0.18,
+        2.075,
+        0.18
+      ],
+      "base_y_m": 0.0,
+      "mesh_nodes": 2,
+      "front": "-Z",
+      "up": "+Y"
+    },
+    {
+      "name": "fist",
+      "path": "models/fist.glb",
+      "dimensions_m": [
+        0.438,
+        0.76,
+        0.371
+      ],
+      "base_y_m": -0.0,
+      "mesh_nodes": 2,
+      "front": "-Z",
+      "up": "+Y"
+    }
+  ]
+}

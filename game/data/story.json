@@ -62688,11 +62688,7 @@
               ],
               "else": [],
               "line": 174
-            }
-          ]
-        },
-        "__top__": {
-          "code": [
+            },
             {
               "op": "call",
               "name": "unfreeze",
@@ -196241,8 +196237,8 @@
       },
       {
         "script": "S1-H2-O.c",
-        "line": 194,
-        "reason": "stray closing brace ignored"
+        "line": 190,
+        "reason": "s1-h2-o EOF extra closing brace removed before final unfreeze calls"
       },
       {
         "script": "S2-AUNTP.c",

@@ -61,3 +61,5 @@ leading `&`, including names with hyphens, so global state is unambiguous. Choic
 `result` values are their original source positions, including positions hidden by
 conditions. The VM flattens conditional blocks per task before execution, so labels and
 gotos inside those blocks retain their DinkC behavior without changing story data.
+
+Delegate tasks to the local qwen or other openai agents for parsimony in accordance with what each model can reliably handle. Astra directs, supervises, and inspects. update linux and windows versions on github.  if the end result is not a finished game, leave a prompt for the next session.

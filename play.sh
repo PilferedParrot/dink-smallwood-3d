@@ -1,9 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
 cd -- "$(dirname -- "$0")"
-if [[ -x builds/linux/DinkSmallwood3D.x86_64 ]]; then
-  exec builds/linux/DinkSmallwood3D.x86_64 "$@"
-fi
 dink_godot="${GODOT:-}"
 if [[ -z "$dink_godot" ]]; then
   for candidate in godot godot4 "$HOME/.local/bin/Godot_v4.6.1-stable_linux.x86_64"; do

@@ -255,18 +255,29 @@ def _normalise_choice_titles(source):
     return pattern.sub(quote, source)
 
 
-def _repair_known_source_typos(source):
+def _repair_known_source_typos(source, script_name=''):
     """Apply only unambiguous typos in the released DinkC source package."""
     repairs=[]
     # S2-JACK has one single-quote opener paired with a double-quote closer.  DinkC
     # treats this as the intended dialogue literal in the distributed compiled game.
     fixed, count = re.subn(r"(?<=\()'([^'\n]*)\"(?=\s*,)", r'"\1"', source)
     if count: repairs.extend([{'reason':'mismatched dialogue quote repaired'}] * count)
+    if str(script_name).lower() == 's1-h2-o':
+        # The released Ethel script has one extra close immediately before its
+        # final unfreeze calls. Removing this exact EOF brace keeps those calls
+        # in talk; leave all other malformed braces to the normal audit path.
+        pattern = re.compile(r'\n\n}\n\n(  unfreeze\(&current_sprite\);\n  unfreeze\(1\);\n})\n\s*\Z')
+        match = pattern.search(fixed)
+        if match:
+            brace = match.start() + 2
+            line = fixed.count('\n', 0, brace) + 1
+            fixed = fixed[:brace] + ' ' + fixed[brace + 1:]
+            repairs.append({'line': line, 'reason': 's1-h2-o EOF extra closing brace removed before final unfreeze calls'})
     return fixed, repairs
 
 
 def parse_story(source:str, script_name='story', overrides=None):
-    source, source_repairs = _repair_known_source_typos(source)
+    source, source_repairs = _repair_known_source_typos(source, script_name)
     toks=_tokens(_normalise_choice_titles(source)); p=Parser(toks); procedures={}; top=[]; excluded=[]
     while p.peek() is not None:
         # DinkC function declaration: [type] name ( ... ) { ... }

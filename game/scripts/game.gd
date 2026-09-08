@@ -101,7 +101,7 @@ func _read_json(path: String) -> Dictionary:
 	return parsed if parsed is Dictionary else {}
 
 func _input_map() -> void:
-	var keys := {"left":[KEY_A,KEY_LEFT],"right":[KEY_D,KEY_RIGHT],"up":[KEY_W,KEY_UP],"down":[KEY_S,KEY_DOWN],"talk":[KEY_E,KEY_ENTER],"attack":[KEY_SPACE],"magic":[KEY_Q],"pause":[KEY_ESCAPE],"inventory":[KEY_I],"camera":[KEY_R]}
+	var keys := {"left":[KEY_A,KEY_LEFT],"right":[KEY_D,KEY_RIGHT],"up":[KEY_W,KEY_UP],"down":[KEY_S,KEY_DOWN],"talk":[KEY_E,KEY_ENTER],"attack":[KEY_SPACE],"magic":[KEY_Q],"pause":[KEY_ESCAPE],"inventory":[KEY_I],"camera":[KEY_R],"map":[KEY_M]}
 	var buttons := {"talk":JOY_BUTTON_A,"attack":JOY_BUTTON_X,"magic":JOY_BUTTON_Y,"pause":JOY_BUTTON_START,"inventory":JOY_BUTTON_BACK,"camera":JOY_BUTTON_RIGHT_STICK}
 	for action in keys:
 		if not InputMap.has_action(action): InputMap.add_action(action, 0.2)
@@ -111,10 +111,12 @@ func _input_map() -> void:
 			InputMap.action_add_event(action,event)
 		if buttons.has(action):
 			var event := InputEventJoypadButton.new()
+			event.device = -1
 			event.button_index = buttons[action]
 			InputMap.action_add_event(action,event)
 	for pair in [["left",JOY_AXIS_LEFT_X,-1.0],["right",JOY_AXIS_LEFT_X,1.0],["up",JOY_AXIS_LEFT_Y,-1.0],["down",JOY_AXIS_LEFT_Y,1.0]]:
 		var event := InputEventJoypadMotion.new()
+		event.device = -1
 		event.axis = pair[1]
 		event.axis_value = pair[2]
 		InputMap.action_add_event(pair[0],event)
@@ -167,6 +169,19 @@ func load_map(number: int, run_scripts: bool = true) -> void:
 	player["frozen"] = false
 	var screen: Dictionary = world.screens[str(number)]
 	_build_ground(screen)
+	# Screen startup can select a vision (for example FINDDUCK). Run its
+	# immediate instructions before filtering editor sprites by that vision.
+	# Sprite main procedures still start after all entities have been created.
+	if run_scripts:
+		var expected := generation
+		# Vision belongs to the incoming screen. Loading a save with scripts
+		# disabled retains its saved vision instead of rerolling quest state.
+		vm.globals["vision"] = 0
+		var script := str(screen.get("script", ""))
+		if not script.is_empty() and not vm._procedure_code(script.to_lower(), "main").is_empty():
+			vm.run(script, "main", 0)
+		if generation != expected: return
+	var editor_entities: Array[int] = []
 	for source in screen.get("sprites",[]):
 		var e: Dictionary = source.duplicate(true)
 		var idx := int(e.get("index",0))
@@ -194,20 +209,22 @@ func load_map(number: int, run_scripts: bool = true) -> void:
 		e["dir"] = 2
 		if int(e.get("size",100)) == 0: e["size"] = 100
 		entities[next_entity] = e
+		editor_entities.append(next_entity)
 		next_entity += 1
-	for id in entities: _create_visual(id)
+	for id in entities:
+		# A screen main may already have created a sprite and its visual.
+		if not visuals.has(id): _create_visual(id)
 	_play_music(str(screen.get("music",0)))
 	warp_cooldown = 0.65
 	changing = false
 	if run_scripts:
-		_run_screen_scripts.call_deferred(generation)
+		_run_screen_scripts.call_deferred(generation, editor_entities)
 
-func _run_screen_scripts(expected: int) -> void:
+func _run_screen_scripts(expected: int, editor_entities: Array[int]) -> void:
 	if generation != expected: return
-	var screen: Dictionary = world.screens[str(current_screen)]
-	var script := str(screen.get("script",""))
-	if not script.is_empty() and not vm._procedure_code(script.to_lower(),"main").is_empty(): vm.run(script,"main",0)
-	for id in entities.keys():
+	# Runtime sprites start main when sp_script attaches it; only editor
+	# sprites need startup here, or screen-created actors would run twice.
+	for id in editor_entities:
 		if generation != expected: return
 		if id == 1 or not entities.has(id): continue
 		var e: Dictionary = entities[id]
@@ -355,6 +372,26 @@ func _physics_process(delta: float) -> void:
 		stats["location"] = _location()
 		ui.show_hud(stats)
 
+func _input(event: InputEvent) -> void:
+	if not is_instance_valid(ui) or not event.is_action_pressed("map") or event.is_echo(): return
+	if not playing: return
+	if ui.page == "map":
+		ui.close_menu()
+	elif not ui.modal:
+		_open_world_map()
+	else:
+		return
+	get_viewport().set_input_as_handled()
+
+func _open_world_map() -> void:
+	if not playing or not entities.has(1) or dialogue_busy: return
+	var player: Dictionary = entities[1]
+	if player.get("frozen", false) or player.get("disabled", false) or int(player.get("nocontrol", 0)): return
+	if ui.modal and ui.page != "pause": return
+	ui.close_menu()
+	# Keep the original ownership check and map artwork in the campaign script.
+	vm.run("button6", "main", 1)
+
 func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("pause") or event.is_action_pressed("ui_cancel"):
 		if ui.dialogue_mode: return
@@ -498,14 +535,22 @@ func _move_entity(id: int, displacement: Vector2, ignore_hardness: bool = false)
 	e["x"] = pos.x
 	e["y"] = pos.y
 
-func _transitions() -> void:
-	if walk_off_screen or warp_cooldown > 0 or entities[1].get("frozen",false) or int(entities[1].get("disabled",0)): return
+func _transitions(scripted_move: bool = false, from_position: Vector2 = Vector2.INF) -> void:
+	# Freeze blocks player input, but an original move_stop can still walk Dink
+	# through a doorway (the burning-home evacuation never calls unfreeze).
+	if walk_off_screen or warp_cooldown > 0 or (entities[1].get("frozen",false) and not scripted_move) or int(entities[1].get("disabled",0)): return
 	var pos := _position2(1)
 	for id in entities.keys():
 		if id == 1 or not entities.has(id): continue
 		var e: Dictionary = entities[id]
 		if int(e.get("active",1)) == 0: continue
 		if e.get("warp") != null and _hard_rect(e).grow(7).has_point(pos):
+			# A delayed entrance cutscene can begin inside this doorway's trigger
+			# after its cooldown expires. Let its move_stop walk into the room;
+			# only motion approaching the door should activate a scripted exit.
+			var center := _hard_rect(e).get_center()
+			if scripted_move and from_position != Vector2.INF and pos.distance_squared_to(center) >= from_position.distance_squared_to(center):
+				continue
 			var warp: Dictionary = e.warp
 			if world.screens.has(str(int(warp.get("map",0)))):
 				vm.cancel_screen_tasks()
@@ -797,10 +842,13 @@ func _script_move(id: int, dir: int, destination: float, speed: float) -> void:
 		elapsed += delta
 		if elapsed>60: break
 		var old_value := float(e.get(axis,0))
+		var from_position := _position2(id)
 		e[axis] = move_toward(old_value,destination,maxf(1,speed)*25*delta)
 		if dir in [1,3,7,9]:
 			e["y"] = float(e.get("y",0))+absf(float(e[axis])-old_value)*(1 if dir in [1,3] else -1)
 		_set_animation(id,int(e.get("base_walk",0))+dir)
+		if id == 1:
+			_transitions(true, from_position)
 	if generation == expected and entities.has(id) and int(e.move_token) == token:
 		e.erase("moving")
 		e["seq"] = 0
@@ -817,7 +865,9 @@ func dink_call(command: String, args: Array, context: Dictionary) -> Variant:
 		if not entities.has(id): return 0
 		var key := cmd.substr(3)
 		if key == "editor_num": return int(entities[id].get("editor_num",0))
-		if args.size()>1 and int(b) != -1:
+		# Unlike ordinary sprite-property queries, touch damage -1 enables the
+		# script's touch procedure. Runtime pickups such as S1-NUT require it.
+		if args.size()>1 and (int(b) != -1 or cmd == "sp_touch_damage"):
 			entities[id][key] = b
 			if key == "seq":
 				entities[id]["frame"] = 1
@@ -1097,6 +1147,7 @@ func _ui_action(action: String, payload: Variant) -> void:
 			else: ui.notify("Could not save the adventure.")
 		"pause": ui.show_pause()
 		"inventory": ui.show_inventory(items,magic_items)
+		"map": _open_world_map()
 		"settings": ui.show_settings(settings)
 		"credits": ui.show_credits()
 		"back":

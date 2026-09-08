@@ -19,8 +19,12 @@ def main():
             shutil.copy2(ROOT / name, folder / name)
         for name in ['licenses', 'third_party', 'docs']:
             if (ROOT / name).is_dir():
-                shutil.copytree(ROOT / name, folder / name, dirs_exist_ok=True)
-        archive = output / f'dink-smallwood-3d-0.1.0-{platform}-x86_64.zip'
+                ignored = shutil.ignore_patterns('NEXT_SESSION.md') if name == 'docs' else None
+                shutil.copytree(ROOT / name, folder / name, dirs_exist_ok=True, ignore=ignored)
+        # A prior package may have copied this internal handoff note. Keep it
+        # out of regenerated archives even when packaging into an existing folder.
+        (folder / 'docs' / 'NEXT_SESSION.md').unlink(missing_ok=True)
+        archive = output / f'dink-smallwood-3d-0.2.0-{platform}-x86_64.zip'
         with zipfile.ZipFile(archive, 'w', zipfile.ZIP_DEFLATED, compresslevel=6) as z:
             for path in sorted(folder.rglob('*')):
                 if path.is_file(): z.write(path, Path('DinkSmallwood3D') / path.relative_to(folder))
