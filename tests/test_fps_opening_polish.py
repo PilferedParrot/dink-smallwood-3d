@@ -14,7 +14,7 @@ pytestmark = pytest.mark.skipif(not Path(GODOT).is_file(), reason="Godot unavail
 
 def test_opening_polish_fixture_headless(tmp_path):
     result = subprocess.run(
-        [str(GODOT), "--headless", "--path", "game", "--script",
+        [str(GODOT), "--headless", "--audio-driver", "Dummy", "--path", "game", "--script",
          str(ROOT / "tests/fps_opening_polish_test.gd"), "--", "--out-dir=" + str(tmp_path)],
         cwd=ROOT, capture_output=True, text=True, timeout=45, check=False,
         env={**os.environ, "XDG_CONFIG_HOME": str(tmp_path / "xdg-config"),
@@ -28,7 +28,7 @@ def test_opening_polish_rendered_fixture(tmp_path):
     if not shutil.which("xvfb-run"):
         pytest.skip("xvfb-run unavailable")
     result = subprocess.run(
-        ["xvfb-run", "-a", str(GODOT), "--path", "game", "--script",
+        ["xvfb-run", "-a", str(GODOT), "--audio-driver", "Dummy", "--path", "game", "--script",
          str(ROOT / "tests/fps_opening_polish_test.gd"), "--", "--out-dir=" + str(tmp_path)],
         cwd=ROOT, capture_output=True, text=True, timeout=45, check=False,
         env={**os.environ, "XDG_CONFIG_HOME": str(tmp_path / "xdg-config"),

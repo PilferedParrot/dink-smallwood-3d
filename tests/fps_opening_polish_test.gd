@@ -59,11 +59,10 @@ func _run() -> void:
 	game._physics_process(0.016)
 	Input.action_release("attack")
 	check(game.fps_feed_use > 0.0, "Using pig feed starts the transient use motion")
-	await create_timer(0.38).timeout
-	var grains: Array[int] = []
-	for id in game.visuals:
-		var visual: Node = game.visuals[id]
-		if is_instance_valid(visual) and visual.get_meta("model_key", "") == "feed_grains": grains.append(int(id))
+	# ITEM-PIG waits before it creates its source-script grain sprite. Rendered
+	# llvmpipe frames can take longer than the former fixed delay, so observe the
+	# actual script-created visual through a bounded frame loop.
+	var grains := await _wait_for_feed_grains(1.5)
 	check(not grains.is_empty(), "Original item-pig use creates feed_grains visuals")
 	for id in grains:
 		var visual: Node = game.visuals[id]
@@ -114,3 +113,18 @@ func _capture(name: String) -> void:
 	await process_frame
 	await process_frame
 	get_root().get_texture().get_image().save_png(out_dir.path_join(name))
+
+func _feed_grain_ids() -> Array[int]:
+	var grains: Array[int] = []
+	for id in game.visuals:
+		var visual: Node = game.visuals[id]
+		if is_instance_valid(visual) and visual.get_meta("model_key", "") == "feed_grains": grains.append(int(id))
+	return grains
+
+func _wait_for_feed_grains(timeout_seconds: float) -> Array[int]:
+	var deadline := Time.get_ticks_msec() + int(timeout_seconds * 1000.0)
+	while Time.get_ticks_msec() < deadline:
+		var grains := _feed_grain_ids()
+		if not grains.is_empty(): return grains
+		await process_frame
+	return _feed_grain_ids()
