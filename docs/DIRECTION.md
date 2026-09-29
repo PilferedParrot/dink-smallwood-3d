@@ -175,3 +175,90 @@ windows. They are solid, not cardboard. The 3/4-view risk did not bite here eith
    the same original pixels.
 6. Not done: the modular inn (seq 33 `outinn`, screens 472/473) and the cabin
    pieces. They need a panel-by-panel version of the same projection.
+
+## Chimneys and the inn — September 29, second pass (Opus 5.5)
+
+Buildings defects 1 and 6 above, with the same method: recover the geometry from the
+original pixels under the original camera, texture it by projection, judge it from the
+original camera and at eye level. Evidence: `docs/images/chimneys-inn-sept29.jpg`.
+
+**Chimneys.** A chimney sprite (home-11, home-12) is a picture of an upright prism. Its
+top face is horizontal, so under `screen = (X, Z - Y)` it shows its own footprint.
+`tools/facade_fit.py` reads that face from the top outline, and it reads the foot: the
+lowest stone pixel under the front edge. The prototype casts the view ray through the
+foot into the house's fitted roof. Where it lands fixes the chimney's depth, and the top
+face then fixes its height. The same ray test decides what a detail is: a foot that lands
+on the roof means an upright piece, anything else is composited onto the walls as before.
+The thatch ring and the dithered shadow at the chimney's foot lie on the roof, so they are
+painted onto the roof texture.
+
+Correction to the Sept 29 notes: only Dink's chimney (439) was composited onto its roof.
+The two on 469 were ground cards hidden behind the house. That house is also placed on
+screen 437 (y = 760), 437 was built first without them, and the duplicate check then
+skipped 469's copy. Houses are now built in a pre-pass over the whole block, with details
+gathered from every screen in world coordinates.
+
+**The inn and its neighbour (kit buildings).** The inn is not one sprite. Its stone
+ground floor and roof are seq 33 kit sprites, but its half-timbered upper storey and eave
+are ground tiles (tilesets 34 and 35). The prototype used to paint that storey flat on the
+ground and stand the kit pieces up as separate cards.
+- `kit_canvas` rebuilds the building as the original camera saw it: per screen, its tiles
+  and kit/door sprites in the original draw order, clipped as the engine clips them. Grass
+  and water connected to the outside are cleared. The building is the largest connected
+  component, and its pieces are listed explicitly, because two kit buildings share screen
+  538.
+- `kit_fit` models each building as two hip-roofed wings that share the outer front
+  corner. Their union is exactly the L's roof: a hip at the outer corner and a valley
+  inside. The upper storey is jettied over the stone floor, and the hip ends are steeper
+  than the long slopes. Both show in the silhouette, and each was a structural change that
+  the misfit located (IoU 0.92 → 0.94 → 0.97).
+- Both buildings use the same kit pieces, so they share one kit geometry, fitted jointly:
+  wall 284 px, stone storey 88, jetty 14, eave 20, pitch 45°, end pitch 1.7. Only the wing
+  depths are per building. Fitted separately, they disagreed by 13% on wall height and
+  2.6× on end pitch. The joint fit scores higher on both (inn 0.971, kit-538 0.966) than
+  either separate fit did.
+- Hanging signs sit on the walls in the original, but their hotspots are behind the drawn
+  wall. A sprite whose visible foot (the bottom of its centre column) the view ray lands on
+  the building is composited onto its walls. Barrels and benches standing in front keep
+  their own billboards.
+- The inn's tiles leave the ground, and the ground continues the row they interrupted.
+
+```bash
+/usr/bin/python3 tools/facade_fit.py
+xvfb-run -a -s "-screen 0 1920x1080x24" ~/.local/bin/Godot_v4.6.1-stable_linux.x86_64 \
+  --path game -s res://prototype/sprite_world_proto.gd -- "$PWD/builds/facades2-505" 505 \
+  439 472 473 474 504 505 506 538 539
+/usr/bin/python3 tools/facade_contact_sheet.py builds/facades2-407 builds/facades2-470 \
+  builds/facades2-505 --out docs/images/chimneys-inn-sept29.jpg \
+  --screens 439,469,472,474,505,506,538 \
+  --eye 1:cottage-front,1:cottage-east,1:village-469,2:inn-southwest,2:inn-door,2:inn-south,2:inn-north,2:inn-northeast,2:inn-east,2:kit538-southwest
+```
+
+Headless runs use Mesa llvmpipe (the project uses the Compatibility renderer), not a GPU.
+Each run takes about 7 s.
+
+**Judgment.** At eye level the inn is one solid two-storey Tudor building. It has the stone
+ground floor with its doors, the X-braced upper storey jettied over it, the hanging signs,
+and a hipped shingle roof. It reads as the original inn, not as a row of cards. The house
+south-east of it came out of the same fit unchanged. Chimneys stand upright on the ridges.
+From the original camera the screens match the source reconstruction: mean |RGB| 11.0–14.8
+on 439, 469, 472, 474, 505, 506 and 538 (538 was 17.0 before). That number is a regression
+check only. The Sept 29 screens are unchanged (407 13.8, 439 13.9, 440 14.3, 469 11.0,
+470 8.6).
+
+**Defects I see, in order:**
+1. Dormers are flat on the roof: they are baked into roof panels 13, 31 and 32. At eye
+   level they barely show. They are the chimney problem again, but their pixels must first
+   be separated from their panel.
+2. The back of each kit building mirrors its front, so the signs and doors repeat on the
+   back walls.
+3. The jetty soffit is textured by projection from the band above it. It is plausible, not
+   derived.
+4. The chimney on 439 lost its thin cast shadow on the thatch. This shows only from the
+   original camera.
+5. Seq 33 kit buildings appear on 25 more screens (186–251, 385–388, 417–420, 465–467,
+   497–499, 553–555, 585–587). Each needs a `KIT_BUILDINGS` entry today. Finding
+   them automatically (connected components of kit pieces over the whole map) is the next
+   step, then the joint fit covers them all.
+6. For the collision step: a kit building's footprint is its fitted stone storey (blocks 0
+   and 2), derived from the same pixels. Footprints are still rhombic (defect 4 above).

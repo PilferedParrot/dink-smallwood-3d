@@ -9,7 +9,9 @@ regression number -- read the images first; the number is blind to form and to a
 view other than the original camera. Then the prototype's eye-level shots.
 
 Usage: /usr/bin/python3 tools/facade_contact_sheet.py <pigpen-centred dir> <village-centred dir> --out sheet.jpg
+       [--screens 439,469,...] [--eye name,k:name,...]   (k:name takes the shot from the k-th dir)
 Verdict (2026-09-29, Opus 5.5): used for the facade step; screens 407 439 440 469 470.
+Verdict (2026-09-29, Opus 5.5, second pass): used for chimneys and the kit buildings.
 """
 from __future__ import annotations
 import argparse, json
@@ -54,6 +56,8 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('dirs', nargs='+')
     ap.add_argument('--out', required=True)
+    ap.add_argument('--screens', help='comma-separated screens to show (default: every original view found)')
+    ap.add_argument('--eye', help='comma-separated eye-level shots; k:name takes it from the k-th dir')
     args = ap.parse_args()
     world = json.loads((ROOT / 'game/data/world.json').read_text())
     seqs = json.loads((ROOT / 'game/data/sequences.json').read_text())['sequences']
@@ -63,21 +67,25 @@ def main():
             views.setdefault(int(p.stem.split('-')[-1]), p)
     # Each run builds only the 5x5 screens around its centre: take the pigpen shots from
     # the first run (centred on the pigpen) and the village shots from the last.
-    for name in EYE:
-        d = Path(args.dirs[0] if name.startswith('pen-') else args.dirs[-1])
+    names = args.eye.split(',') if args.eye else EYE
+    for item in names:
+        k, _, name = item.rpartition(':')
+        d = Path(args.dirs[int(k)] if k else args.dirs[0] if name.startswith('pen-') else args.dirs[-1])
         if (d / f'{name}.png').exists():
             eyes[name] = d / f'{name}.png'
+    names = [n.rpartition(':')[2] for n in names]
     rows = []
-    for n, p in sorted(views.items()):
+    screens = [int(n) for n in args.screens.split(',')] if args.screens else sorted(views)
+    for n, p in [(n, views[n]) for n in screens]:
         ref = reference(world, seqs, n)
         got = Image.open(p).convert('RGB').resize((600, 400))
         diff = np.abs(np.asarray(ref, float) - np.asarray(got, float)).mean()
         print(f'screen {n}: mean |RGB diff| {diff:.1f}')
         rows.append([label(ref, f'ORIGINAL source reconstruction, screen {n}'),
                      label(got, f'prototype, original camera, screen {n} (|d| {diff:.1f})')])
-    for i in range(0, len(EYE), 2):
+    for i in range(0, len(names), 2):
         pair = [label(Image.open(eyes[k]).convert('RGB').resize((600, 375)), f'prototype eye level: {k}')
-                for k in EYE[i:i + 2] if k in eyes]
+                for k in names[i:i + 2] if k in eyes]
         if pair:
             rows.append(pair)
     H = sum(max(im.height for im in r) + 6 for r in rows)

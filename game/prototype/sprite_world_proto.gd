@@ -20,11 +20,19 @@ var actors: Array = [] # [Sprite3D, base_walk, facing Vector2, frame]
 var tex_cache: Dictionary = {}
 var facades: Dictionary # sprite path -> fitted house blocks (tools/facade_fit.py)
 var env_node: WorldEnvironment
+var kit_members: Dictionary = {} # "screen:t|s:index" -> true: pieces a kit building draws
+var kits: Array = [] # [fit, canvas, world top-left] of the kit buildings in this block
+var ground_shade: Array = [] # [shadow image, world top-left] of houses and kit buildings
+var house_parts: Dictionary = {} # "screen:index" -> true: sprites a house draws (itself, its details)
+var block: Array = [] # the screens built
 
 func _initialize() -> void:
 	var args := OS.get_cmdline_user_args()
 	var out_dir: String = args[0] if args.size() > 0 else "user://proto"
 	var center := int(args[1]) if args.size() > 1 else 407
+	# Optional: the screens to render through the original camera (default as before).
+	var views: Array = []
+	for a in args.slice(2): views.append(int(a))
 	sequences = JSON.parse_string(FileAccess.get_file_as_string("res://data/sequences.json"))["sequences"]
 	world = JSON.parse_string(FileAccess.get_file_as_string("res://data/world.json"))
 	facades = JSON.parse_string(FileAccess.get_file_as_string("res://prototype/facades.json"))
@@ -35,11 +43,18 @@ func _initialize() -> void:
 		for dx in range(-2,3):
 			var n := center + dy*COLS + dx
 			if world.screens.has(str(n)) and not bool(world.screens[str(n)].get("indoor",false)):
-				_build_screen(n, seen)
+				block.append(n)
+	for b in facades.get("_kit_buildings", []):
+		if (b.screens as Array).all(func(m): return block.has(int(m))): _prepare_kit(b)
+	_build_houses()
+	for n in block:
+		_build_screen(n, seen)
+	for k in kits:
+		_add_house(k[0], _fill_holes(k[1]), k[2])
 	camera.current = true
 	camera.fov = 75
 	root3d.add_child(camera)
-	_capture(out_dir, center)
+	_capture(out_dir, center, views)
 
 func _origin(n: int) -> Vector2:
 	return Vector2(((n-1)%COLS)*600, int((n-1)/COLS)*400)
@@ -89,20 +104,24 @@ func _build_screen(n: int, seen: Dictionary) -> void:
 	var screen: Dictionary = world.screens[str(n)]
 	var ground := Image.create(600,400,false,Image.FORMAT_RGBA8)
 	for i in range(mini(96,screen.tiles.size())):
-		var index := int(screen.tiles[i].get("tile",0))
+		var index := _ground_tile(n, screen.tiles, i)
 		var sheet := _image("assets/tiles/ts%02d.png" % (int(index/128)+1))
 		var cell := index%128
 		if sheet: ground.blit_rect(sheet,Rect2i((cell%12)*50,int(cell/12)*50,50,50),Vector2i((i%12)*50,int(i/12)*50))
 	var o := _origin(n)
+	for k in ground_shade:
+		ground.blend_rect(k[0], Rect2i(Vector2i.ZERO, k[0].get_size()), Vector2i(k[1] - o))
 	var upright := {}
 	# Story state is not simulated here: show the editor's default layer (vision 0),
-	# like the original-source reference images.
-	var sprites: Array = screen.sprites.filter(func(s): return int(s.get("vision",0)) == 0)
-	var consumed := _build_houses(n, sprites, ground, seen)
+	# like the original-source reference images. Pieces of a kit building are drawn by it.
+	var sprites: Array = []
+	for i in screen.sprites.size():
+		var sp: Dictionary = screen.sprites[i]
+		if int(sp.get("vision",0)) == 0 and not kit_members.has("%d:s:%d" % [n, i]) and not house_parts.has("%d:%d" % [n, i]):
+			sprites.append(sp)
 	for s in sprites:
 		if int(s.type) == 1: upright["%d:%d:%d:%d" % [int(s.seq),int(s.frame),int(s.x),int(s.y)]] = true
 	for s in sprites:
-		if consumed.has(s): continue
 		var seq := int(s.seq)
 		var d := frame_data(seq,int(s.frame))
 		if d.is_empty(): continue
@@ -221,7 +240,7 @@ func _shot(pos_src: Vector2, look_src: Vector2, center: int) -> void:
 	camera.look_at(Vector3((o.x+look_src.x-20)*S, EYE*0.8, (o.y+look_src.y)*S), Vector3.UP)
 	_face_actors()
 
-func _capture(out_dir: String, center: int) -> void:
+func _capture(out_dir: String, center: int, views: Array) -> void:
 	DirAccess.make_dir_recursive_absolute(out_dir)
 	root.size = Vector2i(1280,720)
 	# Shots are in screen 407's source coordinates (may leave the screen); a run centred
@@ -237,6 +256,14 @@ func _capture(out_dir: String, center: int) -> void:
 		["neighbour-440", Vector2(820,860), Vector2(1000,560)],
 		["village-469", Vector2(-330,1170), Vector2(-760,1110)],
 		["village-469-west", Vector2(-900,930), Vector2(-1060,1260)],
+		["cottage-east", Vector2(640,560), Vector2(280,600)],
+		["inn-southwest", Vector2(900,1900), Vector2(1500,1500)],
+		["inn-south", Vector2(1723,2150), Vector2(1723,1500)],
+		["inn-door", Vector2(1250,1700), Vector2(1400,1480)],
+		["inn-east", Vector2(2500,1650), Vector2(1900,1450)],
+		["inn-north", Vector2(1500,900), Vector2(1700,1400)],
+		["inn-northeast", Vector2(2250,1050), Vector2(1700,1450)],
+		["kit538-southwest", Vector2(1900,2300), Vector2(2250,1950)],
 	]
 	await process_frame
 	for shot in shots:
@@ -246,7 +273,8 @@ func _capture(out_dir: String, center: int) -> void:
 		await RenderingServer.frame_post_draw
 		var img := root.get_texture().get_image()
 		img.save_png(out_dir.path_join(str(shot[0])+".png"))
-	for n in ([407, 439, 440, 469, 470] if center != 407 else [center]):
+	if views.is_empty(): views = [407, 439, 440, 469, 470] if center != 407 else [center]
+	for n in views:
 		await _original_view(out_dir, n)
 	quit()
 
@@ -266,82 +294,124 @@ func _sprite_rect(s: Dictionary) -> Rect2:
 	if t == null: return Rect2()
 	return Rect2(float(s.x) - float(d.dx), float(s.y) - float(d.dy), t.get_width(), t.get_height())
 
-func _build_houses(n: int, sprites: Array, ground: Image, seen: Dictionary) -> Dictionary:
-	var consumed := {}
-	var o := _origin(n)
-	for s in sprites:
-		var d := frame_data(int(s.seq), int(s.frame))
-		if d.is_empty() or not facades.has(str(d.path)) or int(s.type) == 2: continue
-		consumed[s] = true
-		var g := o + Vector2(float(s.x)-20.0, float(s.y))
-		var key := "house:%s:%d:%d" % [d.path, int(g.x), int(g.y)]
-		if seen.has(key): continue
-		seen[key] = true
-		var rect := _sprite_rect(s)
-		var canvas := _image(str(d.path))
-		# Details drawn over the house in the original, in its draw order (type 0 first).
-		var details: Array = []
-		for e in sprites:
-			if e == s or consumed.has(e) or int(e.type) == 2: continue
+# Every house in the block, before any screen adds its sprites: a house near a screen edge
+# is placed on both screens, and its details (a chimney, a door) may be on either, so they
+# are gathered from every screen in world coordinates (world = screen origin + (x - 20, y)).
+func _build_houses() -> void:
+	var built := {}
+	for n in block:
+		var list: Array = world.screens[str(n)].sprites
+		for idx in list.size():
+			var s: Dictionary = list[idx]
+			var d := frame_data(int(s.seq), int(s.frame))
+			if int(s.get("vision",0)) != 0 or d.is_empty() or not facades.has(str(d.path)) or int(s.type) == 2: continue
+			house_parts["%d:%d" % [n, idx]] = true
+			var rect := _world_rect(s, n)
+			var key := "house:%s:%d:%d" % [d.path, int(rect.position.x), int(rect.position.y)]
+			if built.has(key): continue
+			built[key] = true
+			_build_house(s, d, rect)
+
+func _world_rect(s: Dictionary, n: int) -> Rect2:
+	var r := _sprite_rect(s)
+	r.position += _origin(n) - Vector2(20, 0)
+	return r
+
+func _build_house(s: Dictionary, d: Dictionary, rect: Rect2) -> void:
+	var canvas := _image(str(d.path))
+	var fit: Dictionary = facades[str(d.path)]
+	# Details drawn over the house in the original, in its draw order (type 0 first).
+	# A detail whose foot the view ray finds on the roof stands on the roof (a chimney).
+	var details: Array = [] # [sprite, world rect, world hotspot y]
+	var roof_pieces: Array = [] # [sprite, fit, house-local position, height of its foot]
+	var pieces_seen := {}
+	for m in block:
+		var list: Array = world.screens[str(m)].sprites
+		for i in list.size():
+			var e: Dictionary = list[i]
+			if int(e.get("vision",0)) != 0 or int(e.type) == 2 or house_parts.has("%d:%d" % [m, i]): continue
 			var ed := frame_data(int(e.seq), int(e.frame))
 			if ed.is_empty() or facades.has(str(ed.path)) or not str(ed.path).contains("/struct/"): continue
-			if rect.encloses(_sprite_rect(e)): details.append(e)
-		details.sort_custom(func(a, b):
-			if (int(a.type) == 0) != (int(b.type) == 0): return int(a.type) == 0
-			return int(a.y) < int(b.y))
-		for e in details:
-			consumed[e] = true
-			var img := _image(str(frame_data(int(e.seq), int(e.frame)).path))
-			var at := _sprite_rect(e).position - rect.position
-			canvas.blend_rect(img, Rect2i(Vector2i.ZERO, img.get_size()), Vector2i(at))
-		# The original's shadow: the isolated black dither pixels, which lie on the ground
-		# in this projection. Paint them into the ground at 50% like the engine's blend.
-		var shade := Image.create(canvas.get_width(), canvas.get_height(), false, Image.FORMAT_RGBA8)
-		for y in canvas.get_height():
-			for x in canvas.get_width():
-				if _is_dither(canvas, x, y): shade.set_pixel(x, y, Color(0,0,0,0.5))
-		ground.blend_rect(shade, Rect2i(Vector2i.ZERO, shade.get_size()), Vector2i(int(rect.position.x) - 20, int(rect.position.y)))
-		_add_house(facades[str(d.path)], _fill_holes(canvas), g - Vector2(float(d.dx), float(d.dy)))
-	return consumed
+			var er := _world_rect(e, m)
+			if not rect.intersects(er): continue
+			var at := er.position - rect.position
+			var rp: Dictionary = facades.get("_roof_pieces", {}).get(str(ed.path), {})
+			if not rp.is_empty():
+				var hit := _ray_hit(fit, at.x + float(rp.foot[0]), at.y + float(rp.foot[1]))
+				if not hit.is_empty() and int(hit[1]) == 2:
+					house_parts["%d:%d" % [m, i]] = true
+					var pk := "%s:%d:%d" % [ed.path, int(er.position.x), int(er.position.y)]
+					if not pieces_seen.has(pk): roof_pieces.append([e, rp, at, float(hit[0])])
+					pieces_seen[pk] = true
+					continue
+			if rect.encloses(er):
+				house_parts["%d:%d" % [m, i]] = true
+				details.append([e, er, er.position.y + float(ed.dy)])
+	details.sort_custom(func(a, b):
+		if (int(a[0].type) == 0) != (int(b[0].type) == 0): return int(a[0].type) == 0
+		return a[2] < b[2])
+	for dt in details:
+		var img := _image(str(frame_data(int(dt[0].seq), int(dt[0].frame)).path))
+		canvas.blend_rect(img, Rect2i(Vector2i.ZERO, img.get_size()), Vector2i(dt[1].position - rect.position))
+	for r in roof_pieces: _paint_roof_piece_foot(canvas, r)
+	# The original's shadow: the isolated black dither pixels, which lie on the ground
+	# in this projection. Painted into the ground at 50% like the engine's blend.
+	ground_shade.append([_shade(canvas, _dither_mask(canvas)), rect.position])
+	_add_house(fit, _fill_holes(canvas), rect.position)
+	for r in roof_pieces: _add_roof_piece(r, fit, rect.position)
 
-func _is_dither(img: Image, x: int, y: int) -> bool:
-	var c := img.get_pixel(x, y)
-	if c.a < 0.5 or c.r + c.g + c.b >= 0.04: return false
-	for q in [Vector2i(x+1,y), Vector2i(x-1,y), Vector2i(x,y+1), Vector2i(x,y-1)]:
-		if q.x < 0 or q.y < 0 or q.x >= img.get_width() or q.y >= img.get_height(): continue
-		var nb := img.get_pixel(q.x, q.y)
-		if nb.a >= 0.5 and nb.r + nb.g + nb.b < 0.04: return false
-	return true
+func _dither_mask(img: Image) -> PackedByteArray:
+	var w := img.get_width()
+	var h := img.get_height()
+	var data := img.get_data()
+	var black := PackedByteArray()
+	black.resize(w*h)
+	for p in w*h:
+		black[p] = 1 if data[p*4+3] > 127 and data[p*4] + data[p*4+1] + data[p*4+2] <= 10 else 0
+	var out := PackedByteArray()
+	out.resize(w*h)
+	for y in h:
+		for x in w:
+			var p := y*w + x
+			if not black[p]: continue
+			if (x > 0 and black[p-1]) or (x < w-1 and black[p+1]) or (y > 0 and black[p-w]) or (y < h-1 and black[p+w]): continue
+			out[p] = 1
+	return out
+
+func _shade(img: Image, dither: PackedByteArray) -> Image:
+	var shade := Image.create(img.get_width(), img.get_height(), false, Image.FORMAT_RGBA8)
+	for p in dither.size():
+		if dither[p]: shade.set_pixel(p % img.get_width(), p / img.get_width(), Color(0,0,0,0.5))
+	return shade
 
 # Where the fitted geometry reaches past the drawn silhouette, extend the nearest drawn
-# pixels outward instead of showing holes or shadow dither.
+# pixels outward instead of showing holes or shadow dither (breadth-first, so each hole
+# takes the colour of the nearest drawn pixel).
 func _fill_holes(src: Image) -> ImageTexture:
 	var img: Image = src.duplicate()
 	var w := img.get_width()
 	var h := img.get_height()
+	var data := img.get_data()
+	var dither := _dither_mask(src)
 	var solid := PackedByteArray()
 	solid.resize(w*h)
-	for y in h:
-		for x in w:
-			solid[y*w+x] = 0 if (img.get_pixel(x,y).a < 0.5 or _is_dither(src,x,y)) else 1
-	var changed := true
-	while changed:
-		changed = false
-		var grown := solid.duplicate()
-		for y in h:
-			for x in w:
-				if solid[y*w+x]: continue
-				var sum := Color(0,0,0,0)
-				var k := 0
-				for q in [Vector2i(x+1,y), Vector2i(x-1,y), Vector2i(x,y+1), Vector2i(x,y-1)]:
-					if q.x < 0 or q.y < 0 or q.x >= w or q.y >= h or not solid[q.y*w+q.x]: continue
-					sum += img.get_pixel(q.x,q.y)
-					k += 1
-				if k > 0:
-					img.set_pixel(x, y, Color(sum.r/k, sum.g/k, sum.b/k, 1.0))
-					grown[y*w+x] = 1
-					changed = true
-		solid = grown
+	var queue := PackedInt32Array()
+	for p in w*h:
+		if data[p*4+3] >= 128 and not dither[p]:
+			solid[p] = 1
+			queue.append(p)
+	var head := 0
+	while head < queue.size():
+		var p := queue[head]
+		head += 1
+		var x := p % w
+		for q in [p-1 if x > 0 else -1, p+1 if x < w-1 else -1, p-w, p+w]:
+			if q < 0 or q >= w*h or solid[q]: continue
+			solid[q] = 1
+			for c in 3: data[q*4+c] = data[p*4+c]
+			data[q*4+3] = 255
+			queue.append(q)
+	img.set_data(w, h, false, Image.FORMAT_RGBA8, data)
 	img.generate_mipmaps()
 	return ImageTexture.create_from_image(img)
 
@@ -418,3 +488,220 @@ func _original_view(out_dir: String, n: int) -> void:
 	camera.projection = Camera3D.PROJECTION_PERSPECTIVE
 	camera.keep_aspect = Camera3D.KEEP_HEIGHT
 	env_node.environment.fog_enabled = true
+
+# --- Roof pieces (the chimneys) ------------------------------------------------------
+# A chimney sprite is a picture of an upright prism standing on the roof, taken by the same
+# camera. tools/facade_fit.py reads its top face (the footprint, as a horizontal face
+# projects to itself) and its foot, the lowest stone pixel under its front edge. The view
+# ray through the foot meets the house's roof where the chimney stands; that fixes its
+# depth, and the top face fixes its height. Its thatch ring and dithered shadow lie on the
+# roof, so they are painted onto the roof texture (the shadow at the engine's 50%).
+
+# The nearest face of a fitted house hit by the view ray through house-local screen point
+# (x, y); points on that ray are (x, Y, y + Y). Returns [Y, label] or [] if it misses.
+func _ray_hit(fit: Dictionary, x: float, y: float) -> Array:
+	var best := []
+	for f in fit.faces:
+		var pts := _pts(f)
+		var n := (pts[1]-pts[0]).cross(pts[2]-pts[0])
+		var den := n.y + n.z
+		if absf(den) < 1e-6: continue
+		var yy := (n.dot(pts[0]) - n.x*x - n.z*y) / den
+		if _inside(pts, n, Vector3(x, yy, y + yy)) and (best.is_empty() or yy > best[0]):
+			best = [yy, int(f.label)]
+	return best
+
+# Height of the roof above ground point (x, z) in house-local pixels, or NAN.
+func _roof_height(fit: Dictionary, x: float, z: float) -> float:
+	var best := NAN
+	for f in fit.faces:
+		if int(f.label) != 2: continue
+		var pts := _pts(f)
+		var n := (pts[1]-pts[0]).cross(pts[2]-pts[0])
+		if absf(n.y) < 1e-6: continue
+		var yy := (n.dot(pts[0]) - n.x*x - n.z*z) / n.y
+		if _inside(pts, n, Vector3(x, yy, z)) and (is_nan(best) or yy > best): best = yy
+	return best
+
+func _pts(f: Dictionary) -> Array[Vector3]:
+	var pts: Array[Vector3] = []
+	for p in f.pts: pts.append(Vector3(float(p[0]), float(p[1]), float(p[2])))
+	return pts
+
+func _inside(pts: Array[Vector3], n: Vector3, q: Vector3) -> bool:
+	var sign := 0.0
+	for i in pts.size():
+		var s := (pts[(i+1) % pts.size()] - pts[i]).cross(q - pts[i]).dot(n)
+		if absf(s) < 1e-3 * n.length_squared(): continue
+		if sign == 0.0: sign = signf(s)
+		elif signf(s) != sign: return false
+	return true
+
+func _paint_roof_piece_foot(canvas: Image, r: Array) -> void:
+	var rp: Dictionary = r[1]
+	var at: Vector2 = r[2]
+	var img := _image(str(frame_data(int(r[0].seq), int(r[0].frame)).path))
+	var dither := _dither_mask(img)
+	var xl := float(rp.top[0][0])
+	var xr := float(rp.top[2][0])
+	for y in img.get_height():
+		for x in img.get_width():
+			# The body is the column band under the top face, down to the foot.
+			if x >= xl and x <= xr and y <= float(rp.foot[1]): continue
+			var c := img.get_pixel(x, y)
+			if dither[y*img.get_width() + x]: c = Color(0, 0, 0, 0.5)
+			if c.a < 0.25: continue
+			var q := Vector2i(int(at.x) + x, int(at.y) + y)
+			if q.x < 0 or q.y < 0 or q.x >= canvas.get_width() or q.y >= canvas.get_height(): continue
+			canvas.set_pixel(q.x, q.y, canvas.get_pixel(q.x, q.y).blend(c))
+
+func _add_roof_piece(r: Array, fit: Dictionary, top_left: Vector2) -> void:
+	var rp: Dictionary = r[1]
+	var at: Vector2 = r[2]
+	var zf: float = at.y + float(rp.foot[1]) + float(r[3]) # depth of the front edge
+	var yt: float = zf - (at.y + float(rp.top[3][1])) # height of the top face
+	var top: Array[Vector3] = [] # left, back, right, front
+	for c in rp.top: top.append(Vector3(at.x + float(c[0]), yt, at.y + float(c[1]) + yt))
+	var yb: float = float(r[3])
+	for c in top:
+		var h := _roof_height(fit, c.x, c.z)
+		if not is_nan(h): yb = minf(yb, h)
+	yb -= 3.0 # into the roof, so no gap shows where the fit and the art differ
+	# Texture: the sprite without its roof-lying parts, stone extended over the gaps.
+	var img := _image(str(frame_data(int(r[0].seq), int(r[0].frame)).path))
+	for y in img.get_height():
+		for x in img.get_width():
+			if x < float(rp.top[0][0]) or x > float(rp.top[2][0]) or y > float(rp.foot[1]): img.set_pixel(x, y, Color(0,0,0,0))
+	var t := _fill_holes(img)
+	var size := Vector2(img.get_width(), img.get_height())
+	var centre := (top[0] + top[2]) / 2.0
+	var faces: Array = [top]
+	for k in 4:
+		var a := top[k]
+		var b := top[(k+1) % 4]
+		faces.append([Vector3(a.x, yb, a.z), Vector3(b.x, yb, b.z), b, a] as Array[Vector3])
+	var st := SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	for face in faces:
+		var pts: Array[Vector3] = face
+		var normal := (pts[1]-pts[0]).cross(pts[2]-pts[0]).normalized()
+		var mid := Vector3.ZERO
+		for p in pts: mid += p / pts.size()
+		if normal.dot(mid - Vector3(centre.x, (yt + yb) / 2.0, centre.z)) < 0: normal = -normal
+		for i in range(1, pts.size()-1):
+			for p in [pts[0], pts[i], pts[i+1]]:
+				# Faces the original camera never saw take the point-mirrored front faces.
+				var q: Vector3 = p if normal.z >= -1e-3 else Vector3(2*centre.x - p.x, p.y, 2*centre.z - p.z)
+				st.set_uv((Vector2(q.x, q.z - q.y) - at) / size)
+				st.add_vertex(Vector3((top_left.x + p.x)*S, p.y*S, (top_left.y + p.z)*S))
+	var mi := MeshInstance3D.new()
+	mi.mesh = st.commit()
+	var m := StandardMaterial3D.new()
+	m.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	m.albedo_texture = t
+	m.texture_filter = BaseMaterial3D.TEXTURE_FILTER_NEAREST_WITH_MIPMAPS
+	m.cull_mode = BaseMaterial3D.CULL_DISABLED
+	mi.material_override = m
+	root3d.add_child(mi)
+
+# --- Kit buildings (the inn) ---------------------------------------------------------
+# The original assembles some buildings from modular sprites (seq 33: the stone ground
+# floor and the roof) plus building tiles (the half-timbered upper storey and the eave).
+# tools/facade_fit.py fits the building to the composite of its pieces as the original
+# camera saw it and lists those pieces; here the same composite is rebuilt, screen by
+# screen and clipped as the engine clips, and projected onto the fitted wings exactly like
+# a house sprite. Its tiles leave the ground, which continues the row they interrupted.
+
+func _depth(s: Dictionary) -> float:
+	if int(s.type) == 0: return -10000.0 + float(s.y)
+	return float(s.que) if int(s.que) != 0 else float(s.y)
+
+func _draw_order(sprites: Array) -> Array:
+	var idx: Array = range(sprites.size())
+	idx.sort_custom(func(a, b):
+		var ka := _depth(sprites[a])
+		var kb := _depth(sprites[b])
+		return ka < kb or (ka == kb and a < b))
+	return idx
+
+func _prepare_kit(b: Dictionary) -> void:
+	var r: Array = b.rect
+	var top_left := Vector2(float(r[0]), float(r[1]))
+	var canvas := Image.create(int(r[2]), int(r[3]), false, Image.FORMAT_RGBA8)
+	var members := {}
+	for m in b.members: members["%d:%s:%d" % [int(m[0]), str(m[1]), int(m[2])]] = true
+	for sn in b.screens:
+		var n := int(sn)
+		var screen: Dictionary = world.screens[str(n)]
+		var view := Image.create(600, 400, false, Image.FORMAT_RGBA8)
+		for i in range(mini(96, screen.tiles.size())):
+			if not members.has("%d:t:%d" % [n, i]): continue
+			var index := int(screen.tiles[i].get("tile", 0))
+			var sheet := _image("assets/tiles/ts%02d.png" % (int(index/128)+1))
+			var cell := index % 128
+			view.blit_rect(sheet, Rect2i((cell%12)*50, int(cell/12)*50, 50, 50), Vector2i((i%12)*50, int(i/12)*50))
+		for i in _draw_order(screen.sprites):
+			if not members.has("%d:s:%d" % [n, i]): continue
+			var s: Dictionary = screen.sprites[i]
+			var d := frame_data(int(s.seq), int(s.frame))
+			var img := _image(str(d.path))
+			view.blend_rect(img, Rect2i(Vector2i.ZERO, img.get_size()), Vector2i(int(s.x) - 20 - int(d.dx), int(s.y) - int(d.dy)))
+		canvas.blend_rect(view, Rect2i(0, 0, 600, 400), Vector2i(_origin(n) - top_left))
+	kit_members.merge(members)
+	_knock_out_background(canvas)
+	ground_shade.append([_shade(canvas, _dither_mask(canvas)), top_left])
+	kits.append([b, canvas, top_left])
+
+# Grass and water in the building tiles are what stands behind the building: clear the
+# background-coloured regions connected to the outside (enclosed window glass stays).
+func _knock_out_background(img: Image) -> void:
+	var w := img.get_width()
+	var h := img.get_height()
+	var data := img.get_data()
+	var open := PackedByteArray()
+	open.resize(w*h)
+	for p in w*h:
+		var cr := data[p*4]
+		var cg := data[p*4+1]
+		var cb := data[p*4+2]
+		if data[p*4+3] < 128 or (cg > cr + 10 and cg > cb + 10) or (cb > cr + 20 and cb > cg + 10): open[p] = 1
+	var seen := PackedByteArray()
+	seen.resize(w*h)
+	var queue := PackedInt32Array()
+	for p in w*h:
+		var x := p % w
+		var y := p / w
+		if (x == 0 or y == 0 or x == w-1 or y == h-1) and open[p]:
+			seen[p] = 1
+			queue.append(p)
+	var head := 0
+	while head < queue.size():
+		var p := queue[head]
+		head += 1
+		var x := p % w
+		for q in [p-1 if x > 0 else -1, p+1 if x < w-1 else -1, p-w, p+w]:
+			if q < 0 or q >= w*h or seen[q] or not open[q]: continue
+			seen[q] = 1
+			queue.append(q)
+	for p in w*h:
+		if seen[p]: data[p*4+3] = 0
+	img.set_data(w, h, false, Image.FORMAT_RGBA8, data)
+
+# The tile to draw on the ground: a kit building's own tiles are pictures of its upper
+# storey, so continue the row they interrupt (ground tiles alternate in pairs, so keep the
+# column parity), else the column.
+func _ground_tile(n: int, tiles: Array, i: int) -> int:
+	if not kit_members.has("%d:t:%d" % [n, i]): return int(tiles[i].get("tile", 0))
+	var row := int(i / 12)
+	var col := i % 12
+	for dist in range(2, 12, 2):
+		for c in [col - dist, col + dist]:
+			var j: int = row*12 + c
+			if c >= 0 and c < 12 and j < tiles.size() and not kit_members.has("%d:t:%d" % [n, j]):
+				return int(tiles[j].get("tile", 0))
+	for dist in range(1, 8):
+		for rr in [row - dist, row + dist]:
+			var j: int = rr*12 + col
+			if rr >= 0 and rr < 8 and j < tiles.size() and not kit_members.has("%d:t:%d" % [n, j]):
+				return int(tiles[j].get("tile", 0))
+	return int(tiles[i].get("tile", 0))
