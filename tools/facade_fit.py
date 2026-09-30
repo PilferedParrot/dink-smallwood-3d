@@ -187,6 +187,47 @@ def score(pred, lab):
     return s / 2
 
 
+def clip_tips(faces, body):
+    """Each roof block's two side tips cut where the drawn roof ends. A hip roof's eave, offset o
+    from its walls, stands 2.1 o out at the footprint's acute corners (52 degrees: the rhombus the
+    1:1 ground makes of a house), the left and right tips on screen: past the drawn roof from the
+    original camera, and a flat blade of thatch at eye level. The drawn roof keeps its hip lines
+    straight out towards the tips (rounding the eave pulled them in, and every house got worse
+    from the original camera) but stops short. So each block's leftmost and rightmost roof points
+    are cut by the vertical plane x = the sprite's own extent in the tip's row, and the planes and
+    hip lines are left as they are."""
+    rows = [np.nonzero(r)[0] for r in body]
+    out = list(faces)
+    for blk in {b for _, _, b in faces}:
+        roof = [q for l_, pts, b in faces if b == blk and l_ == 2 for q in pts]
+        for side in (-1, 1):
+            tip = min(roof, key=lambda q: q[0]) if side < 0 else max(roof, key=lambda q: q[0])
+            y = int(round(tip[2] - tip[1]))
+            near = [x for r in range(max(0, y - 1), min(len(rows), y + 2)) for x in rows[r]]
+            if not near:
+                continue
+            cut = min(near) if side < 0 else max(near)
+            if side * (tip[0] - cut) <= 1:
+                continue
+            clipped = []
+            for l_, pts, b in out:
+                if b != blk or l_ != 2:
+                    clipped.append((l_, pts, b)); continue
+                P, keep = list(pts), []
+                inside = lambda q: side * (q[0] - cut) <= 0
+                for i, q in enumerate(P):  # Sutherland-Hodgman against the plane x = cut
+                    r_ = P[(i + 1) % len(P)]
+                    if inside(q):
+                        keep.append(q)
+                    if inside(q) != inside(r_):
+                        t = (cut - q[0]) / (r_[0] - q[0])
+                        keep.append(tuple(float(q[k] + t * (r_[k] - q[k])) for k in range(3)))
+                if len(keep) >= 3:
+                    clipped.append((l_, keep, b))
+            out = clipped
+    return out
+
+
 def fit(labs, blocks, fixed=None):
     """Shared parameters for one or more label maps of the same house (mirror twins), each
     with its own base lines; the score is their mean."""
@@ -1149,7 +1190,7 @@ def main():
         p[2] = pitches[0]
         if blocks == 2:
             p[6] = pitches[1]
-        faces = house_faces(F, L, R, p, blocks)
+        faces = clip_tips(house_faces(F, L, R, p, blocks), silhouette(rgba))
         out[fr['path']] = {
             'score': round(s, 3),
             'faces': [{'label': lab_, 'block': blk, 'pts': [[round(float(c), 2) for c in pt] for pt in pts]} for lab_, pts, blk in faces],
