@@ -9,14 +9,21 @@ extends SceneTree
 
 const GAME := preload("res://scripts/fps_game.gd")
 
-# Original v1.08 sound files that GNU FreeDink has no free replacement for.
-# FreeDink leaves these slots silent; so does this game.
-const FREEDINK_SFX_GAPS := [
-	"attack1.wav", "caveent.wav", "drag1.wav", "drag2.wav", "escape.wav", "flyby.wav",
-	"hurt1.wav", "hurt2.wav", "knock.wav", "level.wav", "picker.wav", "pig1.wav",
-	"pig2.wav", "pig3.wav", "pig4.wav", "quack.wav", "sel2.wav", "sel3.wav",
-	"select.wav", "snarl1.wav", "snarl2.wav", "snarl3.wav", "spell1.wav", "splash.wav",
-	"squish.wav", "steps.wav", "sword1.wav",
+# GNU FreeDink has no free replacement for 27 of the original v1.08 effect files
+# and leaves them silent. tools/build_sfx.py fills all 27 (licenses/AUDIO-FILES.tsv),
+# so no numbered sound slot is silent any more.
+const SFX_GAPS := []
+const SHIPPED_SOUNDS := 66
+# DinkC playsound(sound, speed, rand_add): the speed is an absolute rate in Hz
+# (GNU FreeDink 109.6 sfx.cpp:637-653), so pitch = speed / the file's own rate.
+# [slot, file, min Hz, rand Hz, lowest pitch, highest pitch]
+const SPEED_RULE := [
+	[8, "swing.wav", 8000, 0, 1.0, 1.0],            # 8000 Hz file at its own rate
+	[10, "sword2.wav", 22050, 0, 2.75625, 2.75625],  # 8000 Hz file called at 22050
+	[9, "punch.wav", 22050, 0, 1.0, 1.0],
+	[2, "pig1.wav", 13000, 800, 1.625, 1.725],       # brain_pig.cpp: size 100 pig
+	[45, "knock.wav", 12000, 0, 0.96, 0.96],         # s2-mdoor.c, 12500 Hz file
+	[1, "quack.wav", 15050, 4000, 0.68254, 0.86395],  # s7-duck.c
 ]
 # Music. The original engine has no CD, so a 1000+N id (a CD-track cue) plays
 # N.mid: GNU FreeDink 109.6 game_engine.cpp:334-339 (a screen's music) and
@@ -107,7 +114,7 @@ func _run() -> void:
 			check(seconds > 0.0 or path.ends_with("/intro.wav"), "%s %s has no audio" % [kind, cue])
 			if kind == "music":
 				check(seconds > 1.0, "music %s is %.4f s long; its render is empty" % [cue, seconds])
-	check(loaded == 39, "expected 39 shipped sounds, loaded %d" % loaded)
+	check(loaded == SHIPPED_SOUNDS, "expected %d shipped sounds, loaded %d" % [SHIPPED_SOUNDS, loaded])
 
 	# 2. The numbered sound registry from START.c, through the game's _play_sound.
 	var gaps: Array = []
@@ -123,8 +130,23 @@ func _run() -> void:
 		elif not gaps.has(path.get_file()):
 			gaps.append(path.get_file())
 	gaps.sort()
-	check(gaps == FREEDINK_SFX_GAPS, "sound slots without a file changed: %s" % [gaps])
-	print("AUDIO SLOTS played=%d freedink_gaps=%d" % [played, gaps.size()])
+	check(gaps == SFX_GAPS, "sound slots without a file: %s" % [gaps])
+	print("AUDIO SLOTS played=%d silent=%d" % [played, gaps.size()])
+
+	# 2b. playsound's speed, through the game's own DinkC binding.
+	for row in SPEED_RULE:
+		var path := str(game.sound_slots.get(str(row[0]), ""))
+		check(path.get_file() == row[1], "slot %s is %s, want %s" % [row[0], path.get_file(), row[1]])
+		for i in 8:
+			var id: int = await game.dink_call("playsound", [row[0], row[2], row[3], 0, 0], {})
+			var player: Object = instance_from_id(id) if id != 0 else null
+			check(player != null, "playsound(%s, %s, %s) did not start" % [row[0], row[2], row[3]])
+			if player == null:
+				break
+			var pitch: float = player.pitch_scale
+			check(pitch >= float(row[4]) - 0.0001 and pitch <= float(row[5]) + 0.0001,
+				"playsound(%s, %s, %s) on %s plays at pitch %.5f, want %.5f to %.5f" % [row[0], row[2], row[3], row[1], pitch, row[4], row[5]])
+		print("AUDIO SPEED slot %s %s at %s+%s Hz ok" % [row[0], row[1], row[2], row[3]])
 
 	# 3. The rule itself.
 	check(game.has_method("music_candidates"), "the game has no music_candidates rule")

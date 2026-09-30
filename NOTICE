@@ -11,7 +11,7 @@ and Justin Martin. Additional level design: Chris Bakker.
 v1.08 game fixes: Talmadge Bradley III.
 See licenses/FREEDINK-DATA-COPYRIGHT.txt for the original data license.
 
-Audio: every sound and music file shipped is from GNU FreeDink's free data
+Audio: the music and 22 sound effects are from GNU FreeDink's free data
 (freedink-data 1.08.20190120). The original Dink Smallwood sounds that RTsoft
 did not own, and so did not release under a free license, are not included.
 Six original Dink MIDIs and secret.wav are part of RTsoft's zlib-licensed data.
@@ -24,7 +24,19 @@ domain); fire from the Berklee College of Music Sampling Archive (CC BY 3.0);
 spell sound basis by Bart K. (CC BY 3.0); door sound by Iwan Gabovitch; sounds
 from The Battle for Wesnoth (GPL-2.0-or-later) edited by Petteri Tolonen and
 Sylvain Beucler; public-domain effects by qubodup and Frank Condello; scream by
-Maria and Fernando Carmona Varo (WTFPL). Per-file sources, hashes and licenses:
+Maria and Fernando Carmona Varo (WTFPL).
+
+The 27 effects FreeDink leaves silent are filled by tools/build_sfx.py from:
+pig grunts by Vinrax ("Pig SFX Pack", OpenGameArt) and by erdie (Wikimedia
+Commons), a monster cry by Michel Baradari ("15 monster grunt/pain/death
+sounds", OpenGameArt) and a water splash from Yo Frankie! by the Blender
+Foundation (OpenGameArt), all CC BY 3.0; CC0 sounds by Kenney (kenney.nl),
+Bert76, Zabuhailo, Foleyhaven, qubodup, AntumDeluge (U.S. Fish & Wildlife
+Service bear recordings), Darsycho, trazzz123, Independent.nu, JaggedStone and
+StarNinjas; public-domain recordings of a lion, an alligator (U.S. Fish and
+Wildlife Service) and a door knock (stephan, pdsounds.org); and one synthesized
+sound (Apache-2.0). Each file's source page, author, license and edit are in
+licenses/AUDIO-FILES.tsv. Per-file sources, hashes and licenses:
 licenses/AUDIO-FILES.tsv and licenses/AUDIO-REPLACEMENTS.txt. Editable music
 sources: third_party/freedink-audio-source/.
 

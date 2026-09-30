@@ -133,6 +133,13 @@
       "source": "Sound/arrow.wav",
       "license": "FreeDink audio replacement; see licenses/AUDIO-REPLACEMENTS.txt"
     },
+    "attack1": {
+      "path": "assets/sound/attack1.wav",
+      "format": "wav",
+      "source": "-",
+      "license": "CC0-1.0; see licenses/AUDIO-FILES.tsv",
+      "generated_by": "tools/build_sfx.py"
+    },
     "axe": {
       "path": "assets/sound/axe.wav",
       "format": "wav",
@@ -166,12 +173,47 @@
       "license": "FreeDink audio replacement; see licenses/AUDIO-REPLACEMENTS.txt",
       "source_directory": "third_party/freedink-audio-source/src/burn.wav"
     },
+    "caveent": {
+      "path": "assets/sound/caveent.wav",
+      "format": "wav",
+      "source": "-",
+      "license": "CC0-1.0; see licenses/AUDIO-FILES.tsv",
+      "generated_by": "tools/build_sfx.py"
+    },
+    "drag1": {
+      "path": "assets/sound/drag1.wav",
+      "format": "wav",
+      "source": "-",
+      "license": "public domain; see licenses/AUDIO-FILES.tsv",
+      "generated_by": "tools/build_sfx.py"
+    },
+    "drag2": {
+      "path": "assets/sound/drag2.wav",
+      "format": "wav",
+      "source": "-",
+      "license": "public domain; see licenses/AUDIO-FILES.tsv",
+      "generated_by": "tools/build_sfx.py"
+    },
+    "escape": {
+      "path": "assets/sound/escape.wav",
+      "format": "wav",
+      "source": "-",
+      "license": "CC0-1.0; see licenses/AUDIO-FILES.tsv",
+      "generated_by": "tools/build_sfx.py"
+    },
     "fire": {
       "path": "assets/sound/fire.wav",
       "format": "wav",
       "source": "Sound/fire.wav",
       "license": "FreeDink audio replacement; see licenses/AUDIO-REPLACEMENTS.txt",
       "source_directory": "third_party/freedink-audio-source/src/fire.wav"
+    },
+    "flyby": {
+      "path": "assets/sound/flyby.wav",
+      "format": "wav",
+      "source": "-",
+      "license": "Apache-2.0; see licenses/AUDIO-FILES.tsv",
+      "generated_by": "tools/build_sfx.py"
     },
     "gold": {
       "path": "assets/sound/gold.wav",
@@ -198,12 +240,40 @@
       "source": "Sound/high2.wav",
       "license": "FreeDink audio replacement; see licenses/AUDIO-REPLACEMENTS.txt"
     },
+    "hurt1": {
+      "path": "assets/sound/hurt1.wav",
+      "format": "wav",
+      "source": "-",
+      "license": "CC-BY-3.0; see licenses/AUDIO-FILES.tsv",
+      "generated_by": "tools/build_sfx.py"
+    },
+    "hurt2": {
+      "path": "assets/sound/hurt2.wav",
+      "format": "wav",
+      "source": "-",
+      "license": "CC0-1.0; see licenses/AUDIO-FILES.tsv",
+      "generated_by": "tools/build_sfx.py"
+    },
     "intro": {
       "path": "assets/sound/intro.wav",
       "format": "wav",
       "source": "Sound/intro.wav",
       "license": "FreeDink audio replacement; see licenses/AUDIO-REPLACEMENTS.txt",
       "source_directory": "third_party/freedink-audio-source/src/intro.wav"
+    },
+    "knock": {
+      "path": "assets/sound/knock.wav",
+      "format": "wav",
+      "source": "-",
+      "license": "public domain; see licenses/AUDIO-FILES.tsv",
+      "generated_by": "tools/build_sfx.py"
+    },
+    "level": {
+      "path": "assets/sound/level.wav",
+      "format": "wav",
+      "source": "-",
+      "license": "CC0-1.0; see licenses/AUDIO-FILES.tsv",
+      "generated_by": "tools/build_sfx.py"
     },
     "nono": {
       "path": "assets/sound/nono.wav",
@@ -219,11 +289,53 @@
       "license": "FreeDink audio replacement; see licenses/AUDIO-REPLACEMENTS.txt",
       "source_directory": "third_party/freedink-audio-source/src/open.wav"
     },
+    "picker": {
+      "path": "assets/sound/picker.wav",
+      "format": "wav",
+      "source": "-",
+      "license": "CC0-1.0; see licenses/AUDIO-FILES.tsv",
+      "generated_by": "tools/build_sfx.py"
+    },
+    "pig1": {
+      "path": "assets/sound/pig1.wav",
+      "format": "wav",
+      "source": "-",
+      "license": "CC-BY-3.0; see licenses/AUDIO-FILES.tsv",
+      "generated_by": "tools/build_sfx.py"
+    },
+    "pig2": {
+      "path": "assets/sound/pig2.wav",
+      "format": "wav",
+      "source": "-",
+      "license": "CC-BY-3.0; see licenses/AUDIO-FILES.tsv",
+      "generated_by": "tools/build_sfx.py"
+    },
+    "pig3": {
+      "path": "assets/sound/pig3.wav",
+      "format": "wav",
+      "source": "-",
+      "license": "CC-BY-3.0; see licenses/AUDIO-FILES.tsv",
+      "generated_by": "tools/build_sfx.py"
+    },
+    "pig4": {
+      "path": "assets/sound/pig4.wav",
+      "format": "wav",
+      "source": "-",
+      "license": "CC-BY-3.0; see licenses/AUDIO-FILES.tsv",
+      "generated_by": "tools/build_sfx.py"
+    },
     "punch": {
       "path": "assets/sound/punch.wav",
       "format": "wav",
       "source": "Sound/punch.wav",
       "license": "FreeDink audio replacement; see licenses/AUDIO-REPLACEMENTS.txt"
+    },
+    "quack": {
+      "path": "assets/sound/quack.wav",
+      "format": "wav",
+      "source": "-",
+      "license": "CC0-1.0; see licenses/AUDIO-FILES.tsv",
+      "generated_by": "tools/build_sfx.py"
     },
     "save": {
       "path": "assets/sound/save.wav",
@@ -245,6 +357,69 @@
       "license": "FreeDink audio replacement; see licenses/AUDIO-REPLACEMENTS.txt",
       "source_directory": "third_party/freedink-audio-source/src/sel1.wav"
     },
+    "sel2": {
+      "path": "assets/sound/sel2.wav",
+      "format": "wav",
+      "source": "-",
+      "license": "CC0-1.0; see licenses/AUDIO-FILES.tsv",
+      "generated_by": "tools/build_sfx.py"
+    },
+    "sel3": {
+      "path": "assets/sound/sel3.wav",
+      "format": "wav",
+      "source": "-",
+      "license": "CC0-1.0; see licenses/AUDIO-FILES.tsv",
+      "generated_by": "tools/build_sfx.py"
+    },
+    "select": {
+      "path": "assets/sound/select.wav",
+      "format": "wav",
+      "source": "-",
+      "license": "CC0-1.0; see licenses/AUDIO-FILES.tsv",
+      "generated_by": "tools/build_sfx.py"
+    },
+    "snarl1": {
+      "path": "assets/sound/snarl1.wav",
+      "format": "wav",
+      "source": "-",
+      "license": "CC0-1.0; see licenses/AUDIO-FILES.tsv",
+      "generated_by": "tools/build_sfx.py"
+    },
+    "snarl2": {
+      "path": "assets/sound/snarl2.wav",
+      "format": "wav",
+      "source": "-",
+      "license": "CC0-1.0; see licenses/AUDIO-FILES.tsv",
+      "generated_by": "tools/build_sfx.py"
+    },
+    "snarl3": {
+      "path": "assets/sound/snarl3.wav",
+      "format": "wav",
+      "source": "-",
+      "license": "CC0-1.0; see licenses/AUDIO-FILES.tsv",
+      "generated_by": "tools/build_sfx.py"
+    },
+    "spell1": {
+      "path": "assets/sound/spell1.wav",
+      "format": "wav",
+      "source": "-",
+      "license": "CC0-1.0; see licenses/AUDIO-FILES.tsv",
+      "generated_by": "tools/build_sfx.py"
+    },
+    "splash": {
+      "path": "assets/sound/splash.wav",
+      "format": "wav",
+      "source": "-",
+      "license": "CC-BY-3.0; see licenses/AUDIO-FILES.tsv",
+      "generated_by": "tools/build_sfx.py"
+    },
+    "squish": {
+      "path": "assets/sound/squish.wav",
+      "format": "wav",
+      "source": "-",
+      "license": "CC0-1.0; see licenses/AUDIO-FILES.tsv",
+      "generated_by": "tools/build_sfx.py"
+    },
     "stairs": {
       "path": "assets/sound/stairs.wav",
       "format": "wav",
@@ -252,11 +427,25 @@
       "license": "FreeDink audio replacement; see licenses/AUDIO-REPLACEMENTS.txt",
       "source_directory": "third_party/freedink-audio-source/src/stairs.wav"
     },
+    "steps": {
+      "path": "assets/sound/steps.wav",
+      "format": "wav",
+      "source": "-",
+      "license": "CC0-1.0; see licenses/AUDIO-FILES.tsv",
+      "generated_by": "tools/build_sfx.py"
+    },
     "swing": {
       "path": "assets/sound/swing.wav",
       "format": "wav",
       "source": "Sound/swing.wav",
       "license": "FreeDink audio replacement; see licenses/AUDIO-REPLACEMENTS.txt"
+    },
+    "sword1": {
+      "path": "assets/sound/sword1.wav",
+      "format": "wav",
+      "source": "-",
+      "license": "CC0-1.0; see licenses/AUDIO-FILES.tsv",
+      "generated_by": "tools/build_sfx.py"
     },
     "sword2": {
       "path": "assets/sound/sword2.wav",

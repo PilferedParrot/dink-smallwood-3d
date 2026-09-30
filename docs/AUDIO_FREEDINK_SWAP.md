@@ -24,6 +24,13 @@ files and left the rest silent.
   `docs/OPENING_SOURCE_AUDIO.md`, `NOTICE` and `README.md` describe that rework,
   not this repository. This branch does not touch the rework. What happens to it
   is Chris's decision.
+* **The 27 effects FreeDink leaves silent are filled** (2026-09-30, Chris: "why
+  have a silent sound effect?"). The sources are CC0, public domain and CC BY 3.0
+  recordings, plus one sound we synthesize. `tools/build_sfx.py` builds them, and
+  each one has its own row, source and license. See "Filled" below.
+* **`playsound` speed now follows the engine.** DinkC passes an absolute rate in
+  Hz, and the game had divided it by 22050 for every file. See "playsound speed"
+  below.
 * **Guards.** `tools/audio_provenance.py` pins every shipped file to its FreeDink
   source by hash. `tests/test_audio_provenance.py` and
   `tools/package_release.py` both run it, so a tree containing original audio
@@ -40,7 +47,8 @@ Code path: `game/scripts/game.gd` loads only `res://assets/sound/`.
 * **Nothing else:** nothing loads audio at runtime from a Dink install. The export
   presets ship `game/` whole: all resources plus `data/*.json`.
 
-The 39 shipped files, classified by content:
+The 39 FreeDink files, classified by content (the 27 fills are listed under
+"Filled"):
 
 | Class | Files | How identified |
 |---|---|---|
@@ -64,36 +72,149 @@ byte before rendering (`midi_with_explicit_status`). This is lossless:
 
 Only `104.ogg` changed. The source MIDI is unchanged; it is still FreeDink's file.
 
-## Sounds FreeDink has no replacement for (silent, flagged)
+## Sounds FreeDink has no replacement for (filled, source per file)
 
-The campaign data references these original files, and FreeDink ships no free
-version. The original is **not** kept. The cue stays silent, which is what
-FreeDink itself does.
+The campaign data references 27 original effect files that FreeDink ships no
+free version of. The originals are **not** used. Until 2026-09-30 these cues
+were silent, as they are in FreeDink. Now each one plays a free sound built by
+`tools/build_sfx.py`:
 
-* **Sound effects: 27 files, 28 slots.** `quack` (1), `pig1`–`pig4` (2–5),
-  `select` (11), `picker` (13), `escape` (18), `sel2` (20), `sel3` (21),
+* **Sound effects: 27 files, 28 slots, all filled.** `quack` (1), `pig1`–`pig4`
+  (2–5), `select` (11), `picker` (13), `escape` (18), `sel2` (20), `sel3` (21),
   `spell1` (24), `caveent` (25, 32), `snarl1`–`snarl3` (26–28), `hurt1`,
   `hurt2` (29, 30), `attack1` (31), `level` (33), `splash` (35), `sword1` (36),
   `squish` (38), `steps` (40), `flyby` (42), `knock` (45), `drag1`, `drag2`
   (46, 47).
-* **Music cues: 9 by name, plus the CD tracks with no file.** Screen music `100`,
-  `101`, `102`, `103`, `107`, and `playmidi` `battle`, `bullythe`, `caveexpl`,
-  `wanderer`. The CD-track cues (`1000+N`, see Observations) whose `N` has no
-  shipped file are silent too: screen music `1008`, `1010`, `1016` and `playmidi`
-  `1004`, `1006`, `1009`, `1011`, `1015`. `_play_music` leaves the current track
-  playing, as before.
+* **Music cues are still silent (out of scope; Chris composes).** 9 by name, plus
+  the CD tracks with no file. Screen music `100`, `101`, `102`, `103`, `107`, and
+  `playmidi` `battle`, `bullythe`, `caveexpl`, `wanderer`. The CD-track cues
+  (`1000+N`, see Observations) whose `N` has no shipped file are silent too:
+  screen music `1008`, `1010`, `1016` and `playmidi` `1004`, `1006`, `1009`,
+  `1011`, `1015`. `_play_music` leaves the current track playing, as before.
 
 The v1.08 installer holds 13 more original files that no cue names directly:
 `bird2`, `click`, `high1`, `ocean1`, `pop`, `splash.aif`, and the MIDIs `4`,
 `6`, `9`, `10`, `11`, `16` and `neighbor`. They are not shipped, and FreeDink has
 no replacement for them. The CD-track cues `1004` to `1016` reach `4`, `6`,
 `9`, `10`, `11` and `16` through the mapping below, and find no file.
+freedink-data 1.08.20190120 is the newest release (ftp.gnu.org/gnu/freedink), so
+there is no newer FreeDink replacement to take.
 
-**Proposal:** keep these silent, as they are now. The audible gaps are the pig
-grunts in the opening pigpen, Dink's hurt sounds, the sword hit, menu select and
-level-up. Filling them with CC0 sounds is a separate step, and it needs Chris's
-ear. freedink-data 1.08.20190120 is the newest release (ftp.gnu.org/gnu/freedink),
-so there is no newer FreeDink replacement to take.
+### Filled
+
+**Sources.** Only CC0, public domain and CC BY 3.0 files were used. The shipped
+audio already includes CC BY 3.0 and CC BY-SA 3.0 files.
+* **Where from:** Kenney.nl packs, OpenGameArt entries and Wikimedia Commons
+  files. None of these needs an account.
+* **License check:** each license was read on the source's own page (the OGA
+  "License(s)" field, the Commons file's wikitext license tag, and the Kenney
+  asset page plus the pack's `License.txt`), not from a search listing.
+* **Pinned:** every download is pinned by SHA-256 in `tools/build_sfx.py`.
+* **Credits:** `licenses/AUDIO-FILES.tsv` gives each file's credit: the source
+  page, author, license and our edit. `NOTICE` names the CC BY authors.
+* **Own work:** `flyby.wav` is synthesized, so it is our own work (Apache-2.0).
+  It is a fireball's roar moving past the listener. Its swell and pitch drop come
+  from the distance (1/r), the propagation delay (Doppler) and air damping.
+  Nobody drew them. The test suite rebuilds it byte for byte.
+
+**Format: the v1.08 file's sample rate.** The originals are 8000, 11025, 12500
+or 22050 Hz, and all 20 FreeDink replacements we measured keep their original's
+rate. A script's `playsound` speed is a playback rate in Hz (next section). So a
+file at the original's rate plays at the speed each script was written for.
+Each file's content sounds natural at its own rate, so the in-game pitch follows
+from the script. For example, a size-100 pig grunts at 13000 Hz, 1.6 times its
+file's rate (GNU FreeDink 109.6 `src/brain_pig.cpp:64-88`), as the original did.
+
+**Where register mattered, it was measured.** For `hurt1`, the original's
+register was read from its spectral centroid and pitch. Its callers play it at
+1.5 to 2 times its rate, so the source was slowed to 0.56 like tape. That puts
+it near the original's pitch and length at the file's rate: f0 about 260 Hz
+against 212, and 2.2 s against 2.4.
+
+**Loudness.** Loudness is the maximum momentary loudness, EBU R128 M over 400 ms,
+with short files padded to 0.4 s.
+* **Target:** the v1.08 file's measured value plus −0.35 dB. That offset is the
+  median gap between FreeDink's 20 replacements and the originals they replace;
+  the gaps range from −8.6 to +5.3 dB.
+* **Clamp:** the target is kept inside the range the shipped FreeDink effects
+  span, −29.0 to −10.2 LUFS.
+* **Peaks:** peaks above −1 dBTP are limited (look-ahead 1.5 ms, release 20 ms),
+  by at most 6 dB.
+* **Shortfalls:** files more than 0.5 dB under their target are marked \* in
+  the table. Three percussive sources could not get near it within that limit:
+  `knock` is 6.9 dB under, `sel2` 4.5 dB and `picker` 3.1 dB. `sword1`,
+  `splash`, `escape` and `pig4` are 0.7 to 1.0 dB under. The original
+  `knock` clipped (true peak +2.2 dBTP). We did not clip to match it.
+* **Neighbours:** every fill but one sits inside the level range of the shipped
+  FreeDink effects. The exception is `picker`, a 38 ms click at −32.1. The
+  original `picker` (−30.6) was also quieter than any shipped effect.
+* **Measured only:** the originals were used for their rate, length and level.
+  No original waveform was used, and none is in this repository.
+
+**Heard only by measurement so far.** No sound was played during this work.
+Chris judges them on headphones.
+
+| file | slot | role | source | license | Hz | s (v1.08) | max M LUFS (target) | int. LUFS | true peak dBTP |
+|---|---:|---|---|---|---:|---:|---:|---:|---:|
+| `quack.wav` | 1 | duck hit (s7-duck); duck brain | [Ducks snatching (Ravenhof park, Torhout)](https://commons.wikimedia.org/wiki/File:Ducks_snatching.ogg), Bert76 | CC0-1.0 | 22050 | 1.00 (1.13) | -17.8 (-17.8) | -19.4 | -6.4 |
+| `pig1.wav` | 2 | pig grunt (engine pig brain, at 13000 Hz for a size-100 pig) | [Pig SFX Pack, pig_idle](https://opengameart.org/content/pig-sfx-pack), Vinrax | CC-BY-3.0 | 8000 | 0.75 (0.77) | -20.0 (-20.0) | -21.2 | -1.0 |
+| `pig2.wav` | 3 | pig grunt (engine pig brain) | [Pig grunt (a farm pig)](https://commons.wikimedia.org/wiki/File:Pig_grunt_-_Erdie.ogg), erdie (freesound.org/people/Erdie) | CC-BY-3.0 | 8000 | 0.66 (0.88) | -22.9 (-22.9) | -24.2 | -12.0 |
+| `pig3.wav` | 4 | pig grunt (engine pig brain) | [Pig SFX Pack, pig_idle3](https://opengameart.org/content/pig-sfx-pack), Vinrax | CC-BY-3.0 | 8000 | 0.28 (0.38) | -28.1 (-28.2) | -30.5 | -7.3 |
+| `pig4.wav` | 5 | pig grunt (engine pig brain) | [Pig SFX Pack, pig_idle4](https://opengameart.org/content/pig-sfx-pack), Vinrax | CC-BY-3.0 | 8000 | 0.87 (0.78) | -20.5 (-19.8) * | -21.9 | -1.1 |
+| `select.wav` | 11 | menu cursor move (engine: inventory and choice menus) | [Interface Sounds 1.0](https://kenney.nl/assets/interface-sounds), Kenney (kenney.nl) | CC0-1.0 | 22050 | 0.13 (0.58) | -23.5 (-23.6) | -23.5 | -2.5 |
+| `picker.wav` | 13 | experience counter tick (engine), pig-feed item | [Interface Sounds 1.0](https://kenney.nl/assets/interface-sounds), Kenney (kenney.nl) | CC0-1.0 | 22050 | 0.04 (0.21) | -32.1 (-29.0) * | -32.1 | -1.5 |
+| `escape.wav` | 18 | game menu and inventory open/close | [RPG Audio](https://kenney.nl/assets/rpg-audio), Kenney (kenney.nl) | CC0-1.0 | 22050 | 0.56 (0.83) | -16.0 (-15.2) * | -17.6 | -1.1 |
+| `sel2.wav` | 20 | title menu button hover | [Interface Sounds 1.0](https://kenney.nl/assets/interface-sounds), Kenney (kenney.nl) | CC0-1.0 | 22050 | 0.10 (0.43) | -22.3 (-17.8) * | -22.3 | -1.0 |
+| `sel3.wav` | 21 | title menu choice; warp (at 8000 Hz) | [Interface Sounds 1.0](https://kenney.nl/assets/interface-sounds), Kenney (kenney.nl) | CC0-1.0 | 22050 | 0.53 (0.87) | -15.2 (-15.2) | -17.6 | -4.2 |
+| `spell1.wav` | 24 | spell cast (wizards, magic items, bosses) | [Magic spell SFX, magical_1](https://opengameart.org/content/magic-spell-sfx), JaggedStone | CC0-1.0 | 22050 | 1.59 (1.56) | -10.3 (-10.2) | -12.3 | -1.4 |
+| `caveent.wav` | 25, 32 | a monster roaring deep in the cave (s1-cave, s1-caves noise) | [CC0 deep monster roar](https://opengameart.org/content/cc0-deep-monster-roar), trazzz123 | CC0-1.0 | 11025 | 6.62 (6.62) | -12.6 (-12.5) | -15.0 | -1.5 |
+| `snarl1.wav` | 26 | monster snarl (no current caller) | [Cat hissing](https://commons.wikimedia.org/wiki/File:Cat_hissing_-_Zabuhailo.wav), Zabuhailo (freesound.org/people/Zabuhailo) | CC0-1.0 | 22050 | 1.64 (1.64) | -13.8 (-13.8) | -16.3 | -1.4 |
+| `snarl2.wav` | 27 | monster attack snarl (goblins, slayers) | [Dog snarl, grunt, grumble](https://opengameart.org/content/dog-snarl-grunt-grumble), qubodup | CC0-1.0 | 22050 | 0.66 (0.78) | -29.0 (-29.0) | -31.5 | -15.5 |
+| `snarl3.wav` | 28 | monster attack snarl (goblins, slayers) | [Bear growls (U.S. Fish & Wildlife Service recordings)](https://opengameart.org/content/bear-growls), AntumDeluge | CC0-1.0 | 22050 | 1.07 (1.97) | -25.2 (-25.2) | -27.1 | -18.7 |
+| `hurt1.wav` | 29 | monster hit (boncas, slimes, cave monster; called at 1.5-2x) | [15 monster grunt/pain/death sounds](https://opengameart.org/content/15-monster-gruntpaindeath-sounds), Michel Baradari | CC-BY-3.0 | 11025 | 2.19 (2.40) | -16.9 (-16.9) | -19.7 | -6.1 |
+| `hurt2.wav` | 30 | pillbug hit | [Piglet squeal 01](https://commons.wikimedia.org/wiki/File:618483_foleyhaven_piglet-squeal-01.flac), Foleyhaven (freesound.org/people/Foleyhaven) | CC0-1.0 | 22050 | 1.41 (1.29) | -20.5 (-20.6) | -23.1 | -8.2 |
+| `attack1.wav` | 31 | monster attack (boncas, cave monster, dragon, boss) | [Big scary troll sounds, troll-roars](https://opengameart.org/content/big-scary-troll-sounds), Darsycho | CC0-1.0 | 11025 | 1.20 (1.30) | -16.4 (-16.4) | -20.4 | -8.0 |
+| `level.wav` | 33 | level up | [Music Jingles](https://kenney.nl/assets/music-jingles), Kenney (kenney.nl) | CC0-1.0 | 22050 | 0.80 (1.67) | -12.7 (-12.8) | -14.7 | -3.6 |
+| `splash.wav` | 35 | fish splashing; boat launch | [Water Splash (Yo Frankie!)](https://opengameart.org/content/water-splash-yo-frankie), Blender Foundation | CC-BY-3.0 | 22050 | 3.03 (2.67) | -15.7 (-14.8) * | -18.5 | -1.1 |
+| `sword1.wav` | 36 | sword enemies' attack | [20 sword sound effects, clashes](https://opengameart.org/content/20-sword-sound-effects-attacks-and-clashes), StarNinjas | CC0-1.0 | 22050 | 0.48 (0.76) | -14.8 (-13.8) * | -17.4 | -1.1 |
+| `squish.wav` | 38 | slime touch and hit | [8 wet squish, slurp impacts](https://opengameart.org/content/8-wet-squish-slurp-impacts), Independent.nu (Johannes Pinter) | CC0-1.0 | 22050 | 0.42 (0.42) | -15.9 (-15.8) | -17.5 | -1.5 |
+| `steps.wav` | 40 | footsteps (s3-1st) | [RPG Audio](https://kenney.nl/assets/rpg-audio), Kenney (kenney.nl) | CC0-1.0 | 22050 | 1.57 (1.79) | -21.7 (-21.6) | -25.2 | -1.4 |
+| `flyby.wav` | 42 | fireball flying past (s4-h1p, s2-fgate, s8-da) | synthesized (`synth_flyby`) | Apache-2.0 | 22050 | 0.60 (0.60) | -22.9 (-23.0) | -23.5 | -4.5 |
+| `knock.wav` | 45 | knocking on a door (s2-mdoor) | [Knocking on wood or door](https://commons.wikimedia.org/wiki/File:Knocking_on_wood_or_door.ogg), stephan (pdsounds.org) | public domain | 12500 | 0.72 (0.68) | -17.1 (-10.2) * | -18.4 | -1.4 |
+| `drag1.wav` | 46 | dragon hit; s5-fguy | [Lion roaring (a captive lion, Tamil Nadu)](https://commons.wikimedia.org/wiki/File:Lion_raring-sound1TamilNadu178.ogg), த*உழவன் (Wikimedia Commons) | public domain | 22050 | 1.30 (1.26) | -14.1 (-14.0) | -15.7 | -9.9 |
+| `drag2.wav` | 47 | dragon attack | [American alligator bellows](https://commons.wikimedia.org/wiki/File:27alligator2bellow.ogg), U.S. Fish and Wildlife Service | public domain | 22050 | 3.20 (3.10) | -11.8 (-11.8) | -15.0 | -1.8 |
+
+The table's lengths are the shipped file's; the v1.08 original's is in
+parentheses. "Engine" roles are FreeDink engine calls that this game does not
+make yet, so those files load but are not triggered: `pig1`–`pig4`
+(`brain_pig.cpp`), `select` (`inventory.cpp`, `game_choice.cpp`) and the
+experience-counter `picker` ticks (`status.cpp`). `snarl1` and `caveent`'s slot
+25 have no caller in FreeDink either; slot 32 plays `caveent`.
+
+## playsound speed (fixed 2026-09-30)
+
+DinkC's `playsound(sound, min_speed, rand_speed_to_add, sprite, repeat)` passes
+a playback rate in Hz, whatever rate the file was written at. GNU FreeDink 109.6
+`src/sfx.cpp:637-653`:
+* `play_freq = min + rand() % plus`;
+* the sample then advances `play_freq / hw_freq` per output frame.
+
+The game had divided every speed by 22050, so an 8000 Hz file called at 8000
+played at 0.36. It also ignored `rand_speed_to_add`. `Game._play_sound_hz` now
+uses speed / the file's own rate, plus the random add.
+
+**What changes in the existing FreeDink set.** The 22050 Hz files play exactly as
+before when called at a fixed speed. The four 8000 Hz files now play as FreeDink
+plays them:
+* `swing` from the weapon scripts at 8000 Hz: pitch 1.0 (was 0.36).
+* `burn` at 8000: 1.0 (was 0.36); at 22050: 2.76 (was 1.0).
+* `sword2` from 14 pickup scripts at 22050: 2.76 (was 1.0).
+* `wscream`'s `12050 + rand(10000)` now varies.
+
+`tests/audio_cues_test.gd` checks the rule through the game's own DinkC binding
+(`swing` at 8000 → 1.0, `sword2` at 22050 → 2.756, `pig1` at 13000 + 800 →
+1.625 to 1.725, and more). Under the old rule it fails: "playsound(8, 8000, 0)
+on swing.wav plays at pitch 0.36281, want 1.00000".
 
 ## CD-track music ids (fixed 2026-09-30)
 
@@ -147,25 +268,31 @@ dead socket. `tests/test_fps_fire_world.py` now passes `--audio-driver Dummy`
 in its rendered (xvfb) mode. Before this change, that mode started Godot's
 default audio driver.
 
-* `python3 tools/audio_provenance.py` passes: 39 files match
-  `AUDIO-FILES.tsv` and the installed FreeDink data. Two negative controls
-  fail as they should:
+* `python3 tools/audio_provenance.py` passes: 66 files match
+  `AUDIO-FILES.tsv` and the installed FreeDink data (39 FreeDink files and the
+  27 fills). The negative controls fail as they should:
+  * **The 27 v1.08 originals copied over the fills:** all 27 fail
+    ("sha256 differs"), and 20 of them also fail the fill format rule (8-bit or
+    stereo).
   * **The local v1.08 rework folder:** 49 files unlisted and 38 hash mismatches,
     one of them its own empty `lovin.ogg` render.
   * **The pre-fix `104.ogg`:** "0.0015 s of audio; the render is empty".
-* The headless Godot import produces 39 audio resources, with no import errors.
+* The headless Godot import produces 66 audio resources, with no import errors.
+  The 27 new `.import` files carry the same parameters as FreeDink's.
 * `tests/audio_cues_test.gd` runs the real game class headless. Through the
   game's own `_play_sound` and `_play_music`:
-  * **Loaded:** all 39 shipped sounds.
-  * **Played:** 21 sound slots, 9 of the 18 screen music ids (loaded through
+  * **Loaded:** all 66 shipped sounds.
+  * **Played:** all 49 sound slots, 9 of the 18 screen music ids (loaded through
     the game's own `load_map`) and 8 of the 17 `playmidi` names.
-  * **Missing:** exactly the 27 FreeDink effect gaps, and the silent music ids
-    listed above. With the old `104.ogg` swapped back in, the test fails.
+  * **Missing:** no sound slot; only the silent music ids listed above. With the
+    old `104.ogg` swapped back in, the test fails.
+  * **playsound speed:** see "playsound speed" above.
   * **CD-track ids:** the test asserts each screen id's file (`1002` to `2.ogg`,
     `1005` to `5.ogg`, `1007` to `7.ogg`, `1012` to `12.ogg`, `1013` to
     `13.ogg`), and that a silent screen leaves the track playing. It fails on
     the code before the mapping.
-* Per-file stats, from ffprobe and ffmpeg `ebur128=peak=true`:
+* Per-file stats of the FreeDink files, from ffprobe and ffmpeg
+  `ebur128=peak=true` (the fills are in the "Filled" table):
 
 | file | codec | rate Hz | ch | duration s | integrated LUFS | true peak dBTP |
 |---|---|---:|---:|---:|---:|---:|

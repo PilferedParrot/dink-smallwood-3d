@@ -385,7 +385,22 @@ def _sound_provenance(source_file):
     return result
 
 
-def sound_manifest(source_sound_dir, soundfont):
+def _gap_fill_effects(sound_dir):
+    """Effects FreeDink leaves silent, filled by tools/build_sfx.py: the AUDIO-FILES.tsv rows
+    whose freedink_file is "-", for the files present in sound_dir."""
+    table = Path(__file__).resolve().parents[1] / "licenses" / "AUDIO-FILES.tsv"
+    fills = {}
+    for line in table.read_text(encoding="utf-8").splitlines():
+        cells = line.split("\t")
+        if line.startswith("#") or len(cells) != 8 or cells[2] != "-" or not (sound_dir / cells[0]).is_file():
+            continue
+        fills[Path(cells[0]).stem] = {"path": f"assets/sound/{cells[0]}", "format": "wav", "source": "-",
+                                      "license": f"{cells[6]}; see licenses/AUDIO-FILES.tsv",
+                                      "generated_by": "tools/build_sfx.py"}
+    return fills
+
+
+def sound_manifest(source_sound_dir, soundfont, fills_dir=None):
     music = {}; effects = {}
     for f in sorted(source_sound_dir.iterdir(), key=lambda p: p.name.lower()):
         if not f.is_file(): continue
@@ -397,6 +412,10 @@ def sound_manifest(source_sound_dir, soundfont):
         elif f.suffix.lower() in (".wav", ".oga"):
             effects[stem] = {"path": f"assets/sound/{f.name}", "format": f.suffix.lower()[1:],
                              **_sound_provenance(f)}
+    if fills_dir is not None:
+        for stem, entry in _gap_fill_effects(fills_dir).items():
+            effects.setdefault(stem, entry)
+        effects = dict(sorted(effects.items(), key=lambda kv: kv[0].lower()))
     return {"music": music, "effects": effects, "soundfont": str(soundfont)}
 
 def main():
@@ -423,7 +442,7 @@ def main():
                     else:
                         target=sound_out/f.relative_to(sound_src); target.parent.mkdir(parents=True,exist_ok=True); shutil.copy2(f,target)
     if sound_src.exists():
-        (out/"data/sounds.json").write_text(json.dumps(sound_manifest(sound_src, a.soundfont), indent=2))
+        (out/"data/sounds.json").write_text(json.dumps(sound_manifest(sound_src, a.soundfont, out/"assets"/"sound"), indent=2))
     seq_data={"sequences":build_sequences(ini,src,out/"assets"),"frame_overrides":ini["frame_overrides"],"sprite_info":ini["sprite_info"],"warnings":ini["warnings"],
               "asset_frames":[{"path":str(Path("assets")/p.relative_to(out/"assets")).replace("\\","/")} for p in sorted((out/"assets").rglob("*.png"))]}
     (out/"data/sequences.json").write_text(json.dumps(seq_data,indent=2))

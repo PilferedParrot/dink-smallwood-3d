@@ -1050,7 +1050,7 @@ func dink_call(command: String, args: Array, context: Dictionary) -> Variant:
 		"attack": _attack()
 		"load_sound":
 			sound_slots[str(int(b))] = "res://assets/sound/"+str(a).get_file().to_lower()
-		"playsound": return _play_sound(int(a),float(b)/22050.0 if float(b)>0 else 1.0)
+		"playsound": return _play_sound_hz(int(a),int(b),int(c))
 		"playmidi": _play_music(str(a))
 		"stopmidi", "stopcd": music.stop()
 		"save_game": return int(_save_game())
@@ -1155,6 +1155,21 @@ func _load_sound_slots() -> void:
 			if op.get("op","") == "call" and str(op.get("name","")).to_lower() == "load_sound":
 				var args: Array = op.get("args",[])
 				if args.size()>=2: sound_slots[str(int(args[1].get("value",0)))] = "res://assets/sound/"+str(args[0].get("value","")).to_lower()
+
+# DinkC playsound(sound, min_speed, rand_speed_to_add, sprite, repeat): the speed is
+# the playback rate in Hz, whatever rate the file was written at. GNU FreeDink 109.6
+# sfx.cpp:637-653: play_freq = min + rand() % plus, and the sample advances
+# play_freq / hw_freq per output frame, so an 8000 Hz file called at 8000 plays at
+# its own pitch and at 22050 plays 2.76 times faster. Godot's pitch_scale is relative
+# to the stream's own rate, hence speed / mix_rate.
+func _play_sound_hz(slot: int, min_hz: int, plus_hz: int) -> int:
+	var path := str(sound_slots.get(str(slot),""))
+	if path.is_empty() or not ResourceLoader.exists(path): return 0
+	var hz := min_hz + (randi() % plus_hz if plus_hz > 0 else 0)
+	var stream: AudioStream = load(path)
+	var pitch := 1.0
+	if hz > 0 and stream is AudioStreamWAV and stream.mix_rate > 0: pitch = float(hz) / float(stream.mix_rate)
+	return _play_sound(slot, pitch)
 
 func _play_sound(slot: int, pitch: float = 1.0) -> int:
 	var path := str(sound_slots.get(str(slot),""))
