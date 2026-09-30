@@ -576,6 +576,30 @@ and the spire's shingles count by label, depth-tested (`render_z`). Tower 30 px 
 the ridge, spire 60 px (was 74). The shaft band matches the drawn one's width from the original camera.
 At eye level the spire stands on a short dark shaft. 186-251 are unchanged to 0.05.
 
-Left in this pass: the trees drawn under a building (497), by a depth offset in the sprite's shader
-(moved, their trunks sank).
+**Trees drawn under a building (`_push_back`).** A sprite the original draws under a building its
+canopy overlaps keeps its place, and its depth is pushed away by its half-width in its own shader. Each
+fragment's push is capped at 0.9 of its clearance above the ground along the view ray, so the trunk
+never goes under the ground (moving it did). Control: with every push at 0 the images equal the plain
+sprites' (mean |d| 0.000). It is the other half of the draw-order rule of the fifth pass. On today's
+screens it changes 9-16 px at eye level and nothing from the original camera.
+
+**Correction to the fourth and fifth passes:** the tree over home-07 on 497 is not tree-04 of 497
+(drawn under the house). It is tree-04 of screen 528, whose trunk stands in front of the house, 40 px
+below 497's edge. Its canopy reaches over the house. The source reconstruction draws only a screen's
+own sprites, as the original engine did; the continuous world shows it, correctly in front. 497's
++0.3 against Sept 29 is that, not a cut tree.
+
+Regression over every run, against the published state (a8fbd02 + package 5): 350 -2.0, 439 and
+617 -0.3, 440/500/586/618 -0.1; worse: 318 +0.14 (home-10's core roof, above), 619 +0.10 and
+470 +0.08 (the shared thatch profile, in its own commit).
+
+**Next step (recommended):** the buildings are done. Every building on the map is a solid,
+derived structure. The prototype is not the game. Integrate it, in this order:
+1. Collision from one source: the original hardboxes and tile hardness, plus the fitted building
+   footprints (the drawn walls stand ~90 px in front of the houses' hardboxes; Buildings defect 5).
+   Then remove `_fps_landing_recovery_offsets` (item 5 above).
+2. Story state through the DinkC VM's `fp_world.create_visual`/`update_visual`, not the prototype's
+   vision-0 layer (item 4).
+3. Build the game's world from the prototype's buildings and billboards, then have Chris play the
+   opening.
 

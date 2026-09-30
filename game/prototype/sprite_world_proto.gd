@@ -211,8 +211,8 @@ func _set_anchor(sp: Sprite3D, d: Dictionary, t: Texture2D) -> void:
 # building's over it: such a billboard is moved along the view ray toward the camera by its
 # half-width and scaled to keep its size on screen, so it stands clear in front of the building,
 # as drawn (251). Its trunk, and any collision, stays where the source put it. One drawn under the
-# building is left: moved away along the ray, its trunk sinks below the ground (it needs a depth
-# offset in a shader, not a move).
+# building cannot be moved away along the ray (its trunk sinks below the ground); its depth is pushed
+# away instead, in its shader (_push_back).
 func _flag_nudge(sp: Sprite3D, g: Vector2, r: float) -> void:
 	for b in buildings:
 		var hull: PackedVector2Array = b[0]
@@ -223,7 +223,49 @@ func _flag_nudge(sp: Sprite3D, g: Vector2, r: float) -> void:
 				dist = minf(dist, g.distance_to(Geometry2D.get_closest_point_to_segment(g, hull[i], hull[(i+1) % hull.size()])))
 		if dist < r:
 			if g.y > float(b[1]): nudged.append([sp, sp.position, r * S, sp.pixel_size])
+			else: _push_back(sp, r * S)
 			return
+
+# A sprite the original draws under a building its canopy overlaps: drawn where it stands, but its
+# depth pushed away from the camera by its half-width, so the building hides the canopy as the
+# original does (497). Each fragment's push is capped at 0.9 of its clearance above the ground along
+# the view ray, so the trunk's foot never goes under the ground (which moving the sprite did).
+# Compatibility renderer: window depth = NDC z * 0.5 + 0.5. Env PUSH_ZERO: every push 0 (a control:
+# the images must equal the plain sprites').
+var push_shader: Shader
+func _push_back(sp: Sprite3D, off: float) -> void:
+	if push_shader == null:
+		push_shader = Shader.new()
+		push_shader.code = """shader_type spatial;
+render_mode unshaded, cull_disabled, depth_draw_opaque;
+uniform sampler2D tex : source_color, filter_nearest_mipmap;
+uniform float off = 0.0;
+uniform bool bill = true;
+void vertex() {
+	if (bill) {
+		MODELVIEW_MATRIX = VIEW_MATRIX * mat4(vec4(normalize(cross(vec3(0.0, 1.0, 0.0), INV_VIEW_MATRIX[2].xyz)), 0.0), vec4(0.0, 1.0, 0.0, 0.0), vec4(normalize(cross(INV_VIEW_MATRIX[0].xyz, vec3(0.0, 1.0, 0.0))), 0.0), MODEL_MATRIX[3]);
+		MODELVIEW_NORMAL_MATRIX = mat3(MODELVIEW_MATRIX);
+	}
+}
+void fragment() {
+	vec4 c = texture(tex, UV);
+	if (c.a < 0.5) { discard; }
+	ALBEDO = c.rgb;
+	bool ortho = PROJECTION_MATRIX[3][3] > 0.5;
+	vec3 wp = (INV_VIEW_MATRIX * vec4(VERTEX, 1.0)).xyz;
+	vec3 dw = ortho ? -INV_VIEW_MATRIX[2].xyz : normalize(wp - INV_VIEW_MATRIX[3].xyz);
+	float room = -dw.y > 1e-4 ? 0.9 * max(wp.y, 0.0) / -dw.y : off;
+	vec3 dv = ortho ? vec3(0.0, 0.0, -1.0) : normalize(VERTEX);
+	vec4 clip = PROJECTION_MATRIX * vec4(VERTEX + dv * min(off, room), 1.0);
+	DEPTH = clip.z / clip.w * 0.5 + 0.5;
+}
+"""
+	var m := ShaderMaterial.new()
+	m.shader = push_shader
+	m.set_shader_parameter("tex", sp.texture)
+	m.set_shader_parameter("off", 0.0 if OS.has_environment("PUSH_ZERO") else off)
+	m.set_shader_parameter("bill", sp.billboard == BaseMaterial3D.BILLBOARD_FIXED_Y)
+	sp.material_override = m
 
 func _nudge_billboards() -> void:
 	for n in nudged:
@@ -259,6 +301,7 @@ func _face_actors() -> void:
 		var t := clean(str(d.path))
 		if t == null: continue
 		sp.texture = t
+		if sp.material_override is ShaderMaterial: (sp.material_override as ShaderMaterial).set_shader_parameter("tex", t)
 		_set_anchor(sp, d, t)
 
 func _environment() -> void:
