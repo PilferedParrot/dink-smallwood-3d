@@ -26,6 +26,11 @@ var tex_cache: Dictionary = {}
 var clean_panels: Dictionary = {}
 var kit_cache: Dictionary = {} # kit name -> [canvas, back, top-left, members]
 var surface_cache: Dictionary = {} # house or kit key -> [[ArrayMesh, Texture2D], ...]
+# The kit buildings' filled canvases, baked by tools/bake_kit_canvases.gd: composing them here takes
+# seconds of per-pixel GDScript per building. Used while the manifest's facades.json hash matches.
+const BAKED_DIR := "res://data/kits"
+const FACADES := "res://prototype/facades.json"
+var baked_ok := -1 # -1 unknown, 0 stale or missing, 1 usable
 
 func _init(seqs: Dictionary, map: Dictionary, fits: Dictionary, scale: float) -> void:
 	sequences = seqs
@@ -156,7 +161,9 @@ func house(path: String, rect: Rect2, parts: Dictionary, cache_key: String = "")
 	var shade := _shade(canvas, dither_mask(canvas))
 	var surfaces: Array = []
 	if fit.has("polys"): _uv_house(surfaces, fit, canvas, back)
-	else: _block_house(surfaces, fit, fill_holes(canvas), fill_holes(back))
+	else:
+		var sides := fill_all([canvas, back])
+		_block_house(surfaces, fit, _texture(sides[0]), _texture(sides[1]))
 	for r in parts.roof: _roof_piece(surfaces, r, fit)
 	for g in parts.ground: _ground_piece(surfaces, g, rect.position)
 	if not cache_key.is_empty(): surface_cache[cache_key] = [surfaces, shade]
@@ -215,6 +222,24 @@ func _shade(img: Image, dither: PackedByteArray) -> Image:
 # pixels outward instead of showing holes or shadow dither (breadth-first, so each hole
 # takes the colour of the nearest drawn pixel).
 func fill_holes(src: Image) -> ImageTexture:
+	return _texture(filled(src))
+
+# filled() of each image, on the worker threads: pure Image work on images of their own, so each
+# is the same bytes as a call on this thread.
+func fill_all(imgs: Array) -> Array:
+	var out: Array = []
+	out.resize(imgs.size())
+	var tasks: Array = []
+	for i in imgs.size():
+		tasks.append(WorkerThreadPool.add_task(func(): out[i] = filled(imgs[i])))
+	for t in tasks: WorkerThreadPool.wait_for_task_completion(t)
+	return out
+
+func _texture(img: Image) -> ImageTexture:
+	img.generate_mipmaps()
+	return ImageTexture.create_from_image(img)
+
+func filled(src: Image) -> Image:
 	var img: Image = src.duplicate()
 	var w := img.get_width()
 	var h := img.get_height()
@@ -239,8 +264,7 @@ func fill_holes(src: Image) -> ImageTexture:
 			data[q*4+3] = 255
 			queue.append(q)
 	img.set_data(w, h, false, Image.FORMAT_RGBA8, data)
-	img.generate_mipmaps()
-	return ImageTexture.create_from_image(img)
+	return img
 
 # A house of hip-roofed blocks (and a kit building): `back`, if given, textures the faces the
 # original camera never saw.
@@ -323,7 +347,8 @@ func _uv_house(surfaces: Array, fit: Dictionary, canvas: Image, back: Image) -> 
 		var pv := PackedVector2Array()
 		for q in poly: pv.append(Vector2(float(q[0]), float(q[1])))
 		occ.append(pv)
-	var texs := [fill_holes(_without(canvas, occ)), fill_holes(_without(back, occ)), fill_holes(canvas)]
+	var fills := fill_all([_without(canvas, occ), _without(back, occ), canvas])
+	var texs := [_texture(fills[0]), _texture(fills[1]), _texture(fills[2])]
 	var sts: Array = []
 	var used := [false, false, false]
 	for k in 3:
@@ -374,6 +399,21 @@ func ray_hit(fit: Dictionary, x: float, y: float) -> Array:
 		var yy := (n.dot(pts[0]) - n.x*x - n.z*y) / den
 		if _inside(pts, n, Vector3(x, yy, y + yy)) and (best.is_empty() or yy > best[0]):
 			best = [yy, int(f.label)]
+	return best
+
+# The index of the face ray_hit finds through house-local screen point (x, y), or -1.
+func _first_face(fit: Dictionary, x: float, y: float) -> int:
+	var best := -1
+	var best_y := -INF
+	for i in fit.faces.size():
+		var pts := pts_of(fit.faces[i])
+		var n := (pts[1]-pts[0]).cross(pts[2]-pts[0])
+		var den := n.y + n.z
+		if absf(den) < 1e-6: continue
+		var yy := (n.dot(pts[0]) - n.x*x - n.z*y) / den
+		if yy > best_y and _inside(pts, n, Vector3(x, yy, y + yy)):
+			best = i
+			best_y = yy
 	return best
 
 # Height of the roof above ground point (x, z) in house-local pixels, or NAN.
@@ -444,7 +484,9 @@ func _paint_unseen(img: Image, dither: PackedByteArray, r: Array, fit: Dictionar
 	var at: Vector2 = r[2]
 	var w := img.get_width()
 	var h := img.get_height()
-	for f in fit.faces:
+	var first_face := {} # sprite pixel -> the face the original camera sees there (_first_face)
+	for fi in fit.faces.size():
+		var f: Dictionary = fit.faces[fi]
 		var pts := pts_of(f)
 		var n := (pts[1]-pts[0]).cross(pts[2]-pts[0])
 		var c: Array = fit.centers[int(f.block)]
@@ -460,23 +502,29 @@ func _paint_unseen(img: Image, dither: PackedByteArray, r: Array, fit: Dictionar
 			var uv := Vector2(2.0*cen.x - q.x, 2.0*cen.z - q.z - q.y)
 			lo = lo.min(uv)
 			hi = hi.max(uv)
+		# Only the texel columns whose point lands inside the piece's sprite: sx = floor(x - at.x)
+		# with x = 2c.x - U - 0.5 (the same texels as scanning the whole face, far fewer tried).
+		var u0 := maxi(maxi(0, int(lo.x)), int(floor(2.0*cen.x - 0.5 - at.x - w)))
+		var u1 := mini(mini(back.get_width(), int(hi.x) + 1), int(ceil(2.0*cen.x - 0.5 - at.x)) + 1)
 		for V in range(maxi(0, int(lo.y)), mini(back.get_height(), int(hi.y) + 1)):
-			for U in range(maxi(0, int(lo.x)), mini(back.get_width(), int(hi.x) + 1)):
+			for U in range(u0, u1):
 				var x := 2.0*cen.x - (U + 0.5)
 				var sz := 2.0*cen.z - (V + 0.5) # y + z on the face
 				# n.x x + n.y y + n.z (sz - y) = n.p0
 				var y := (n.dot(pts[0]) - n.x*x - n.z*sz) / (n.y - n.z)
 				var p := Vector3(x, y, sz - y)
-				if not _inside(pts, n, p): continue
 				var sx := int(floor(p.x - at.x))
 				var sy := int(floor(p.z - p.y - at.y))
 				if sx < 0 or sy < 0 or sx >= w or sy >= h: continue
+				if not _inside(pts, n, p): continue
 				if sx >= float(rp.top[0][0]) and sx <= float(rp.top[2][0]) and sy <= float(rp.foot[1]): continue
 				# Only where the original camera sees this face: behind the ridge the view ray meets
 				# the near slope first. Unseen, the wedge's few pixels spread down the whole far slope
 				# along the grazing rays and showed at eye level as a dark stripe from ridge to eave.
-				var first := ray_hit(fit, p.x, p.z - p.y)
-				if first.is_empty() or absf(float(first[0]) - p.y) > 0.5: continue
+				# The face seen is read once per sprite pixel, through its centre.
+				var key := sy*w + sx
+				if not first_face.has(key): first_face[key] = _first_face(fit, at.x + sx + 0.5, at.y + sy + 0.5)
+				if int(first_face[key]) != fi: continue
 				var col := img.get_pixel(sx, sy)
 				if dither[sy*w + sx]: col = Color(0, 0, 0, 0.5)
 				if col.a < 0.25: continue
@@ -624,12 +672,39 @@ func kit_prepare(b: Dictionary) -> Array:
 func kit(b: Dictionary) -> Node3D:
 	var key := "kit:%s" % str(b.name)
 	if not surface_cache.has(key):
-		var k := kit_prepare(b)
+		var sides := baked_kit(b)
+		if sides.is_empty(): sides = kit_canvases(b)
 		var surfaces: Array = []
-		_block_house(surfaces, b, fill_holes(k[0]), fill_holes(k[1]))
+		_block_house(surfaces, b, _texture(sides[0]), _texture(sides[1]))
 		for dm in b.get("dormers", []): _dormer(surfaces, dm)
 		surface_cache[key] = [surfaces, null]
 	return node_from(surface_cache[key][0])
+
+# The kit building's front and back textures, filled, before mipmaps: what the bake stores.
+func kit_canvases(b: Dictionary) -> Array:
+	var k := kit_prepare(b)
+	return [filled(k[0]), filled(k[1])]
+
+# The baked [front, back] of kit building `b`, or [] if there is no current bake.
+func baked_kit(b: Dictionary) -> Array:
+	if baked_ok < 0:
+		baked_ok = 0
+		var path := BAKED_DIR + "/manifest.json"
+		var manifest: Variant = JSON.parse_string(FileAccess.get_file_as_string(path)) if FileAccess.file_exists(path) else null
+		if manifest is Dictionary and str(manifest.get("facades_sha256", "")) == FileAccess.get_sha256(FACADES):
+			baked_ok = 1
+		elif FileAccess.file_exists(path):
+			push_warning("data/kits is stale for prototype/facades.json: composing kit buildings at run time (tools/bake_kit_canvases.gd)")
+	if baked_ok != 1: return []
+	var out: Array = []
+	for side in ["front", "back"]:
+		var file := "%s/%s-%s.bin" % [BAKED_DIR, str(b.name), side]
+		if not FileAccess.file_exists(file): return []
+		var img := Image.new()
+		if img.load_webp_from_buffer(FileAccess.get_file_as_bytes(file)) != OK: return []
+		img.convert(Image.FORMAT_RGBA8)
+		out.append(img)
+	return out
 
 # Grass and water in the building tiles are what stands behind the building: clear the
 # background-coloured regions connected to the outside (enclosed window glass stays).

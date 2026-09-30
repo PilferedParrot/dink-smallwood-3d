@@ -1,0 +1,14 @@
+{
+  "facades_sha256": "8e247fbef5658926ba4f66b9641ac945929359a4e81a82f763294a8ec2998e6f",
+  "format": "webp lossless, RGBA8, before mipmaps",
+  "kits": [
+    "kit-251",
+    "kit-417",
+    "kit-498",
+    "kit-537",
+    "kit-570",
+    "kit-585",
+    "kit-587"
+  ],
+  "made_by": "tools/bake_kit_canvases.gd"
+}

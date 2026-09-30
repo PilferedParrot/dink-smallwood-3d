@@ -74,6 +74,14 @@ func _run() -> void:
 	for child in game.scene_root.get_children():
 		if str(child.name).begins_with("Neighbor_"): neighbors += 1
 	check(neighbors > 0, "Outdoor FPS screen builds adjacent screen scenery")
+	# Interiors are the original map's indoor screens (dink.dat): Dink's house and the inn's rooms
+	# are; the walled streets and kit-417's courtyard, built of outdoor stone walls, are not.
+	var inside: Array = []
+	for n in game.world.screens:
+		if game.fp_world.is_inside(int(n)): inside.append(int(n))
+	check(inside.size() == game.world.screens.values().filter(func(sc): return bool(sc.get("indoor", false))).size(), "Every indoor-flagged screen, and only those, is an interior")
+	check(game.fp_world.is_inside(1) and game.fp_world.is_inside(2), "Dink's house is an interior")
+	check(not game.fp_world.is_inside(386) and not game.fp_world.is_inside(417) and not game.fp_world.is_inside(450), "kit-417's courtyard and its street are outdoors")
 	check(_mesh_count(game.scene_root) > 0, "Outdoor FPS screen builds 3D terrain and models")
 
 	target_visual.free()

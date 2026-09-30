@@ -34,14 +34,20 @@ PITCH = {NEAR: -0.12, WIDE: -0.05}
 # log cabin, home-10's cross wing, the zig-zag kit building, the kit buildings round the fountain.
 EXTRA = [('church-219.json', 's188-4-front'), ('cabin-270.json', 's270-6-front'), ('houses-350.json', 's350-1-front'),
          ('kit-419.json', 'kit-417-back'), ('kit-586.json', 'kit-587-front')]
+# kit-417's front from the walled street south of it (450), which the game took for an interior
+# until the eighth pass: (tag, world camera, world look point).
+INLINE = [('kit-417-street', (1100.0, 5700.0), (1100.0, 5300.0))]
 
 
 def extra_views():
     """(screen, tag, local camera, yaw, pitch) for EXTRA: the screen holding the camera."""
     out = []
+    views = []
     for fname, tag in EXTRA:
         shots = {s[0]: s for s in json.loads((ROOT / 'tools/shots' / fname).read_text())}
-        _, (wx, wy), (lx, ly) = shots[tag]
+        views.append(shots[tag])
+    views += [[tag, list(pos), list(look)] for tag, pos, look in INLINE]
+    for tag, (wx, wy), (lx, ly) in views:
         col, row = int(wx // 600), int(wy // 400)
         n = row * 32 + col + 1
         cam = (wx - col * 600 + 20, wy - row * 400)

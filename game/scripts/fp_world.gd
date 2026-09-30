@@ -46,14 +46,17 @@ func setup(game) -> void:
 func point(x: float, y: float) -> Vector3:
 	return Vector3((x-320.0)*SCALE,0,(y-200.0)*SCALE)
 
+# An interior is what the original's own map says it is: the per-screen indoor flag of dink.dat
+# (world.json "indoor"; the engine keeps the last outdoor screen for the map by it). Every screen
+# with interior wall sprites (innwalls) carries it. Counting wall sprites (3 or more innwalls or
+# stnwalls) also took 18 outdoor screens for rooms: kit-417's courtyard (385-388, 417, 420) and the
+# walled streets south of it (449-452), 238, 244, 536, 625, 680-681 and 712-713. All are flagged
+# outdoor, every neighbour they have is an outdoor screen, and their "walls" are the stonw and snak
+# stone-wall pieces of the stnwalls folder. They were drawn as rooms, with ceilings and no sky, and
+# their neighbours showed wilderness in their place.
 func is_inside(number: int) -> bool:
 	if interior_cache.has(number): return interior_cache[number]
-	var screen: Dictionary = host.world.screens.get(str(number),{})
-	var count := 0
-	for e in screen.get("sprites",[]):
-		var path := source_path(e)
-		if "innwalls" in path or "stnwalls" in path: count += 1
-	var result := count >= 3 or bool(screen.get("indoor",false))
+	var result := bool(host.world.screens.get(str(number),{}).get("indoor",false))
 	interior_cache[number] = result
 	return result
 

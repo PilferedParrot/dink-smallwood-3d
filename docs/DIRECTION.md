@@ -720,9 +720,9 @@ Step 3 of the sixth pass's next step, its building part: the seventh pass's flat
 are gone. Evidence: `docs/images/buildings-sept30.jpg`. Each row is one camera, placed in source
 pixels, filmed in the old game with its Blender cottages (8db1ff5), in the game now, and in the
 prototype. The first twelve rows are the seventh pass's walls, 74 px out (where the player stopped,
-plus its 70 px step back) and 300 px out. The last five show the church, the log cabin, home-10,
-kit-417 seen across the water from the north, and a house by the fountain. The game shows no
-kit-417 there: defect 3.
+plus its 70 px step back) and 300 px out. The last six show the church, the log cabin, home-10,
+kit-417 across the water from the north, a house by the fountain, and kit-417's front from the
+walled street south of it (450). The old game drew that street as a dark room.
 
 **One build, not two.** `scripts/sprite_buildings.gd` is the prototype's building code, moved out of
 `prototype/sprite_world_proto.gd`, not copied. It covers the projection-textured faces, the thatch
@@ -811,33 +811,32 @@ first hit must be the face itself. The original camera's view is unchanged by co
   home-10. They differ in the game's lighting on everything else, its Blender stand-ins, and its
   lighter fog. No flat stand-in remains on a fitted building. The four `/Building/` sprites without a
   fit (build-01, 02, 03, 10) keep the Blender cottage.
-- `pytest`: 80 passed, after the rebase onto 7a778e0. `tests/fps_wall_test.gd` is among them:
+- `pytest`: 80 passed, after the rebase onto 7a778e0, and again after the second round. `tests/fps_wall_test.gd` is among them:
   eight walls stop 4.3 px from the drawn wall, the doors of 439 and 409 lead in, and all four
   points behind Dink's cottage are open. The first run failed 3
   tests, on the two fixtures above.
 - The letter campaign (`tools/playtest.py --mode campaign --milestone letter --rendered
   --max-commands 5000`) runs from Begin adventure to Aunt Maria's letter, with real input. It
-  passes in 3,122 commands. The seventh pass took 3,201 and 8db1ff5 2,955, and collision is
-  unchanged in source pixels. It found no stuck player.
+  passes in 3,122 commands, and in 3,823 after the second round (the duck search varies). The
+  seventh pass took 3,201 and 8db1ff5 2,955, and collision is unchanged in source pixels. It found
+  no stuck player.
 - Frame time, `tests/fps_perf.gd` (written by a Sonnet subagent and checked here), same camera and
   same screen in each checkout, 300 frames after 30 of warm-up, three repeats. The screen is loaded
   with its scripts off (scenario setup). llvmpipe under xvfb, so the numbers are relative only.
   The runs are interleaved: repeat, then screen, then checkout. Medians follow, with the spread of
-  the three repeats:
+  the three repeats. The numbers are after the second round below.
 
   | Screen, camera | Old game (8db1ff5) | Stand-ins (seventh pass) | Now |
   |---|---|---|---|
-  | 439, the cottage: frame | 30.0 ms (29.6–30.7) | 27.4 (27.1–27.4) | 27.7 (27.6–27.8) |
-  | 505, the inn: frame | 44.4 ms (43.8–46.2) | 17.0 (17.0–17.0) | 16.6 (15.3–16.7) |
-  | 439: `load_map` | 29 ms | 54 | 41 |
-  | 505: `load_map` | 47 ms | 47 | 1,570–1,730 |
+  | 439, the cottage: frame | 29.3 ms (29.2–29.5) | 27.0 (27.0–27.1) | 27.7 (27.7–27.7) |
+  | 440, the village: frame | 35.9 ms (35.8–35.9) | 33.5 (33.4–33.6) | 32.5 (32.4–32.5) |
+  | 505, the inn: frame | 44.0 ms (43.7–44.0) | 17.2 (17.0–17.2) | 15.3 (15.3–15.3) |
+  | 439: `load_map` | 30 ms | 54 | 41 |
+  | 440: `load_map` | 41 ms | 72 | 277 (275–289) |
+  | 505: `load_map` | 48 ms | 47 | 141 (136–145) |
 
-  The textured buildings draw at the stand-ins' cost, and both beat the Blender models. Loading does
-  not: the first time a session builds a kit building, it composes that building's canvases in
-  GDScript, in per-pixel passes. Later scenes in the session take them from the cache. Profiled
-  alone, in a headless process, the inn took 1.6 s to compose its two canvases, including 0.75 s
-  per background knock-out, and 2.1 s to fill them. That is more than the whole load in the game's
-  run, and the difference is not diagnosed. Defect 1 below.
+  Frame time: the textured buildings cost what the stand-ins did (439 +0.7 ms, 440 and 505 less),
+  and less than the Blender models everywhere. Loading is still slower; see the second round.
 - Every Godot run used the Dummy audio driver. Headless runs imply it.
 
 **Judgment.** In the game, at eye level, the buildings are the prototype's buildings. Dink's cottage
@@ -848,27 +847,70 @@ on stretched hardboxes, and from behind the player stood inside them. At 0.025 t
 Dink's shoulder, as drawn. The cottages are cottages: the eaves just above the eye, the ridge twice
 the eye's height.
 
+**Second round (the orchestrator's review of the sheet).**
+
+*The kit-canvas stall.* The first build of a kit building composed its canvases in per-pixel
+GDScript: the inn cost 3.7 s, profiled alone. The first round's game run measured 1.6 s for 505
+because the new game had already built the inn. `_new_game` passes screens round 440, and its
+`load_map` built kit-537 there, outside the timed load. The 1.6 s was kit-570, which 505's own
+load built. Measured in the game, that explains the profile-vs-game gap.
+
+The canvases depend only on the map and `facades.json`, so they are baked:
+`tools/bake_kit_canvases.gd` runs `sprite_buildings.gd kit_canvases`, the same code, for all seven
+kit buildings. It writes `game/data/kits/<name>-front.bin` and `-back.bin` (lossless WebP, 3.5 MB)
+and a manifest holding `facades.json`'s SHA-256. Every image reads back byte-identical, or no
+manifest is written. The game and the prototype load them, then fall back to composing when the
+hash is stale. The export includes `data/kits/*`. The inn now loads in 17 ms. The prototype's kit
+views are unchanged (worst eye-level mean |d| 0.02 of 255).
+
+The houses then showed what was left. A house cost 170–190 ms, and a house with roof chimneys
+0.8–1.5 s. Almost all of the chimney cost was the unseen-face painting, which ran the view ray
+for every texel of every north-facing face. Two changes cut it:
+- The texel scan is limited to the columns whose points land inside the chimney's sprite. The
+  same texels pass.
+- The face the original camera sees is read once per sprite pixel, through its centre.
+
+Together they take the chimney painting from 1,264 to 191 ms (home-06) and from 606 to 83 ms
+(home-01). The houses' hole fills run on the worker threads, taking a house's remaining build from
+185 to about 110 ms. The original camera is ±0.0 on every screen of the regression. Eye level
+changes only where the unseen-face painting did: the house on 501 loses the thatch-coloured smears
+its chimneys had painted onto its back wall and roof (mean |d| 2.0 there), and the cottage its
+stripe.
+
+With those changes, 505 loads in 141 ms (from 1.6 s; the old game took 48) and 440 in 277 ms (the
+old game took 41). That is not the old load time. 440 still composes its houses' textures on
+arrival, about 110 ms each, once per session. The next step is to bake the houses as the kits
+are baked, keyed by a house and the parts it draws (the cache key the game already uses).
+
+*kit-417 missing: `is_inside`.* The game took a screen with three or more `innwalls`/`stnwalls`
+sprites for an interior. The original's own flag is the per-screen indoor flag of dink.dat
+(world.json `indoor`, 74 screens). The engine uses it to keep the last outdoor screen for the map,
+and every screen with interior wall sprites (`innwalls`) carries it. The count added 18 screens
+that are flagged outdoor: kit-417's courtyard (385–388, 417, 420), the walled streets south of it
+(449–452), 238, 244, 536, 625, 680–681 and 712–713. Every neighbour of each is an outdoor screen,
+and their "walls" are the stonw and snak stone-wall pieces. `is_inside` is now the flag.
+`tests/fps_test.gd` checks the result: exactly the flagged screens are interiors, Dink's house (1,
+2) among them, and 386, 417 and 450 are outdoors. The sheet's last row shows the street before
+(a dark room) and after (kit-417's front, as in the prototype). The interior tests (Dink's house:
+Mother's visibility, the grief cameras, the hearth) pass.
+
 **Defects I see, in order:**
-1. The first build of a kit building stalls the load: 1.6 s for the inn. The village screen 440
-   has two of the inn's screens as neighbours, so the stall falls inside the opening, once per
-   session. The canvases depend only on the map. The fix is to compose them off the main thread
-   (the source images loaded first on the main thread), or once per build into cached images.
-   Making `fill_holes` fill only the fringe the faces sample would change the prototype's pixels.
-2. Everything that is not a building is still a Blender stand-in. The fences are dark slabs, tools
-   are crates, flames are cones, and bushes are blobs. This is step 3's other half: billboards made
-   through `create_visual`/`update_visual`.
-3. `fp_world.is_inside` takes kit-417's courtyard screens (385–388, 417, 420) for interiors,
-   because their stone-wall sprites count as room walls (5–8 of them each; the rule is 3). This
-   predates this pass. Those screens are drawn as rooms, and their neighbours show wilderness in
-   their place, so kit-417 is built only from 418 and 419.
-4. The game builds the screen and its eight neighbours. So kit-417 is not seen from two screens
-   south, where the prototype's 5×5 block shows it. At 0.025 the 3×3 is 45 × 30 m.
-5. The drawn dither shadow of each building is not painted into the game's ground. The game's
-   ground is tiles only, and background sprites are entities. The real-time shadow stands in for it.
-6. Parts composited onto a house are fixed for the scene. A door the VM moves or animates stays as
+1. The houses' textures are composed on arrival (about 110 ms a house, once per session): 440
+   loads in 277 ms against the old 41. Bake them as the kits are baked.
+2. Everything that is not a building is still a Blender stand-in: fences are dark slabs, tools are
+   crates, flames are cones, bushes are blobs. The walled streets' stone walls, now outdoors, are
+   flat plaster boxes (the `wall` model), seen across the water on the sheet. This is step 3's
+   other half: billboards made through `create_visual`/`update_visual`.
+3. The game builds the screen and its eight neighbours. At 0.025 that is 45 × 30 m, and a
+   building two screens away (kit-417 from 481) is not drawn, although the prototype's 5×5 draws
+   it.
+4. The drawn dither shadow of each building is not painted into the game's ground. The game's
+   ground is tiles only, and background sprites are entities. The real-time shadow stands in for
+   it.
+5. Parts composited onto a house are fixed for the scene. A door the VM moves or animates stays as
    drawn until the screen reloads. Composited parts of a neighbour screen use the current screen's
    story layer, as every neighbour sprite already does.
-7. The story fire's flame entities (fire1-0x) stand at their hotspots, not on the roof they are
+6. The story fire's flame entities (fire1-0x) stand at their hotspots, not on the roof they are
    drawn on. `add_story_fire` puts its own flames on the roof.
-8. The prototype's open building defects carry over: home-10's core roof sits a few px low (318).
-   The rhombic footprints remain.
+7. The prototype's open building defects carry over: home-10's core roof sits a few px low (318),
+   and the footprints are still rhombic.
