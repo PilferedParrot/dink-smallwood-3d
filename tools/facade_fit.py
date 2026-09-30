@@ -68,6 +68,8 @@ TWINS = {5: 4, 7: 8}
 # Roof pieces: separate sprites the original draws over a house's roof (the chimneys of
 # seq 63). Each is an upright prism; see roof_piece().
 ROOF_PIECES = [(63, 11), (63, 12)]
+# Chimneys standing on the ground beside a house, their own sprites; see standing_piece().
+GROUND_PIECES = [(63, 13)]
 # Kit buildings: assembled in the original from modular sprites (seq 33 `outinn`: the stone
 # ground floor and the roof) plus building tiles (tilesets 34 and 35 carry the half-timbered
 # upper storey and the eave). Doors (seqs 61, 62) are drawn on its walls. See kit_building().
@@ -298,6 +300,29 @@ def roof_piece(rgba: np.ndarray) -> dict:
     xf = int(round(Pf[0]))
     foot = [xf, int(np.nonzero(stone[:, xf - 1:xf + 2].any(1))[0].max())]
     return {'top': [[round(float(v), 2) for v in P] for P in (Pl, Pb, Pr, Pf)], 'foot': foot}
+
+
+def standing_piece(rgba, dR, dL):
+    """A chimney standing on the ground beside a house, as its own sprite (home-13): a rubble
+    firebox under a tapering stack, read as the frustum from its foot to its top (as the cabin's,
+    standing_chimney). The foot's bottom outline is two base lines along the art's wall directions
+    meeting at the front corner (the lowest point); the top face is roof_piece's. Its axis is
+    taken as vertical (the top's centre stands over the foot's), which fixes the height. Returns
+    roof_piece's dict plus 'base', the foot's corners (ground, sprite pixels), and 'height'."""
+    rp = roof_piece(rgba)
+    body = silhouette(rgba)
+    bot = {x: np.nonzero(body[:, x])[0].max() for x in range(body.shape[1]) if body[:, x].any()}
+    X = np.array(sorted(bot)); Y = np.array([bot[x] for x in X], float)
+    xc = X[np.argmax(Y)]
+    sl, sr = dL[1] / dL[0], dR[1] / dR[0]
+    cl = np.median((Y - sl * X)[X <= xc]); cr = np.median((Y - sr * X)[X >= xc])
+    C = np.array([(cr - cl) / (sl - sr), 0.0]); C[1] = sl * C[0] + cl
+    cw, cd = (C[0] - X.min()) / -dL[0], (X.max() - C[0]) / dR[0]
+    base = [C, C + cd * dR, C + cd * dR + cw * dL, C + cw * dL]
+    mid, top = np.mean(base, 0), np.mean(np.array(rp['top']), 0)
+    rp['base'] = [[round(float(v), 2) for v in q] for q in base]
+    rp['height'] = round(float(mid[1] - top[1]), 2)
+    return rp
 
 
 def origin(n: int):
@@ -1221,6 +1246,11 @@ def main():
         fr = seqs[str(seq)]['frames'][frame - 1]
         out['_roof_pieces'][fr['path']] = rp = roof_piece(np.array(Image.open(ROOT / 'game' / fr['path']).convert('RGBA')))
         print(fr['path'], rp)
+    dR, dL = wall_dirs([v for k, v in out.items() if not k.startswith('_')])
+    for seq, frame in GROUND_PIECES:
+        fr = seqs[str(seq)]['frames'][frame - 1]
+        out['_roof_pieces'][fr['path']] = rp = standing_piece(np.array(Image.open(ROOT / 'game' / fr['path']).convert('RGBA')), dR, dL)
+        print(fr['path'], 'standing:', rp)
     dR, dL = wall_dirs([v for k, v in out.items() if not k.startswith('_')])
     print('wall directions', dR.round(4), dL.round(4))
     for bd in BUILDINGS:

@@ -343,6 +343,7 @@ func _build_house(s: Dictionary, d: Dictionary, rect: Rect2) -> void:
 	# A detail whose foot the view ray finds on the roof stands on the roof (a chimney).
 	var details: Array = [] # [sprite, world rect, world hotspot y]
 	var roof_pieces: Array = [] # [sprite, fit, house-local position, height of its foot]
+	var ground_pieces: Array = [] # [sprite, reading, world top-left]: chimneys standing beside the house
 	var pieces_seen := {}
 	for m in block:
 		var list: Array = world.screens[str(m)].sprites
@@ -355,6 +356,12 @@ func _build_house(s: Dictionary, d: Dictionary, rect: Rect2) -> void:
 			if not rect.intersects(er): continue
 			var at := er.position - rect.position
 			var rp: Dictionary = facades.get("_roof_pieces", {}).get(str(ed.path), {})
+			if rp.has("base"): # a chimney standing on the ground beside the house (home-13)
+				house_parts["%d:%d" % [m, i]] = true
+				var gk := "%s:%d:%d" % [ed.path, int(er.position.x), int(er.position.y)]
+				if not pieces_seen.has(gk): ground_pieces.append([e, rp, er.position])
+				pieces_seen[gk] = true
+				continue
 			if not rp.is_empty():
 				var hit := _ray_hit(fit, at.x + float(rp.foot[0]), at.y + float(rp.foot[1]))
 				if not hit.is_empty() and int(hit[1]) == 2:
@@ -386,6 +393,7 @@ func _build_house(s: Dictionary, d: Dictionary, rect: Rect2) -> void:
 	if fit.has("polys"): _add_uv_house(fit, canvas, rect.position, back)
 	else: _add_house(fit, _fill_holes(canvas), rect.position, _fill_holes(back))
 	for r in roof_pieces: _add_roof_piece(r, fit, rect.position)
+	for g in ground_pieces: _add_ground_piece(g)
 
 func _dither_mask(img: Image) -> PackedByteArray:
 	var w := img.get_width()
@@ -644,6 +652,14 @@ func _roof_height(fit: Dictionary, x: float, z: float) -> float:
 		if _inside(pts, n, Vector3(x, yy, z)) and (is_nan(best) or yy > best): best = yy
 	return best
 
+func _nrm(pts: Array[Vector3]) -> Vector3:
+	return (pts[1]-pts[0]).cross(pts[2]-pts[0])
+
+func _ctr(pts: Array[Vector3]) -> Vector3:
+	var c := Vector3.ZERO
+	for q in pts: c += q / pts.size()
+	return c
+
 func _pts(f: Dictionary) -> Array[Vector3]:
 	var pts: Array[Vector3] = []
 	for p in f.pts: pts.append(Vector3(float(p[0]), float(p[1]), float(p[2])))
@@ -724,6 +740,37 @@ func _paint_unseen(img: Image, dither: PackedByteArray, r: Array, fit: Dictionar
 				if dither[sy*w + sx]: col = Color(0, 0, 0, 0.5)
 				if col.a < 0.25: continue
 				back.set_pixel(U, V, back.get_pixel(U, V).blend(col))
+
+# A chimney standing on the ground beside a house (tools/facade_fit.py standing_piece): the
+# frustum from its foot (on the ground, where the sprite shows it) to its top face (at its height),
+# textured by projection like a house; faces the original camera never saw take the point mirror
+# about its axis.
+func _add_ground_piece(g: Array) -> void:
+	var rp: Dictionary = g[1]
+	var tl: Vector2 = g[2]
+	var img := _image(str(frame_data(int(g[0].seq), int(g[0].frame)).path))
+	var h := float(rp.height)
+	var base: Array[Vector3] = []
+	for q in rp.base: base.append(Vector3(float(q[0]), 0.0, float(q[1])))
+	var top: Array[Vector3] = [] # front, right, back, left, as the base
+	for k in [3, 2, 1, 0]: top.append(Vector3(float(rp.top[k][0]), h, float(rp.top[k][1]) + h))
+	var cen := Vector3.ZERO
+	for q in base: cen += q / 4.0
+	var faces: Array = [top]
+	for k in 4: faces.append([base[k], base[(k+1) % 4], top[(k+1) % 4], top[k]] as Array[Vector3])
+	var size := Vector2(img.get_width(), img.get_height())
+	var st := SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	for face in faces:
+		var pts: Array[Vector3] = face
+		var n := _nrm(pts) if pts.size() > 2 else Vector3.UP
+		if n.dot(_ctr(pts) - Vector3(cen.x, h/2.0, cen.z)) < 0: n = -n
+		for i in range(1, pts.size()-1):
+			for q in [pts[0], pts[i], pts[i+1]]:
+				var m: Vector3 = q if n.z >= -1e-3 else Vector3(2*cen.x - q.x, q.y, 2*cen.z - q.z)
+				st.set_uv(Vector2(m.x, m.z - m.y) / size)
+				st.add_vertex(Vector3((tl.x + q.x)*S, q.y*S, (tl.y + q.z)*S))
+	_add_mesh(st.commit(), _fill_holes(img))
 
 func _add_roof_piece(r: Array, fit: Dictionary, top_left: Vector2) -> void:
 	var rp: Dictionary = r[1]
