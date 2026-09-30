@@ -57,7 +57,8 @@ def render(checkout: Path, out_root: Path, only=None):
             print('skip', name, '(no', shots + ')')
             continue
         out = (out_root / name).resolve()
-        cmd = ['xvfb-run', '-a', '-s', '-screen 0 1920x1080x24', str(GODOT), '--path', str(checkout / 'game'),
+        # No sound may reach the default sink (Chris, 2026-09-30): the dummy audio driver, always.
+        cmd = ['xvfb-run', '-a', '-s', '-screen 0 1920x1080x24', str(GODOT), '--audio-driver', 'Dummy', '--path', str(checkout / 'game'),
                '-s', 'res://prototype/sprite_world_proto.gd', '--', str(out), str(centre)] + [str(v) for v in views]
         if shots:
             cmd.append(str(ROOT / 'tools/shots' / shots))

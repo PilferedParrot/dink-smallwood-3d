@@ -77,7 +77,7 @@ first fixes to try.
 (map 407) from original data only. It does not touch the game.
 
 ```bash
-xvfb-run -a -s "-screen 0 1920x1080x24" ~/.local/bin/Godot_v4.6.1-stable_linux.x86_64 \
+xvfb-run -a -s "-screen 0 1920x1080x24" ~/.local/bin/Godot_v4.6.1-stable_linux.x86_64 --audio-driver Dummy \
   --path game -s res://prototype/sprite_world_proto.gd -- "$PWD/builds/sprite-proto-sept24" 407
 ```
 
@@ -139,9 +139,9 @@ shadow is painted into the ground.
 
 ```bash
 /usr/bin/python3 tools/facade_fit.py   # -> game/prototype/facades.json
-xvfb-run -a -s "-screen 0 1920x1080x24" ~/.local/bin/Godot_v4.6.1-stable_linux.x86_64 \
+xvfb-run -a -s "-screen 0 1920x1080x24" ~/.local/bin/Godot_v4.6.1-stable_linux.x86_64 --audio-driver Dummy \
   --path game -s res://prototype/sprite_world_proto.gd -- "$PWD/builds/facades-sept29-407" 407
-xvfb-run -a -s "-screen 0 1920x1080x24" ~/.local/bin/Godot_v4.6.1-stable_linux.x86_64 \
+xvfb-run -a -s "-screen 0 1920x1080x24" ~/.local/bin/Godot_v4.6.1-stable_linux.x86_64 --audio-driver Dummy \
   --path game -s res://prototype/sprite_world_proto.gd -- "$PWD/builds/facades-sept29-470" 470
 /usr/bin/python3 tools/facade_contact_sheet.py builds/facades-sept29-407 builds/facades-sept29-470 \
   --out docs/images/facades-sept29.jpg
@@ -225,7 +225,7 @@ ground and stand the kit pieces up as separate cards.
 
 ```bash
 /usr/bin/python3 tools/facade_fit.py
-xvfb-run -a -s "-screen 0 1920x1080x24" ~/.local/bin/Godot_v4.6.1-stable_linux.x86_64 \
+xvfb-run -a -s "-screen 0 1920x1080x24" ~/.local/bin/Godot_v4.6.1-stable_linux.x86_64 --audio-driver Dummy \
   --path game -s res://prototype/sprite_world_proto.gd -- "$PWD/builds/facades2-505" 505 \
   439 472 473 474 504 505 506 538 539
 /usr/bin/python3 tools/facade_contact_sheet.py builds/facades2-407 builds/facades2-470 \
@@ -343,7 +343,7 @@ shows only from the original camera.
 ```bash
 /usr/bin/python3 tools/facade_fit.py
 /usr/bin/python3 tools/kit_shots.py kit-498 tools/shots/kit-498.json   # the shot files are committed
-xvfb-run -a -s "-screen 0 1920x1080x24" ~/.local/bin/Godot_v4.6.1-stable_linux.x86_64 \
+xvfb-run -a -s "-screen 0 1920x1080x24" ~/.local/bin/Godot_v4.6.1-stable_linux.x86_64 --audio-driver Dummy \
   --path game -s res://prototype/sprite_world_proto.gd -- "$PWD/builds/final-498" 498 \
   465 466 467 497 498 499 "$PWD/tools/shots/kit-498.json"
 ```
