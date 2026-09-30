@@ -1179,6 +1179,20 @@ def church_score(faces, pieces, lab):
     return 0.6 * parts_score(faces, pieces, lab) + 0.2 * iou[0] + 0.2 * iou[1]
 
 
+def church_spire_score(faces, pieces, lab):
+    """The tower and spire, refined once the body is fitted: in the spire window (church_score) the
+    tower's stone and the spire's shingles count by label as well as by outline. By outline alone
+    the pyramid swallowed the tower's shaft (its top fitted at the grid's floor, 4 px above the
+    ridge, under the art's dark louvred shaft). Depth-tested (render_z): in painter's order by whole
+    faces the near roof slope sorted in front of the tower and hid its shaft."""
+    lp = render_z(faces, lab.shape)
+    win = np.zeros(lab.shape, bool)
+    win[:125, 270:370] = True
+    cls = [((lp == c) & (lab == c) & win).sum() / max((((lp == c) | (lab == c)) & win).sum(), 1) for c in (1, 2)]
+    sil = ((lp > 0) & (lab > 0) & win).sum() / max((((lp > 0) | (lab > 0)) & win).sum(), 1)
+    return 0.5 * sil + 0.5 * float(np.mean(cls))
+
+
 def church_mirrors(p, dR, dL):
     """The apse's unseen (north) half is the mirror of its seen half across the vertical plane
     through the semicircle's centre along the ridge."""
@@ -1199,7 +1213,7 @@ BUILDINGS = [
     # lie inside the silhouette, so no score sees it. The tower's top is fitted as its height above
     # the ridge (th): free in absolute height, the descent sank the box and the pyramid's base into the roof.
     {'seq': 60, 'frame': 1, 'parts': church_parts, 'labels': church_labels, 'score': church_score,
-     'mirrors': church_mirrors,
+     'mirrors': church_mirrors, 'refine': ([16, 17, 18, 19], church_spire_score),
      'p0': [194., 372., 226., 105., 127., 8., 4., 1.1, 96., 88., 114., 0.9, 8., 68., 0.8, 4.,
             191., 26., 8., 74., 14., 8., 86., 74., 52.],
      'starts': (4, [110., 130.]),
@@ -1541,6 +1555,10 @@ def main():
             if best is None or s_ > best[1]:
                 best = (q, s_)
         p, s_ = best
+        if 'refine' in bd:  # some parts refined on their own score once the body is fitted
+            idx, rsc = bd['refine']
+            p, _ = descend(p, lambda q: rsc(*bd['parts'](q, dR, dL)[:2], lab),
+                           [bd['grids'][i] if i in idx else None for i in range(len(p))], rounds=6)
         faces, pieces, eaves = bd['parts'](p, dR, dL)
         if 'read' in bd:  # parts read from the pixels once the body is fitted
             faces, pieces, eaves, info = bd['read'](rgba, p, dR, dL)

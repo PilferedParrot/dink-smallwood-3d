@@ -568,8 +568,14 @@ and `docs/images/home10-roofs-sept30.jpg`.
 
 All Godot runs now use `--audio-driver Dummy` (f838088): no sound may reach the default sink.
 
+**The church's tower shaft.** The spire's fit scored the tower and the pyramid by outline only, and
+its render sorted whole faces by mean depth, so the near roof slope hid the tower. The pyramid
+swallowed the shaft (the tower's top at the grid's floor). Now the body is fitted as before and the
+tower and spire are refined on their own (`church_spire_score`). In the spire window the tower's stone
+and the spire's shingles count by label, depth-tested (`render_z`). Tower 30 px (was 23), top 7 px above
+the ridge, spire 60 px (was 74). The shaft band matches the drawn one's width from the original camera.
+At eye level the spire stands on a short dark shaft. 186-251 are unchanged to 0.05.
+
 Left in this pass: the trees drawn under a building (497), by a depth offset in the sprite's shader
-(moved, their trunks sank); the church's tower shaft (the spire's fit scores the tower and the pyramid
-by silhouette only, so the pyramid swallowed the shaft: score their wall and roof labels in the spire
-window).
+(moved, their trunks sank).
 
