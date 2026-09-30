@@ -41,7 +41,8 @@ fitted with one geometry (silhouette IoU 0.959-0.971), a four-arm zig-zag (kit-4
 them; the three dormer panels fit as one dormer in two orientations. See DIRECTION.md.
 Verdict (2026-09-29, Opus 5.5, fourth pass): seq 63 frames 5 and 7 fit jointly with their mirror
 twins 4 and 8; the log cabin (seq 59 frame 1) as a gable block with a standing chimney read from
-its foot and top (BUILDINGS). See DIRECTION.md.
+its foot and top (BUILDINGS); the church (seq 60 frame 1) as nave, chancel, apse, spire and
+buttresses, silhouette IoU 0.956 (built by a Sonnet 5.5 subagent). See DIRECTION.md.
 """
 from __future__ import annotations
 import argparse, colorsys, json, math
@@ -948,13 +949,19 @@ def wood_labels(rgba):
     return smooth_labels(out)
 
 
-def uv_polys(faces, pieces, eaves):
+def uv_polys(faces, pieces, eaves, mirrors=None):
     """Each face with a texture coordinate per vertex, in sprite pixels. A face the original
     camera saw (turned south, as in the prototype's houses) is textured by projection,
     (x, z - y). One it never saw takes the point mirror of its part (about the part's centre), and
     the building's back canvas. On a long wall under an eave the band the eave hid from the camera
-    (from the eave's shadow line ye - o/|n.z| up) takes the wall below it, mirrored.
-    `eaves`: block -> (eave height ye, overhang o) for gable blocks."""
+    (from the eave's shadow line ye - o/|n.z| up) takes the wall one band further down, shifted up:
+    the band just under the eave carries the eave's own marks, and a mirror doubled them into
+    chevrons (as in the prototype's _add_house).
+    `eaves`: block -> (eave height ye, overhang o) for gable blocks.
+    `mirrors`: block -> (origin, direction), both (x, z): a part whose unseen half is the mirror
+    image of its seen half across a vertical plane (an apse: the plane through its axis, along
+    the ridge) takes that reflection instead of the point mirror."""
+    mirrors = mirrors or {}
     cen = {}
     for _, pts, b in faces:
         cen.setdefault(b, []).extend(pts)
@@ -974,15 +981,20 @@ def uv_polys(faces, pieces, eaves):
             hs = max(ye - o / max(abs(n[2]), 0.3), y0 + 0.5 * (top - y0))
             lo = np.array([P[0], P[1], [P[1][0], hs, P[1][2]], [P[0][0], hs, P[0][2]]])
             hi = np.array([lo[3], lo[2], P[2], P[3]])
-            bands = [(lo, None), (hi, hs)]
-        for Q, mirror in bands:
+            bands = [(lo, None), (hi, min(2 * (top - hs), hs - y0))]
+        for Q, shift in bands:
             uv = []
             for q in Q:
                 q = q.copy()
-                if not seen:
+                if not seen and b in mirrors:
+                    o_, d_ = (np.array(c, float) for c in mirrors[b])
+                    d_ = d_ / np.linalg.norm(d_)
+                    w_ = np.array([q[0], q[2]]) - o_
+                    q[0], q[2] = o_ + 2 * (w_ @ d_) * d_ - w_
+                elif not seen:
                     q[0], q[2] = 2 * cen[b][0] - q[0], 2 * cen[b][2] - q[2]
-                if mirror is not None:
-                    q[1] = 2 * mirror - q[1]
+                if shift is not None:
+                    q[1] -= shift
                 uv.append([round(float(q[0]), 2), round(float(q[2] - q[1]), 2)])
             out.append({'pts': [[round(float(c), 2) for c in q] for q in Q], 'uv': uv,
                         'back': bool(not seen), 'piece': bool(b in pieces)})
@@ -1000,6 +1012,88 @@ def occluders(faces, pieces):
     return polys
 
 
+def church_labels(rgba):
+    """The church (seq 60 frame 1): dark blue-grey stone walls, pale warm-grey shingles. Value
+    alone loses the shingles in shade (the nave's ridge, the apse cone), so a roof is where the
+    local mean of red - blue (shingles run warm, the stone runs cool) or of the value is high."""
+    body = (rgba[..., 3] >= 128) & ~is_dither(rgba)
+    rgb = rgba[..., :3].astype(float)
+    w = body.astype(float)
+    mean = lambda x: ndimage.uniform_filter(x * w, 7) / np.maximum(ndimage.uniform_filter(w, 7), 1e-3)
+    lab = np.zeros(body.shape, np.uint8)
+    lab[body] = 1
+    lab[body & ((mean(rgb[..., 0] - rgb[..., 2]) > 5) | (mean(rgb.max(-1)) > 90))] = 2
+    return smooth_labels(lab)
+
+
+def church_layout(p, dR, dL):
+    """The church's derived points, in ground pixels (x, z): the nave's front corner F, the
+    chancel's (Fc: centred on the nave's axis, ending at the nave's gable wall) and the centre C
+    of the apse's semicircle (the middle of the chancel's far gable wall)."""
+    fx, fy, a, b, hw, o, ov, pitch, ac, bc = p[:10]
+    F = np.array([fx, fy])
+    Fc = F + (b - bc) / 2 * dL - ac * dR
+    return F, Fc, Fc + bc / 2 * dL
+
+
+def church_parts(p, dR, dL):
+    """The church (seq 60 frame 1), for the fit. Nave: a gable block, ridge along dR, front
+    corner F, length a, width b, wall height hw, eaves o, verges ov. Chancel: a lower, narrower
+    gable block continuing it along -dR (length ac to the nave's gable wall, width bc, centred, wall
+    height hwc, pitch pc, eaves oc; its verges are flush). Apse: a half cylinder against the
+    chancel's far gable wall, as wide as the chancel (radius bc / 2 in the walls' own frame, so a
+    circle of the true ground), wall height ha, with a half-cone roof (pitch pa, overhang oa).
+    Tower: a square box (side ts, top th above the nave's ridge) standing on it, centred tc along
+    it from F, under a pyramid of height sh. Buttresses: four tapered prisms against the nave's
+    south wall (width bw, projecting bd, height bh), evenly spaced from s0 by ds. The tower, its
+    spire and the buttresses are pieces: they stand in front of the body, so their outlines count
+    in the silhouette only. Params: F (2), a, b, hw, o, ov, pitch, ac, bc, hwc, pc, oc, ha, pa, oa,
+    tc, ts, th, sh, bw, bd, bh, s0, ds."""
+    fx, fy, a, b, hw, o, ov, pitch, ac, bc, hwc, pc, oc, ha, pa, oa, tc, ts, th, sh, bw, bd, bh, s0, ds = p
+    F, Fc, C = church_layout(p, dR, dL)
+    sin = abs(cross2(dR, dL))
+    faces = gable_faces(F, a * dR, b * dL, 0.0, hw, o, ov, pitch, 0)
+    faces += gable_faces(Fc, (ac + 3) * dR, bc * dL, 0.0, hwc, oc, 0.0, pc, 1)
+    r = bc / 2
+    ring = lambda th, rad: C + rad * (math.cos(th) * dR + math.sin(th) * dL)
+    ths = [math.pi / 2 + k * math.pi / 12 for k in range(13)]
+    for t0, t1 in zip(ths, ths[1:]):
+        faces.append((1, [P3(ring(t0, r), 0.0), P3(ring(t1, r), 0.0), P3(ring(t1, r), ha + pa * oa), P3(ring(t0, r), ha + pa * oa)], 2))
+        faces.append((2, [P3(ring(t0, r + oa), ha), P3(ring(t1, r + oa), ha), P3(C, ha + pa * (r + oa))], 2))
+    ridge = hw + pitch * (b * sin / 2 + o)  # the nave's ridge height
+    T = F + tc * dR + b / 2 * dL
+    yt = ridge + th
+    y0 = ridge - pitch * ts * sin / 2 - 2  # low enough for the box's corners to meet the roof
+    faces += box_faces(T - ts / 2 * (dR + dL), ts * dR, ts * dL, y0, yt, 1, 3)
+    so = 2.0  # the spire's eave
+    faces += frustum_faces(T - (ts / 2 + so) * (dR + dL), (ts + 2 * so) * dR, (ts + 2 * so) * dL, yt,
+                           T - 0.25 * (dR + dL), 0.5 * dR, 0.5 * dL, yt + sh, 2, 4)
+    for k in range(4):
+        B = F + (s0 + k * ds - bw / 2) * dR
+        faces += frustum_faces(B, bw * dR, -bd * dL, 0.0, B, bw * dR, -0.3 * bd * dL, bh, 1, 5 + k)
+    return faces, {3, 4, 5, 6, 7, 8}, {0: (hw, o), 1: (hwc, oc)}
+
+
+def church_score(faces, pieces, lab):
+    """parts_score, plus the silhouette agreement in two windows that the whole sprite's area
+    would drown: around the spire (the tower's height and the pyramid's are fixed only by its
+    outline against the air) and along the nave's south base line, where the buttresses' feet
+    show as bumps (the first face is the nave's south wall, whose base is that line)."""
+    pred = render([(9 if b in pieces else l_, pts, b) for l_, pts, b in faces], lab.shape) > 0
+    (x0, _, z0), (x1, _, z1) = faces[0][1][0], faces[0][1][1]
+    yy, xx = np.mgrid[:lab.shape[0], :lab.shape[1]]
+    zl = z0 + (xx - x0) * (z1 - z0) / (x1 - x0)
+    wins = [(xx >= 270) & (xx < 370) & (yy < 125), (xx >= x0 - 5) & (xx < x1 + 25) & (yy > zl - 12) & (yy < zl + 18)]
+    iou = [np.logical_and(pred & w, lab > 0).sum() / max(np.logical_or(pred & w, (lab > 0) & w).sum(), 1) for w in wins]
+    return 0.6 * parts_score(faces, pieces, lab) + 0.2 * iou[0] + 0.2 * iou[1]
+
+
+def church_mirrors(p, dR, dL):
+    """The apse's unseen (north) half is the mirror of its seen half across the vertical plane
+    through the semicircle's centre along the ridge."""
+    return {2: (church_layout(p, dR, dL)[2].tolist(), dR.tolist())}
+
+
 # Buildings described by parts (see cabin_parts ...): the sprite, its parts, how its pixels are
 # labelled, a start, the grids searched, and the starts tried for one parameter (the wall height,
 # which has local optima as in fit()).
@@ -1010,6 +1104,20 @@ BUILDINGS = [
                np.arange(40, 140, 4.), np.arange(0, 30, 2.), np.arange(0, 40, 2.), np.arange(0.3, 1.6, 0.05),
                np.arange(20, 110, 2.), np.arange(16, 70, 2.), np.arange(8, 60, 2.), np.arange(80, 220, 4.)],
      'read': standing_chimney},
+    # The church. The buttresses' height (bh) is held at the caps read from the art: their tops
+    # lie inside the silhouette, so no score sees it. The tower's top is fitted as its height above
+    # the ridge (th): free in absolute height, the descent sank the box and the pyramid's base into the roof.
+    {'seq': 60, 'frame': 1, 'parts': church_parts, 'labels': church_labels, 'score': church_score,
+     'mirrors': church_mirrors,
+     'p0': [194., 372., 226., 105., 127., 8., 4., 1.1, 96., 88., 114., 0.9, 8., 68., 0.8, 4.,
+            191., 26., 8., 74., 14., 8., 86., 74., 52.],
+     'starts': (4, [110., 130.]),
+     'grids': [np.arange(186, 204, 1.), np.arange(364, 392, 1.), np.arange(200, 250, 2.), np.arange(90, 125, 1.),
+               np.arange(100, 150, 2.), np.arange(0, 20, 1.), np.arange(0, 20, 1.), np.arange(0.7, 1.6, 0.05),
+               np.arange(70, 120, 2.), np.arange(70, 105, 1.), np.arange(90, 140, 2.), np.arange(0.6, 1.4, 0.05),
+               np.arange(0, 20, 1.), np.arange(40, 100, 2.), np.arange(0.3, 1.4, 0.05), np.arange(0, 14, 1.),
+               np.arange(150, 230, 2.), np.arange(16, 50, 1.), np.arange(4, 50, 1.), np.arange(30, 100, 2.),
+               np.arange(6, 32, 1.), np.arange(4, 16, 1.), None, np.arange(50, 110, 2.), np.arange(40, 70, 1.)]},
 ]
 
 
@@ -1078,7 +1186,7 @@ def main():
         fr = seqs[str(bd['seq'])]['frames'][bd['frame'] - 1]
         rgba = np.array(Image.open(ROOT / 'game' / fr['path']).convert('RGBA'))
         lab = bd['labels'](rgba)
-        sc = lambda q: parts_score(*bd['parts'](q, dR, dL)[:2], lab)
+        sc = lambda q: bd.get('score', parts_score)(*bd['parts'](q, dR, dL)[:2], lab)
         best = None
         i, vals = bd['starts']
         for v0 in vals:
@@ -1094,7 +1202,8 @@ def main():
         out[fr['path']] = {
             'score': round(s_, 3), 'params': [round(x, 3) for x in p],
             'faces': [{'label': l_, 'block': blk, 'pts': [[round(float(c), 2) for c in pt] for pt in pts]} for l_, pts, blk in faces],
-            'polys': uv_polys(faces, pieces, eaves), 'occluders': occluders(faces, pieces)}
+            'polys': uv_polys(faces, pieces, eaves, bd['mirrors'](p, dR, dL) if 'mirrors' in bd else None),
+            'occluders': occluders(faces, pieces)}
         over = Image.new('RGBA', (rgba.shape[1], rgba.shape[0]), (255, 0, 255, 255))
         over.alpha_composite(Image.fromarray(rgba))
         d = ImageDraw.Draw(over)

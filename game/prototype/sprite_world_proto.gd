@@ -4,7 +4,7 @@ extends SceneTree
 # as the original engine does; type-1 sprites stand upright at their source
 # positions; actors pick their original directional frame from the camera angle.
 # Run: godot --path game -s res://prototype/sprite_world_proto.gd -- <out_dir> [center_screen]
-#      [screens to render through the original camera...] [shots.json]
+#      [screens to render through the original camera...] [shots.json] [faceid]
 # shots.json replaces the default eye-level shots: [[name, [x, y], [look x, look y]], ...] in
 # world source pixels (world = screen origin + (x - 20, y)).
 
@@ -28,6 +28,7 @@ var kits: Array = [] # [fit, canvas, world top-left] of the kit buildings in thi
 var ground_shade: Array = [] # [shadow image, world top-left] of houses and kit buildings
 var house_parts: Dictionary = {} # "screen:index" -> true: sprites a house draws (itself, its details)
 var block: Array = [] # the screens built
+var face_id := false # debug (arg "faceid"): each house face flat in its own colour, see _add_house
 
 func _initialize() -> void:
 	var args := OS.get_cmdline_user_args()
@@ -37,7 +38,8 @@ func _initialize() -> void:
 	var views: Array = []
 	var shots_file := ""
 	for a in args.slice(2):
-		if str(a).ends_with(".json"): shots_file = a
+		if str(a) == "faceid": face_id = true
+		elif str(a).ends_with(".json"): shots_file = a
 		else: views.append(int(a))
 	sequences = JSON.parse_string(FileAccess.get_file_as_string("res://data/sequences.json"))["sequences"]
 	world = JSON.parse_string(FileAccess.get_file_as_string("res://data/world.json"))
@@ -377,7 +379,7 @@ func _build_house(s: Dictionary, d: Dictionary, rect: Rect2) -> void:
 		canvas.blend_rect(img, Rect2i(Vector2i.ZERO, img.get_size()), Vector2i(dt[1].position - rect.position))
 		if not doors.has(path):
 			back.blend_rect(img, Rect2i(Vector2i.ZERO, img.get_size()), Vector2i(dt[1].position - rect.position))
-	for r in roof_pieces: _paint_roof_piece_foot(canvas, r)
+	for r in roof_pieces: _paint_roof_piece_foot(canvas, r, fit, back)
 	# The original's shadow: the isolated black dither pixels, which lie on the ground
 	# in this projection. Painted into the ground at 50% like the engine's blend.
 	ground_shade.append([_shade(canvas, _dither_mask(canvas)), rect.position])
@@ -448,7 +450,27 @@ func _add_house(fit: Dictionary, t: ImageTexture, top_left: Vector2, back: Image
 	var st_back := SurfaceTool.new()
 	st_back.begin(Mesh.PRIMITIVE_TRIANGLES)
 	var n_back := 0
+	var roofed := {} # blocks with a roof: their walls stand under an eave, not a jetty
 	for f in fit.faces:
+		if int(f.label) == 2: roofed[int(f.block)] = true
+	var fi := -1
+	for f in fit.faces:
+		fi += 1
+		if face_id: # debug: face fi of this house in colour (8(fi+1), 60 block, 255)
+			var fst := SurfaceTool.new()
+			fst.begin(Mesh.PRIMITIVE_TRIANGLES)
+			var fp := _pts(f)
+			for i in range(1, fp.size()-1):
+				for q in [fp[0], fp[i], fp[i+1]]: fst.add_vertex(Vector3((top_left.x + q.x)*S, q.y*S, (top_left.y + q.z)*S))
+			var fm := MeshInstance3D.new()
+			fm.mesh = fst.commit()
+			var mat := StandardMaterial3D.new()
+			mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+			mat.cull_mode = BaseMaterial3D.CULL_DISABLED
+			mat.albedo_color = Color8(8*(fi+1), 60*int(f.block), 255)
+			fm.material_override = mat
+			root3d.add_child(fm)
+			continue
 		var c: Array = fit.centers[int(f.block)]
 		var centre := Vector3(float(c[0]), float(c[1]), float(c[2]))
 		var pts: Array[Vector3] = []
@@ -461,27 +483,32 @@ func _add_house(fit: Dictionary, t: ImageTexture, top_left: Vector2, back: Image
 		# squarely: n.view vs (-nx, ny, -nz).view, i.e. faces turned south use their own
 		# pixels; north-turned ones (unseen, or seen at a grazing, smeared angle) the mirror.
 		var seen_by_camera := normal.z >= 0.0
-		var polys: Array = [[pts, INF]] # [polygon, mirror height for the texture]
+		var polys: Array = [[pts, INF, 0.0]] # [polygon, mirror height, shift down for the texture]
 		if int(f.label) == 1:
-			# The eave hid the top of this wall from the original camera (the view ray
-			# drops o/|n.z| crossing the overhang); texture that band from the stone
-			# just below it, mirrored, instead of from the eave's thatch.
+			# The eave (or the jetty) hid the top of this wall from the original camera (the
+			# view ray drops o/|n.z| crossing the overhang). Under an eave, that band takes the
+			# wall one band further down, shifted up: the band just under the eave carries the
+			# eave's own marks (rafter holes, the top rail), and mirroring it doubled them into
+			# diamonds and chevrons. Under a jetty it takes the stone just below, mirrored.
 			var y0 := pts[0].y
 			var top := pts[2].y
 			var band := float(fit.overhangs[int(f.block)]) / maxf(absf(normal.z), 0.3)
 			var hs := maxf(top - band, y0 + 0.5*(top - y0))
 			var lo: Array[Vector3] = [pts[0], pts[1], Vector3(pts[1].x, hs, pts[1].z), Vector3(pts[0].x, hs, pts[0].z)]
 			var hi: Array[Vector3] = [lo[3], lo[2], pts[2], pts[3]]
-			polys = [[lo, INF], [hi, hs]]
+			if roofed.has(int(f.block)): polys = [[lo, INF, 0.0], [hi, INF, minf(2.0*(top - hs), hs - y0)]]
+			else: polys = [[lo, INF, 0.0], [hi, hs, 0.0]]
 		var out: SurfaceTool = st if seen_by_camera or back == null else st_back
 		if out == st_back: n_back += 1
 		for poly in polys:
 			var ps: Array[Vector3] = poly[0]
 			var mirror: float = poly[1]
+			var shift: float = poly[2]
 			for i in range(1, ps.size()-1):
 				for p in [ps[0], ps[i], ps[i+1]]:
 					var q: Vector3 = p if seen_by_camera else Vector3(2*centre.x - p.x, p.y, 2*centre.z - p.z)
 					if mirror != INF: q.y = 2*mirror - q.y
+					q.y -= shift
 					out.set_uv(Vector2(q.x, q.z - q.y) / size)
 					out.add_vertex(Vector3((top_left.x + p.x)*S, p.y*S, (top_left.y + p.z)*S))
 	_add_mesh(st.commit(), t)
@@ -589,6 +616,23 @@ func _ray_hit(fit: Dictionary, x: float, y: float) -> Array:
 	return best
 
 # Height of the roof above ground point (x, z) in house-local pixels, or NAN.
+# As _ray_hit, returning [Y, block, whether the original camera saw the face (normal turned south)].
+func _ray_face(fit: Dictionary, x: float, y: float) -> Array:
+	var best := []
+	for f in fit.faces:
+		var pts := _pts(f)
+		var n := (pts[1]-pts[0]).cross(pts[2]-pts[0])
+		var den := n.y + n.z
+		if absf(den) < 1e-6: continue
+		var yy := (n.dot(pts[0]) - n.x*x - n.z*y) / den
+		if not _inside(pts, n, Vector3(x, yy, y + yy)) or (not best.is_empty() and yy <= best[0]): continue
+		var c: Array = fit.centers[int(f.block)]
+		var mid := Vector3.ZERO
+		for q in pts: mid += q / pts.size()
+		if n.dot(mid - Vector3(float(c[0]), float(c[1]), float(c[2]))) < 0: n = -n
+		best = [yy, int(f.block), n.z >= 0.0]
+	return best
+
 func _roof_height(fit: Dictionary, x: float, z: float) -> float:
 	var best := NAN
 	for f in fit.faces:
@@ -614,7 +658,13 @@ func _inside(pts: Array[Vector3], n: Vector3, q: Vector3) -> bool:
 		elif signf(s) != sign: return false
 	return true
 
-func _paint_roof_piece_foot(canvas: Image, r: Array) -> void:
+# The thatch ring and cast shadow at a chimney's foot, painted into the canvas where the original
+# camera saw them. Some land on a face it never saw squarely (the north slope's sliver behind the
+# ridge: 98 of the 439 shadow wedge's pixels in a face-ID render, arg "faceid"), which samples the
+# back canvas at the point mirror. The sliver is seen at a grazing angle, so neighbouring screen
+# pixels sample texels ~10 px apart and single painted texels vanish in its mipmaps; so every back
+# texel whose point on such a face projects onto a foot pixel is painted (_paint_unseen).
+func _paint_roof_piece_foot(canvas: Image, r: Array, fit: Dictionary, back: Image) -> void:
 	var rp: Dictionary = r[1]
 	var at: Vector2 = r[2]
 	var img := _image(str(frame_data(int(r[0].seq), int(r[0].frame)).path))
@@ -631,6 +681,49 @@ func _paint_roof_piece_foot(canvas: Image, r: Array) -> void:
 			var q := Vector2i(int(at.x) + x, int(at.y) + y)
 			if q.x < 0 or q.y < 0 or q.x >= canvas.get_width() or q.y >= canvas.get_height(): continue
 			canvas.set_pixel(q.x, q.y, canvas.get_pixel(q.x, q.y).blend(c))
+	_paint_unseen(img, dither, r, fit, back)
+
+# Every back-canvas texel sampled by a face the original camera never saw (normal turned north),
+# whose point on that face the original camera shows at a foot pixel of the roof piece: painted
+# with that pixel. A face samples (2c.x - x, 2c.z - z - y) at its point (x, y, z), so a texel
+# (U, V) is the point with x = 2c.x - U and y + z = 2c.z - V on the face's plane.
+func _paint_unseen(img: Image, dither: PackedByteArray, r: Array, fit: Dictionary, back: Image) -> void:
+	var rp: Dictionary = r[1]
+	var at: Vector2 = r[2]
+	var w := img.get_width()
+	var h := img.get_height()
+	for f in fit.faces:
+		var pts := _pts(f)
+		var n := (pts[1]-pts[0]).cross(pts[2]-pts[0])
+		var c: Array = fit.centers[int(f.block)]
+		var cen := Vector3(float(c[0]), float(c[1]), float(c[2]))
+		var mid := Vector3.ZERO
+		for q in pts: mid += q / pts.size()
+		if n.dot(mid - cen) < 0: n = -n
+		if n.z >= 0.0 or absf(n.y - n.z) < 1e-6: continue
+		# The texels this face samples in the piece's neighbourhood: mirror the piece's rect.
+		var lo := Vector2(INF, INF)
+		var hi := Vector2(-INF, -INF)
+		for q in pts:
+			var uv := Vector2(2.0*cen.x - q.x, 2.0*cen.z - q.z - q.y)
+			lo = lo.min(uv)
+			hi = hi.max(uv)
+		for V in range(maxi(0, int(lo.y)), mini(back.get_height(), int(hi.y) + 1)):
+			for U in range(maxi(0, int(lo.x)), mini(back.get_width(), int(hi.x) + 1)):
+				var x := 2.0*cen.x - (U + 0.5)
+				var sz := 2.0*cen.z - (V + 0.5) # y + z on the face
+				# n.x x + n.y y + n.z (sz - y) = n.p0
+				var y := (n.dot(pts[0]) - n.x*x - n.z*sz) / (n.y - n.z)
+				var p := Vector3(x, y, sz - y)
+				if not _inside(pts, n, p): continue
+				var sx := int(floor(p.x - at.x))
+				var sy := int(floor(p.z - p.y - at.y))
+				if sx < 0 or sy < 0 or sx >= w or sy >= h: continue
+				if sx >= float(rp.top[0][0]) and sx <= float(rp.top[2][0]) and sy <= float(rp.foot[1]): continue
+				var col := img.get_pixel(sx, sy)
+				if dither[sy*w + sx]: col = Color(0, 0, 0, 0.5)
+				if col.a < 0.25: continue
+				back.set_pixel(U, V, back.get_pixel(U, V).blend(col))
 
 func _add_roof_piece(r: Array, fit: Dictionary, top_left: Vector2) -> void:
 	var rp: Dictionary = r[1]

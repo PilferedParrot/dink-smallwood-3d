@@ -448,12 +448,43 @@ stand like their twins. Through the original camera every Sept 29 screen is with
 | 270 | 15.0 | 13.9 | the cabin |
 | 500 / 537 / 619 | 12.1 / 13.0 / 13.4 | 11.4 / 12.5 / 13.1 | the twin houses |
 
+**The church (seq 60 frame 1, 187-188)** is parts in the same frame (`church_parts`; built by a
+Sonnet 5.5 subagent, judged here): the nave and the chancel are gable blocks, the chancel centred on
+the nave's axis; the apse is a half cylinder as wide as the chancel with a half-cone roof; a square
+tower on the ridge carries the spire; four buttresses stand against the south wall. Walls and roof
+are told apart by warmth and brightness (`church_labels`). Its unseen half-apse mirrors across the
+apse's axis, not through a point (`uv_polys(..., mirrors)`). Silhouette IoU 0.956. Two weaknesses:
+`church_score` weights a fixed pixel window round the spire, fitted to this one sprite, and the
+buttresses' height is read from the art and held (their tops lie inside the silhouette). The dark
+square on the chancel's west gable is chrch-09, a window the level places on screen 187.
+
+**The eave band (third pass, defect 1).** The band the eave hid now takes the wall one band further
+down, shifted up, not the band just below it mirrored: that band carries the eave's own marks
+(rafter holes on the cottages, the top rail on the kit buildings), and the mirror doubled them into
+diamonds and chevrons. Walls under a jetty keep the mirror. The original camera cannot see the band,
+so its numbers are unchanged; see the last rows of the evidence sheet.
+
+**The 439 chimney's cast shadow (third pass, defect 4).** A face-ID render (prototype arg `faceid`:
+each house face flat in its own colour) put 98 of the wedge's 169 pixels on face 6, the north slope's
+sliver behind the ridge, 20 on the hips and 43 behind the chimney itself; 8 miss. So the geometry was
+right. Face 6 is textured from the back canvas through the point mirror, and the foot was painted
+only into the front canvas. Painting each pixel at its mirrored texel (the earlier attempt) lands, but
+the sliver is seen at a grazing angle: neighbouring screen pixels sample texels ~10 px apart, and the
+isolated painted texels vanish in the mipmaps. `_paint_unseen` paints every back texel whose point on
+an unseen face projects onto a foot pixel. The wedge's error fell from 33.1 to 16.5.
+
+Evidence: `docs/images/church-eaves-sept29.jpg`. Regression over every screen rendered since Sept 29
+(`tools/facade_regress.py table`): 187 17.7 to 14.8, 188 13.5 to 12.0, 439 13.9 to 13.8; the rest as
+in the table above.
+
 **Defects I see, in order:**
-1. The eave band (third pass, defect 1) shows on every house too, as a row of arrowheads under the
-   thatch: the mirrored stone repeats the rafter holes.
-2. The church (seq 60, 187-188) and home-10 (318, 349, 350) are still cards.
-3. At the acute corner of the rhombic footprint (56 degrees), a hip roof's eave sticks out as a
+1. home-10 (seq 63 frame 10, one house on 318, 349 and 350) is still a card: a two-storey core with
+   a lower cross wing, the kit's arms-along-the-front model with an upper block.
+2. At the acute corner of the rhombic footprint (56 degrees), a hip roof's eave sticks out as a
    thatch spike about half a metre long.
-4. A tree billboard standing against a wall is cut by it (251, 497): the flat billboard stands at
+3. A tree billboard standing against a wall is cut by it (251, 497): the flat billboard stands at
    the trunk, not at the front of its canopy.
-5. home-13, the tall chimney beside home-05 on 500, is composited flat onto the wall.
+4. home-13, the tall chimney beside home-05 on 500, is composited flat onto the wall; it is a sprite
+   of its own, so `roof_piece` can read it once a foot ray that misses the house means the ground.
+5. The church's spire has no tower shaft (it fits at the grid's floor) and its buttresses are about
+   5 px wider than drawn.

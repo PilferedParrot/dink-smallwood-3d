@@ -61,7 +61,10 @@ def render(checkout: Path, out_root: Path, only=None):
                '-s', 'res://prototype/sprite_world_proto.gd', '--', str(out), str(centre)] + [str(v) for v in views]
         if shots:
             cmd.append(str(ROOT / 'tools/shots' / shots))
-        r = subprocess.run(cmd, capture_output=True, text=True)
+        try:  # a script error leaves Godot running: never wait on it forever
+            r = subprocess.run(cmd, capture_output=True, text=True, timeout=300)
+        except subprocess.TimeoutExpired:
+            print(name, "TIMEOUT"); continue
         errs = [l for l in (r.stdout + r.stderr).splitlines() if 'ERROR' in l or 'SCRIPT ERROR' in l]
         print(name, 'exit', r.returncode, len(list(out.glob('*.png'))), 'images', *errs[:3], sep='  ')
 
