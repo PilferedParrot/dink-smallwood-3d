@@ -120,10 +120,21 @@ def base_lines(lab: np.ndarray):
     return F, L, R
 
 
-def block_faces(F, L, R, y0, hw, o, pitch, block=0, end_pitch=None):
+def block_faces(F, L, R, y0, hw, o, pitch, block=0, end_pitch=None, thick=0.0, bulge=0.0):
     """Faces as lists of 3D points (X, Y, Z) with a label. Ground point (x, z) = sprite (x, y).
     The hip ends take the side pitch unless end_pitch is given (a steeper end hip, whose
-    ridge runs closer to the end walls)."""
+    ridge runs closer to the end walls).
+
+    thick: thatch has a thickness. The slopes are its top; its underside is the same slopes
+    lowered by `thick`, and a thatch edge (a fascia) hangs from the eave all round, as the drawn
+    eave roll hangs in front of the top of the wall. Without it a thatched roof reads as a thin
+    board at eye level. (Raised instead, above the slopes, it was confounded with `bulge`: the
+    silhouette cannot tell a thicker roof from a fuller one.)
+
+    bulge: drawn thatch is convex, like a dome. Each slope breaks halfway up its hip lines, where
+    the roof is raised by `bulge`: a steeper lower facet and a flatter upper one, all planar (the
+    break line is parallel to the eave and the ridge). A straight slope runs under the drawn
+    upper edges (home-10's core roof on 318)."""
     u, v = R - F, L - F
     if np.linalg.norm(v) > np.linalg.norm(u):  # u = long axis
         u, v = v, u
@@ -148,10 +159,24 @@ def block_faces(F, L, R, y0, hw, o, pitch, block=0, end_pitch=None):
     yr = ye + rise
     e3 = [(e[0], ye, e[1]) for e in E]
     p0, p1 = (P0[0], yr, P0[1]), (P1[0], yr, P1[1])
-    faces.append((2, [e3[0], e3[1], p1, p0], block))      # long side at F
-    faces.append((2, [e3[1], e3[2], p1], block))          # hip
-    faces.append((2, [e3[2], e3[3], p0, p1], block))      # far long side
-    faces.append((2, [e3[3], e3[0], p0], block))          # hip
+    n_roof = 4
+    if not bulge:
+        faces.append((2, [e3[0], e3[1], p1, p0], block))      # long side at F
+        faces.append((2, [e3[1], e3[2], p1], block))          # hip
+        faces.append((2, [e3[2], e3[3], p0, p1], block))      # far long side
+        faces.append((2, [e3[3], e3[0], p0], block))          # hip
+    else:
+        mid = lambda a, b: tuple((a[k] + b[k]) / 2 + (bulge if k == 1 else 0.0) for k in range(3))
+        m = [mid(e3[0], p0), mid(e3[1], p1), mid(e3[2], p1), mid(e3[3], p0)]
+        faces += [(2, [e3[0], e3[1], m[1], m[0]], block), (2, [e3[1], e3[2], m[2], m[1]], block),
+                  (2, [e3[2], e3[3], m[3], m[2]], block), (2, [e3[3], e3[0], m[0], m[3]], block),
+                  (2, [m[0], m[1], p1, p0], block), (2, [m[1], m[2], p1], block),
+                  (2, [m[2], m[3], p0, p1], block), (2, [m[3], m[0], p0], block)]
+        n_roof = 8
+    if thick:
+        dn = lambda q: (q[0], q[1] - thick, q[2])
+        faces += [(2, [dn(q) for q in pts], block) for _, pts, _ in faces[-n_roof:]]
+        faces += [(2, [dn(e3[i]), dn(e3[(i + 1) % 4]), e3[(i + 1) % 4], e3[i]], block) for i in range(4)]
     return faces
 
 
@@ -161,13 +186,13 @@ def block_center(faces, block):
     return [round(float(np.mean(xs)), 2), round(float(np.mean(ys)), 2), round(float(np.mean(zs)), 2)]
 
 
-def house_faces(F, L, R, params, blocks):
-    faces = block_faces(F, L, R, 0.0, *params[:3])
+def house_faces(F, L, R, params, blocks, thick=0.0, bulge=0.0):
+    faces = block_faces(F, L, R, 0.0, *params[:3], thick=thick, bulge=bulge)
     if blocks == 2:
         s, h2, o2, p2 = params[3:7]
         C = (L + R) / 2
         k = max(0.2, 1 - s)
-        faces += block_faces(C + (F - C) * k, C + (L - C) * k, C + (R - C) * k, params[0], h2, o2, p2, 1)
+        faces += block_faces(C + (F - C) * k, C + (L - C) * k, C + (R - C) * k, params[0], h2, o2, p2, 1, thick=thick, bulge=bulge)
     return faces
 
 
@@ -1200,6 +1225,16 @@ BUILDINGS = [
 # read in reverse with the two directions swapped; the dimensions are shared, each sprite keeps
 # its own zig-zag.
 CROSS = (10, 9)
+# Thatch thickness shared by every thatched house, set by main() from its search (block_faces).
+THATCH = [0.0, 0.0]  # thickness, bulge
+FLAT_HOUSES = True  # the other thatched houses keep flat thatch (see main)
+# home-10's wing pitch is read from the art, as the other thatched houses' are: the front wing's
+# hip end, its one ridge end drawn against contrast, peaks on the 1.05 line of an overlay of 0.65,
+# 0.85 and 1.05 (2026-09-30). Fitted freely it went to 0.65, and the wings read as flat slabs.
+# The core's pitch is read from the sprite's top 80 rows, where only the core's roof stands against
+# the air (screen 318 shows exactly those rows): silhouette IoU there, both twins, at the fitted
+# rest, peaks at 1.5 (1.1: 0.886, 1.3: 0.915, 1.5: 0.923, 1.7: 0.899, 2.0: 0.848). Fitted over the
+# whole sprite it went to 1.25, and the core's roof stood a band below the drawn top edges.
 CROSS_NAMES = ['long wing', 'front wing', 'core']
 
 
@@ -1287,10 +1322,10 @@ def cross_plan(Q, mirrored, dR, dL):
     return C1, es, et, dims
 
 
-CROSS_P0 = [80., 10., 0.9, 180., 200., 42., 24., 118., 102., 10., 1.1]
-CROSS_GRIDS = [np.arange(50, 110, 2.), np.arange(0, 24, 2.), np.arange(0.6, 1.3, 0.05), np.arange(100, 260, 4.),
+CROSS_P0 = [80., 10., 1.05, 180., 200., 42., 24., 118., 102., 10., 1.5, 1.25]
+CROSS_GRIDS = [np.arange(50, 110, 2.), np.arange(0, 24, 2.), None, np.arange(100, 260, 4.),
                np.arange(60, 260, 4.), np.arange(10, 120, 2.), np.arange(-10, 100, 2.), np.arange(60, 160, 2.),
-               np.arange(60, 160, 2.), np.arange(0, 24, 2.), np.arange(0.6, 1.3, 0.05)]
+               np.arange(60, 160, 2.), np.arange(0, 24, 2.), None, np.arange(0.9, 3.2, 0.1)]
 
 
 def cross_labels(rgba):
@@ -1322,7 +1357,8 @@ def cross_faces(plan, p):
     foot is hidden by the wings' roofs, so its height and its ground position trade off along the
     view ray and the silhouette cannot tell them apart)."""
     C1, es, et, d = plan
-    h1, o, pw, wL, fD, cs0, ct0, ca, cb, oc, pc = p
+    h1, o, pw, wL, fD, cs0, ct0, ca, cb, oc, pc = p[:11]
+    pe = p[11] if len(p) > 11 else None  # the core's hip ends, steeper: its rounded thatch ends (318)
     G = lambda s, t: C1 + s * es + t * et
     rect = lambda s0, t0, ds, dt: (G(s0, t0), G(s0, t0 + dt), G(s0 + ds, t0))  # F, L, R
     fD = max(fD, -d['tC'] + 8)
@@ -1330,7 +1366,7 @@ def cross_faces(plan, p):
             (rect(cs0, ct0, ca, cb), 2 * h1, oc, pc)]
     faces = []
     for k, ((F, L, R), hw, oo, pp) in enumerate(spec):
-        faces += block_faces(F, L, R, 0.0, hw, oo, pp, k)
+        faces += block_faces(F, L, R, 0.0, hw, oo, pp, k, end_pitch=pe if k == 2 else None, thick=THATCH[0], bulge=THATCH[1])
     return faces
 
 
@@ -1407,6 +1443,33 @@ def main():
     Path(args.sheet).mkdir(parents=True, exist_ok=True)
     twin_of = {f: t for f, t in TWINS.items()}
     shared = {}
+    def house_fit(seq, frame, blocks, pitches, fixed):
+        group = sorted({frame, twin_of.get(frame, frame)} | {f for f, t in TWINS.items() if t == frame})
+        if tuple(group) not in shared:
+            labs = [classify(np.array(Image.open(ROOT / 'game' / seqs[str(seq)]['frames'][g - 1]['path']).convert('RGBA')))
+                    for g in group]
+            shared[tuple(group)] = fit(labs, blocks, fixed)
+        bases, p, _ = shared[tuple(group)]
+        (F, L, R), p = bases[group.index(frame)], list(p)
+        p[2] = pitches[0]
+        if blocks == 2:
+            p[6] = pitches[1]
+        return F, L, R, p
+    # Thatch thickness and bulge (block_faces): one profile for the thatch of this art, the mean
+    # label score over every house's sprite (faces as built): flat 0.6715, best 0.6796 at 2 px
+    # hanging, 8 px bulge. Read per house instead, the label score and the original camera
+    # disagreed (home-01 flat by labels, fullest by colour), so the profile is shared, as the kit's
+    # geometry is. home-10 takes it; the other houses stay flat in this commit (FLAT_HOUSES).
+    pre = []
+    for seq, frame, blocks, pitches, fixed in HOUSES:
+        rgba = np.array(Image.open(ROOT / 'game' / seqs[str(seq)]['frames'][frame - 1]['path']).convert('RGBA'))
+        pre.append((house_fit(seq, frame, blocks, pitches, fixed), blocks, classify(rgba), silhouette(rgba)))
+    grid = [(t, g) for t in np.arange(0, 18, 2.) for g in np.arange(0, 18, 2.)]
+    tsc = {tg: float(np.mean([score(render(clip_tips(house_faces(*h, b, *tg), sil), lab.shape), lab) for h, b, lab, sil in pre]))
+           for tg in grid}
+    THATCH[:] = list(max(tsc, key=tsc.get))
+    print('thatch thickness, bulge', THATCH, 'score %.4f' % tsc[tuple(THATCH)], 'flat %.4f' % tsc[(0.0, 0.0)])
+    house_thatch = (0.0, 0.0) if FLAT_HOUSES else tuple(THATCH)
     for seq, frame, blocks, pitches, fixed in HOUSES:
         fr = seqs[str(seq)]['frames'][frame - 1]
         rgba = np.array(Image.open(ROOT / 'game' / fr['path']).convert('RGBA'))
@@ -1425,7 +1488,7 @@ def main():
         p[2] = pitches[0]
         if blocks == 2:
             p[6] = pitches[1]
-        faces = clip_tips(house_faces(F, L, R, p, blocks), silhouette(rgba))
+        faces = clip_tips(house_faces(F, L, R, p, blocks, *house_thatch), silhouette(rgba))
         out[fr['path']] = {
             'score': round(s, 3),
             'faces': [{'label': lab_, 'block': blk, 'pts': [[round(float(c), 2) for c in pt] for pt in pts]} for lab_, pts, blk in faces],
