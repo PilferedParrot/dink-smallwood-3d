@@ -542,3 +542,34 @@ home-10's core roof). Against the Sept 29 baseline, 497 stays +0.3 (tree-04, dra
    shader, not a move.
 3. The church's spire has no tower shaft, and its buttresses are about 5 px wider than drawn.
 
+## Home-10's roofs, thatch, trees under buildings, the tower shaft — September 30, sixth pass (Opus 5.5)
+
+State at the time of writing (the pass is in progress; the last paragraph says what is left).
+
+**home-10's roofs (d13c6c8, on the held 997ac24).** The wing pitch is read from the art as the other
+houses' are: an overlay of 0.65, 0.85 and 1.05 puts the front wing's hip end, its one ridge end drawn
+against contrast, on 1.05. Fitted freely it had gone to 0.65: flat slabs. The core's pitch is read from
+the sprite's top 80 rows, where only the core's roof stands against the air. Screen 318 shows exactly
+those rows. Silhouette IoU there, on both twins, peaks at 1.5 (1.25 fitted). The band along the core
+roof's top edges that 318 showed is gone. 318 is still +0.14 against the card (10.08 to 10.22), spread
+evenly over the roof's interior, not its edges. It is not mip blur: with mipmaps off it is unchanged
+to three decimals. It is not diagnosed. The card was exact there, and 350 went 12.5 to 10.4.
+
+**Thatch (block_faces `thick`, `bulge`).** Drawn thatch is convex and hangs a little at the eave. Each
+hip slope now breaks halfway up its hip lines, raised by a bulge, and a thatch edge hangs from the eave
+with the underside below it. One profile for this art's thatch, from the mean label score over every
+house's sprite: 2 px hanging, 8 px bulge (0.6796, flat 0.6715). The first try raised the thickness
+above the slopes, where the silhouette cannot tell it from a bulge. Read per house, the label score and
+the original camera disagreed, so the profile is shared, as the kit's geometry is. d13c6c8 gives it to
+home-10 only. The next commit gives it to every thatched house: at eye level the cottages' roofs are
+full and rounded instead of boards. From the original camera, against the published state: 439 -0.34,
+617 -0.35, 440/500/586/618 -0.1, but 619 +0.10 and 470 +0.08. Evidence: `docs/images/thatch-sept30.jpg`
+and `docs/images/home10-roofs-sept30.jpg`.
+
+All Godot runs now use `--audio-driver Dummy` (f838088): no sound may reach the default sink.
+
+Left in this pass: the trees drawn under a building (497), by a depth offset in the sprite's shader
+(moved, their trunks sank); the church's tower shaft (the spire's fit scores the tower and the pyramid
+by silhouette only, so the pyramid swallowed the shaft: score their wall and roof labels in the spire
+window).
+

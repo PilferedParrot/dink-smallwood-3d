@@ -1227,7 +1227,7 @@ BUILDINGS = [
 CROSS = (10, 9)
 # Thatch thickness shared by every thatched house, set by main() from its search (block_faces).
 THATCH = [0.0, 0.0]  # thickness, bulge
-FLAT_HOUSES = True  # the other thatched houses keep flat thatch (see main)
+FLAT_HOUSES = False  # every thatched house takes the shared profile (see main)
 # home-10's wing pitch is read from the art, as the other thatched houses' are: the front wing's
 # hip end, its one ridge end drawn against contrast, peaks on the 1.05 line of an overlay of 0.65,
 # 0.85 and 1.05 (2026-09-30). Fitted freely it went to 0.65, and the wings read as flat slabs.
@@ -1459,7 +1459,7 @@ def main():
     # label score over every house's sprite (faces as built): flat 0.6715, best 0.6796 at 2 px
     # hanging, 8 px bulge. Read per house instead, the label score and the original camera
     # disagreed (home-01 flat by labels, fullest by colour), so the profile is shared, as the kit's
-    # geometry is. home-10 takes it; the other houses stay flat in this commit (FLAT_HOUSES).
+    # geometry is. Every thatched house takes it (FLAT_HOUSES).
     pre = []
     for seq, frame, blocks, pitches, fixed in HOUSES:
         rgba = np.array(Image.open(ROOT / 'game' / seqs[str(seq)]['frames'][frame - 1]['path']).convert('RGBA'))
