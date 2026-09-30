@@ -28,6 +28,8 @@ var kits: Array = [] # [fit, canvas, world top-left] of the kit buildings in thi
 var ground_shade: Array = [] # [shadow image, world top-left] of houses and kit buildings
 var house_parts: Dictionary = {} # "screen:index" -> true: sprites a house draws (itself, its details)
 var block: Array = [] # the screens built
+var buildings: Array = [] # [footprint (world px), original draw key]: houses and parts buildings
+var nudged: Array = [] # [Sprite3D, source position, depth offset (m), pixel size]: see _nudge_billboards
 var face_id := false # debug (arg "faceid"): each house face flat in its own colour, see _add_house
 
 func _initialize() -> void:
@@ -194,6 +196,8 @@ func _add_sprite(s: Dictionary, d: Dictionary, t: Texture2D, g: Vector2) -> void
 	elif t.get_width() > 100 or str(d.path).contains("/Fence/") or str(d.path).contains("/struct/"):
 		# Structures keep the orientation they were drawn in (facing the original viewer).
 		sp.billboard = BaseMaterial3D.BILLBOARD_DISABLED
+	# Trees and props (wide trees stand as fixed cards, the rest as billboards); not fences or buildings.
+	if not str(d.path).contains("/struct/") and not str(d.path).contains("/Fence/"): _flag_nudge(sp, g, float(t.get_width())/2.0 * maxf(0.01, float(s.size)/100.0))
 	root3d.add_child(sp)
 
 func _set_anchor(sp: Sprite3D, d: Dictionary, t: Texture2D) -> void:
@@ -201,6 +205,39 @@ func _set_anchor(sp: Sprite3D, d: Dictionary, t: Texture2D) -> void:
 	var dy := float(d.get("dy",t.get_height()-10.0))
 	sp.centered = true
 	sp.offset = Vector2(t.get_width()/2.0-dx, dy-t.get_height()/2.0)
+
+# A flat billboard whose canopy overlaps a building is cut by its walls or roof where the plane
+# through its trunk passes inside. The original draws a sprite whose hotspot lies below the
+# building's over it: such a billboard is moved along the view ray toward the camera by its
+# half-width and scaled to keep its size on screen, so it stands clear in front of the building,
+# as drawn (251). Its trunk, and any collision, stays where the source put it. One drawn under the
+# building is left: moved away along the ray, its trunk sinks below the ground (it needs a depth
+# offset in a shader, not a move).
+func _flag_nudge(sp: Sprite3D, g: Vector2, r: float) -> void:
+	for b in buildings:
+		var hull: PackedVector2Array = b[0]
+		var dist := 0.0
+		if not Geometry2D.is_point_in_polygon(g, hull):
+			dist = INF
+			for i in hull.size():
+				dist = minf(dist, g.distance_to(Geometry2D.get_closest_point_to_segment(g, hull[i], hull[(i+1) % hull.size()])))
+		if dist < r:
+			if g.y > float(b[1]): nudged.append([sp, sp.position, r * S, sp.pixel_size])
+			return
+
+func _nudge_billboards() -> void:
+	for n in nudged:
+		var sp: Sprite3D = n[0]
+		var a: Vector3 = n[1]
+		var off: float = n[2]
+		if camera.projection == Camera3D.PROJECTION_ORTHOGONAL:
+			sp.position = a + camera.global_transform.basis.z * off
+			sp.pixel_size = n[3]
+		else:
+			var to_cam := camera.global_position - a
+			var d := to_cam.length()
+			sp.position = a + to_cam / d * off
+			sp.pixel_size = n[3] * (d - off) / d
 
 func _face_actors() -> void:
 	var cam := Vector2(camera.position.x, camera.position.z)
@@ -248,6 +285,7 @@ func _shot(pos_src: Vector2, look_src: Vector2, center: int) -> void:
 	camera.position = p
 	camera.look_at(Vector3((o.x+look_src.x-20)*S, EYE*0.8, (o.y+look_src.y)*S), Vector3.UP)
 	_face_actors()
+	_nudge_billboards()
 
 func _capture(out_dir: String, center: int, views: Array, shots_file: String) -> void:
 	DirAccess.make_dir_recursive_absolute(out_dir)
@@ -389,6 +427,12 @@ func _build_house(s: Dictionary, d: Dictionary, rect: Rect2) -> void:
 	for r in roof_pieces: _paint_roof_piece_foot(canvas, r, fit, back)
 	# The original's shadow: the isolated black dither pixels, which lie on the ground
 	# in this projection. Painted into the ground at 50% like the engine's blend.
+	var foot := PackedVector2Array()
+	for f in fit.faces:
+		if int(f.label) != 1: continue
+		for q in f.pts:
+			if absf(float(q[1])) < 1e-3: foot.append(rect.position + Vector2(float(q[0]), float(q[2])))
+	if foot.size() >= 3: buildings.append([Geometry2D.convex_hull(foot), rect.position.y + float(d.dy)])
 	ground_shade.append([_shade(canvas, _dither_mask(canvas)), rect.position])
 	if fit.has("polys"): _add_uv_house(fit, canvas, rect.position, back)
 	else: _add_house(fit, _fill_holes(canvas), rect.position, _fill_holes(back))
@@ -590,6 +634,7 @@ func _original_view(out_dir: String, n: int) -> void:
 	camera.far = 200
 	env_node.environment.fog_enabled = false
 	_face_actors()
+	_nudge_billboards()
 	for i in 4: await process_frame
 	await RenderingServer.frame_post_draw
 	var img := root.get_texture().get_image()
