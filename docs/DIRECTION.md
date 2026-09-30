@@ -488,3 +488,57 @@ in the table above.
    of its own, so `roof_piece` can read it once a foot ray that misses the house means the ground.
 5. The church's spire has no tower shaft (it fits at the grid's floor) and its buttresses are about
    5 px wider than drawn.
+
+## Eave tips, trees against walls, home-13, home-10 — September 30, fifth pass (Opus 5.5)
+
+Four of the fourth pass's defects. Evidence: `docs/images/tips-trees-chimney-sept30.jpg` (source,
+e859386, now through the original camera; then eye-level pairs, e859386 on the left).
+
+**Eave tips (d131a84).** A hip roof's eave, offset o from its walls, stands 2.1 o out at the
+rhombic footprint's acute corners (52 degrees), the left and right tips on screen. From the original
+camera those tips stood past the drawn roof (the "wing tips" of the first pass); at eye level they were
+flat blades of thatch. The first fix rounded the eave (an overhang of width o all round, the roof
+fanning up to the hip line). The blades went, but every house got worse from the original camera by
+0.1-0.3. Four triangulations and texture rules gave the same numbers to the decimal. A changed-pixel map
+showed why: rounding pulls each hip line in from the tip toward the arc, and the drawn roof keeps its
+hip lines straight out toward the tip. It only stops short. So `clip_tips` keeps every plane and hip
+line and cuts each block's two side tips with the vertical plane at the sprite's own extent in the
+tip's row, read from the art, not tuned. No screen is worse (440 -0.2, 500 -0.2, 617/618 -0.1).
+
+**Trees against walls (4a19be9).** A flat billboard (or a wide tree's fixed card) whose canopy overlaps
+a house or parts building is cut where the plane through its trunk passes inside. The original's draw
+order says which side of the building it belongs on. One drawn over the building (hotspot below the
+building's) is moved along the view ray toward the camera by its half-width, and scaled to keep its size
+on screen. Its trunk, and any collision, stays at the source position (`_flag_nudge`,
+`_nudge_billboards`). 251 12.7 to 11.6. One drawn under the building (tree-04 on 497) is left:
+moved away along the ray its trunk sinks below the ground (498 went +1.2 when tried). It needs a depth
+offset in the sprite's shader, not a move.
+
+**home-13 (ba949c1)**, the tall chimney beside home-05 on 500, is a sprite of its own: a rubble firebox
+under a tapering stack, like the cabin's. `standing_piece` reads its foot from its bottom outline
+along the wall directions and its top face as a roof chimney's; its axis is taken as vertical, which
+fixes the height (163 px). The prototype stands it on the ground as the frustum between them
+(`_add_ground_piece`). The house's own wall shows behind it.
+
+**home-10 (seq 63 frame 10, one house on 318/349/350),** fitted by a Sonnet 5.5 subagent and judged
+here. Evidence: `docs/images/home10-sept30.jpg`. Three hip-roofed blocks in the wall frame: a long
+lower wing, a lower front wing crossing it, and the two-storey core. The zig-zag front is read by
+`zigzag` with the art's slopes fixed. It is fitted jointly with home-09, its mirror twin, with a
+depth-tested render (`render_z`) and shadow pixels left unread. Silhouette IoU 0.960, and 0.961 on the
+twin. At eye level it went from a card to a solid stone house with a cross wing. From the original
+camera, 350 went from 12.5 to 10.9, but 318 got worse, 10.1 to 10.2. The core's roof lands a few px
+right of and below the drawn rounded top, and the old card was exact there. Held, not fitted: the
+core's height is twice the wings' wall height, because its foot is hidden and height and depth trade
+along the view ray. The wing pitch fitted 0.65, under the 0.8-1.1 read from the other houses'
+art, and the core pitch is unresolved.
+
+Regression over every screen rendered since Sept 29, against e859386: none worse except 318 (+0.1,
+home-10's core roof). Against the Sept 29 baseline, 497 stays +0.3 (tree-04, drawn under the house).
+
+**Defects I see, in order:**
+1. home-10: the core roof sits a few px low from the original camera (318). The wing roofs, at pitch
+   0.65, read flatter than the drawn thatch. The front wing's back end carries mirrored thatch.
+2. A tree drawn under a building (497) is still cut by it: it needs a depth offset in the sprite's
+   shader, not a move.
+3. The church's spire has no tower shaft, and its buttresses are about 5 px wider than drawn.
+
