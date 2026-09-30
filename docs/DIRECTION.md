@@ -603,3 +603,112 @@ derived structure. The prototype is not the game. Integrate it, in this order:
 3. Build the game's world from the prototype's buildings and billboards, then have Chris play the
    opening.
 
+
+## Collision from one source — September 30, seventh pass (Opus 5.5)
+
+Step 1 of the sixth pass's next step. Evidence: `docs/images/collision-sept30.jpg` (per row: Dink
+walks into a wall with W from 60 px out; a post marks where he stopped, seen from 70 px behind him;
+8db1ff5 left, now right; the collision change beside them: kept grey, dropped red, added green).
+
+**What the old collision was, measured.** Buildings defect 5 took home-01's hardbox, ~90 px behind
+the drawn front wall, for the collision. 439 does not use it: most house sprites are not hard. The
+map makers drew a house's hardness as a ring of custom tile masks round its picture.
+`tools/collision_map.py --profile` walks into every wall of every fitted footprint on the map, at
+points 5 px apart, from 80 px out. It leaves out approaches that meet a fence or a barrel first.
+
+| | Front walls (1,779 approaches) | Back walls (1,916) |
+|---|---|---|
+| Original data: where the player stops | median 15 px in front of the drawn wall (10th percentile 2, 90th 32); 3% walk more than 80 px in | half walk more than 80 px in (kit buildings have no hardness on their backs); behind the houses, the ring stops him 45–80 px out in open ground |
+| Now | median 4 px (the player's radius); 90% at 3–7 px | median 5 px; 77% at 3–7 px |
+
+The rest are approaches that meet a building's other arm or a restored tile line within the last
+few pixels. Before this pass the game also stopped the player on any 3D model
+(`_fps_capsule_blocked`). The cottages were Blender models stretched over the unused hardbox, so
+60 px behind Dink's cottage he stood inside it and could not move (sheet, second row).
+
+**One source.** `tools/collision_map.py` writes `game/data/footprints.json`. Per screen it lists
+the fitted footprints and the original hardness each replaces. A footprint is, per block, the hull
+of the fitted faces' points on the ground: walls, the apse, buttresses, standing chimneys. Jettied
+storeys and the tower are not on the ground. The hardness it replaces:
+- the hardboxes of the building sprites, of the `/struct/` details drawn on them (doors, windows),
+  of kit pieces, and of invisible (type 2) blockers standing on the picture (465, 585);
+- a kit building's own tiles;
+- the ring: custom tile masks on the building's picture (inside its outline), and custom hardness
+  within one tile (50 px) that hangs off those and ends there. A custom mask that goes on beyond
+  that or off the screen stays: the courtyard wall beside kit-417 on 385 and 388, forest edges,
+  fences. A tile that loses its custom mask keeps its art's default mask (a river bank, a cliff
+  edge).
+
+The first core rule, any custom tile the outline touched, took the courtyard wall on 385 and 388,
+which the outline grazes by one pixel. The overlays of all 57 screens with buildings were read to
+settle the rule.
+
+`game.gd` reads the file. A building's footprint, grown 4 px as every hardbox is, blocks movers,
+missiles and lines of fire in place of that hardness while the building's entity is active.
+`fps_game.gd` no longer blocks on 3D bodies, so `_fps_recover_landing_overlap` and its search are
+gone. 3D bodies remain, for rays only.
+
+**What stands where it blocks.** In the game, each fitted building replaces the Blender cottage
+stretched over the hardbox. It is built from the fitted faces, each coloured by the sprite pixels
+it covers from the original camera, and kit buildings in plain stone, plaster and shingle. That is
+a stand-in: step 3 brings the prototype's projection-textured build. A door stands in the wall it
+is drawn on. The porch that joined the old door to the old box is gone. A kit building's own tiles
+leave the ground, as in the prototype, and the story fire stands on the fitted roof's east slopes.
+
+```bash
+/usr/bin/python3 tools/collision_map.py              # -> game/data/footprints.json (after facade_fit.py)
+/usr/bin/python3 tools/collision_map.py --profile 439 505    # walk into every wall, old data and now
+/usr/bin/python3 tools/collision_map.py --sheet tmp/collision 439 505   # overlays
+/usr/bin/python3 tools/collision_sheet.py <8db1ff5 checkout> . --out docs/images/collision-sept30.jpg
+```
+
+**Verification.**
+- `tests/fps_wall_test.gd` (new, real W input, screens loaded without scripts: scenario setup that
+  skips progression). Eight walls on 439, 409, 440, 500, 537, 617, 505 and 538 all stop 4.0–4.3 px
+  from the drawn wall. The doors of 439 and 409 lead in, and all four points behind Dink's cottage
+  are open. Against 8db1ff5 the same test fails. At 538 the player walks through the inn and off
+  the screen. Three approaches meet the old models' capsule before the wall. Behind the cottage,
+  only 1 of 4 points is open.
+- Every door on the map stays reachable: the free depth inside each trigger rect is 8–31 px (the
+  inn's doors are the shallowest).
+- `pytest`: 80 passed (79 before, plus the wall test). `tests/fps_stuck_test.gd` now checks that the
+  pig-farm landing is walkable in the original data, that no recovery search remains, and that the
+  pigpen fence still holds.
+- The letter campaign (`tools/playtest.py --mode campaign --milestone letter --rendered
+  --max-commands 5000`, from Begin adventure to Aunt Maria's letter and the map, with real input):
+  PASS in 3,201 commands. 8db1ff5 passes it in 2,955; the difference is a second pass of the duck
+  search. So the opening is still completable, and the route found no stuck player.
+- Every Godot run used the Dummy audio driver (headless runs imply it). Renders used llvmpipe under
+  xvfb, not the GPU.
+
+**Judgment.** Where the player stops is now where the drawn building stands, from every side, on
+every screen with a building. The eye-level sheet shows the change: the old post stood in the open
+air in front of the cottages and 60 px behind them, stood inside the inn, or never moved, because
+the player was inside a Blender cottage. Now it stands against the wall. The stand-in buildings are
+the right shape and size, doors included, but they are flat-coloured. At 0.06 m per pixel a cottage
+is 8–9 m to the ridge (3.5–3.8 m at the prototype's 0.025), which is step 3's scale question.
+
+**Defects I see, in order:**
+1. The buildings are stand-ins: flat colours per face, and kit buildings in fixed colours. Step 3's
+   projection-textured build (the prototype's `_add_house`, `_add_uv_house`, `_prepare_kit`) belongs
+   here.
+2. The chimney sprites (home-11, 12, 13) are still drawn as rubble on the ground ("ruin"), behind
+   the houses. The prototype stands them on the roofs.
+3. The ring rule is a rule. It leaves custom hardness that reaches more than one tile from a
+   building, or runs off the screen, as fences and walls. Screen 570 keeps a bush's hardbox and
+   default-mask grass tiles ~60 px in front of kit-570's corner. Anything else the tile art's own
+   masks hold (grass tiles with non-empty defaults beside buildings) stays as it was.
+4. Neighbour screens' buildings have no ray bodies. As before, arrows can cross them from the next
+   screen.
+5. Outdoor hardness with nothing visible (water edges, cliffs, invisible gates) is unchanged. It
+   still needs the geometry from the mask that step 3 calls for.
+
+**Step 2 (story state) was not started.** The fitted buildings already go through
+`create_visual`/`update_visual`: a building sprite the VM hides or kills stops drawing and stops
+blocking, and Dink's cottage keeps its fire and ruin states. For everything else the step means the
+billboards, and they are step 3.
+
+**Next step (recommended):** step 3 with step 2 inside it. Build the game's world from the
+prototype: its textured buildings in place of the stand-ins, and its billboards made through
+`create_visual`/`update_visual` so the VM's story state drives them. Settle the scale (0.025 m per
+pixel), then have Chris play the opening.

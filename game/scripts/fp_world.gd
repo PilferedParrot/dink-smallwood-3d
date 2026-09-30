@@ -17,9 +17,15 @@ var scene_generation := -1
 # Fingerprint to the currently live structural node. A node reference lets
 # save/load rebuild after the previous visual has been queued for deletion.
 var structural_seen: Dictionary = {}
+# Buildings fitted from their sprites (tools/facade_fit.py); see fitted_model.
+var facades: Dictionary = {}
+var fitted_built: Dictionary = {} # world position key -> the node holding it (null: reserved), this scene
 
 func setup(game) -> void:
 	host = game
+	var path := "res://prototype/facades.json"
+	var parsed: Variant = JSON.parse_string(FileAccess.get_file_as_string(path)) if FileAccess.file_exists(path) else null
+	facades = parsed if parsed is Dictionary else {}
 
 func point(x: float, y: float) -> Vector3:
 	return Vector3((x-320.0)*SCALE,0,(y-200.0)*SCALE)
@@ -120,6 +126,13 @@ func model_key(e: Dictionary) -> String:
 func build_ground(screen: Dictionary) -> void:
 	scene_generation = host.generation
 	structural_seen.clear()
+	fitted_built.clear()
+	# The current screen's own buildings carry its story state; a neighbour showing the
+	# same building (one placed on both screens) leaves it to them.
+	for source in screen.get("sprites",[]):
+		if int(source.get("vision",0)) != 0 and int(source.vision) != int(host.vm.globals.get("vision",0)): continue
+		var key := fitted_key(source,host.current_screen)
+		if not key.is_empty(): fitted_built[key] = null
 	interior = is_inside(host.current_screen)
 	configure_environment()
 	add_ground(host.current_screen,host.scene_root,Vector3.ZERO)
@@ -155,7 +168,7 @@ func build_ground(screen: Dictionary) -> void:
 						var fingerprint := "%s:%d:%d" % [key,int(e.x),int(e.y)]
 						if dedup.has(fingerprint): continue
 						dedup[fingerprint] = true
-						make_entity(e,0,backdrop,false)
+						make_entity(e,0,backdrop,false,n)
 				else:
 					add_wilderness(host.scene_root,offset,n)
 		add_horizon()
@@ -198,8 +211,10 @@ func ground_texture(number: int) -> Texture2D:
 	var img := Image.create(600,400,false,Image.FORMAT_RGB8)
 	img.fill(Color("677744"))
 	var sheets: Dictionary = {}
+	var kit_tiles: Dictionary = {}
+	for i in host.footprints.get(str(number),{}).get("clear",[]): kit_tiles[int(i)] = true
 	for i in range(mini(96,screen.tiles.size())):
-		var index := int(screen.tiles[i].get("tile",0))
+		var index := ground_tile(screen.tiles,i,kit_tiles)
 		var sheet := int(index/128)+1
 		var cell := index%128
 		if not sheets.has(sheet):
@@ -216,6 +231,23 @@ func ground_texture(number: int) -> Texture2D:
 	terrain_cache[number] = result
 	return result
 
+# A kit building's own tiles are pictures of its upper storey, which now stands in 3D: the
+# ground continues the row they interrupt (ground tiles alternate in pairs, so keep the column
+# parity), else the column. As the prototype does (sprite_world_proto.gd _ground_tile).
+func ground_tile(tiles: Array, i: int, kit_tiles: Dictionary) -> int:
+	if not kit_tiles.has(i): return int(tiles[i].get("tile",0))
+	var row := int(i/12)
+	var col := i%12
+	for dist in range(2,12,2):
+		for c in [col-dist,col+dist]:
+			var j: int = row*12+c
+			if c >= 0 and c < 12 and j < tiles.size() and not kit_tiles.has(j): return int(tiles[j].get("tile",0))
+	for dist in range(1,8):
+		for rr in [row-dist,row+dist]:
+			var j: int = rr*12+col
+			if rr >= 0 and rr < 8 and j < tiles.size() and not kit_tiles.has(j): return int(tiles[j].get("tile",0))
+	return int(tiles[i].get("tile",0))
+
 func add_ground(number: int, parent: Node3D, offset: Vector3) -> void:
 	var ground := MeshInstance3D.new()
 	ground.name = "Terrain_%d" % number
@@ -229,7 +261,7 @@ func add_ground(number: int, parent: Node3D, offset: Vector3) -> void:
 	mat.texture_filter = BaseMaterial3D.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS_ANISOTROPIC
 	ground.material_override = mat
 	parent.add_child(ground)
-	add_inns(number,parent,offset)
+	add_kit_buildings(number,parent,offset)
 	if not is_inside(number): add_grass(number,parent,offset,mat.albedo_texture.get_image())
 	if offset == Vector3.ZERO:
 		var body := StaticBody3D.new()
@@ -501,7 +533,7 @@ func model_bounds(key: String, node: Node3D) -> AABB:
 	bounds_cache[key] = box
 	return box
 
-func make_entity(e: Dictionary, id: int, parent: Node3D, collision: bool = true) -> Node3D:
+func make_entity(e: Dictionary, id: int, parent: Node3D, collision: bool = true, screen: int = -1) -> Node3D:
 	var node := Node3D.new()
 	var key := model_key(e)
 	node.name = "Entity_%d_%s" % [id,key]
@@ -510,6 +542,10 @@ func make_entity(e: Dictionary, id: int, parent: Node3D, collision: bool = true)
 	parent.add_child(node)
 	node.position = point(float(e.get("x",320)),float(e.get("y",200)))
 	if key.is_empty(): return node
+	if screen < 0: screen = host.current_screen
+	if key == "cottage" and not fitted_key(e,screen).is_empty():
+		add_fitted_building(node,e,id,screen,collision)
+		return node
 	var passable_fence := key == "fence" and int(e.get("hard",0)) != 0
 	# Hard=1 fence artwork marks an opening. Keep a readable gate shape while
 	# leaving the center visually open for the source walk corridor.
@@ -561,7 +597,7 @@ func make_entity(e: Dictionary, id: int, parent: Node3D, collision: bool = true)
 			model.rotation.y = PI
 		if key == "door" and not interior:
 			model.rotation.y = PI
-			add_porch(node,e)
+			set_in_wall(node,model,e,screen)
 	var height := maxf(0.2,bounds.size.y*model.scale.y)
 	node.set_meta("height",height)
 	node.set_meta("base_model_position",model.position)
@@ -721,48 +757,245 @@ func hard_rect(e: Dictionary) -> Rect2:
 	if not normalized.has("pframe"): normalized["pframe"] = e.get("frame",1)
 	return host._hard_rect(normalized)
 
-func add_inns(number: int, parent: Node3D, offset: Vector3) -> void:
-	var clusters: Array[Rect2] = []
-	for e in host.world.screens[str(number)].get("sprites",[]):
-		if not "/outinn/" in source_path(e): continue
-		if int(e.get("vision",0)) != 0 and int(e.vision) != int(host.vm.globals.get("vision",0)): continue
-		var r := hard_rect(e)
-		var joined := false
-		for i in clusters.size():
-			if clusters[i].grow(45).intersects(r):
-				clusters[i] = clusters[i].merge(r)
-				joined = true
-				break
-		if not joined: clusters.append(r)
-	for r in clusters:
-		if r.size.x < 30 or r.size.y < 15: continue
-		var e := {"fps_model":"inn","x":r.get_center().x,"y":r.get_center().y,"size":100,"hardbox":[-r.size.x/2,-r.size.y/2,r.size.x/2,r.size.y/2]}
-		var node := make_entity(e,0,parent,false)
-		node.position += offset
+# --- Fitted buildings --------------------------------------------------------------------
+# A building sprite is a picture of a 3D building from the original raised camera;
+# tools/facade_fit.py recovers the building from its pixels. Its footprint is also what the
+# player collides with (game.gd, data/footprints.json), so what stands here is exactly what
+# blocks. This build is a stand-in: the fitted faces, each coloured by the sprite pixels it
+# covers from the original camera. The projection-textured build of the prototype
+# (prototype/sprite_world_proto.gd) replaces it when the world is built from the prototype.
 
-func add_porch(node: Node3D, door: Dictionary) -> void:
-	# Source doors sit in front of the isometric footprint. A covered porch joins
-	# the original warp position to its new three-dimensional house facade.
-	var nearest := 180.0
-	var front := 0.0
-	for other in host.world.screens[str(host.current_screen)].get("sprites",[]):
-		if model_key(other) != "cottage": continue
-		var rect := hard_rect(other)
-		var gap := float(door.get("y",0))-rect.end.y
-		if gap > 8 and gap < nearest and float(door.get("x",0)) > rect.position.x-20 and float(door.get("x",0)) < rect.end.x+20:
-			nearest = gap
-			front = gap*SCALE
-	if front <= 0: return
-	var wood := mat("porch",Color("695035"))
-	box_mesh(node,Vector3(2.5,0.18,front+0.5),Vector3(0,2.8,-front*0.5),wood)
-	for x in [-1.05,1.05]: box_mesh(node,Vector3(0.15,2.8,0.15),Vector3(x,1.4,0),wood)
+func frame_path(e: Dictionary) -> String:
+	var seq := int(e.get("pseq",e.get("seq",0)))
+	var frame := int(e.get("pframe",e.get("frame",1)))
+	return str(host._frame(seq,frame).get("path",""))
+
+# "path:x:y" of the sprite's top-left in world pixels, or "" when it has no fitted building.
+func fitted_key(e: Dictionary, screen: int) -> String:
+	if int(e.get("type",1)) == 2: return ""
+	var path := frame_path(e)
+	if not facades.has(path) or not (facades[path] is Dictionary) or not facades[path].has("faces"): return ""
+	var d: Dictionary = host._frame(int(e.get("pseq",e.get("seq",0))),int(e.get("pframe",e.get("frame",1))))
+	var o := screen_origin(screen)
+	return "%s:%d:%d" % [path,int(o.x+float(e.get("x",0))-float(d.get("dx",0))),int(o.y+float(e.get("y",0))-float(d.get("dy",0)))]
+
+func screen_origin(n: int) -> Vector2:
+	return Vector2(((n-1)%32)*600-20,int((n-1)/32)*400)
+
+func add_fitted_building(node: Node3D, e: Dictionary, id: int, screen: int, collision: bool) -> void:
+	var key := fitted_key(e,screen)
+	var own: bool = screen == host.current_screen and id != 0
+	if fitted_built.has(key):
+		var holder: Variant = fitted_built[key]
+		if holder == null and not own: return # the current screen builds its own
+		# Built once: a house drawn twice (its foot and its top), or on two screens. A save
+		# being loaded frees the old visuals, so a stale holder is rebuilt.
+		if holder != null and is_instance_valid(holder) and not holder.is_queued_for_deletion(): return
+	fitted_built[key] = node
+	var path := frame_path(e)
+	var d: Dictionary = host._frame(int(e.get("pseq",e.get("seq",0))),int(e.get("pframe",e.get("frame",1))))
+	var image := sprite_image(path)
+	# The node stands at the centre of the footprint, so story treatments sit on the house.
+	var foot := PackedVector2Array()
+	for f in facades[path].faces:
+		for q in f.pts:
+			if absf(float(q[1])) < 0.5: foot.append(Vector2(float(q[0]),float(q[2])))
+	var box := Rect2(foot[0],Vector2.ZERO)
+	for q in foot: box = box.expand(q)
+	var top_left := Vector2(float(e.get("x",0))-float(d.get("dx",0)),float(e.get("y",0))-float(d.get("dy",0)))
+	var centre := top_left+box.get_center()
+	node.position = point(centre.x,centre.y)
+	var model := fitted_model(facades[path].faces,image,box.get_center())
+	node.add_child(model)
+	if collision: node.add_child(ray_body(model,id))
+	node.set_meta("height",float(model.get_meta("height",1.0)))
+	node.set_meta("fitted",true)
+	if is_story_house(e):
+		if int(host.vm.globals.get("vision",0)) == 1: add_story_fire(node,box.size.x*SCALE,model.get_meta("roof_spots",[]))
+		elif int(host.vm.globals.get("vision",0)) == 2: add_ruin_skin(node,model)
+
+func sprite_image(path: String) -> Image:
+	var texture: Texture2D = host._texture("res://"+path)
+	if texture == null: return null
+	var image := texture.get_image()
+	if image.is_compressed(): image.decompress()
+	image.convert(Image.FORMAT_RGBA8)
+	return image
+
+# faces: [{label, block, pts: [[X, Y, Z]]}] in source pixels, (X, Z) on the ground, Y up;
+# `origin` is the ground point placed at the node. `image` is the picture the faces were
+# fitted to (seen through screen = (X, Z - Y)), or null for fixed stand-in colours.
+func fitted_model(faces: Array, image: Image, origin: Vector2) -> Node3D:
+	var model := Node3D.new()
+	model.name = "Model"
+	var centres := {}
+	var counts := {}
+	for f in faces:
+		var b := int(f.block)
+		for q in f.pts:
+			centres[b] = centres.get(b,Vector3.ZERO)+Vector3(float(q[0]),float(q[1]),float(q[2]))
+			counts[b] = int(counts.get(b,0))+1
+	var colours: Array = []
+	var sums := {}
+	for f in faces:
+		var pts := face_points(f)
+		var normal := (pts[1]-pts[0]).cross(pts[2]-pts[0]).normalized()
+		var mid := Vector3.ZERO
+		for q in pts: mid += q/pts.size()
+		if normal.dot(mid-centres[int(f.block)]/counts[int(f.block)]) < 0: normal = -normal
+		# Seen by the original camera (looking 45 degrees down from the south)?
+		var colour := Color(0,0,0,0)
+		if image != null and normal.y+normal.z > 0.1: colour = face_colour(image,pts)
+		colours.append(colour)
+		if colour.a > 0:
+			var k := "%d:%d" % [int(f.block),int(f.label)]
+			sums[k] = sums.get(k,[Color(0,0,0,0),0])
+			sums[k] = [sums[k][0]+colour,sums[k][1]+1]
+	var st := SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	var top := 0.0
+	for i in faces.size():
+		var f: Dictionary = faces[i]
+		var colour: Color = colours[i]
+		if colour.a == 0:
+			# Faces the camera never saw take their block's seen faces of the same kind.
+			var k := "%d:%d" % [int(f.block),int(f.label)]
+			var same_label := ""
+			for other in sums:
+				if other.ends_with(":%d" % int(f.label)): same_label = other
+			if sums.has(k): colour = sums[k][0]/float(sums[k][1])
+			elif not same_label.is_empty(): colour = sums[same_label][0]/float(sums[same_label][1])
+			else: colour = {1: Color("7d766a"),2: Color("6b6861"),3: Color("5a4030")}.get(int(f.label),Color("7d766a"))
+			if int(f.label) == 1 and image == null and int(f.block)%2 == 1: colour = Color("c9bea4") # a kit's upper storey
+		colour.a = 1.0
+		var pts := face_points(f)
+		for j in range(1,pts.size()-1):
+			for q in [pts[0],pts[j],pts[j+1]]:
+				var v := Vector3((q.x-origin.x)*SCALE,q.y*SCALE,(q.z-origin.y)*SCALE)
+				st.set_color(colour)
+				st.add_vertex(v)
+				top = maxf(top,v.y)
+	st.generate_normals()
+	var material := StandardMaterial3D.new()
+	material.vertex_color_use_as_albedo = true
+	material.vertex_color_is_srgb = true
+	material.roughness = 0.95
+	material.cull_mode = BaseMaterial3D.CULL_DISABLED
+	st.set_material(material)
+	var mesh := MeshInstance3D.new()
+	mesh.name = "Fitted"
+	mesh.mesh = st.commit()
+	model.add_child(mesh)
+	model.set_meta("height",top)
+	# Where a roof slope faces +X (the discovery camera's side, add_story_fire): the middle
+	# of each such roof face, in the model's space.
+	var spots: Array = []
+	for f in faces:
+		if int(f.label) != 2: continue
+		var pts := face_points(f)
+		var normal := (pts[1]-pts[0]).cross(pts[2]-pts[0]).normalized()
+		var mid := Vector3.ZERO
+		for q in pts: mid += q/pts.size()
+		if normal.dot(mid-centres[int(f.block)]/counts[int(f.block)]) < 0: normal = -normal
+		if normal.x > 0.3 and spots.size() < 4:
+			spots.append(Vector3((mid.x-origin.x)*SCALE,mid.y*SCALE,(mid.z-origin.y)*SCALE))
+	model.set_meta("roof_spots",spots)
+	return model
+
+# The fitted faces as a body for rays only (aim, projectiles, dialogue cameras); movement
+# reads the footprint (game.gd).
+func ray_body(model: Node3D, id: int) -> StaticBody3D:
+	var body := StaticBody3D.new()
+	body.name = "HitBody"
+	body.set_meta("entity_id",id)
+	body.collision_layer = 1
+	body.collision_mask = 0
+	var shape := CollisionShape3D.new()
+	var concave := ConcavePolygonShape3D.new()
+	concave.backface_collision = true
+	var mesh: MeshInstance3D = model.get_node("Fitted")
+	concave.set_faces(mesh.mesh.get_faces())
+	shape.shape = concave
+	body.add_child(shape)
+	return body
+
+func face_points(f: Dictionary) -> Array[Vector3]:
+	var pts: Array[Vector3] = []
+	for q in f.pts: pts.append(Vector3(float(q[0]),float(q[1]),float(q[2])))
+	return pts
+
+# The mean colour of the picture's opaque pixels inside the face as the original camera saw
+# it, leaving out the black dither of the drawn shadow. Alpha 0 when it covers none.
+func face_colour(image: Image, pts: Array[Vector3]) -> Color:
+	var poly := PackedVector2Array()
+	for q in pts: poly.append(Vector2(q.x,q.z-q.y))
+	var r := Rect2(poly[0],Vector2.ZERO)
+	for q in poly: r = r.expand(q)
+	var sum := Color(0,0,0,0)
+	var n := 0
+	for y in range(maxi(0,int(r.position.y)),mini(image.get_height(),int(r.end.y)+1),2):
+		for x in range(maxi(0,int(r.position.x)),mini(image.get_width(),int(r.end.x)+1),2):
+			if not Geometry2D.is_point_in_polygon(Vector2(x+0.5,y+0.5),poly): continue
+			var c := image.get_pixel(x,y)
+			if c.a < 0.5 or c.r+c.g+c.b < 0.04: continue
+			sum += c
+			n += 1
+	return Color(0,0,0,0) if n < 4 else Color(sum.r/n,sum.g/n,sum.b/n,1.0)
+
+# Kit buildings (the inn and its kin: seq 33 pieces and building tiles, found over the whole
+# map by tools/facade_fit.py) with a piece on screen `number`, built once per scene.
+func add_kit_buildings(number: int, parent: Node3D, offset: Vector3) -> void:
+	for b in facades.get("_kit_buildings",[]):
+		if not (b.screens as Array).any(func(m): return int(m) == number): continue
+		var key := "kit:%s" % str(b.name)
+		if fitted_built.has(key): continue
+		var o := screen_origin(number)
+		var rect: Array = b.rect
+		var foot := Rect2(Vector2(float(rect[0]),float(rect[1])),Vector2(float(rect[2]),float(rect[3])))
+		var node := Node3D.new()
+		node.name = "Kit_%s" % str(b.name)
+		node.set_meta("model_key","inn")
+		parent.add_child(node)
+		fitted_built[key] = node
+		var centre := foot.get_center()-o
+		node.position = point(centre.x,centre.y)+offset
+		var model := fitted_model(b.faces,null,foot.size*0.5)
+		node.add_child(model)
+		if offset == Vector3.ZERO: node.add_child(ray_body(model,0))
+
+# A door drawn on a building stands in its wall: on the nearest footprint edge, turned to it.
+func set_in_wall(node: Node3D, model: Node3D, e: Dictionary, screen: int) -> void:
+	var at := Vector2(float(e.get("x",0)),float(e.get("y",0)))
+	var best := 30.0
+	var hit := Vector2.INF
+	var along := Vector2.RIGHT
+	var outward := Vector2.DOWN
+	for p in host.footprints.get(str(screen),{}).get("polys",[]):
+		var poly := PackedVector2Array()
+		for q in p.pts: poly.append(Vector2(float(q[0]),float(q[1])))
+		var mid := Vector2.ZERO
+		for q in poly: mid += q/poly.size()
+		for i in poly.size():
+			var a := poly[i]
+			var b := poly[(i+1)%poly.size()]
+			var c := Geometry2D.get_closest_point_to_segment(at,a,b)
+			if c.distance_to(at) < best:
+				best = c.distance_to(at)
+				hit = c
+				along = (b-a).normalized()
+				outward = Vector2(-along.y,along.x)
+				if outward.dot(c-mid) < 0: outward = -outward
+	if hit == Vector2.INF: return
+	node.position = point(hit.x,hit.y)
+	# The door model faces its local +Z (the knob side); turn that outward.
+	model.rotation.y = atan2(outward.x,outward.y)
 
 func is_story_house(e: Dictionary) -> bool:
 	# Map 439's home-01 at this anchor is Dink's house.  The other Home and
 	# fire sprites on the map are scenery, and must not inherit its story state.
 	return host.current_screen == 439 and int(e.get("x",-1)) == 275 and int(e.get("y",-1)) == 234 and source_path(e).ends_with("/home/home-01.png")
 
-func add_story_fire(node: Node3D, house_width: float) -> void:
+func add_story_fire(node: Node3D, house_width: float, roof_spots: Array = []) -> void:
 	# The discovery camera approaches from the house's +X side.  Keep flames
 	# just beyond that roof plane so they read as attached roof fire rather than
 	# being hidden inside the imported cottage mesh.
@@ -771,6 +1004,15 @@ func add_story_fire(node: Node3D, house_width: float) -> void:
 	treatment.name = "StoryHouseFire"
 	treatment.set_meta("story_house_treatment",true)
 	node.add_child(treatment)
+	if not roof_spots.is_empty():
+		# A fitted house: flames stand on its own roof slopes that face +X.
+		var sizes := [0.95,1.25,1.08,0.88]
+		for i in roof_spots.size():
+			var fire := primitive_model("flame")
+			fire.position = roof_spots[i]
+			fire.scale = Vector3.ONE*float(sizes[i%sizes.size()])
+			treatment.add_child(fire)
+		return
 	var face_x := house_width*0.5+0.28
 	for spec in [[4.00,-1.70,0.95],[4.72,-0.60,1.25],[4.46,0.72,1.08],[3.92,1.72,0.88]]:
 		var fire := primitive_model("flame")

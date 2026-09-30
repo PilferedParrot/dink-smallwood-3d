@@ -7,7 +7,7 @@ ROOT = Path(__file__).resolve().parents[1]
 GODOT = os.environ.get("GODOT", str(Path.home() / ".local/bin/Godot_v4.6.1-stable_linux.x86_64"))
 
 
-def test_pig_farm_transition_recovers_from_decorative_3d_overlap(tmp_path):
+def test_pig_farm_transition_walkable_from_source_collision(tmp_path):
     env = os.environ.copy()
     env["XDG_DATA_HOME"] = str(tmp_path / "data")
     env["XDG_CONFIG_HOME"] = str(tmp_path / "config")

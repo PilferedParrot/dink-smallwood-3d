@@ -38,6 +38,17 @@ var visited: Array = []
 var dialogue_log: Array = []
 var test_mode := false
 var hardness_cache: Dictionary = {}
+# Buildings the 3D world rebuilds from their sprites stand on fitted footprints, derived from
+# the same original pixels (tools/collision_map.py -> data/footprints.json). They replace the
+# hardness the original drew for its 3/4 picture: the building sprites' hardboxes and the
+# ring of tile hardness round each picture, which in 3D stood in the air in front of the
+# drawn walls (median 15 px) and 45-80 px out behind the houses, and was missing on the
+# inn's back (docs/DIRECTION.md, seventh pass).
+const FOOTPRINT_GROW := 4.0 # the player's radius in source pixels, as for every hardbox
+var footprints: Dictionary = {} # screen -> record written by tools/collision_map.py
+var footprint_sprites: Dictionary = {} # editor index -> [PackedVector2Array]: this screen's buildings
+var screen_footprints: Array = [] # [PackedVector2Array]: kit buildings (tiles and many sprites)
+var footprint_tiles: Dictionary = {} # tile index -> 0: no tile hardness, 1: the tile's default mask
 var asset_frames: Array = []
 var original_sequences: Dictionary = {}
 
@@ -49,6 +60,7 @@ func _ready() -> void:
 	original_sequences = sequences.duplicate(true)
 	asset_frames = seq.get("asset_frames",[])
 	sounds = _read_json("res://data/sounds.json")
+	footprints = _read_json("res://data/footprints.json").get("screens",{})
 	vm = VM.new(self)
 	vm.load_story()
 	ui = UI.new()
@@ -168,6 +180,7 @@ func load_map(number: int, run_scripts: bool = true) -> void:
 	entities[1] = player
 	player["frozen"] = false
 	var screen: Dictionary = world.screens[str(number)]
+	_load_footprints(number)
 	_build_ground(screen)
 	# Screen startup can select a vision (for example FINDDUCK). Run its
 	# immediate instructions before filtering editor sprites by that vision.
@@ -497,15 +510,60 @@ func _blocked(pos: Vector2, mover: int) -> bool:
 		if id == mover or id == 1: continue
 		var e: Dictionary = entities[id]
 		if int(e.get("active",1)) == 0 or int(e.get("hard",1)) != 0 or e.get("warp") != null: continue
+		if footprint_sprites.has(int(e.get("editor_num",0))): continue # its footprint stands for it
 		if _hard_rect(e).grow(4).has_point(pos): return true
-	return _tile_blocked(pos)
+	return _structure_blocked(pos)
+
+# The anonymous structure of the screen: tile hardness and the buildings' footprints. Movers,
+# missiles and lines of fire all stop at it.
+func _structure_blocked(pos: Vector2) -> bool:
+	return _footprint_blocked(pos) or _tile_blocked(pos)
+
+func _load_footprints(number: int) -> void:
+	footprint_sprites.clear()
+	screen_footprints.clear()
+	footprint_tiles.clear()
+	var record: Dictionary = footprints.get(str(number),{})
+	for i in record.get("clear",[]): footprint_tiles[int(i)] = 0
+	for i in record.get("revert",[]): footprint_tiles[int(i)] = 1
+	for i in record.get("sprites",[]): footprint_sprites[int(i)] = []
+	for p in record.get("polys",[]):
+		var poly := PackedVector2Array()
+		for q in p.get("pts",[]): poly.append(Vector2(float(q[0]),float(q[1])))
+		var owner := int(p.get("owner",0))
+		if owner == 0: screen_footprints.append(poly)
+		elif footprint_sprites.has(owner): footprint_sprites[owner].append(poly)
+
+func _footprint_blocked(pos: Vector2) -> bool:
+	for poly in screen_footprints:
+		if _in_footprint(pos,poly): return true
+	if footprint_sprites.is_empty(): return false
+	for id in entities:
+		if id == 1: continue
+		var e: Dictionary = entities[id]
+		var polys: Array = footprint_sprites.get(int(e.get("editor_num",0)),[])
+		if polys.is_empty() or int(e.get("active",1)) == 0: continue
+		for poly in polys:
+			if _in_footprint(pos,poly): return true
+	return false
+
+func _in_footprint(pos: Vector2, poly: PackedVector2Array) -> bool:
+	if Geometry2D.is_point_in_polygon(pos,poly): return true
+	for i in poly.size():
+		var closest := Geometry2D.get_closest_point_to_segment(pos,poly[i],poly[(i+1)%poly.size()])
+		if closest.distance_to(pos) <= FOOTPRINT_GROW: return true
+	return false
 
 func _tile_blocked(pos: Vector2) -> bool:
 	if pos.x < 20 or pos.x >= 620 or pos.y < 0 or pos.y >= 400: return false
 	var tx := int((pos.x-20)/50)
 	var ty := int(pos.y/50)
 	var tile: Dictionary = world.screens[str(current_screen)].tiles[ty*12+tx]
-	var mask := int(tile.get("hard",0))
+	# A building's own tiles, and the custom masks drawn round its picture, give way to its
+	# footprint (a reverted tile keeps its art's default mask: a river bank, a cliff edge).
+	var override := int(footprint_tiles.get(ty*12+tx,-1))
+	if override == 0: return false
+	var mask := int(tile.get("hard",0)) if override != 1 else 0
 	var hardness: Dictionary = world.get("hardness",{})
 	if mask == 0:
 		var defaults: Array = hardness.get("tile_defaults",[])
@@ -759,8 +817,8 @@ func _update_ai(delta: float) -> void:
 			if velocity == Vector2.ZERO: velocity = _dir_vector(int(e.get("dir",2)))*float(e.get("speed",6))
 			var next_pos := _position2(id)+velocity*delta*30.0
 			# Dynamic hard sprites are resolved below so their HIT procedure receives
-			# the correct missile_target. Only the tile map is an anonymous impact.
-			if brain == 11 and _tile_blocked(next_pos):
+			# the correct missile_target. Tiles and buildings are anonymous impacts.
+			if brain == 11 and _structure_blocked(next_pos):
 				vm.globals["missile_target"] = 0
 				vm.globals["missle_source"] = id
 				if vm._procedure_code(str(e.get("script","")).to_lower(),"damage").is_empty(): e["active"] = 0

@@ -19,9 +19,7 @@ var fps_viewmodel: Node3D
 var fps_viewmodel_key := ""
 var fps_hand: Node3D
 var fps_feed_use := 0.0
-var fps_player_shape: CapsuleShape3D
 var fps_hit_timer := 0.0
-var fps_landing_recovery_pending := false
 # A dialogue camera may look from a nearby clear spot, but it never moves Dink.
 # These are reset as soon as the individual line closes.
 var fps_dialogue_camera_active := false
@@ -159,9 +157,6 @@ func _update_visual(id: int) -> void:
 func load_map(number: int, run_scripts: bool = true) -> void:
 	_fps_restore_dialogue_camera()
 	super.load_map(number, run_scripts)
-	# Source-map exits sometimes land beneath a decorative 3D body on the adjacent
-	# screen. Let the next physics tick verify that the destination is clear.
-	fps_landing_recovery_pending = true
 	if last_music.is_empty(): _play_music("104")
 	if fp_world != null and fp_world.has_method("refresh_neighbors"):
 		fp_world.refresh_neighbors()
@@ -172,9 +167,6 @@ func _physics_process(delta: float) -> void:
 		_fps_restore_dialogue_camera()
 		_fps_update_mouse_mode()
 		return
-	if fps_landing_recovery_pending and not ui.modal and not entities[1].get("frozen",false) and not int(entities[1].get("disabled",0)) and not int(entities[1].get("nocontrol",0)):
-		fps_landing_recovery_pending = false
-		_fps_recover_landing_overlap()
 	attack_cooldown = maxf(0.0, attack_cooldown - delta)
 	hurt_cooldown = maxf(0.0, hurt_cooldown - delta)
 	warp_cooldown = maxf(0.0, warp_cooldown - delta)
@@ -390,7 +382,7 @@ func _fps_material(color: Color, roughness: float) -> StandardMaterial3D:
 func _fps_line_clear(from: Vector2, to: Vector2) -> bool:
 	var distance := from.distance_to(to)
 	for step in range(1, int(distance / 5.0)):
-		if _tile_blocked(from.lerp(to, float(step) * 5.0 / distance)): return false
+		if _structure_blocked(from.lerp(to, float(step) * 5.0 / distance)): return false
 	return true
 
 func _fps_ray_reaches(id: int) -> bool:
@@ -724,56 +716,6 @@ func _input(event: InputEvent) -> void:
 		if event.is_action_pressed("magic"): fps_magic_held = true
 	if event is InputEventKey and event.pressed and event.physical_keycode == KEY_F11:
 		DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_WINDOWED if DisplayServer.window_get_mode() == DisplayServer.WINDOW_MODE_FULLSCREEN else DisplayServer.WINDOW_MODE_FULLSCREEN)
-
-func _blocked(pos: Vector2, mover: int) -> bool:
-	if super._blocked(pos,mover): return true
-	if mover != 1 or fp_world == null: return false
-	return _fps_capsule_blocked(pos)
-
-func _fps_capsule_blocked(pos: Vector2) -> bool:
-	if fps_player_shape == null:
-		fps_player_shape = CapsuleShape3D.new()
-		fps_player_shape.radius = 0.24
-		fps_player_shape.height = 1.55
-	var query := PhysicsShapeQueryParameters3D.new()
-	query.shape = fps_player_shape
-	query.transform = Transform3D(Basis.IDENTITY,Vector3((pos.x-320)*SCALE,0.95+fps_jump_height,(pos.y-200)*SCALE))
-	query.collision_mask = 1
-	return not get_world_3d().direct_space_state.intersect_shape(query,1).is_empty()
-
-func _fps_recover_landing_overlap() -> void:
-	if not entities.has(1) or fp_world == null: return
-	var pos := _position2(1)
-	# Respect original collision and only repair an initial overlap with a 3D body.
-	if super._blocked(pos,1) or not _fps_capsule_blocked(pos): return
-	var offsets: Array[Vector2] = []
-	if pos.y >= 380.0:
-		for distance in [8.0,16.0,24.0,32.0]:
-			offsets.append(Vector2(-distance,0)); offsets.append(Vector2(distance,0))
-	elif pos.y <= 20.0:
-		for distance in [8.0,16.0,24.0,32.0]:
-			offsets.append(Vector2(-distance,0)); offsets.append(Vector2(distance,0))
-	elif pos.x <= 40.0:
-		for distance in [8.0,16.0,24.0,32.0]:
-			offsets.append(Vector2(0,-distance)); offsets.append(Vector2(0,distance))
-	elif pos.x >= 600.0:
-		for distance in [8.0,16.0,24.0,32.0]:
-			offsets.append(Vector2(0,-distance)); offsets.append(Vector2(0,distance))
-	else: return
-	for offset in offsets:
-		var candidate := pos+offset
-		if candidate.x < 20.0 or candidate.x > 620.0 or candidate.y < 0.0 or candidate.y > 400.0: continue
-		if not _fps_source_path_clear(pos,candidate) or _fps_capsule_blocked(candidate): continue
-		entities[1]["x"] = candidate.x
-		entities[1]["y"] = candidate.y
-		_sync_fps_camera()
-		return
-
-func _fps_source_path_clear(from: Vector2, to: Vector2) -> bool:
-	var distance := from.distance_to(to)
-	for travelled in range(4,int(distance)+1,4):
-		if super._blocked(from.lerp(to,float(travelled)/distance),1): return false
-	return not super._blocked(to,1)
 
 func _location() -> String:
 	var places := {1:"Dink's home",2:"Ethel's home",407:"Stonebrook • Pig farm",
