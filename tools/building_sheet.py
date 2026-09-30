@@ -33,7 +33,7 @@ PITCH = {NEAR: -0.12, WIDE: -0.05}
 # The other building types, from the prototype's own shot files (world pixels): the church, the
 # log cabin, home-10's cross wing, the zig-zag kit building, the kit buildings round the fountain.
 EXTRA = [('church-219.json', 's188-4-front'), ('cabin-270.json', 's270-6-front'), ('houses-350.json', 's350-1-front'),
-         ('kit-419.json', 'kit-417-wall'), ('kit-586.json', 'kit-587-front')]
+         ('kit-419.json', 'kit-417-back'), ('kit-586.json', 'kit-587-front')]
 
 
 def extra_views():

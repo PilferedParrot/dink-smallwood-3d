@@ -5,9 +5,9 @@ extends Node3D
 var host
 var source_id := 1
 var damage := 1
-# Flight in source pixels, as the rest of the game logic: 350 px/s for 2.2 s. (It was 21 m/s
-# when the world was drawn at 0.06 m/px; docs/DIRECTION.md, eighth pass.)
-var speed: float = 350.0*preload("res://scripts/fp_world.gd").SCALE
+# An arrow's flight in metres: a thing seen flying at eye level. At 0.025 m/px it crosses a
+# screen in 0.7 s (the 2D missile of game.gd moves 30 px/s per unit of speed, 180 px/s for a bow).
+var speed := 21.0
 var lifetime := 2.2
 var direction := Vector3.FORWARD
 var spell := false

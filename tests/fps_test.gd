@@ -194,7 +194,8 @@ func _spawn_target(id: int, position: Vector3, height: float, hitpoints: int) ->
 	shape.position.y = height * 0.5
 	body.add_child(shape)
 	visual.add_child(body)
-	game.entities[id] = {"x":320.0,"y":133.33,"active":1,"type":1,"hitpoints":hitpoints,"nohit":0,"script":"","fps_min_height":0.0,"fps_max_height":height}
+	# The entity stands where its body is (update_visual places the visual from x, y).
+	game.entities[id] = {"x":320.0+position.x/SCALE,"y":200.0+position.z/SCALE,"active":1,"type":1,"hitpoints":hitpoints,"nohit":0,"script":"","fps_min_height":0.0,"fps_max_height":height}
 	game.visuals[id] = visual
 
 func _spawn_wall(position: Vector3) -> void:

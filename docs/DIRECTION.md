@@ -712,3 +712,163 @@ billboards, and they are step 3.
 prototype: its textured buildings in place of the stand-ins, and its billboards made through
 `create_visual`/`update_visual` so the VM's story state drives them. Settle the scale (0.025 m per
 pixel), then have Chris play the opening.
+
+
+## The game's buildings, and the scale — September 30, eighth pass (Opus 5.5)
+
+Step 3 of the sixth pass's next step, its building part: the seventh pass's flat-coloured stand-ins
+are gone. Evidence: `docs/images/buildings-sept30.jpg`. Each row is one camera, placed in source
+pixels, filmed in the old game with its Blender cottages (8db1ff5), in the game now, and in the
+prototype. The first twelve rows are the seventh pass's walls, 74 px out (where the player stopped,
+plus its 70 px step back) and 300 px out. The last five show the church, the log cabin, home-10,
+kit-417 seen across the water from the north, and a house by the fountain. The game shows no
+kit-417 there: defect 3.
+
+**One build, not two.** `scripts/sprite_buildings.gd` is the prototype's building code, moved out of
+`prototype/sprite_world_proto.gd`, not copied. It covers the projection-textured faces, the thatch
+profile, chimneys on roofs and beside houses, the cabin and the church (`polys`), kit buildings with
+their dormers, and backs mirrored without their doors. It also holds the gathering: which sprites a
+house draws onto itself. The prototype now calls it. Through the original camera, every screen of
+`tools/facade_regress.py` is unchanged (±0.0), and its 199 renders differ by at most 0.022 of 255 in
+the mean (sub-pixel edges). The game calls the same functions (`fp_world.gd`):
+- A fitted house (`add_fitted_building`, `house_plan`): the sprites drawn over it are gathered as
+  the prototype gathers them, over a 5×5 block round the screen, from the sprites drawn at the
+  current story layer. Doors, windows and damage are composited onto its walls in the original draw
+  order. Chimneys stand on its roof, or beside it (home-13). Those sprites keep their entities
+  (warps, scripts, story state) but no model of their own (`house_part`). A scripted part without a
+  warp, such as a door someone talks to, keeps an unseen body where it is drawn.
+- Kit buildings (`add_kit_buildings`) are composed from the map's own tiles and kit sprites, with
+  their dormers.
+- Meshes and textures are cached per building and story layer, because the game rebuilds its scene
+  on every screen change. Materials are unshaded, as in the prototype, because the light is baked
+  into the art. They still cast the game's real-time shadows.
+- Each building's mesh has its origin at its sprite's top-left, so it stands on exactly the
+  footprint `tools/collision_map.py` derives from the same faces.
+- Dink's cottage keeps its story states: flames on its east roof slopes at vision 1, and the charred
+  tint at vision 2. The damage sprites of both layers are now on its walls and roof, not boxes
+  floating beside it.
+
+**The chimneys are no longer rubble.** home-11 and home-12 stand on their roofs and home-13 beside
+its house. The game had drawn all three as a "ruin" heap behind the houses. The model key stays
+`ruin` (tests/fps_fire_world_test.gd checks it), but nothing is drawn for it.
+
+**The scale: 0.025 m per source pixel (was 0.06).** The player is Dink. His eye (EYE_HEIGHT,
+1.65 m) must stand where Dink's eyes are in his sprite. The rest of the art must then come out at the
+sizes it was drawn at, in the same unit. Heights come from the sprites' drawn pixels: from the top
+of the drawn pixels to the hotspot, or, on a wall, a column's extent. The black shadow dither is
+left out.
+
+| Drawn | px | at 0.025 | at 0.06 |
+|---|---|---|---|
+| Dink standing (walk and idle, frame 1) | 68–71 | 1.7–1.8 m | 4.1–4.3 m |
+| The player's eye (1.65 m), in Dink's pixels | | 66 px: 0.94 of his height, his eyes | 27.5 px: 0.39, his hip |
+| Villagers (c5, c09) | 75–88 | 1.9–2.2 m | 4.5–5.3 m |
+| Rail-fence post (fence-01) | 45 | 1.1 m | 2.7 m |
+| Cottage wall to the eave (home-01, fitted) | 80 | 2.0 m | 4.8 m |
+| Cottage ridge (home-01) | 140 | 3.5 m | 8.4 m |
+| Kit ground storey (stone) | 92 | 2.3 m | 5.5 m |
+| Door leaf, in the wall plane (seq 61/62) | 53–54 | 1.35 m | 3.2 m |
+| Doorway with its frame (home-02/03) | 63–64 | 1.6 m | 3.8 m |
+
+At 0.025 the eye stands at Dink's eyes, and fences, storeys and people come out at human sizes. The
+door does not. The art draws doors at 0.77 of Dink's height, and the doorway frame at 0.9. That is
+the art's cartoon proportion, and it is kept. A door is not stretched to 2 m. Choosing the scale
+from the door (2 m for 54 px, 0.037) would put the eye at Dink's chest (45 px). At 0.06 the player
+saw the world from Dink's hip, doors stood twice his eye height, and a cottage was a two-storey
+house. The prototype's 0.025 was right, and the game now uses it.
+
+Applied consistently:
+- `fp_world.SCALE` is the one constant. `fps_game.gd`, `tests/fps_test.gd` and the screen size
+  (`WIDTH`, `DEPTH`) read it. The interior mask grid and the wilderness had 0.06 written into their
+  numbers; they now derive from SCALE.
+- Game logic stays in source pixels: movement, collision, triggers and dialogue offsets.
+- The arrow keeps its 21 m/s: it is a thing seen flying at eye level. At 0.025 it crosses a screen
+  in 0.7 s. The game's 2D missiles move 180 px/s.
+- The Blender models that stand in for sprites are sized to the sprite: people, animals, trees,
+  barrels, chests, wells, signs, gravestones and fountains (`SPRITE_SIZED`). Each is as tall as its
+  sprite stands above its hotspot, the way the prototype's billboards stand. They had been sized
+  for 0.06, inconsistently: at 0.025 a duck would have been 1.63 m and a chest 1.6 m, while people
+  (2.07 m) and oaks (6 m) happened to fit. `crate` is left out. It stands in for anything scripted or
+  unknown (rakes leaning on walls, sacks), and a cube as tall as a leaning rake is a wall. Interior
+  rooms keep their 3.6 m walls and ceiling, a room's height in metres.
+- Two test fixtures had the old scale written into them, and both are fixed.
+  `tests/fps_test.gd` placed its targets' entities at `y = 133.33` (4 m at 0.06), so
+  `update_visual` moved the bodies to 1.7 m. `tests/fps_opening_polish_test.gd` gave a speaker the
+  id of one of the room's walls without removing the wall's visual, so the framing aimed at a 3.6 m
+  "head". At 0.06 the wall was far enough to stay under the 0.2 rad bound, and at 0.025 it was not.
+
+**A roof piece's shadow on unseen faces.** Seen from behind at eye level, Dink's cottage had a dark
+stripe running from ridge to eave on its north slope, in the prototype and the game alike. It was
+the fifth pass's `_paint_unseen`. The chimney's cast shadow was painted onto the far slope wherever
+that slope's points project onto the shadow's pixels. Along the grazing view rays, a few pixels
+cover the whole slope. It is now painted only where the original camera sees that face: the ray's
+first hit must be the face itself. The original camera's view is unchanged by construction (439:
+13.4 before and after), and the stripe is gone.
+
+**Verification.**
+- Look first: the sheet above. From the seventh pass's camera positions, and wider, the game's
+  buildings are the prototype's: the same cottages, doors, chimneys, thatch, inn, church, cabin and
+  home-10. They differ in the game's lighting on everything else, its Blender stand-ins, and its
+  lighter fog. No flat stand-in remains on a fitted building. The four `/Building/` sprites without a
+  fit (build-01, 02, 03, 10) keep the Blender cottage.
+- `pytest`: 80 passed, after the rebase onto 7a778e0. `tests/fps_wall_test.gd` is among them:
+  eight walls stop 4.3 px from the drawn wall, the doors of 439 and 409 lead in, and all four
+  points behind Dink's cottage are open. The first run failed 3
+  tests, on the two fixtures above.
+- The letter campaign (`tools/playtest.py --mode campaign --milestone letter --rendered
+  --max-commands 5000`) runs from Begin adventure to Aunt Maria's letter, with real input. It
+  passes in 3,122 commands. The seventh pass took 3,201 and 8db1ff5 2,955, and collision is
+  unchanged in source pixels. It found no stuck player.
+- Frame time, `tests/fps_perf.gd` (written by a Sonnet subagent and checked here), same camera and
+  same screen in each checkout, 300 frames after 30 of warm-up, three repeats. The screen is loaded
+  with its scripts off (scenario setup). llvmpipe under xvfb, so the numbers are relative only.
+  The runs are interleaved: repeat, then screen, then checkout. Medians follow, with the spread of
+  the three repeats:
+
+  | Screen, camera | Old game (8db1ff5) | Stand-ins (seventh pass) | Now |
+  |---|---|---|---|
+  | 439, the cottage: frame | 30.0 ms (29.6–30.7) | 27.4 (27.1–27.4) | 27.7 (27.6–27.8) |
+  | 505, the inn: frame | 44.4 ms (43.8–46.2) | 17.0 (17.0–17.0) | 16.6 (15.3–16.7) |
+  | 439: `load_map` | 29 ms | 54 | 41 |
+  | 505: `load_map` | 47 ms | 47 | 1,570–1,730 |
+
+  The textured buildings draw at the stand-ins' cost, and both beat the Blender models. Loading does
+  not: the first time a session builds a kit building, it composes that building's canvases in
+  GDScript, in per-pixel passes. Later scenes in the session take them from the cache. Profiled
+  alone, in a headless process, the inn took 1.6 s to compose its two canvases, including 0.75 s
+  per background knock-out, and 2.1 s to fill them. That is more than the whole load in the game's
+  run, and the difference is not diagnosed. Defect 1 below.
+- Every Godot run used the Dummy audio driver. Headless runs imply it.
+
+**Judgment.** In the game, at eye level, the buildings are the prototype's buildings. Dink's cottage
+is stone and thatch, with its door where it was drawn and its chimney on the ridge. From behind it
+is whole. The inn is one Tudor building, and the church, the cabin and home-10 are what the
+prototype made of them. They are clearly better than the Blender cottages. Those were yellow boxes
+on stretched hardboxes, and from behind the player stood inside them. At 0.025 the doors come to
+Dink's shoulder, as drawn. The cottages are cottages: the eaves just above the eye, the ridge twice
+the eye's height.
+
+**Defects I see, in order:**
+1. The first build of a kit building stalls the load: 1.6 s for the inn. The village screen 440
+   has two of the inn's screens as neighbours, so the stall falls inside the opening, once per
+   session. The canvases depend only on the map. The fix is to compose them off the main thread
+   (the source images loaded first on the main thread), or once per build into cached images.
+   Making `fill_holes` fill only the fringe the faces sample would change the prototype's pixels.
+2. Everything that is not a building is still a Blender stand-in. The fences are dark slabs, tools
+   are crates, flames are cones, and bushes are blobs. This is step 3's other half: billboards made
+   through `create_visual`/`update_visual`.
+3. `fp_world.is_inside` takes kit-417's courtyard screens (385–388, 417, 420) for interiors,
+   because their stone-wall sprites count as room walls (5–8 of them each; the rule is 3). This
+   predates this pass. Those screens are drawn as rooms, and their neighbours show wilderness in
+   their place, so kit-417 is built only from 418 and 419.
+4. The game builds the screen and its eight neighbours. So kit-417 is not seen from two screens
+   south, where the prototype's 5×5 block shows it. At 0.025 the 3×3 is 45 × 30 m.
+5. The drawn dither shadow of each building is not painted into the game's ground. The game's
+   ground is tiles only, and background sprites are entities. The real-time shadow stands in for it.
+6. Parts composited onto a house are fixed for the scene. A door the VM moves or animates stays as
+   drawn until the screen reloads. Composited parts of a neighbour screen use the current screen's
+   story layer, as every neighbour sprite already does.
+7. The story fire's flame entities (fire1-0x) stand at their hotspots, not on the roof they are
+   drawn on. `add_story_fire` puts its own flames on the roof.
+8. The prototype's open building defects carry over: home-10's core roof sits a few px low (318).
+   The rhombic footprints remain.

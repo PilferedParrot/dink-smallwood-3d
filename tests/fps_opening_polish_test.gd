@@ -73,6 +73,11 @@ func _run() -> void:
 	# path is exercised; the entity is deliberately off-camera before the line.
 	game.test_mode = false
 	game.entities[2] = {"x": 500.0, "y": 200.0, "active":1, "script":"s1-bul", "type":1}
+	# The id belonged to one of the room's walls: its visual goes with it, or the framing aims at
+	# the head of a 3.6 m wall (at 0.025 m/px, 4.5 m away: 0.30 rad up).
+	if game.visuals.has(2):
+		game.visuals[2].queue_free()
+		game.visuals.erase(2)
 	game.fps_yaw = 0.0
 	game.fps_pitch = 1.0
 	game._sync_fps_camera()
