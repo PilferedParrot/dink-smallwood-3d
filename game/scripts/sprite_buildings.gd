@@ -472,6 +472,11 @@ func _paint_unseen(img: Image, dither: PackedByteArray, r: Array, fit: Dictionar
 				var sy := int(floor(p.z - p.y - at.y))
 				if sx < 0 or sy < 0 or sx >= w or sy >= h: continue
 				if sx >= float(rp.top[0][0]) and sx <= float(rp.top[2][0]) and sy <= float(rp.foot[1]): continue
+				# Only where the original camera sees this face: behind the ridge the view ray meets
+				# the near slope first. Unseen, the wedge's few pixels spread down the whole far slope
+				# along the grazing rays and showed at eye level as a dark stripe from ridge to eave.
+				var first := ray_hit(fit, p.x, p.z - p.y)
+				if first.is_empty() or absf(float(first[0]) - p.y) > 0.5: continue
 				var col := img.get_pixel(sx, sy)
 				if dither[sy*w + sx]: col = Color(0, 0, 0, 0.5)
 				if col.a < 0.25: continue

@@ -3,7 +3,7 @@
 # save format remain in game.gd; this class only translates controls/rendering.
 extends "res://scripts/game.gd"
 
-const SCALE := 0.06
+const SCALE: float = preload("res://scripts/fp_world.gd").SCALE # metres per source pixel
 const EYE_HEIGHT := 1.65
 const PROJECTILE := preload("res://scripts/fps_projectile.gd")
 

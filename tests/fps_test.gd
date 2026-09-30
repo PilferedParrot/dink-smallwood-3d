@@ -2,7 +2,7 @@ extends SceneTree
 
 const GAME := preload("res://scripts/fps_game.gd")
 const EYE_HEIGHT := 1.65
-const SCALE := 0.06
+const SCALE: float = preload("res://scripts/fp_world.gd").SCALE
 
 var game
 var failures: Array[String] = []

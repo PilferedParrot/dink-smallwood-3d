@@ -5,7 +5,9 @@ extends Node3D
 var host
 var source_id := 1
 var damage := 1
-var speed := 21.0
+# Flight in source pixels, as the rest of the game logic: 350 px/s for 2.2 s. (It was 21 m/s
+# when the world was drawn at 0.06 m/px; docs/DIRECTION.md, eighth pass.)
+var speed: float = 350.0*preload("res://scripts/fp_world.gd").SCALE
 var lifetime := 2.2
 var direction := Vector3.FORWARD
 var spell := false
