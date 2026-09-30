@@ -392,3 +392,68 @@ Through the original camera, the new screens match the source reconstruction: me
 4. The 439 chimney's cast shadow (above).
 5. Each dormer's gable is fitted about 7 px wider than its drawn frame on one side.
 6. For collision (item 5): unchanged. A kit building's footprint is its arms' stone storeys.
+
+## Tiles, mirror-twin houses and the log cabin — September 29, fourth pass (Opus 5.5)
+
+The defects of the third pass. Evidence: `docs/images/cabin-houses-tiles-sept29.jpg` (per screen:
+source, before, after through the original camera; then eye-level pairs, before on the left).
+One command now renders every building run and compares two sets of renders:
+
+```bash
+/usr/bin/python3 tools/facade_fit.py
+/usr/bin/python3 tools/facade_regress.py render . tmp/after            # every run, ~2 min, llvmpipe
+/usr/bin/python3 tools/facade_regress.py render <old checkout> tmp/before
+/usr/bin/python3 tools/facade_regress.py table tmp/before tmp/after
+/usr/bin/python3 tools/facade_regress.py sheet tmp/before tmp/after --out sheet.jpg --screens 270 --eye s270-6-near
+```
+
+`tools/kit_shots.py` also writes shots round a placed sprite (`screen:index`).
+
+**Tilesets 36-39.** The importer globbed `*.bmp`, which is case-sensitive on Linux, and the original
+ships `ts36.BMP` to `ts39.BMP`. It now matches the suffix in any case. Re-running the tile step
+reproduces every existing tile byte for byte and adds these four. The courtyard of kit-417 has its
+cobbles (385-420: mean |RGB| 8.3-18.0, from 16.2-32.2). The game loads the same sheets.
+`S04.bmp` (20x20, short palette) and `cd.BMP` are still skipped. They are not tiles.
+
+**Seq 63 frames 5 and 7** are frames 4 and 8 drawn mirrored (silhouette IoU 0.99 against the
+mirrored twin; the lighting was re-rendered). One house drawn twice has one geometry, so each pair is
+fitted jointly, each sprite with its own base lines. Fitted alone, home-05 chose a smaller upper
+block whose roof fell 20 px short of the drawn peak. The joint fit raised home-04's own score
+(0.592 to 0.605) and moved 440, 586 and 618 by +0.1; at the pixel the house is unchanged. Screens
+497, 500, 501, 537 and 619 had these houses as cards; they are solid now.
+
+**The log cabin (seq 59 frame 1)** is not a hip-roofed house: `gable_faces` builds a gabled block
+(eaves and verges overhanging, long walls up to the roof's underside, gable pentagons at the ends).
+Every fitted house shares the art's two wall directions to 0.001 (`wall_dirs`), so a building's
+parts are placed in that frame and only their dimensions are fitted (`parts_score`: silhouette, wall
+and roof IoU). The stone chimney defeated three fits: its sides lie inside the silhouette and its
+stone and the logs share their colours, so only its foot and its top show against the air. It is
+read from those, like the roof chimneys (`standing_chimney`): the foot's two base lines along the
+wall directions give its footprint, the top face gives the top and, standing on the wall line, the
+height. It is a frustum from one to the other. Faces carry their own texture coordinates (`polys`),
+and the body's texture has the chimney cleared and filled from its own pixels (`occluders`,
+`_add_uv_house`), so the gable wall behind it shows logs. The "log cabins" on 274, 409, 440, 500,
+501 and 530 were cabin-03 windows and cabin-02 doors on houses; there are two cabins, on 251 and 270.
+
+Seq 59 frames 2 and 3 on houses are composited onto their walls as before.
+
+**Judgment.** At eye level the cabin is a log cabin with a tapering stone chimney against its
+gable, from all four sides; it was a card that went edge-on from the east and west. The twin houses
+stand like their twins. Through the original camera every Sept 29 screen is within +0.1 except two:
+
+| Screen | Before | After | Why |
+|---|---|---|---|
+| 251 | 12.4 | 12.7 | tree-08 stands 3 px in front of the cabin's long wall; its flat billboard is half inside the wall |
+| 497 | 16.7 | 17.0 | tree-04 west of home-07: its canopy is in front of the back roof in 3D, behind the house in 2D |
+| 270 | 15.0 | 13.9 | the cabin |
+| 500 / 537 / 619 | 12.1 / 13.0 / 13.4 | 11.4 / 12.5 / 13.1 | the twin houses |
+
+**Defects I see, in order:**
+1. The eave band (third pass, defect 1) shows on every house too, as a row of arrowheads under the
+   thatch: the mirrored stone repeats the rafter holes.
+2. The church (seq 60, 187-188) and home-10 (318, 349, 350) are still cards.
+3. At the acute corner of the rhombic footprint (56 degrees), a hip roof's eave sticks out as a
+   thatch spike about half a metre long.
+4. A tree billboard standing against a wall is cut by it (251, 497): the flat billboard stands at
+   the trunk, not at the front of its canopy.
+5. home-13, the tall chimney beside home-05 on 500, is composited flat onto the wall.

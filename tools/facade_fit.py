@@ -39,6 +39,9 @@ kit geometry; see tmp/facades/fit-*.png.
 Verdict (2026-09-29, Opus 5.5, third pass): all seven kit buildings on the map are found and
 fitted with one geometry (silhouette IoU 0.959-0.971), a four-arm zig-zag (kit-417) among
 them; the three dormer panels fit as one dormer in two orientations. See DIRECTION.md.
+Verdict (2026-09-29, Opus 5.5, fourth pass): seq 63 frames 5 and 7 fit jointly with their mirror
+twins 4 and 8; the log cabin (seq 59 frame 1) as a gable block with a standing chimney read from
+its foot and top (BUILDINGS). See DIRECTION.md.
 """
 from __future__ import annotations
 import argparse, colorsys, json, math
@@ -53,7 +56,14 @@ ROOT = Path(__file__).resolve().parents[1]
 # Optional fixed params by index. home-04's free fit put a 28 px skirt eave that stands
 # out as wings beyond the drawn silhouette; the three single houses from the same kit
 # all fit a 10 px eave, so its skirt is held to that.
-HOUSES = [(63, 1, 1, [0.9], {}), (63, 4, 2, [0.8, 1.1], {1: 10.0}), (63, 6, 1, [1.1], {}), (63, 8, 1, [1.1], {})]
+HOUSES = [(63, 1, 1, [0.9], {}), (63, 4, 2, [0.8, 1.1], {1: 10.0}), (63, 6, 1, [1.1], {}), (63, 8, 1, [1.1], {}),
+          (63, 5, 2, [0.8, 1.1], {1: 10.0}), (63, 7, 1, [1.1], {})]
+# Mirror twins: frames 5 and 7 are 4 and 8 drawn mirrored (silhouette IoU 0.99 against the
+# mirrored twin; the lighting was re-rendered). One house drawn twice has one geometry, so each
+# pair is fitted jointly (each sprite keeps its own base lines) and takes its twin's pitches.
+# Fitted alone, home-05 settled on a smaller upper block (inset 0.25 against home-04's 0.20)
+# whose roof fell 20 px short of the drawn peak on screen 500.
+TWINS = {5: 4, 7: 8}
 # Roof pieces: separate sprites the original draws over a house's roof (the chimneys of
 # seq 63). Each is an upright prism; see roof_piece().
 ROOF_PIECES = [(63, 11), (63, 12)]
@@ -176,9 +186,13 @@ def score(pred, lab):
     return s / 2
 
 
-def fit(lab, blocks, fixed=None):
+def fit(labs, blocks, fixed=None):
+    """Shared parameters for one or more label maps of the same house (mirror twins), each
+    with its own base lines; the score is their mean."""
     fixed = fixed or {}
-    F, L, R = base_lines(lab)
+    bases = [base_lines(lab) for lab in labs]
+    sc = lambda p: float(np.mean([score(render(house_faces(F, L, R, p, blocks), lab.shape), lab)
+                                  for (F, L, R), lab in zip(bases, labs)]))
     grids = [np.arange(20, 130, 4), np.arange(0, 30, 2), np.arange(0.3, 1.8, 0.1)]
     if blocks == 2:
         grids += [np.arange(0.05, 0.6, 0.05), np.arange(20, 130, 4), np.arange(0, 30, 2), np.arange(0.3, 1.8, 0.1)]
@@ -192,7 +206,7 @@ def fit(lab, blocks, fixed=None):
         cur = [h0] + best[1:]
         for i, v in fixed.items():
             cur[i] = v
-        cur_s = score(render(house_faces(F, L, R, cur, blocks), lab.shape), lab)
+        cur_s = sc(cur)
         for _ in range(4):
             for i, g in enumerate(grids):
                 if i in fixed:
@@ -200,12 +214,12 @@ def fit(lab, blocks, fixed=None):
                 for val in g:
                     trial = list(cur)
                     trial[i] = float(val)
-                    s = score(render(house_faces(F, L, R, trial, blocks), lab.shape), lab)
+                    s = sc(trial)
                     if s > cur_s:
                         cur, cur_s = trial, s
         if cur_s > top_s:
             top, top_s = cur, cur_s
-    return F, L, R, top, top_s
+    return bases, top, top_s
 
 
 def is_dither(rgba: np.ndarray) -> np.ndarray:
@@ -760,6 +774,245 @@ def wall_details(world, seqs, screens, faces, top_left, members, mask, kit=KIT):
     return extra
 
 
+# --- General buildings: gable blocks and upright pieces (the cabin, the church) ------------
+# Buildings that are neither hip-roofed cottages nor kit buildings are described by their
+# parts (a gable block, a chimney standing on the ground, ...) in one frame: the art's two wall
+# directions, which every fitted house shares to 0.001 (wall_dirs). The parts' dimensions are
+# fitted to the sprite; which parts a building has is its description (BUILDINGS). Each face
+# carries its texture coordinates (projection, or a mirror for faces the original camera never
+# saw), and upright pieces standing in front of the body (a chimney) list their outlines, so the
+# body's texture behind them can be filled from its own pixels instead of showing them.
+
+def wall_dirs(houses):
+    """The two wall directions of the art (unit, in sprite pixels on the 1:1 ground): dR along
+    the walls whose base runs up to the right, dL up to the left, both from the front corner."""
+    dr = [np.subtract(h['R'], h['F']) / np.linalg.norm(np.subtract(h['R'], h['F'])) for h in houses]
+    dl = [np.subtract(h['L'], h['F']) / np.linalg.norm(np.subtract(h['L'], h['F'])) for h in houses]
+    return np.mean(dr, 0), np.mean(dl, 0)
+
+
+def P3(q, y):
+    return (float(q[0]), float(y), float(q[1]))
+
+
+def gable_faces(F, u, v, y0, hw, o, ov, pitch, block=0):
+    """A gabled block on the footprint F, F+u, F+u+v, F+v with its ridge along u. The eaves
+    (the sides along u) overhang by o, the verges (the gable ends) by ov, both perpendicular.
+    The roof falls from the ridge at `pitch` (rise/run) to the eave edge at y0 + hw; the long
+    walls rise to its underside and the end walls into the gable under it."""
+    uh, vh = u / np.linalg.norm(u), v / np.linalg.norm(v)
+    sin = abs(cross2(uh, vh))
+    de, dv = o / sin, ov / sin
+    E = [F - dv * uh - de * vh, F + u + dv * uh - de * vh, F + u + v + dv * uh + de * vh, F + v - dv * uh + de * vh]
+    ye = y0 + hw
+    yr = ye + pitch * (np.linalg.norm(v) * sin / 2 + o)
+    yw = ye + pitch * o
+    M0, M1 = (E[0] + E[3]) / 2, (E[1] + E[2]) / 2
+    C = [F, F + u, F + u + v, F + v]
+    faces = [(1, [P3(C[0], y0), P3(C[1], y0), P3(C[1], yw), P3(C[0], yw)], block),
+             (1, [P3(C[3], y0), P3(C[2], y0), P3(C[2], yw), P3(C[3], yw)], block),
+             (1, [P3(C[0], y0), P3(C[3], y0), P3(C[3], yw), P3((C[0] + C[3]) / 2, yr), P3(C[0], yw)], block),
+             (1, [P3(C[1], y0), P3(C[2], y0), P3(C[2], yw), P3((C[1] + C[2]) / 2, yr), P3(C[1], yw)], block),
+             (2, [P3(E[0], ye), P3(E[1], ye), P3(M1, yr), P3(M0, yr)], block),
+             (2, [P3(E[3], ye), P3(E[2], ye), P3(M1, yr), P3(M0, yr)], block)]
+    return faces
+
+
+def box_faces(P, u, v, y0, y1, label, block):
+    """An upright prism on the footprint P, P+u, P+u+v, P+v from y0 to y1, with its top."""
+    C = [P, P + u, P + u + v, P + v]
+    faces = [(label, [P3(C[i], y0), P3(C[(i + 1) % 4], y0), P3(C[(i + 1) % 4], y1), P3(C[i], y1)], block) for i in range(4)]
+    return faces + [(label, [P3(c, y1) for c in C], block)]
+
+
+def parts_score(faces, pieces, lab):
+    """Agreement of a parts model with a sprite's label map (0 air, 1 wall, 2 roof): the mean of
+    the silhouette IoU and the wall and roof IoUs. Pieces (a chimney, whose stone the colour
+    classes confuse with both) count only in the silhouette: their pixels are left out of the
+    class IoUs."""
+    pred = render([(9 if b in pieces else l_, pts, b) for l_, pts, b in faces], lab.shape)
+    s = [np.logical_and(pred > 0, lab > 0).sum() / max(np.logical_or(pred > 0, lab > 0).sum(), 1)]
+    keep = pred != 9
+    for c in (1, 2):
+        a_, b_ = (pred == c) & keep, (lab == c) & keep
+        s.append((a_ & b_).sum() / max((a_ | b_).sum(), 1))
+    return float(np.mean(s))
+
+
+def descend(cur, score_fn, grids, rounds=4):
+    """Coordinate descent over the given grids (None = held)."""
+    best = score_fn(cur)
+    for _ in range(rounds):
+        improved = False
+        for i, g in enumerate(grids):
+            if g is None:
+                continue
+            for val in g:
+                t = list(cur); t[i] = float(val)
+                s_ = score_fn(t)
+                if s_ > best:
+                    cur, best, improved = t, s_, True
+        if not improved:
+            break
+    return cur, best
+
+
+def frustum_faces(Pb, ub, vb, y0, Pt, ut, vt, y1, label, block):
+    """An upright frustum: the footprint Pb, Pb+ub, Pb+ub+vb, Pb+vb at y0, the top Pt, ... at y1."""
+    B = [Pb, Pb + ub, Pb + ub + vb, Pb + vb]
+    T = [Pt, Pt + ut, Pt + ut + vt, Pt + vt]
+    faces = [(label, [P3(B[i], y0), P3(B[(i + 1) % 4], y0), P3(T[(i + 1) % 4], y1), P3(T[i], y1)], block) for i in range(4)]
+    return faces + [(label, [P3(c, y1) for c in T], block)]
+
+
+def silhouette(rgba):
+    """The sprite's body: opaque, shadow dither removed, its largest component, holes filled."""
+    body = ndimage.binary_opening((rgba[..., 3] >= 128) & ~is_dither(rgba), iterations=1)
+    lab_, _ = ndimage.label(body)
+    return ndimage.binary_fill_holes(lab_ == 1 + np.argmax(np.bincount(lab_.ravel())[1:]))
+
+
+def cabin_parts(p, dR, dL):
+    """The log cabin (seq 59 frame 1), for the fit: one gable block, its ridge along dR, and a
+    box where the stone chimney stands on the ground against the gable end at F -> F + v (centre
+    t along the wall, width cw, depth cd, height ch). The box only keeps the chimney's pixels out
+    of the block's fit; the chimney itself is read afterwards (standing_chimney). Params: F (2),
+    a, b, wall height, eave, verge, pitch, t, cw, cd, ch."""
+    fx, fy, a, b, hw, o, ov, pitch, t, cw, cd, ch = p
+    F = np.array([fx, fy])
+    faces = gable_faces(F, a * dR, b * dL, 0.0, hw, o, ov, pitch, 0)
+    faces += box_faces(F + (t - cw / 2) * dL - cd * dR, (cd + 2) * dR, cw * dL, 0.0, ch, 2, 1)
+    return faces, {1}, {0: (hw, o)}
+
+
+def standing_chimney(rgba, p, dR, dL):
+    """The cabin's chimney, read from the two parts of it that show against the air: its foot,
+    below the gable wall's base, and its top face, above the roof. Its sides lie inside the
+    building's silhouette, and its stone and the logs cannot be told apart by colour, so no fit
+    sees them (three attempts on 2026-09-29 each settled the silhouette with a wrong chimney).
+
+    The foot's bottom outline is two base lines along the art's wall directions meeting at the
+    front corner: the outer face (along dL) from its left end, the side (along dR) back to the
+    wall. The top face shows as a parallelogram (as a roof chimney's does, roof_piece): its left
+    edge runs along dR to the back corner, which stands on the wall line, so it fixes the height.
+    The chimney is the frustum from the foot to the top, against the wall; the art's shoulder
+    between firebox and stack is left to the texture."""
+    faces, _, eaves = cabin_parts(p, dR, dL)
+    faces = [f for f in faces if f[2] == 0]
+    F = np.array(p[:2])
+    body = silhouette(rgba)
+    res = body & ~ndimage.binary_dilation(render(faces, body.shape) > 0, iterations=1)
+    lab_, n = ndimage.label(res)
+    comps = [np.nonzero(lab_ == k) for k in range(1, n + 1)]
+    # Nearest the chimney's box: the foot below it, the top above it.
+    cx = F[0] + p[8] * dL[0]
+    near = [c for c in comps if len(c[0]) >= 60 and abs(np.median(c[1]) - cx) < p[9]]
+    foot = max(near, key=lambda c: c[0].max())
+    top = min(near, key=lambda c: c[0].min())
+    ys, xs = foot
+    bot = {x: ys[xs == x].max() for x in np.unique(xs)}
+    X = np.array(sorted(bot)); Y = np.array([bot[x] for x in X], float)
+    xc = X[np.argmax(Y)]
+    sl, sr = dL[1] / dL[0], dR[1] / dR[0]
+    cl = np.median((Y - sl * X)[X <= xc]); cr = np.median((Y - sr * X)[X >= xc])
+    C = np.array([(cr - cl) / (sl - sr), 0.0]); C[1] = sl * C[0] + cl
+    cw, cd = (C[0] - X.min()) / -dL[0], (X.max() - C[0]) / dR[0]
+    ys, xs = top
+    tp = {x: ys[xs == x].min() for x in np.unique(xs)}
+    X = np.array(sorted(tp)); Y = np.array([tp[x] for x in X], float)
+    xb = X[np.argmin(Y)]
+    bl = np.median((Y - sr * X)[X <= xb]); br = np.median((Y - sl * X)[X >= xb])
+    B = np.array([(br - bl) / (sr - sl), 0.0]); B[1] = sr * B[0] + bl
+    dt, wt = (B[0] - X.min()) / dR[0], (X.max() - B[0]) / -dL[0]
+    s_ = (B[0] - F[0]) / dL[0]
+    ch = F[1] + s_ * dL[1] - B[1]
+    W = F + s_ * dL  # the top's back corner on the ground
+    faces += frustum_faces(C, (cd + 2) * dR, cw * dL, 0.0, W - wt * dL - dt * dR, (dt + 2) * dR, wt * dL, ch, 2, 1)
+    info = {'foot': C.round(1).tolist(), 'width': round(cw, 1), 'depth': round(cd, 1),
+            'top width': round(wt, 1), 'top depth': round(dt, 1), 'height': round(ch, 1)}
+    return faces, {1}, eaves, info
+
+
+def smooth_labels(lab, size=5):
+    """Majority label in a size x size window (the shingles' rust and moss patches, the dark gaps
+    between logs)."""
+    counts = [ndimage.uniform_filter((lab == c).astype(float), size) for c in range(3)]
+    return np.argmax(counts, 0).astype(np.uint8)
+
+
+def wood_labels(rgba):
+    """Log walls (the warm, saturated class of classify) as walls, grey shingles as roof."""
+    lab = classify(rgba)
+    out = np.zeros_like(lab)
+    out[lab == 2], out[lab == 1] = 1, 2
+    return smooth_labels(out)
+
+
+def uv_polys(faces, pieces, eaves):
+    """Each face with a texture coordinate per vertex, in sprite pixels. A face the original
+    camera saw (turned south, as in the prototype's houses) is textured by projection,
+    (x, z - y). One it never saw takes the point mirror of its part (about the part's centre), and
+    the building's back canvas. On a long wall under an eave the band the eave hid from the camera
+    (from the eave's shadow line ye - o/|n.z| up) takes the wall below it, mirrored.
+    `eaves`: block -> (eave height ye, overhang o) for gable blocks."""
+    cen = {}
+    for _, pts, b in faces:
+        cen.setdefault(b, []).extend(pts)
+    cen = {b: np.mean(np.array(v, float), 0) for b, v in cen.items()}
+    out = []
+    for lab_, pts, b in faces:
+        P = np.array(pts, float)
+        n = np.cross(P[1] - P[0], P[2] - P[0])
+        n /= np.linalg.norm(n)
+        if n @ (P.mean(0) - cen[b]) < 0:
+            n = -n
+        seen = n[2] >= -1e-6
+        bands = [(P, None)]
+        if lab_ == 1 and len(P) == 4 and b in eaves:
+            ye, o = eaves[b]
+            y0, top = P[:, 1].min(), P[:, 1].max()
+            hs = max(ye - o / max(abs(n[2]), 0.3), y0 + 0.5 * (top - y0))
+            lo = np.array([P[0], P[1], [P[1][0], hs, P[1][2]], [P[0][0], hs, P[0][2]]])
+            hi = np.array([lo[3], lo[2], P[2], P[3]])
+            bands = [(lo, None), (hi, hs)]
+        for Q, mirror in bands:
+            uv = []
+            for q in Q:
+                q = q.copy()
+                if not seen:
+                    q[0], q[2] = 2 * cen[b][0] - q[0], 2 * cen[b][2] - q[2]
+                if mirror is not None:
+                    q[1] = 2 * mirror - q[1]
+                uv.append([round(float(q[0]), 2), round(float(q[2] - q[1]), 2)])
+            out.append({'pts': [[round(float(c), 2) for c in q] for q in Q], 'uv': uv,
+                        'back': bool(not seen), 'piece': bool(b in pieces)})
+    return out
+
+
+def occluders(faces, pieces):
+    """Screen outlines (sprite pixels) of the faces of upright pieces the original camera saw:
+    there the sprite shows the piece, not the body behind it."""
+    polys = []
+    for lab_, pts, b in faces:
+        if b not in pieces:
+            continue
+        polys.append([[round(float(q[0]), 2), round(float(q[2] - q[1]), 2)] for q in pts])
+    return polys
+
+
+# Buildings described by parts (see cabin_parts ...): the sprite, its parts, how its pixels are
+# labelled, a start, the grids searched, and the starts tried for one parameter (the wall height,
+# which has local optima as in fit()).
+BUILDINGS = [
+    {'seq': 59, 'frame': 1, 'parts': cabin_parts, 'labels': wood_labels,
+     'p0': [120., 220., 208., 117., 80., 10., 15., 0.8, 58., 40., 30., 160.], 'starts': (4, [60., 90., 120.]),
+     'grids': [np.arange(100, 140, 2.), np.arange(200, 235, 2.), np.arange(160, 260, 4.), np.arange(80, 160, 4.),
+               np.arange(40, 140, 4.), np.arange(0, 30, 2.), np.arange(0, 40, 2.), np.arange(0.3, 1.6, 0.05),
+               np.arange(20, 110, 2.), np.arange(16, 70, 2.), np.arange(8, 60, 2.), np.arange(80, 220, 4.)],
+     'read': standing_chimney},
+]
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('--out', default=str(ROOT / 'game/prototype/facades.json'))
@@ -768,11 +1021,23 @@ def main():
     seqs = json.loads((ROOT / 'game/data/sequences.json').read_text())['sequences']
     out = {}
     Path(args.sheet).mkdir(parents=True, exist_ok=True)
+    twin_of = {f: t for f, t in TWINS.items()}
+    shared = {}
     for seq, frame, blocks, pitches, fixed in HOUSES:
         fr = seqs[str(seq)]['frames'][frame - 1]
         rgba = np.array(Image.open(ROOT / 'game' / fr['path']).convert('RGBA'))
         lab = classify(rgba)
-        F, L, R, p, s = fit(lab, blocks, fixed)
+        group = sorted({frame, twin_of.get(frame, frame)} | {f for f, t in TWINS.items() if t == frame})
+        if tuple(group) not in shared:
+            labs = [classify(np.array(Image.open(ROOT / 'game' / seqs[str(seq)]['frames'][g - 1]['path']).convert('RGBA')))
+                    for g in group]
+            # The descent fits the pitch too, then the pitch read from the art replaces it.
+            # Holding the read pitch during the descent lands in worse optima (home-04 0.573
+            # against 0.605 on 2026-09-29): coordinate descent, not the model, decides that.
+            shared[tuple(group)] = fit(labs, blocks, fixed)
+        bases, p, s = shared[tuple(group)]
+        (F, L, R), p = bases[group.index(frame)], list(p)
+        s = score(render(house_faces(F, L, R, p, blocks), lab.shape), lab)
         p[2] = pitches[0]
         if blocks == 2:
             p[6] = pitches[1]
@@ -807,6 +1072,36 @@ def main():
         fr = seqs[str(seq)]['frames'][frame - 1]
         out['_roof_pieces'][fr['path']] = rp = roof_piece(np.array(Image.open(ROOT / 'game' / fr['path']).convert('RGBA')))
         print(fr['path'], rp)
+    dR, dL = wall_dirs([v for k, v in out.items() if not k.startswith('_')])
+    print('wall directions', dR.round(4), dL.round(4))
+    for bd in BUILDINGS:
+        fr = seqs[str(bd['seq'])]['frames'][bd['frame'] - 1]
+        rgba = np.array(Image.open(ROOT / 'game' / fr['path']).convert('RGBA'))
+        lab = bd['labels'](rgba)
+        sc = lambda q: parts_score(*bd['parts'](q, dR, dL)[:2], lab)
+        best = None
+        i, vals = bd['starts']
+        for v0 in vals:
+            q = list(bd['p0']); q[i] = v0
+            q, s_ = descend(q, sc, bd['grids'], rounds=6)
+            if best is None or s_ > best[1]:
+                best = (q, s_)
+        p, s_ = best
+        faces, pieces, eaves = bd['parts'](p, dR, dL)
+        if 'read' in bd:  # parts read from the pixels once the body is fitted
+            faces, pieces, eaves, info = bd['read'](rgba, p, dR, dL)
+            print('  read:', info)
+        out[fr['path']] = {
+            'score': round(s_, 3), 'params': [round(x, 3) for x in p],
+            'faces': [{'label': l_, 'block': blk, 'pts': [[round(float(c), 2) for c in pt] for pt in pts]} for l_, pts, blk in faces],
+            'polys': uv_polys(faces, pieces, eaves), 'occluders': occluders(faces, pieces)}
+        over = Image.new('RGBA', (rgba.shape[1], rgba.shape[0]), (255, 0, 255, 255))
+        over.alpha_composite(Image.fromarray(rgba))
+        d = ImageDraw.Draw(over)
+        for _, pts, blk in faces:
+            d.polygon([(pt[0], pt[2] - pt[1]) for pt in pts], outline=(255, 255, 0, 255) if blk in pieces else (0, 255, 255, 255))
+        over.save(Path(args.sheet) / f"fit-{bd['seq']}-{bd['frame']}.png")
+        print(fr['path'], 'score %.3f' % s_, 'params', [round(x, 2) for x in p])
     world = json.loads((ROOT / 'game/data/world.json').read_text())
     out['_kit_buildings'] = []
     kits = [b for cluster in kit_clusters(world) for b in kit_canvas(world, seqs, cluster)]

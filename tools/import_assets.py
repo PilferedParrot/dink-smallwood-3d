@@ -355,7 +355,8 @@ def main():
     copied=0
     for ff in src.rglob("dir.ff"): copied += extract_ff(ff,out/"assets"/ff.parent.relative_to(src))
     tile_dir = next((p for p in src.iterdir() if p.is_dir() and p.name.lower() == "tiles"), src/"Tiles")
-    for tile in tile_dir.glob("*.bmp"):
+    # The original ships both .bmp and .BMP (ts36-39); glob is case-sensitive on Linux.
+    for tile in sorted(t for t in tile_dir.iterdir() if t.suffix.lower() == ".bmp"):
         try:
             (out/"assets"/"tiles").mkdir(parents=True,exist_ok=True)
             _png_from_bmp(tile.read_bytes(),out/"assets"/"tiles"/(tile.stem.lower()+".png")); copied+=1

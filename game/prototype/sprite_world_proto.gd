@@ -381,7 +381,8 @@ func _build_house(s: Dictionary, d: Dictionary, rect: Rect2) -> void:
 	# The original's shadow: the isolated black dither pixels, which lie on the ground
 	# in this projection. Painted into the ground at 50% like the engine's blend.
 	ground_shade.append([_shade(canvas, _dither_mask(canvas)), rect.position])
-	_add_house(fit, _fill_holes(canvas), rect.position, _fill_holes(back))
+	if fit.has("polys"): _add_uv_house(fit, canvas, rect.position, back)
+	else: _add_house(fit, _fill_holes(canvas), rect.position, _fill_holes(back))
 	for r in roof_pieces: _add_roof_piece(r, fit, rect.position)
 
 func _dither_mask(img: Image) -> PackedByteArray:
@@ -485,6 +486,48 @@ func _add_house(fit: Dictionary, t: ImageTexture, top_left: Vector2, back: Image
 					out.add_vertex(Vector3((top_left.x + p.x)*S, p.y*S, (top_left.y + p.z)*S))
 	_add_mesh(st.commit(), t)
 	if n_back > 0: _add_mesh(st_back.commit(), back)
+
+# A building described by parts (tools/facade_fit.py, "General buildings": the cabin, the
+# church): every face carries its texture coordinates, and faces the original camera never saw
+# sample the back canvas (no doors). Upright pieces standing in front of the body (a chimney)
+# are cleared from the body's texture, which is filled from its own pixels there, so the wall
+# behind a chimney does not wear the chimney; the pieces keep the full sprite.
+func _add_uv_house(fit: Dictionary, canvas: Image, top_left: Vector2, back: Image) -> void:
+	var occ: Array = []
+	for poly in fit.get("occluders", []):
+		var pv := PackedVector2Array()
+		for q in poly: pv.append(Vector2(float(q[0]), float(q[1])))
+		occ.append(pv)
+	var texs := [_fill_holes(_without(canvas, occ)), _fill_holes(_without(back, occ)), _fill_holes(canvas)]
+	var sts: Array = []
+	var used := [false, false, false]
+	for k in 3:
+		var st := SurfaceTool.new()
+		st.begin(Mesh.PRIMITIVE_TRIANGLES)
+		sts.append(st)
+	var size := Vector2(canvas.get_width(), canvas.get_height())
+	for f in fit.polys:
+		var k := 2 if bool(f.piece) else (1 if bool(f.back) else 0)
+		used[k] = true
+		var pts: Array = f.pts
+		var uv: Array = f.uv
+		for i in range(1, pts.size()-1):
+			for j in [0, i, i+1]:
+				sts[k].set_uv(Vector2(float(uv[j][0]), float(uv[j][1])) / size)
+				sts[k].add_vertex(Vector3((top_left.x + float(pts[j][0]))*S, float(pts[j][1])*S, (top_left.y + float(pts[j][2]))*S))
+	for k in 3:
+		if used[k]: _add_mesh(sts[k].commit(), texs[k])
+
+# The image with the pixels inside any of the polygons cleared.
+func _without(img: Image, polys: Array) -> Image:
+	var out: Image = img.duplicate()
+	for pv in polys:
+		var r := Rect2(pv[0], Vector2.ZERO)
+		for q in pv: r = r.expand(q)
+		for y in range(maxi(0, int(r.position.y)), mini(out.get_height(), int(r.end.y) + 1)):
+			for x in range(maxi(0, int(r.position.x)), mini(out.get_width(), int(r.end.x) + 1)):
+				if Geometry2D.is_point_in_polygon(Vector2(x + 0.5, y + 0.5), pv): out.set_pixel(x, y, Color(0, 0, 0, 0))
+	return out
 
 func _add_mesh(mesh: ArrayMesh, t: Texture2D) -> void:
 	var mi := MeshInstance3D.new()

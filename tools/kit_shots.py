@@ -7,13 +7,19 @@ lowest front corner (`-front`), close to its front wall (`-wall`), from behind (
 with --dormers one shot per dormer (`-dormerK`). A camera stands at eye height; world =
 screen origin + (x - 20, y).
 
-Usage: /usr/bin/python3 tools/kit_shots.py kit-498[,kit-251...] out.json [--dormers]
+A name of the form screen:index is a placed sprite (a house, the church, a cabin): four shots
+round it, from the south-west (`-front`), east, north (`-back`) and west, at a distance scaled to
+the sprite, and one close from the south-west (`-near`), aimed at its footprint (the lower part of the sprite, which the oblique original
+camera draws below the roof).
+
+Usage: /usr/bin/python3 tools/kit_shots.py kit-498[,kit-251,500:0...] out.json [--dormers]
 Verdict (2026-09-29, Opus 5.5): used for the kit-discovery / dormer / back evidence
 (docs/images/kit-buildings-sept29.jpg).
 """
 import argparse, json
 from pathlib import Path
 import numpy as np
+from PIL import Image
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -26,6 +32,25 @@ def main():
     args = ap.parse_args()
     fac = json.loads((ROOT / 'game/prototype/facades.json').read_text())
     shots = []
+    for name in args.names.split(','):
+        if ':' not in name:
+            continue
+        world = json.loads((ROOT / 'game/data/world.json').read_text())
+        seqs = json.loads((ROOT / 'game/data/sequences.json').read_text())['sequences']
+        n, i = (int(v) for v in name.split(':'))
+        e = world['screens'][str(n)]['sprites'][i]
+        f = seqs[str(e['seq'])]['frames'][e['frame'] - 1]
+        w, h = Image.open(ROOT / 'game' / f['path']).size
+        x0 = (n - 1) % 32 * 600 + e['x'] - 20 - f['dx']
+        y0 = (n - 1) // 32 * 400 + e['y'] - f['dy']
+        c = np.array([x0 + w / 2, y0 + 0.65 * h])
+        d = 1.3 * max(w, h)
+        tag = f's{n}-{i}'
+        shots += [[tag + '-front', (c + (-0.3 * d, d)).tolist(), c.tolist()],
+                  [tag + '-east', (c + (d, -0.1 * d)).tolist(), c.tolist()],
+                  [tag + '-back', (c + (0.2 * d, -d)).tolist(), c.tolist()],
+                  [tag + '-west', (c + (-d, 0)).tolist(), c.tolist()],
+                  [tag + '-near', (c + (-0.35 * d, 0.45 * d)).tolist(), c.tolist()]]
     for b in fac['_kit_buildings']:
         if b['name'] not in args.names.split(','):
             continue

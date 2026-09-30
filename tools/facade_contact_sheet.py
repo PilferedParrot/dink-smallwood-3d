@@ -32,7 +32,7 @@ def reference(world, seqs, n: int) -> Image.Image:
     for i, t in enumerate(sc['tiles'][:96]):
         k = t['tile']; cell = k % 128
         sheet = ROOT / f'game/assets/tiles/ts{k // 128 + 1:02}.png'
-        if not sheet.exists():  # tilesets 36-39 are not in the import; the prototype skips them too
+        if not sheet.exists():  # a missing sheet (36-39 until the .BMP import fix); the prototype skips it too
             continue
         tile = Image.open(sheet).convert('RGBA').crop(
             ((cell % 12) * 50, (cell // 12) * 50, (cell % 12 + 1) * 50, (cell // 12 + 1) * 50))
