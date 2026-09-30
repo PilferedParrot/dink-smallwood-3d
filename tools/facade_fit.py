@@ -24,20 +24,28 @@ The Godot prototype builds the meshes from the JSON this writes and textures the
 projecting the sprite back through the same camera (UV = (X, Z - Y), exact on planes).
 
 Also fitted, with the same camera (see each function): the chimneys, as upright prisms
-standing on a house's roof (roof_piece), and kit buildings assembled from modular
-sprites plus building tiles, as hip-roofed wings (kit_canvas, kit_fit).
+standing on a house's roof (roof_piece); kit buildings assembled from modular sprites plus
+building tiles, found over the whole map (kit_clusters, kit_canvas) and fitted as hip-roofed
+arms along their fronts with one shared kit geometry (front_polyline, kit_fit); and the
+dormers drawn into kit roof panels, as gabled prisms on the roof (dormers, place_dormers).
+For the backs, which mirror the fronts, door panels are swapped for their door-less twins
+(back_twins).
 
 Usage: /usr/bin/python3 tools/facade_fit.py [--out game/prototype/facades.json] [--sheet DIR]
 Verdict (2026-09-29, Opus 5.5): works for seq 63 frames 1, 4, 6, 8; see the sheet for IoU.
 Verdict (2026-09-29, Opus 5.5, second pass): chimneys home-11/12 and the Stonebrook inn
 (screens 472-474, 504-506, 537-538) and the second kit house (kit-538) fit, with one
 kit geometry; see tmp/facades/fit-*.png.
+Verdict (2026-09-29, Opus 5.5, third pass): all seven kit buildings on the map are found and
+fitted with one geometry (silhouette IoU 0.959-0.971), a four-arm zig-zag (kit-417) among
+them; the three dormer panels fit as one dormer in two orientations. See DIRECTION.md.
 """
 from __future__ import annotations
 import argparse, colorsys, json, math
 from pathlib import Path
 import numpy as np
 from scipy import ndimage
+from scipy.signal import find_peaks
 from PIL import Image, ImageDraw
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -52,11 +60,19 @@ ROOF_PIECES = [(63, 11), (63, 12)]
 # Kit buildings: assembled in the original from modular sprites (seq 33 `outinn`: the stone
 # ground floor and the roof) plus building tiles (tilesets 34 and 35 carry the half-timbered
 # upper storey and the eave). Doors (seqs 61, 62) are drawn on its walls. See kit_building().
-KIT_BUILDINGS = [
-    {'name': 'inn', 'screens': [472, 473, 474, 504, 505, 506, 537, 538], 'tilesets': [34, 35], 'seqs': [33], 'details': [61, 62]},
-    # The second house of the same kit, south-east of the inn: the method's transfer test.
-    {'name': 'kit-538', 'screens': [506, 507, 538, 539, 570, 571], 'tilesets': [34, 35], 'seqs': [33], 'details': [61, 62]},
-]
+# Every building of the kit is found by kit_clusters() and kit_canvas().
+KIT = {'tilesets': [34, 35], 'seqs': [33], 'details': [61, 62]}
+# Kit roof panels with a dormer drawn in (seq 33). Each has a plain twin in the kit, the
+# same-size panel it differs from least; see dormers().
+DORMER_FRAMES = [13, 31, 32]
+# Kit stone-storey panels with a door drawn in (seq 33). The original camera never saw a
+# building's back, which takes its front mirrored; there each door panel shows its door-less
+# twin (the same-anchor panel it differs from least: always the window panel of the same
+# wall slot), and door and sign sprites are left off. See back_twins().
+DOOR_FRAMES = [3, 4, 5, 6, 20, 21, 22, 23, 33, 34, 38, 39]
+# Door sprites drawn over walls: (seq, frame), frame None for the whole sequence. Seq 63
+# frames 2 and 3 are the cottages' doorways (one per wall direction), under a seq 61 leaf.
+DOOR_SPRITES = [(61, None), (62, None), (63, 2), (63, 3)]
 COLS = 32
 
 
@@ -245,40 +261,71 @@ def draw_order(sprites):
                                                       else sprites[i]['que'] or sprites[i]['y'], i))
 
 
-def kit_canvas(world, seqs, spec):
-    """The building as the original camera saw it: per screen, its building tiles (with
-    grass and water knocked out) and its kit and door sprites in the original draw order,
-    clipped to the screen as the engine clips them, stitched in world source pixels.
+def kit_clusters(world, kit=KIT):
+    """Outdoor screens holding any piece of the kit (a building tile or a kit sprite on the
+    default story layer), grouped by 8-neighbour adjacency: a building spans adjacent
+    screens, and the engine places each piece on every screen it shows on."""
+    has = set()
+    for n, sc in world['screens'].items():
+        if sc.get('indoor'):
+            continue
+        if any(t['tile'] // 128 + 1 in kit['tilesets'] for t in sc['tiles'][:96]) or any(
+                e['seq'] in kit['seqs'] and e['vision'] == 0 and e['type'] != 2 for e in sc['sprites']):
+            has.add(int(n))
+    seen, clusters = set(), []
+    for n in sorted(has):
+        if n in seen:
+            continue
+        stack, comp = [n], []
+        seen.add(n)
+        while stack:
+            m = stack.pop()
+            comp.append(m)
+            c, r = (m - 1) % COLS, (m - 1) // COLS
+            for dc in (-1, 0, 1):
+                for dr in (-1, 0, 1):
+                    k = (r + dr) * COLS + c + dc + 1
+                    if 0 <= c + dc < COLS and k in has and k not in seen:
+                        seen.add(k)
+                        stack.append(k)
+        clusters.append(sorted(comp))
+    return clusters
 
-    Several kit buildings can share screens, so the building is the largest connected
-    component of the result, and its pieces are the tiles and sprites that lie mostly on
-    it (unclipped, so a copy the engine clips away on one screen still counts).
-    Returns the canvas cropped to the building, its world top-left (world = screen
-    origin + (x - 20, y)), the building mask and the member pieces [screen, 't'|'s', index].
+
+def kit_canvas(world, seqs, screens, kit=KIT):
+    """The kit buildings on a cluster of screens as the original camera saw them: per
+    screen, its building tiles (with grass and water knocked out) and its kit and door
+    sprites in the original draw order, clipped to the screen as the engine clips them,
+    stitched in world source pixels.
+
+    Every connected component that holds a kit sprite is a building (a stray door is not);
+    its pieces are the tiles and sprites that lie mostly on it (unclipped, so a copy the
+    engine clips away on one screen still counts), and its screens are theirs.
+    Returns per building: the canvas cropped to it, its world top-left (world = screen
+    origin + (x - 20, y)), its mask, its member pieces [screen, 't'|'s', index] and screens.
     """
-    os_ = [origin(n) for n in spec['screens']]
+    os_ = [origin(n) for n in screens]
     x0, y0 = min(o[0] for o in os_), min(o[1] for o in os_)
     x1, y1 = max(o[0] for o in os_) + 600, max(o[1] for o in os_) + 400
     pad = 400
     canvas = Image.new('RGBA', (x1 - x0 + 2 * pad, y1 - y0 + 2 * pad), (0, 0, 0, 0))
-    pieces = []  # (key, image, canvas position)
-    for n, o in zip(spec['screens'], os_):
+    pieces = []  # (key, image, canvas position, is a kit sprite)
+    for n, o in zip(screens, os_):
         sc = world['screens'][str(n)]
         at = (pad + o[0] - x0, pad + o[1] - y0)
         im = Image.new('RGBA', (600 + 2 * pad, 400 + 2 * pad), (0, 0, 0, 0))
         for i, t in enumerate(sc['tiles'][:96]):
             k = t['tile']; cell = k % 128
-            if k // 128 + 1 not in spec['tilesets']:
+            if k // 128 + 1 not in kit['tilesets']:
                 continue
-            tile = np.array(Image.open(ROOT / f'game/assets/tiles/ts{k // 128 + 1:02}.png').convert('RGBA').crop(
-                ((cell % 12) * 50, (cell // 12) * 50, (cell % 12 + 1) * 50, (cell // 12 + 1) * 50)))
-            tile = Image.fromarray(tile)
+            tile = Image.open(ROOT / f'game/assets/tiles/ts{k // 128 + 1:02}.png').convert('RGBA').crop(
+                ((cell % 12) * 50, (cell // 12) * 50, (cell % 12 + 1) * 50, (cell // 12 + 1) * 50))
             im.paste(tile, (pad + i % 12 * 50, pad + i // 12 * 50))
-            pieces.append(([n, 't', i], tile, (at[0] + i % 12 * 50, at[1] + i // 12 * 50)))
+            pieces.append(([n, 't', i], tile, (at[0] + i % 12 * 50, at[1] + i // 12 * 50), False))
         sp = sc['sprites']
         for i in draw_order(sp):
             e = sp[i]
-            if e['vision'] != 0 or e['type'] == 2 or e['seq'] not in spec['seqs'] + spec['details']:
+            if e['vision'] != 0 or e['type'] == 2 or e['seq'] not in kit['seqs'] + kit['details']:
                 continue
             fs = seqs.get(str(e['seq']), {}).get('frames', [])
             if not 0 < e['frame'] <= len(fs):
@@ -287,7 +334,7 @@ def kit_canvas(world, seqs, spec):
             p = Image.open(ROOT / 'game' / f['path']).convert('RGBA')
             xy = (int(e['x'] - 20 - f['dx']), int(e['y'] - f['dy']))
             im.alpha_composite(p, (pad + xy[0], pad + xy[1]))
-            pieces.append(([n, 's', i], p, (at[0] + xy[0], at[1] + xy[1])))
+            pieces.append(([n, 's', i], p, (at[0] + xy[0], at[1] + xy[1]), e['seq'] in kit['seqs']))
         canvas.alpha_composite(im.crop((pad, pad, pad + 600, pad + 400)), at)
     rgba = np.array(canvas)
     # Grass and water in the building tiles are what stands behind the building: remove
@@ -296,18 +343,30 @@ def kit_canvas(world, seqs, spec):
     lab_, _ = ndimage.label((rgba[..., 3] < 128) | is_background(rgba[..., :3]))
     outside = np.unique(np.concatenate([lab_[0], lab_[-1], lab_[:, 0], lab_[:, -1]]))
     rgba[np.isin(lab_, outside[outside > 0]), 3] = 0
-    comp, _ = ndimage.label((rgba[..., 3] >= 128) & ~is_dither(rgba))
-    mask = comp == 1 + int(np.argmax(np.bincount(comp.ravel())[1:]))
-    members = []
-    for key, p, (px, py) in pieces:
+    comp, count = ndimage.label((rgba[..., 3] >= 128) & ~is_dither(rgba))
+    on = {}  # component -> member pieces
+    for key, p, (px, py), is_kit in pieces:
         a = np.array(p)[..., 3] >= 128
-        if a.sum() and mask[py:py + a.shape[0], px:px + a.shape[1]][a].mean() > 0.5:
-            members.append(key)
-    ys, xs = np.nonzero(mask)
-    bx0, by0, bx1, by1 = xs.min() - 8, ys.min() - 8, xs.max() + 9, ys.max() + 9
-    out = rgba[by0:by1, bx0:bx1].copy()
-    out[~ndimage.binary_dilation(mask, iterations=6)[by0:by1, bx0:bx1], 3] = 0
-    return out, (x0 - pad + bx0, y0 - pad + by0), mask[by0:by1, bx0:bx1], members
+        c = comp[py:py + a.shape[0], px:px + a.shape[1]][a]
+        c = c[c > 0]
+        if not a.sum() or not len(c):
+            continue
+        best = np.bincount(c).argmax()
+        if (c == best).sum() > 0.5 * a.sum():
+            on.setdefault(best, []).append((key, is_kit))
+    out = []
+    for c, members in on.items():
+        if not any(is_kit for _, is_kit in members):
+            continue
+        mask = comp == c
+        ys, xs = np.nonzero(mask)
+        bx0, by0, bx1, by1 = xs.min() - 8, ys.min() - 8, xs.max() + 9, ys.max() + 9
+        crop = rgba[by0:by1, bx0:bx1].copy()
+        crop[~ndimage.binary_dilation(mask, iterations=6)[by0:by1, bx0:bx1], 3] = 0
+        keys = [k for k, _ in members]
+        out.append((crop, (x0 - pad + bx0, y0 - pad + by0), mask[by0:by1, bx0:bx1], keys,
+                    sorted({k[0] for k in keys})))
+    return out
 
 
 def robust_line(xs, ys, tol=10.0):
@@ -338,74 +397,297 @@ def jettied_faces(F, L, R, h1, h, j, o, pitch, block, end_pitch=None):
     return lower + upper + soffit
 
 
-def kit_fit(masks):
-    """L-shaped kit buildings = two hip-roofed wings that share the outer front corner.
+def front_polyline(mask):
+    """The wall bases of a kit building's front: the bottom of its silhouette is a chain of
+    straight segments, meeting at convex corners (the lowest points, walls turning toward
+    the camera) and concave ones (the highest, walls turning away). Each segment is a
+    robust line (see robust_line); the corners are where neighbouring lines meet, and the
+    ends are the outermost inliers. Returns the corners left to right, and for each inner
+    corner whether it is convex."""
+    w = mask.shape[1]
+    bot = np.array([np.nonzero(mask[:, x])[0].max() if mask[:, x].any() else -1 for x in range(w)])
+    xs = np.nonzero(bot >= 0)[0]
+    sm = ndimage.uniform_filter1d(bot[xs].astype(float), 41, mode='nearest')
+    peaks = sorted([(int(xs[i]), True) for i in find_peaks(sm, prominence=20)[0]]
+                   + [(int(xs[i]), False) for i in find_peaks(-sm, prominence=20)[0]])
+    cuts = [int(xs.min()) + 10] + [x for x, _ in peaks] + [int(xs.max()) - 10]
+    lines = []
+    for k in range(len(cuts) - 1):
+        seg = np.arange(cuts[k] + 5, cuts[k + 1] - 5)
+        seg = seg[bot[seg] >= 0]
+        lines.append((seg, *robust_line(seg, bot[seg].astype(float))))
+    pts = [np.array([lines[0][0][lines[0][2]].min(), 0.0])]
+    pts[0][1] = np.polyval(lines[0][1], pts[0][0])
+    for (_, l0, _), (_, l1, _) in zip(lines, lines[1:]):
+        x = (l1[1] - l0[1]) / (l0[0] - l1[0])
+        pts.append(np.array([x, np.polyval(l0, x)]))
+    x = lines[-1][0][lines[-1][2]].max()
+    pts.append(np.array([x, np.polyval(lines[-1][1], x)]))
+    return pts, [c for _, c in peaks]
 
-    The front wall bases are the two base lines at the bottom of each silhouette. The
-    union of two hipped blocks is exactly the L's hipped roof (hip at the outer corner,
-    valley at the inner one), so each wing is a block with its depth along the other wall.
-    The half-timbered upper storey is jettied out over the stone ground floor (the
-    silhouette shows it at both ends), so each wing is jettied_faces(). Its hip ends are
-    steeper than its long slopes (an equal-pitch hip left both roof ends short of the art).
+
+def kit_fit(masks):
+    """Kit buildings = hip-roofed arms, one on each straight run of the front wall.
+
+    The front wall bases are the chain of base lines at the bottom of each silhouette
+    (front_polyline). Each arm is a block standing on its run and reaching back, away from
+    the camera, along the other wall direction. Where the front turns toward the camera
+    (a convex corner, the L's outer front corner) two arms share that front corner; where
+    it turns away (a concave corner) they share the back corner, so each reaches past the
+    corner by the other's depth. The union of hipped blocks is then exactly the building's
+    roof: hips at the outer corners, valleys at the inner ones. The half-timbered upper
+    storey is jettied out over the stone ground floor (the silhouette shows it at the
+    ends), so each arm is jettied_faces(). Its hip ends are steeper than its long slopes
+    (an equal-pitch hip left both roof ends short of the art).
 
     Buildings of one kit share its pieces, so they share its geometry: wall height, stone
     storey height, jetty, eave, pitch and end pitch are fitted jointly to every silhouette
     (fitted one by one, the inn and kit-538 disagreed by 13% on wall height and 2.6x on end
-    pitch); only the wing depths are per building.
+    pitch); only the arm depths are per building.
     """
     geo = []
     for mask in masks:
-        w = mask.shape[1]
-        bot = np.array([np.nonzero(mask[:, x])[0].max() if mask[:, x].any() else -1 for x in range(w)])
-        xs = np.nonzero(bot >= 0)[0]
-        xc = xs[np.argmax(bot[xs])]
-        li = np.arange(xs.min() + 15, xc - 5)
-        ri = np.arange(xc + 5, xs.max() - 15)
-        left, kl = robust_line(li, bot[li].astype(float))
-        right, kr = robust_line(ri, bot[ri].astype(float))
-        fx = (right[1] - left[1]) / (left[0] - right[0])
-        F = np.array([fx, np.polyval(left, fx)])
-        L = np.array([li[kl].min(), np.polyval(left, li[kl].min())])
-        R = np.array([ri[kr].max(), np.polyval(right, ri[kr].max())])
-        geo.append((F, L, R, (L - F) / np.linalg.norm(L - F), (R - F) / np.linalg.norm(R - F)))
+        pts, convex = front_polyline(mask)
+        runs = [(pts[k], pts[k + 1]) for k in range(len(pts) - 1)]
+        # The two wall directions (unit, pointing right), each averaged over its runs.
+        dirs = {}
+        for A, B in runs:
+            d = (B - A) / np.linalg.norm(B - A)
+            dirs.setdefault(d[1] > 0, []).append(B - A)
+        unit = {k: np.sum(v, 0) / np.linalg.norm(np.sum(v, 0)) for k, v in dirs.items()}
+        arms = []
+        for A, B in runs:
+            down = (B - A)[1] > 0
+            # Back, away from the camera: up-right behind a run going down, up-left behind one going up.
+            back = unit.get(not down, np.array([0.894, -0.447]) if down else np.array([-0.894, -0.447]))
+            if not down:
+                back = -back if back[1] > 0 else back
+            arms.append((A, B, back))
+        geo.append((arms, convex))
+
+    def arm_faces(k, p, widths):
+        arms, convex = geo[k]
+        h, o, pitch, h1, j, pe = p[:6]
+        faces = []
+        for i, (A, B, back) in enumerate(arms):
+            f = (B - A) / np.linalg.norm(B - A)
+            a0 = A - f * (widths[i - 1] if i > 0 and not convex[i - 1] else 0.0)
+            b0 = B + f * (widths[i + 1] if i + 1 < len(arms) and not convex[i] else 0.0)
+            faces += jettied_faces(a0, b0, a0 + widths[i] * back, h1, h, j, o, pitch, 2 * i, pe)
+        return faces
+
+    offs = np.cumsum([0] + [len(g[0]) for g in geo])
 
     def faces(k, p):
-        F, L, R, uh, vh = geo[k]
-        h, o, pitch, h1, j, pe = p[:6]
-        wa, wb = p[6 + 2 * k], p[7 + 2 * k]
-        return (jettied_faces(F, L, F + wa * vh, h1, h, j, o, pitch, 0, pe)
-                + jettied_faces(F, F + wb * uh, R, h1, h, j, o, pitch, 2, pe))
+        return arm_faces(k, p, p[6 + offs[k]:6 + offs[k + 1]])
 
-    def sil(k, p):
+    def iou(k, p):
         im = Image.new('L', (masks[k].shape[1], masks[k].shape[0]), 0)
         d = ImageDraw.Draw(im)
         for _, pts, _ in faces(k, p):
             d.polygon([(q[0], q[2] - q[1]) for q in pts], fill=1)
-        return np.array(im) > 0
-
-    def iou(k, p):
-        s = sil(k, p)
+        s = np.array(im) > 0
         return np.logical_and(s, masks[k]).sum() / np.logical_or(s, masks[k]).sum()
 
-    def score(p):
-        return float(np.mean([iou(k, p) for k in range(len(masks))]))
+    def owner(i):  # the building a parameter belongs to, or None for the shared geometry
+        return None if i < 6 else int(np.searchsorted(offs, i - 6, side='right') - 1)
 
     grids = [np.arange(100, 360, 4), np.arange(0, 32, 2), np.arange(0.4, 1.8, 0.05), np.arange(40, 220, 4),
-             np.arange(0, 50, 2), np.arange(0.6, 4.0, 0.1)] + [np.arange(80, 360, 4)] * (2 * len(masks))
+             np.arange(0, 50, 2), np.arange(0.6, 4.0, 0.1)] + [np.arange(60, 360, 4)] * int(offs[-1])
     top, top_s = None, -1.0
     for h0 in (150.0, 200.0, 250.0):
-        cur = [h0, 10.0, 1.0, 100.0, 10.0, 1.0] + [200.0] * (2 * len(masks))
-        cur_s = score(cur)
+        cur = [h0, 10.0, 1.0, 100.0, 10.0, 1.0] + [200.0] * int(offs[-1])
+        per = [iou(k, cur) for k in range(len(masks))]
         for _ in range(4):
             for i, g in enumerate(grids):
+                who = owner(i)
                 for val in g:
                     trial = list(cur); trial[i] = float(val)
-                    sc = score(trial)
-                    if sc > cur_s:
-                        cur, cur_s = trial, sc
-        if cur_s > top_s:
-            top, top_s = cur, cur_s
-    return [(geo[k][:3], faces(k, top), iou(k, top)) for k in range(len(masks))], top
+                    tp = [iou(k, trial) for k in range(len(masks))] if who is None else \
+                        per[:who] + [iou(who, trial)] + per[who + 1:]
+                    if np.mean(tp) > np.mean(per):
+                        cur, per = trial, tp
+        if np.mean(per) > top_s:
+            top, top_s = cur, float(np.mean(per))
+    return [(geo[k], faces(k, top), iou(k, top)) for k in range(len(masks))], top
+
+
+def back_twins(seqs):
+    """Door panel path -> its door-less twin's path (see DOOR_FRAMES)."""
+    fr = seqs['33']['frames']
+    load = lambda k: np.array(Image.open(ROOT / 'game' / fr[k - 1]['path']).convert('RGBA')).astype(int)
+    out = {}
+    for k in DOOR_FRAMES:
+        x = load(k)
+        cands = [j for j in range(1, len(fr) + 1) if j not in DOOR_FRAMES and load(j).shape == x.shape
+                 and (fr[j - 1]['dx'], fr[j - 1]['dy']) == (fr[k - 1]['dx'], fr[k - 1]['dy'])]
+        diff = lambda j: ((np.abs(x[..., :3] - load(j)[..., :3]).sum(-1) > 60) | ((x[..., 3] > 127) != (load(j)[..., 3] > 127))).sum()
+        out[fr[k - 1]['path']] = fr[min(cands, key=diff) - 1]['path']
+    return out
+
+
+def ray_height(faces, x, y, label=2):
+    """Height of the nearest face with this label hit by the view ray through canvas point
+    (x, y) (the points (x, Y, y + Y)), or None."""
+    best = None
+    for lab_, pts, _ in faces:
+        if lab_ != label:
+            continue
+        P = np.array(pts, float)
+        n = np.cross(P[1] - P[0], P[2] - P[0])
+        den = n[1] + n[2]
+        if abs(den) < 1e-6:
+            continue
+        yy = (n @ P[0] - n[0] * x - n[2] * y) / den
+        q = np.array([x, yy, y + yy])
+        s_ = [np.cross(P[(i + 1) % len(P)] - P[i], q - P[i]) @ n for i in range(len(P))]
+        if min(s_) >= -1e-3 * (n @ n) or max(s_) <= 1e-3 * (n @ n):
+            best = yy if best is None else max(best, yy)
+    return best
+
+
+def dormer_prism(p, f, b, kb):
+    """A gabled dormer standing on a roof slope, in panel pixels with its foot line at Y = 0.
+
+    Its front is a vertical gable parallel to the wall below: bottom centre (xc, 0, yc),
+    half-width w along the wall direction f, cheek height hc, gable rise r. It runs back
+    along b, away from the camera, until the roof it stands on (rising kb per unit of b)
+    closes over it: each front vertex at height Y reaches back Y / kb. That is the dormer
+    a roofer builds, so nothing behind the gable is fitted: the roof pitch decides it.
+    Faces: gable, two cheeks, two roof slopes."""
+    xc, yc, w, hc, r = p
+    f3, b3, up = np.array([f[0], 0, f[1]]), np.array([b[0], 0, b[1]]), np.array([0, 1.0, 0])
+    C0 = np.array([xc, 0, yc])
+    BL, BR = C0 - w * f3, C0 + w * f3
+    TL, TR, AP = BL + hc * up, BR + hc * up, C0 + (hc + r) * up
+    TLb, TRb, APb = TL + hc / kb * b3, TR + hc / kb * b3, AP + (hc + r) / kb * b3
+    return [[BL, BR, TR, AP, TL], [BL, TL, TLb], [BR, TR, TRb], [TL, AP, APb, TLb], [TR, AP, APb, TRb]]
+
+
+def dormers(seqs, kit_fits, pitch):
+    """The dormers of the kit's roof panels, as upright prisms (dormer_prism).
+
+    A dormer panel's plain twin is identical to it except where the dormer and its shadow
+    are, so their difference finds both. The shadow keeps the plain roof's texture,
+    darkened (high local normalised cross-correlation); the dormer replaces it. The prism is
+    fitted to the rest: which way the gable faces (down-left on a roof running down to the
+    right, or down-right), and a geometry shared by all the panels (they draw one dormer in
+    two orientations: fitted one by one they agreed within 4 px), with each panel's own
+    foot. The wall directions and pitch are the kit's (kit_fit)."""
+    dn, up = [], []
+    for arms, _ in kit_fits:
+        for A, B, _ in arms:
+            (dn if B[1] > A[1] else up).append(B - A)
+    a_, b_ = np.sum(dn, 0), np.sum(up, 0)
+    a_, b_ = a_ / np.linalg.norm(a_), b_ / np.linalg.norm(b_)
+    orient = {'down-left': (a_, b_), 'down-right': (b_, -a_)}
+    frames = seqs['33']['frames']
+    load = lambda k: np.array(Image.open(ROOT / 'game' / frames[k - 1]['path']).convert('RGBA')).astype(float)
+    panels = []
+    for k in DORMER_FRAMES:
+        x = load(k)
+        twins = [j for j in range(1, len(frames) + 1) if j not in DORMER_FRAMES and load(j).shape == x.shape]
+        diffs = [((np.abs(x[..., :3] - load(j)[..., :3]).sum(-1) > 60) | ((x[..., 3] > 127) != (load(j)[..., 3] > 127)))
+                 for j in twins]
+        j = int(np.argmin([d.sum() for d in diffs]))
+        D, y = diffs[j], load(twins[j])
+        D = ndimage.binary_opening(D, iterations=1)
+        lab_, _ = ndimage.label(D)
+        D = lab_ == 1 + np.argmax(np.bincount(lab_.ravel())[1:])
+        lx, ly = x[..., :3].mean(-1), y[..., :3].mean(-1)
+        m = lambda z: ndimage.uniform_filter(z, 7)
+        mx, my = m(lx), m(ly)
+        ncc = (m(lx * ly) - mx * my) / np.sqrt(np.maximum((m(lx * lx) - mx * mx) * (m(ly * ly) - my * my), 1e-6))
+        body = ndimage.binary_opening(D & (ncc < 0.5), iterations=1)
+        lab_, _ = ndimage.label(body)
+        body = lab_ == 1 + np.argmax(np.bincount(lab_.ravel())[1:])
+        body = ndimage.binary_fill_holes(ndimage.binary_closing(body, iterations=2))
+        ys, xs = np.nonzero(body)
+        panels.append({'frame': k, 'twin': twins[j], 'body': body, 'foot0': [float(xs[np.argmax(ys)]), float(ys.max())]})
+
+    def iou(pn, p, o):
+        f, b = orient[o]
+        im = Image.new('L', (pn['body'].shape[1], pn['body'].shape[0]), 0)
+        d = ImageDraw.Draw(im)
+        for F in dormer_prism(p, f, b, pitch * abs(f[0] * b[1] - f[1] * b[0])):
+            d.polygon([(q[0], q[2] - q[1]) for q in F], fill=1)
+        s_ = np.array(im) > 0
+        return (s_ & pn['body']).sum() / (s_ | pn['body']).sum()
+
+    def descend(cur, score, grids, free):
+        best = score(cur)
+        for _ in range(5):
+            for i in free:
+                for v in grids[i]:
+                    t = list(cur); t[i] = float(v)
+                    s_ = score(t)
+                    if s_ > best:
+                        cur, best = t, s_
+        return cur, best
+
+    # One by one, both orientations: the better one is the panel's.
+    g5 = [np.arange(0, 100, 1.0), np.arange(100, 200, 1.0), np.arange(4, 50, 1.0), np.arange(2, 60, 1.0), np.arange(2, 60, 1.0)]
+    for pn in panels:
+        fits = [(descend(pn['foot0'] + [20.0, 15.0, 15.0], lambda p: iou(pn, p, o), g5, range(5)), o) for o in orient]
+        (pn['p'], _), pn['orient'] = max(fits, key=lambda t: t[0][1])
+    # Jointly: shared w, hc, r; each panel's foot.
+    n = len(panels)
+    cur = [float(np.mean([pn['p'][i] for pn in panels])) for i in (2, 3, 4)] + [c for pn in panels for c in pn['p'][:2]]
+    grids = g5[2:] + [g5[0], g5[1]] * n
+    score = lambda q: np.mean([iou(pn, q[3 + 2 * i:5 + 2 * i] + q[:3], pn['orient']) for i, pn in enumerate(panels)])
+    cur, _ = descend(cur, score, grids, range(len(cur)))
+    out = {}
+    for i, pn in enumerate(panels):
+        p = cur[3 + 2 * i:5 + 2 * i] + cur[:3]
+        f, b = orient[pn['orient']]
+        faces = dormer_prism(p, f, b, pitch * abs(f[0] * b[1] - f[1] * b[0]))
+        out[frames[pn['frame'] - 1]['path']] = {
+            'twin': frames[pn['twin'] - 1]['path'], 'faces': faces, 'foot': p[:2], 'f': f, 'b': b,
+            'orient': pn['orient'], 'iou': round(float(iou(pn, p, pn['orient'])), 3), 'params': [round(v, 1) for v in p]}
+    return out
+
+
+def place_dormers(world, seqs, members, faces, top_left, panels):
+    """Each dormer panel of a building: its prism lifted along the view ray onto the
+    building's roof (the ray through its foot, as for the chimneys), in building pixels,
+    with a texture coordinate (panel pixels) per vertex: the projection for faces the
+    original camera saw, the mirror image across the dormer's own middle for the rest."""
+    out = []
+    for key in members:
+        if key[1] != 's':
+            continue
+        e = world['screens'][str(key[0])]['sprites'][key[2]]
+        f_ = seqs[str(e['seq'])]['frames'][e['frame'] - 1]
+        pn = panels.get(f_['path'])
+        if pn is None:
+            continue
+        o = origin(key[0])
+        at = np.array([o[0] + e['x'] - 20 - f_['dx'] - top_left[0], o[1] + e['y'] - f_['dy'] - top_left[1]], float)
+        lift = ray_height(faces, at[0] + pn['foot'][0], at[1] + pn['foot'][1])
+        if lift is None:
+            continue
+        C0 = np.array([pn['foot'][0], 0.0, pn['foot'][1]])
+        f3, b3 = np.array([pn['f'][0], 0, pn['f'][1]]), np.array([pn['b'][0], 0, pn['b'][1]])
+        basis = np.linalg.inv(np.array([f3[[0, 2]], b3[[0, 2]]]).T)
+        centre = np.mean([q for F in pn['faces'] for q in F], 0)
+        polys = []
+        for F in pn['faces']:
+            P = np.array(F)
+            nrm = np.cross(P[1] - P[0], P[2] - P[0])
+            if nrm @ (P.mean(0) - centre) < 0:
+                nrm = -nrm
+            seen = nrm @ np.array([0, 1.0, 1.0]) > 0.2 * np.linalg.norm(nrm)
+            uv = []
+            for q in P:
+                if not seen:  # mirror across the plane through the ridge: flip the f component
+                    al, be = basis @ (q - C0)[[0, 2]]
+                    g = -al * f3 + be * b3
+                    q = np.array([C0[0] + g[0], q[1], C0[2] + g[2]])
+                uv.append([round(float(q[0]), 2), round(float(q[2] - q[1]), 2)])
+            pts = [[round(float(q[0] + at[0]), 2), round(float(q[1] + lift), 2), round(float(q[2] + at[1] + lift), 2)] for q in P]
+            polys.append({'pts': pts, 'uv': uv})
+        out.append({'member': key, 'path': f_['path'], 'faces': polys})
+    return out
 
 
 def cross2(a, b):
@@ -429,7 +711,7 @@ def ray_hits(faces, x, y):
     return False
 
 
-def wall_details(world, seqs, spec, faces, top_left, members):
+def wall_details(world, seqs, screens, faces, top_left, members, mask, kit=KIT):
     """Sprites the original draws on the building (hanging signs): the view ray through
     the foot of the sprite as the original shows it (the lowest visible pixel of its
     centre column)
@@ -437,10 +719,13 @@ def wall_details(world, seqs, spec, faces, top_left, members):
     drawn wall for the engine's depth sort, where the solid building would swallow them,
     so they join its pieces and are drawn onto its walls in the original draw order, like
     the doors and windows composited onto a house. Whatever the building covers in the
-    original (a tree behind it) never qualifies: its foot is not visible."""
+    original (a tree behind it) never qualifies: its foot is not visible. Nor does anything
+    standing through the building (a tree beside its back corner): a sign is drawn on the
+    building, so most of its visible pixels lie on the building's own mask. Over the seven kit
+    buildings, trees and the like have 0-1% there, signs 80-100% (80% overhangs a wall end)."""
     have = {tuple(m) for m in members}
     extra = []
-    for n in spec['screens']:
+    for n in screens:
         o = origin(n)
         sp = world['screens'][str(n)]['sprites']
         ids = np.full((400, 600), -1, int)
@@ -458,7 +743,7 @@ def wall_details(world, seqs, spec, faces, top_left, members):
             k = (xs >= 0) & (xs < 600) & (ys >= 0) & (ys < 400)
             ids[ys[k], xs[k]] = i
         for i, e in enumerate(sp):
-            if (n, 's', i) in have or e['seq'] in spec['seqs'] or not (ids == i).any():
+            if (n, 's', i) in have or e['seq'] in kit['seqs'] or not (ids == i).any():
                 continue
             # The foot: the bottom of the sprite's centre column (a hanging sign's lowest
             # corner can overhang the wall's end).
@@ -466,7 +751,11 @@ def wall_details(world, seqs, spec, faces, top_left, members):
             xc = int(np.median(xs))
             near = np.abs(xs - xc) <= 1
             foot = (xc + o[0] - top_left[0], ys[near].max() + o[1] - top_left[1])
-            if ray_hits(faces, *foot):
+            bx, by = xs + o[0] - top_left[0], ys + o[1] - top_left[1]
+            inside = (bx >= 0) & (by >= 0) & (bx < mask.shape[1]) & (by < mask.shape[0])
+            on = np.zeros(len(xs), bool)
+            on[inside] = mask[by[inside], bx[inside]]
+            if ray_hits(faces, *foot) and on.mean() > 0.5:
                 extra.append([n, 's', i])
     return extra
 
@@ -520,26 +809,42 @@ def main():
         print(fr['path'], rp)
     world = json.loads((ROOT / 'game/data/world.json').read_text())
     out['_kit_buildings'] = []
-    kits = [(spec, *kit_canvas(world, seqs, spec)) for spec in KIT_BUILDINGS]
-    fits, p = kit_fit([k[3] for k in kits])
+    kits = [b for cluster in kit_clusters(world) for b in kit_canvas(world, seqs, cluster)]
+    fits, p = kit_fit([k[2] for k in kits])
     print('kit geometry (wall, eave, pitch, stone storey, jetty, end pitch):', [round(x, 2) for x in p[:6]])
-    for (spec, rgba, (wx, wy), mask, members), ((F, L, R), faces, s) in zip(kits, fits):
-        members = members + wall_details(world, seqs, spec, faces, (wx, wy), members)
+    panels = dormers(seqs, [g for g, _, _ in fits], p[2])
+    # For the backs (which mirror the fronts): door panels' twins, and the door sprites to leave off.
+    out['_kit'] = {'seqs': KIT['seqs'], 'back': back_twins(seqs),
+                   'doors': [f['path'] for q, k in DOOR_SPRITES for i, f in enumerate(seqs[str(q)]['frames']) if k in (None, i + 1)]}
+    out['_dormer_panels'] = {}
+    for path, pn in panels.items():
+        # What the dormer covers on its panel from the original camera: the twin shows there.
+        out['_dormer_panels'][path] = {'twin': pn['twin'], 'poly': [[[round(float(q[0]), 2), round(float(q[2] - q[1]), 2)] for q in F] for F in pn['faces']]}
+        print(path, 'dormer', pn['orient'], 'twin', pn['twin'].split('/')[-1], 'foot, w, hc, r', pn['params'], 'IoU', pn['iou'])
+    for (rgba, (wx, wy), mask, members, screens), ((arms, convex), faces, s) in zip(kits, fits):
+        # Named after the screen of its lowest front corner (the inn is kit-537).
+        front = [arms[0][0]] + [B for _, B, _ in arms]
+        low = max(front, key=lambda q: q[1])
+        name = 'kit-%d' % (int((wy + low[1]) // 400) * COLS + int((wx + low[0]) // 600) + 1)
+        members = members + wall_details(world, seqs, screens, faces, (wx, wy), members, mask)
         out['_kit_buildings'].append({
-            **spec, 'members': members, 'rect': [int(wx), int(wy), rgba.shape[1], rgba.shape[0]], 'score': round(s, 3),
+            'name': name, 'screens': screens, 'members': members, 'rect': [int(wx), int(wy), rgba.shape[1], rgba.shape[0]],
+            'score': round(s, 3),
             'faces': [{'label': lab_, 'block': blk, 'pts': [[round(float(c), 2) for c in pt] for pt in pts]} for lab_, pts, blk in faces],
-            # Blocks: 0/2 the wings' stone storeys, 1/3 their upper storeys and roofs. The
+            # Blocks: 2k the stone storey of arm k, 2k + 1 its upper storey and roof. The
             # jetty hides the top of the stone from the original camera as the eave hides
             # the top of the upper storey.
-            'centers': [block_center(faces, b) for b in range(4)], 'overhangs': [p[4], p[1], p[4], p[1]],
-            'params': [round(x, 3) for x in p[:6]], 'F': F.round(2).tolist(), 'L': L.round(2).tolist(), 'R': R.round(2).tolist()})
+            'centers': [block_center(faces, b) for b in range(2 * len(arms))], 'overhangs': [p[4], p[1]] * len(arms),
+            'params': [round(x, 3) for x in p[:6]], 'front': [[round(float(c), 2) for c in q] for q in front],
+            'convex': convex, 'dormers': place_dormers(world, seqs, members, faces, (wx, wy), panels)})
         over = Image.new('RGBA', (rgba.shape[1], rgba.shape[0]), (255, 0, 255, 255))
         over.alpha_composite(Image.fromarray(rgba))
         d = ImageDraw.Draw(over)
+        cols = [(0, 255, 255, 255), (255, 255, 0, 255), (0, 255, 0, 255), (255, 128, 0, 255)]
         for _, pts, blk in faces:
-            d.polygon([(pt[0], pt[2] - pt[1]) for pt in pts], outline=(0, 255, 255, 255) if blk < 2 else (255, 255, 0, 255))
-        over.save(Path(args.sheet) / f"fit-{spec['name']}.png")
-        print(spec['name'], 'silhouette IoU %.3f' % s, len(members), 'pieces')
+            d.polygon([(pt[0], pt[2] - pt[1]) for pt in pts], outline=cols[blk // 2 % 4])
+        over.save(Path(args.sheet) / f"fit-{name}.png")
+        print(name, screens, 'arms', len(arms), 'silhouette IoU %.3f' % s, len(members), 'pieces')
     Path(args.out).write_text(json.dumps(out, indent=1))
 
 

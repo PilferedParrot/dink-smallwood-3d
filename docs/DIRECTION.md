@@ -262,3 +262,133 @@ check only. The Sept 29 screens are unchanged (407 13.8, 439 13.9, 440 14.3, 469
    step, then the joint fit covers them all.
 6. For the collision step: a kit building's footprint is its fitted stone storey (blocks 0
    and 2), derived from the same pixels. Footprints are still rhombic (defect 4 above).
+
+## Kit discovery, dormers and backs — September 29, third pass (Opus 5.5)
+
+The five defects of the second pass, in the order the eye-level captures ranked them. The
+25 unlisted seq 33 screens came first: their buildings still stood as cards, with the upper
+storeys painted on the ground, which is the failure the buildings work set out to remove.
+Evidence: `docs/images/kit-buildings-sept29.jpg` (original camera beside the source for eight
+screens, then eye-level pairs, before on the left).
+
+**Discovery (defect 5).** `tools/facade_fit.py` no longer lists kit buildings. It groups the
+outdoor screens holding any kit piece into adjacent clusters, rebuilds each cluster as the
+original camera saw it, and takes every connected component holding a seq 33 sprite as a
+building. On the two hand-listed buildings this reproduces the old rects and members exactly
+(only the signs, added later by `wall_details`, differ). There are seven buildings. The inn
+is now `kit-537` and the old `kit-538` is `kit-570`, each named after the screen of its lowest
+front corner. The others are `kit-251` (north), `kit-417` (west), `kit-498` (west Stonebrook)
+and `kit-585`/`kit-587` (the square with the fountain).
+
+`kit-417` is a zig-zag, not an L, so the fit now puts one hip-roofed arm on each straight run
+of the front (`front_polyline`: the bottom of the silhouette splits at its convex and concave
+corners). Where the front turns toward the camera, two arms share the front corner, as the L
+did. Where it turns away, they share the back corner, so each reaches past the corner by the
+other's depth. One kit geometry is fitted jointly to all seven: wall 296, stone storey 92,
+jetty 16, eave 16, pitch 1.05, end pitch 1.4. Only the arm depths are per building.
+Silhouette IoU is 0.959–0.971; the inn fell from 0.971 to 0.970 and kit-570 from 0.966 to
+0.963. Six shared numbers fit seven buildings, one of them a shape the model had never seen.
+
+The prototype now builds a kit building when any of its screens is in the block.
+
+**Dormers (defect 1).** Each dormer panel (seq 33 frames 13, 31, 32) has a plain twin in the
+kit, the same-size panel it differs from least: 12, 30 and 29. The two are identical except
+where the dormer and its shadow are. A shadow keeps the plain roof's texture, darkened; the
+dormer replaces it. Local normalised cross-correlation against the twin separates them. Two
+earlier separations failed: a colour ratio, because the dormer's shingles are the roof's grey,
+and a wood-and-glass colour mask, because the warm shingles pass it.
+
+The dormer is a gabled prism: a vertical gable parallel to the wall below, running back until
+the roof closes over it at the kit's pitch. So nothing behind the gable is fitted. Fitted one
+by one, the three panels agreed within 4 px on width, cheek and rise, and chose their own
+orientation: 13 faces down-right, 31 and 32 down-left. They are therefore fitted jointly: one
+dormer, each panel with its own foot (IoU 0.79–0.80). The prototype lifts each dormer along
+the view ray through its foot onto the roof, as it does the chimneys. On the roof, the panel
+shows its twin wherever the dormer stood. That also removed the flattened dormers the north
+slopes used to take from the mirrored south slopes.
+
+**Backs (defect 2).** Faces the original camera never saw still take the mirrored front, but
+from a back canvas. For kit buildings, each door panel (12 seq 33 frames, listed) shows its
+door-less twin, which is always the window panel of the same wall slot, and door and sign
+sprites are left off. Houses get the same: their doorways (seq 63 frames 2 and 3) and door
+leaves (seqs 61, 62) stay off the back. The inn's back now has windows in the bays where the
+front has doors, and Dink's cottage has one door, not two.
+
+`wall_details` needed a second test once it ran on seven buildings. It had taken a tree
+(tree-01 on 187 and on 472) and grass tufts as signs, because their foot rays land on the
+building. A sign is drawn on the building, so most of its pixels lie on the building's own
+mask. Over the seven buildings the numbers are:
+
+| Sprites whose foot ray lands on a building | Share of pixels on the building's mask |
+|---|---|
+| Trees and other standing objects | 0–1% |
+| Signs | 80–100% |
+
+The threshold is 50%. The tree on 472 had raised that screen's number from 14.7 to 16.3.
+
+**Soffit (defect 3): decided, not changed.** No pixel of the original shows a jetty's
+underside, so any texture there is a convention. The projection samples the bottom band of the
+upper storey, the bressumer and the foot of each stud. From below, that reads as joists under a
+beam, which is how close-studded jetties are framed: each stud stands over a joist end.
+
+**The 439 chimney's cast shadow (defect 4): still open, diagnosed.** The wedge is 91 pixels of
+the chimney sprite, 88 of them over the house sprite. home-01's pitch (42°) is under the
+camera's 45°, so the camera sees a sliver of the north slope. Every wedge pixel's view ray
+lands on that slope (face 6, normal (−0.30, 0.74, −0.60)), which is textured from the mirrored
+front. Painting those pixels into the back texture at their mirrored place changed nothing in
+the render, which shows grass there. So the rendered geometry and the fitted faces disagree at
+that edge. Next: a face-ID render from the original camera. The failed fix was reverted. This
+shows only from the original camera.
+
+```bash
+/usr/bin/python3 tools/facade_fit.py
+/usr/bin/python3 tools/kit_shots.py kit-498 tools/shots/kit-498.json   # the shot files are committed
+xvfb-run -a -s "-screen 0 1920x1080x24" ~/.local/bin/Godot_v4.6.1-stable_linux.x86_64 \
+  --path game -s res://prototype/sprite_world_proto.gd -- "$PWD/builds/final-498" 498 \
+  465 466 467 497 498 499 "$PWD/tools/shots/kit-498.json"
+```
+
+The other runs use the same command, with these centres and shot files:
+
+| Centre | Shot file | Original-camera screens |
+|---|---|---|
+| 419 | `kit-419.json` | 385–388, 417–420 |
+| 219 | `kit-219.json` | 186, 187, 218, 219, 251 |
+| 586 | `kit-586.json` | 553–555, 585–587 |
+| 505 | `dormers-505.json`, or `soffit-505.json` | 505 |
+| 505 | none | 439, 472–474, 504–506, 538, 539 |
+| 470 | `cottage-439.json` | 439 |
+| 407 and 470 | none | the defaults |
+
+The "before" images are the same runs with 2073182's `game/prototype/facades.json`. The
+cottage's before image also used 2073182's prototype script.
+
+**Judgment.** At eye level, every kit building on the map is a solid two-storey Tudor
+building. The zig-zag on 417, the long L of west Stonebrook and the two small Ls round the
+fountain were rows of cards before. The dormers stand up out of the roof line, with their
+four-pane windows, and read from across a street. Backs no longer repeat their fronts' doors
+and signs.
+
+Through the original camera, the new screens match the source reconstruction: mean |RGB|
+5.2–18.5 over the 25, which is a regression check only. The Sept 29 screens are unchanged:
+
+| Screen | 407 | 439 | 440 | 469 | 470 | 472 | 473 | 474 | 504 | 505 | 506 | 538 | 539 |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| 2073182 | 13.8 | 13.9 | 14.3 | 11.0 | 8.6 | 14.7 | 15.1 | 13.4 | 11.0 | 12.6 | 14.8 | 12.4 | 8.9 |
+| Now | 13.8 | 13.9 | 14.3 | 11.0 | 8.6 | 14.7 | 14.7 | 13.3 | 11.0 | 12.6 | 14.6 | 12.4 | 8.9 |
+
+**Defects I see, in order:**
+1. The band the eave hides at the top of each upper storey is textured from the band below
+   it, mirrored. At eye level it repeats as a chevron strip along every kit building's eave.
+2. Other buildings are still cards:
+
+   | Building | Where |
+   |---|---|
+   | The church (seq 60) | 187, 188 |
+   | Log cabins (seq 59) | 251, 270, 274, 409, 440, 500, 501, 530 |
+   | Thatched houses of seq 63 frames 5, 7 and 10, which are not in `HOUSES` | 318, 349, 350, 497, 500, 501, 537, 619, 734 |
+3. Tilesets 36–39 are not in `game/assets/tiles`, so the courtyard of kit-417 (screens
+   385–420) has no ground. The contact sheet and the prototype skip them alike.
+4. The 439 chimney's cast shadow (above).
+5. Each dormer's gable is fitted about 7 px wider than its drawn frame on one side.
+6. For collision (item 5): unchanged. A kit building's footprint is its arms' stone storeys.

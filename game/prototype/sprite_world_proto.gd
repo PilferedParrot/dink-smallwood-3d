@@ -4,6 +4,9 @@ extends SceneTree
 # as the original engine does; type-1 sprites stand upright at their source
 # positions; actors pick their original directional frame from the camera angle.
 # Run: godot --path game -s res://prototype/sprite_world_proto.gd -- <out_dir> [center_screen]
+#      [screens to render through the original camera...] [shots.json]
+# shots.json replaces the default eye-level shots: [[name, [x, y], [look x, look y]], ...] in
+# world source pixels (world = screen origin + (x - 20, y)).
 
 const S := 0.025 # metres per source pixel, uniform for ground and sprites
 const EYE := 1.6
@@ -32,7 +35,10 @@ func _initialize() -> void:
 	var center := int(args[1]) if args.size() > 1 else 407
 	# Optional: the screens to render through the original camera (default as before).
 	var views: Array = []
-	for a in args.slice(2): views.append(int(a))
+	var shots_file := ""
+	for a in args.slice(2):
+		if str(a).ends_with(".json"): shots_file = a
+		else: views.append(int(a))
 	sequences = JSON.parse_string(FileAccess.get_file_as_string("res://data/sequences.json"))["sequences"]
 	world = JSON.parse_string(FileAccess.get_file_as_string("res://data/world.json"))
 	facades = JSON.parse_string(FileAccess.get_file_as_string("res://prototype/facades.json"))
@@ -45,16 +51,17 @@ func _initialize() -> void:
 			if world.screens.has(str(n)) and not bool(world.screens[str(n)].get("indoor",false)):
 				block.append(n)
 	for b in facades.get("_kit_buildings", []):
-		if (b.screens as Array).all(func(m): return block.has(int(m))): _prepare_kit(b)
+		if (b.screens as Array).any(func(m): return block.has(int(m))): _prepare_kit(b)
 	_build_houses()
 	for n in block:
 		_build_screen(n, seen)
 	for k in kits:
-		_add_house(k[0], _fill_holes(k[1]), k[2])
+		_add_house(k[0], _fill_holes(k[1]), k[2], _fill_holes(k[3]))
+		for dm in k[0].get("dormers", []): _add_dormer(dm, k[2])
 	camera.current = true
 	camera.fov = 75
 	root3d.add_child(camera)
-	_capture(out_dir, center, views)
+	_capture(out_dir, center, views, shots_file)
 
 func _origin(n: int) -> Vector2:
 	return Vector2(((n-1)%COLS)*600, int((n-1)/COLS)*400)
@@ -240,7 +247,7 @@ func _shot(pos_src: Vector2, look_src: Vector2, center: int) -> void:
 	camera.look_at(Vector3((o.x+look_src.x-20)*S, EYE*0.8, (o.y+look_src.y)*S), Vector3.UP)
 	_face_actors()
 
-func _capture(out_dir: String, center: int, views: Array) -> void:
+func _capture(out_dir: String, center: int, views: Array, shots_file: String) -> void:
 	DirAccess.make_dir_recursive_absolute(out_dir)
 	root.size = Vector2i(1280,720)
 	# Shots are in screen 407's source coordinates (may leave the screen); a run centred
@@ -265,10 +272,20 @@ func _capture(out_dir: String, center: int, views: Array) -> void:
 		["inn-northeast", Vector2(2250,1050), Vector2(1700,1450)],
 		["kit538-southwest", Vector2(1900,2300), Vector2(2250,1950)],
 	]
+	var world_shots := shots_file != ""
+	if world_shots:
+		shots = []
+		for sh in JSON.parse_string(FileAccess.get_file_as_string(shots_file)):
+			shots.append([sh[0], Vector2(sh[1][0], sh[1][1]), Vector2(sh[2][0], sh[2][1])])
 	await process_frame
 	for shot in shots:
-		var shift := _origin(407) - _origin(center)
-		_shot(shot[1] + shift, shot[2] + shift, center)
+		if world_shots:
+			# _shot takes the centre screen's source coordinates.
+			var local := _origin(center) - Vector2(20, 0)
+			_shot(shot[1] - local, shot[2] - local, center)
+		else:
+			var shift := _origin(407) - _origin(center)
+			_shot(shot[1] + shift, shot[2] + shift, center)
 		for i in 4: await process_frame
 		await RenderingServer.frame_post_draw
 		var img := root.get_texture().get_image()
@@ -350,14 +367,21 @@ func _build_house(s: Dictionary, d: Dictionary, rect: Rect2) -> void:
 	details.sort_custom(func(a, b):
 		if (int(a[0].type) == 0) != (int(b[0].type) == 0): return int(a[0].type) == 0
 		return a[2] < b[2])
+	# The back, which the original camera never saw, mirrors the front without its doors.
+	var back: Image = canvas.duplicate()
+	var doors := {}
+	for q in facades.get("_kit", {}).get("doors", []): doors[str(q)] = true
 	for dt in details:
-		var img := _image(str(frame_data(int(dt[0].seq), int(dt[0].frame)).path))
+		var path := str(frame_data(int(dt[0].seq), int(dt[0].frame)).path)
+		var img := _image(path)
 		canvas.blend_rect(img, Rect2i(Vector2i.ZERO, img.get_size()), Vector2i(dt[1].position - rect.position))
+		if not doors.has(path):
+			back.blend_rect(img, Rect2i(Vector2i.ZERO, img.get_size()), Vector2i(dt[1].position - rect.position))
 	for r in roof_pieces: _paint_roof_piece_foot(canvas, r)
 	# The original's shadow: the isolated black dither pixels, which lie on the ground
 	# in this projection. Painted into the ground at 50% like the engine's blend.
 	ground_shade.append([_shade(canvas, _dither_mask(canvas)), rect.position])
-	_add_house(fit, _fill_holes(canvas), rect.position)
+	_add_house(fit, _fill_holes(canvas), rect.position, _fill_holes(back))
 	for r in roof_pieces: _add_roof_piece(r, fit, rect.position)
 
 func _dither_mask(img: Image) -> PackedByteArray:
@@ -415,10 +439,14 @@ func _fill_holes(src: Image) -> ImageTexture:
 	img.generate_mipmaps()
 	return ImageTexture.create_from_image(img)
 
-func _add_house(fit: Dictionary, t: ImageTexture, top_left: Vector2) -> void:
+# `back`, if given, textures the faces the original camera never saw (see _prepare_kit).
+func _add_house(fit: Dictionary, t: ImageTexture, top_left: Vector2, back: ImageTexture = null) -> void:
 	var size := Vector2(t.get_width(), t.get_height())
 	var st := SurfaceTool.new()
 	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	var st_back := SurfaceTool.new()
+	st_back.begin(Mesh.PRIMITIVE_TRIANGLES)
+	var n_back := 0
 	for f in fit.faces:
 		var c: Array = fit.centers[int(f.block)]
 		var centre := Vector3(float(c[0]), float(c[1]), float(c[2]))
@@ -444,6 +472,8 @@ func _add_house(fit: Dictionary, t: ImageTexture, top_left: Vector2) -> void:
 			var lo: Array[Vector3] = [pts[0], pts[1], Vector3(pts[1].x, hs, pts[1].z), Vector3(pts[0].x, hs, pts[0].z)]
 			var hi: Array[Vector3] = [lo[3], lo[2], pts[2], pts[3]]
 			polys = [[lo, INF], [hi, hs]]
+		var out: SurfaceTool = st if seen_by_camera or back == null else st_back
+		if out == st_back: n_back += 1
 		for poly in polys:
 			var ps: Array[Vector3] = poly[0]
 			var mirror: float = poly[1]
@@ -451,10 +481,14 @@ func _add_house(fit: Dictionary, t: ImageTexture, top_left: Vector2) -> void:
 				for p in [ps[0], ps[i], ps[i+1]]:
 					var q: Vector3 = p if seen_by_camera else Vector3(2*centre.x - p.x, p.y, 2*centre.z - p.z)
 					if mirror != INF: q.y = 2*mirror - q.y
-					st.set_uv(Vector2(q.x, q.z - q.y) / size)
-					st.add_vertex(Vector3((top_left.x + p.x)*S, p.y*S, (top_left.y + p.z)*S))
+					out.set_uv(Vector2(q.x, q.z - q.y) / size)
+					out.add_vertex(Vector3((top_left.x + p.x)*S, p.y*S, (top_left.y + p.z)*S))
+	_add_mesh(st.commit(), t)
+	if n_back > 0: _add_mesh(st_back.commit(), back)
+
+func _add_mesh(mesh: ArrayMesh, t: Texture2D) -> void:
 	var mi := MeshInstance3D.new()
-	mi.mesh = st.commit()
+	mi.mesh = mesh
 	var m := StandardMaterial3D.new()
 	m.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED # light is baked into the art
 	m.albedo_texture = t
@@ -630,27 +664,41 @@ func _prepare_kit(b: Dictionary) -> void:
 	var canvas := Image.create(int(r[2]), int(r[3]), false, Image.FORMAT_RGBA8)
 	var members := {}
 	for m in b.members: members["%d:%s:%d" % [int(m[0]), str(m[1]), int(m[2])]] = true
+	# The back, which the original camera never saw, mirrors the front without its doors and
+	# signs: door panels show their door-less twins, door and sign sprites are left off.
+	var back := Image.create(int(r[2]), int(r[3]), false, Image.FORMAT_RGBA8)
+	var kit: Dictionary = facades.get("_kit", {})
+	var kit_seqs := {}
+	for q in kit.get("seqs", []): kit_seqs[int(q)] = true # JSON numbers are floats
 	for sn in b.screens:
 		var n := int(sn)
 		var screen: Dictionary = world.screens[str(n)]
 		var view := Image.create(600, 400, false, Image.FORMAT_RGBA8)
+		var view_b := Image.create(600, 400, false, Image.FORMAT_RGBA8)
 		for i in range(mini(96, screen.tiles.size())):
 			if not members.has("%d:t:%d" % [n, i]): continue
 			var index := int(screen.tiles[i].get("tile", 0))
 			var sheet := _image("assets/tiles/ts%02d.png" % (int(index/128)+1))
 			var cell := index % 128
 			view.blit_rect(sheet, Rect2i((cell%12)*50, int(cell/12)*50, 50, 50), Vector2i((i%12)*50, int(i/12)*50))
+			view_b.blit_rect(sheet, Rect2i((cell%12)*50, int(cell/12)*50, 50, 50), Vector2i((i%12)*50, int(i/12)*50))
 		for i in _draw_order(screen.sprites):
 			if not members.has("%d:s:%d" % [n, i]): continue
 			var s: Dictionary = screen.sprites[i]
 			var d := frame_data(int(s.seq), int(s.frame))
-			var img := _image(str(d.path))
-			view.blend_rect(img, Rect2i(Vector2i.ZERO, img.get_size()), Vector2i(int(s.x) - 20 - int(d.dx), int(s.y) - int(d.dy)))
+			var img := _kit_piece(str(d.path))
+			var at := Vector2i(int(s.x) - 20 - int(d.dx), int(s.y) - int(d.dy))
+			view.blend_rect(img, Rect2i(Vector2i.ZERO, img.get_size()), at)
+			if not kit_seqs.has(int(s.seq)): continue
+			var bimg := _kit_piece(str(kit.get("back", {}).get(str(d.path), d.path)))
+			view_b.blend_rect(bimg, Rect2i(Vector2i.ZERO, bimg.get_size()), at)
 		canvas.blend_rect(view, Rect2i(0, 0, 600, 400), Vector2i(_origin(n) - top_left))
+		back.blend_rect(view_b, Rect2i(0, 0, 600, 400), Vector2i(_origin(n) - top_left))
 	kit_members.merge(members)
 	_knock_out_background(canvas)
+	_knock_out_background(back)
 	ground_shade.append([_shade(canvas, _dither_mask(canvas)), top_left])
-	kits.append([b, canvas, top_left])
+	kits.append([b, canvas, top_left, back])
 
 # Grass and water in the building tiles are what stands behind the building: clear the
 # background-coloured regions connected to the outside (enclosed window glass stays).
@@ -705,3 +753,54 @@ func _ground_tile(n: int, tiles: Array, i: int) -> int:
 			if rr >= 0 and rr < 8 and j < tiles.size() and not kit_members.has("%d:t:%d" % [n, j]):
 				return int(tiles[j].get("tile", 0))
 	return int(tiles[i].get("tile", 0))
+
+# --- Dormers ----------------------------------------------------------------------------
+# Three kit roof panels have a dormer drawn in. tools/facade_fit.py fits each as a gabled
+# prism standing on the roof (its foot found by the view ray, like a chimney's) and lists its
+# faces with texture coordinates in the panel's pixels. On the roof, the panel shows its
+# plain twin wherever the dormer stood in the original camera's view.
+
+var clean_panels: Dictionary = {}
+
+func _kit_piece(path: String) -> Image:
+	var dp: Dictionary = facades.get("_dormer_panels", {}).get(path, {})
+	if dp.is_empty(): return _image(path)
+	if clean_panels.has(path): return clean_panels[path]
+	var img: Image = _image(path).duplicate()
+	var twin := _image(str(dp.twin))
+	var polys: Array = []
+	for poly in dp.poly:
+		var pv := PackedVector2Array()
+		for q in poly: pv.append(Vector2(float(q[0]), float(q[1])))
+		polys.append(pv)
+	for y in img.get_height():
+		for x in img.get_width():
+			for pv in polys:
+				if Geometry2D.is_point_in_polygon(Vector2(x + 0.5, y + 0.5), pv):
+					img.set_pixel(x, y, twin.get_pixel(x, y))
+					break
+	clean_panels[path] = img
+	return img
+
+func _add_dormer(dm: Dictionary, top_left: Vector2) -> void:
+	var img: Image = _image(str(dm.path)).duplicate()
+	var size := Vector2(img.get_width(), img.get_height())
+	img.generate_mipmaps()
+	var st := SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	for f in dm.faces:
+		var pts: Array = f.pts
+		var uv: Array = f.uv
+		for i in range(1, pts.size()-1):
+			for k in [0, i, i+1]:
+				st.set_uv(Vector2(float(uv[k][0]), float(uv[k][1])) / size)
+				st.add_vertex(Vector3((top_left.x + float(pts[k][0]))*S, float(pts[k][1])*S, (top_left.y + float(pts[k][2]))*S))
+	var mi := MeshInstance3D.new()
+	mi.mesh = st.commit()
+	var m := StandardMaterial3D.new()
+	m.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	m.albedo_texture = ImageTexture.create_from_image(img)
+	m.texture_filter = BaseMaterial3D.TEXTURE_FILTER_NEAREST_WITH_MIPMAPS
+	m.cull_mode = BaseMaterial3D.CULL_DISABLED
+	mi.material_override = m
+	root3d.add_child(mi)

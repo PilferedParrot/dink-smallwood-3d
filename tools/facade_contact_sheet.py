@@ -12,6 +12,8 @@ Usage: /usr/bin/python3 tools/facade_contact_sheet.py <pigpen-centred dir> <vill
        [--screens 439,469,...] [--eye name,k:name,...]   (k:name takes the shot from the k-th dir)
 Verdict (2026-09-29, Opus 5.5): used for the facade step; screens 407 439 440 469 470.
 Verdict (2026-09-29, Opus 5.5, second pass): used for chimneys and the kit buildings.
+Verdict (2026-09-29, Opus 5.5, third pass): used for kit discovery, dormers and backs; the same
+shot from two runs (before / after) is labelled with its run directory.
 """
 from __future__ import annotations
 import argparse, json
@@ -29,7 +31,10 @@ def reference(world, seqs, n: int) -> Image.Image:
     sc = world['screens'][str(n)]
     for i, t in enumerate(sc['tiles'][:96]):
         k = t['tile']; cell = k % 128
-        tile = Image.open(ROOT / f'game/assets/tiles/ts{k // 128 + 1:02}.png').convert('RGBA').crop(
+        sheet = ROOT / f'game/assets/tiles/ts{k // 128 + 1:02}.png'
+        if not sheet.exists():  # tilesets 36-39 are not in the import; the prototype skips them too
+            continue
+        tile = Image.open(sheet).convert('RGBA').crop(
             ((cell % 12) * 50, (cell // 12) * 50, (cell % 12 + 1) * 50, (cell // 12 + 1) * 50))
         im.paste(tile, (20 + i % 12 * 50, i // 12 * 50))
     for e in sorted(sc['sprites'], key=lambda e: -10000 + e['y'] if e['type'] == 0 else e['que'] or e['y']):
@@ -67,13 +72,13 @@ def main():
             views.setdefault(int(p.stem.split('-')[-1]), p)
     # Each run builds only the 5x5 screens around its centre: take the pigpen shots from
     # the first run (centred on the pigpen) and the village shots from the last.
+    # The same shot from two runs (before / after) is labelled with its run's directory.
     names = args.eye.split(',') if args.eye else EYE
     for item in names:
         k, _, name = item.rpartition(':')
         d = Path(args.dirs[int(k)] if k else args.dirs[0] if name.startswith('pen-') else args.dirs[-1])
         if (d / f'{name}.png').exists():
-            eyes[name] = d / f'{name}.png'
-    names = [n.rpartition(':')[2] for n in names]
+            eyes[item] = (d / f'{name}.png', f'{d.name}: {name}' if k else name)
     rows = []
     screens = [int(n) for n in args.screens.split(',')] if args.screens else sorted(views)
     for n, p in [(n, views[n]) for n in screens]:
@@ -84,7 +89,7 @@ def main():
         rows.append([label(ref, f'ORIGINAL source reconstruction, screen {n}'),
                      label(got, f'prototype, original camera, screen {n} (|d| {diff:.1f})')])
     for i in range(0, len(names), 2):
-        pair = [label(Image.open(eyes[k]).convert('RGB').resize((600, 375)), f'prototype eye level: {k}')
+        pair = [label(Image.open(eyes[k][0]).convert('RGB').resize((600, 375)), f'prototype eye level: {eyes[k][1]}')
                 for k in names[i:i + 2] if k in eyes]
         if pair:
             rows.append(pair)
