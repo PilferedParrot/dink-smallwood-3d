@@ -214,7 +214,7 @@ func load_map(number: int, run_scripts: bool = true) -> void:
 	for id in entities:
 		# A screen main may already have created a sprite and its visual.
 		if not visuals.has(id): _create_visual(id)
-	_play_music(str(screen.get("music",0)))
+	_play_music(str(screen.get("music",0)), true)
 	warp_cooldown = 0.65
 	changing = false
 	if run_scripts:
@@ -1110,17 +1110,34 @@ func _play_sound(slot: int, pitch: float = 1.0) -> int:
 	player.play()
 	return player.get_instance_id()
 
-func _play_music(track: String) -> void:
-	var name := track.get_file().get_basename().to_lower()
-	if name == "0" or name.is_empty(): return
-	if name == last_music and music.playing: return
-	for ext in ["ogg","wav"]:
-		var path: String = "res://assets/sound/"+name+"."+ext
-		if ResourceLoader.exists(path):
+# Music ids above 1000 are CD-track cues, and the original engine has no CD: it
+# plays "<id-1000>.mid" instead (GNU FreeDink 109.6, game_engine.cpp:334-339 for a
+# screen's music; dinkc_bindings.cpp:1264-1278 for playmidi, which plays the
+# mapped track and then the name as written, so the name as written wins when
+# that file exists, as START.c's playmidi("1003.mid") relies on). A cue with no
+# file is left silent and the current track keeps playing (bgm.cpp:137-142).
+static func music_candidates(track: String, screen := false) -> Array[String]:
+	var stem := track.get_file().get_basename().to_lower()
+	var out: Array[String] = []
+	if stem == "0" or stem.is_empty(): return out
+	if stem.is_valid_int() and int(stem) > 1000:
+		var cd_track := str(int(stem)-1000)
+		if screen: out.append(cd_track)
+		else: out.append_array([stem, cd_track])
+	else:
+		out.append(stem)
+	return out
+
+func _play_music(track: String, screen := false) -> void:
+	for stem in music_candidates(track, screen):
+		for ext in ["ogg","wav"]:
+			var path: String = "res://assets/sound/"+stem+"."+ext
+			if not ResourceLoader.exists(path): continue
+			if stem == last_music and music.playing: return
 			music.stream = load(path)
 			if music.stream is AudioStreamOggVorbis: music.stream.loop = true
 			music.play()
-			last_music = name
+			last_music = stem
 			return
 
 func _apply_settings() -> void:

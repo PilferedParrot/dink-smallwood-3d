@@ -76,15 +76,18 @@ FreeDink itself does.
   `hurt2` (29, 30), `attack1` (31), `level` (33), `splash` (35), `sword1` (36),
   `squish` (38), `steps` (40), `flyby` (42), `knock` (45), `drag1`, `drag2`
   (46, 47).
-* **Music cues: 9.** Screen music `100`, `101`, `102`, `103`, `107`, and
-  `playmidi` `battle`, `bullythe`, `caveexpl`, `wanderer`. `_play_music`
-  leaves the current track playing, as before.
+* **Music cues: 9 by name, plus the CD tracks with no file.** Screen music `100`,
+  `101`, `102`, `103`, `107`, and `playmidi` `battle`, `bullythe`, `caveexpl`,
+  `wanderer`. The CD-track cues (`1000+N`, see Observations) whose `N` has no
+  shipped file are silent too: screen music `1008`, `1010`, `1016` and `playmidi`
+  `1004`, `1006`, `1009`, `1011`, `1015`. `_play_music` leaves the current track
+  playing, as before.
 
 The v1.08 installer holds 13 more original files that no cue names directly:
 `bird2`, `click`, `high1`, `ocean1`, `pop`, `splash.aif`, and the MIDIs `4`,
 `6`, `9`, `10`, `11`, `16` and `neighbor`. They are not shipped, and FreeDink has
-no replacement for them. The CD-track cues `1004` to `1016` would reach `4`,
-`6`, `9`, `10`, `11` and `16` if they were mapped (see Observations).
+no replacement for them. The CD-track cues `1004` to `1016` reach `4`, `6`,
+`9`, `10`, `11` and `16` through the mapping below, and find no file.
 
 **Proposal:** keep these silent, as they are now. The audible gaps are the pig
 grunts in the opening pigpen, Dink's hurt sounds, the sword hit, menu select and
@@ -92,17 +95,44 @@ level-up. Filling them with CC0 sounds is a separate step, and it needs Chris's
 ear. freedink-data 1.08.20190120 is the newest release (ftp.gnu.org/gnu/freedink),
 so there is no newer FreeDink replacement to take.
 
-## Observations (behaviour unchanged)
+## CD-track music ids (fixed 2026-09-30)
 
-* **Six music files ship but never play.** `2`, `5`, `7`, `12`, `13` and `18`
-  are FreeDink files that the current data never triggers. Screen music uses the
-  CD-track form `1000+N` (`1002`, `1005`, `1007`, `1012`, `1013`, `1016`, …),
-  and `_play_music` looks for `1007.ogg` and does not find it. FreeDink
-  replaced exactly `5`, `7`, `12`, `13` and `18`, and kept `2`. Those are the
-  `N` of the cues `1005`, `1007`, `1012`, `1013`, `1018` and `1002`. This
-  suggests the original engine plays `N.mid` when no CD is present. That was
-  not checked against engine source. Mapping it would change behaviour, so it is
-  left for a separate decision.
+Screen music uses the CD-track form `1000+N` (`1002`, `1005`, `1007`, `1012`,
+`1013`, `1016`, ...), and `_play_music` used to look for `1007.ogg`. So `2`, `5`,
+`7`, `12`, `13` and `18` shipped and never played. The original engine has no CD
+player. Its rule, from GNU FreeDink 109.6 (`git.savannah.gnu.org/cgit/freedink.git`,
+tag `v109.6`; the same lines are on master):
+
+* `src/game_engine.cpp:334-339`, a screen's music: `if (g_dmod.map.music[*pplayer_map] > 1000)`
+  ... `sprintf(midi_filename, "%d.mid", g_dmod.map.music[*pplayer_map] - 1000);`
+  `PlayMidi(midi_filename);`. Comment at 335: "Try to play a CD track
+  (unsupported) - fall back to MIDI". At or below 1000 it plays `<id>.mid`
+  (343-344); `0` and `-1` play nothing (329, 333).
+* `src/dinkc_bindings.cpp:1264-1278`, DinkC `playmidi`: for `regm > 1000` it plays
+  `"%d.mid"` of `regm - 1000` (1271-1273), then plays the name as written
+  (1278). The comment at 1275 says "necessary for START.c:playmidi("1003.mid")".
+  The name as written therefore wins when its file exists.
+* `src/bgm.cpp:137-142`: when the file is in no directory, `PlayMidi` logs
+  "doesn't exist in any dir" and returns 0. `Mix_HaltMusic` (152) has not run, so
+  the current track keeps playing.
+* `src/bgm.cpp:95-102` tries `N.ogg` before `N.mid`; this game ships `.ogg`.
+
+`Game.music_candidates` implements that. A screen's `1000+N` tries `N`; `playmidi`
+tries the name as written, then `N`. `1000` itself is `1000`. The dedupe of a
+track already playing (`bgm.cpp:87-92`) now compares the resolved track, so
+screen `1007` and `playmidi("7")` are one track. Nothing that played before
+changed: `1`, `104`, `105`, `106`, `denube`, `lovin`, `insper`, `dance`, `love`
+and `1003` resolve as they did.
+
+Result: screen music `1002`, `1005`, `1007`, `1012`, `1013` now plays `2`, `5`, `7`,
+`12`, `13` (60 screens), and `playmidi` `1005.mid` and `1018` play `5` and `18`.
+`1008`, `1010` and `1016` (42 screens) map to `8`, `10`, `16`, which no set
+ships, so they stay silent. This changes what the player hears: the six files are
+FreeDink renders at −24 to −46.5 LUFS (see Loudness spread), next to `104`
+at −29.8 LUFS.
+
+## Observations
+
 * **Loudness spread.** This predates the swap. The FluidSynth renders measure
   −23 to −46.5 LUFS integrated. The recorded tracks (`1`, `106`, `denube`,
   `lovin`) measure −12.6 to −21 LUFS. The repaired `104` measures −29.8 LUFS,
@@ -127,9 +157,14 @@ default audio driver.
 * `tests/audio_cues_test.gd` runs the real game class headless. Through the
   game's own `_play_sound` and `_play_music`:
   * **Loaded:** all 39 shipped sounds.
-  * **Played:** 21 sound slots and 10 music cues.
-  * **Missing:** exactly the 27 FreeDink effect gaps and 24 unresolved music
-    names listed above. With the old `104.ogg` swapped back in, the test fails.
+  * **Played:** 21 sound slots, 9 of the 18 screen music ids (loaded through
+    the game's own `load_map`) and 8 of the 17 `playmidi` names.
+  * **Missing:** exactly the 27 FreeDink effect gaps, and the silent music ids
+    listed above. With the old `104.ogg` swapped back in, the test fails.
+  * **CD-track ids:** the test asserts each screen id's file (`1002` to `2.ogg`,
+    `1005` to `5.ogg`, `1007` to `7.ogg`, `1012` to `12.ogg`, `1013` to
+    `13.ogg`), and that a silent screen leaves the track playing. It fails on
+    the code before the mapping.
 * Per-file stats, from ffprobe and ffmpeg `ebur128=peak=true`:
 
 | file | codec | rate Hz | ch | duration s | integrated LUFS | true peak dBTP |
