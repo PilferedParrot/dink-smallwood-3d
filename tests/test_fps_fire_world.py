@@ -14,7 +14,7 @@ pytestmark = pytest.mark.skipif(not Path(GODOT).is_file(), reason="Godot unavail
 
 
 def _run(tmp_path, rendered=False):
-    command = [str(GODOT)]
+    command = [str(GODOT), "--audio-driver", "Dummy"]  # a rendered run must not reach a speaker
     if not rendered:
         command.append("--headless")
     command += ["--path", "game", "--script", str(ROOT / "tests/fps_fire_world_test.gd"), "--",

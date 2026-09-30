@@ -289,12 +289,64 @@ def extract_ff(path, out_dir):
         except ValueError: pass
     return count
 
+def _midi_vlq(data, pos):
+    value = 0
+    for _ in range(4):
+        if pos >= len(data): raise ValueError("truncated MIDI variable-length quantity")
+        byte = data[pos]; pos += 1
+        value = (value << 7) | (byte & 0x7F)
+        if not byte & 0x80: return value, pos
+    raise ValueError("MIDI variable-length quantity longer than 4 bytes")
+
+
+def midi_with_explicit_status(data):
+    """Return a Standard MIDI File with running status written out.
+
+    SMF 1.0 says meta and sysex events cancel running status. Rosegarden
+    (FreeDink's 104.mid, 2008) keeps running status across meta events, and
+    FluidSynth 2.3 then misreads the rest of the track and renders silence.
+    Writing each channel event's status byte is lossless: every reader,
+    strict or tolerant, gets the same events and delta times.
+    """
+    data = bytes(data)
+    if data[:4] != b"MThd": raise ValueError("not a Standard MIDI File")
+    out = bytearray(); pos = 0
+    while pos < len(data):
+        if pos + 8 > len(data): raise ValueError("truncated MIDI chunk header")
+        cid = data[pos:pos + 4]; size = struct.unpack_from(">I", data, pos + 4)[0]
+        end = pos + 8 + size
+        if end > len(data): raise ValueError(f"truncated MIDI chunk {cid!r}")
+        if cid != b"MTrk":
+            out += data[pos:end]; pos = end; continue
+        track = bytearray(); i = pos + 8; status = None
+        while i < end:
+            start = i; _, i = _midi_vlq(data, i); track += data[start:i]
+            first = data[i]
+            if first == 0xFF:
+                length, body = _midi_vlq(data, i + 2); track += data[i:body + length]; i = body + length
+            elif first in (0xF0, 0xF7):
+                length, body = _midi_vlq(data, i + 1); track += data[i:body + length]; i = body + length
+            else:
+                if first & 0x80:
+                    if first >= 0xF0: raise ValueError(f"system message 0x{first:02X} in a MIDI track")
+                    status = first; i += 1
+                elif status is None:
+                    raise ValueError("MIDI data byte without a status byte")
+                count = 1 if status & 0xF0 in (0xC0, 0xD0) else 2
+                track.append(status); track += data[i:i + count]; i += count
+        if i != end: raise ValueError("MIDI track overruns its chunk")
+        out += b"MTrk" + struct.pack(">I", len(track)) + track; pos = end
+    return bytes(out)
+
+
 def render_midi(source, output, soundfont):
     """Render a MIDI with a locally installed General MIDI soundfont."""
     output.parent.mkdir(parents=True, exist_ok=True)
     with tempfile.TemporaryDirectory(prefix="dink-midi-") as td:
         wav = Path(td) / "render.wav"
-        subprocess.run(["fluidsynth", "-ni", str(soundfont), str(source), "-F", str(wav), "-r", "44100"],
+        midi = Path(td) / "explicit-status.mid"
+        midi.write_bytes(midi_with_explicit_status(Path(source).read_bytes()))
+        subprocess.run(["fluidsynth", "-ni", str(soundfont), str(midi), "-F", str(wav), "-r", "44100"],
                        check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-i", str(wav),
                         "-c:a", "libvorbis", "-q:a", "5", str(output)], check=True)

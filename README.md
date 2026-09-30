@@ -90,9 +90,13 @@ python3 tools/compile_story.py /usr/share/games/dink/dink/Story --overrides tool
 
 New implementation code is Apache-2.0. Original *Dink Smallwood* is by Seth A.
 Robinson, with artwork by Justin Martin and story and world contributions from
-Greg Smith, Chris Bakker, and others listed in [NOTICE](NOTICE). GNU FreeDink
-contributors supplied the free audio replacements. Third-party art, campaign
-data, music, and sound retain their own licenses; see [licenses/](licenses/).
+Greg Smith, Chris Bakker, and others listed in [NOTICE](NOTICE). All audio is
+GNU FreeDink's free set: the original sounds and music that RTsoft could not
+release freely are not included, and the 27 sound effects FreeDink has no
+replacement for are silent, as they are in FreeDink. Per-file authors, sources
+and licenses are in [licenses/AUDIO-FILES.tsv](licenses/AUDIO-FILES.tsv); see
+[the audio notes](docs/AUDIO_FREEDINK_SWAP.md). Third-party art, campaign data,
+music, and sound retain their own licenses; see [licenses/](licenses/).
 
 This project is not endorsed by Robinson Technologies, GNU FreeDink, or Godot.
 

@@ -9,8 +9,24 @@ Original Dink Smallwood: Copyright (C) 1997, 1998, 1999, 2002, 2003 Seth A. Robi
 Artwork: Justin Martin. Story and level design: Seth A. Robinson, Greg Smith,
 and Justin Martin. Additional level design: Chris Bakker.
 v1.08 game fixes: Talmadge Bradley III.
-GNU FreeDink contributors supplied free replacements for proprietary audio.
-See licenses/ for the original data license, per-file audio attribution and terms.
+See licenses/FREEDINK-DATA-COPYRIGHT.txt for the original data license.
+
+Audio: every sound and music file shipped is from GNU FreeDink's free data
+(freedink-data 1.08.20190120). The original Dink Smallwood sounds that RTsoft
+did not own, and so did not release under a free license, are not included.
+Six original Dink MIDIs and secret.wav are part of RTsoft's zlib-licensed data.
+Music and sound credits: Joshua O'Leary, Ofir Mo and Sylvain Beucler (FreeDink
+compositions and arrangements, GPL-3.0-or-later); "Ave Maria", cello by John
+Michel (CC BY-SA 3.0); Mendelssohn's Violin Concerto, Fulda Symphonic
+Orchestra, Simon Schindler, Franziska Früh (EFF Open Audio License 1.0);
+"Lovin'" by Gachopin (CC BY 3.0); "The Blue Danube", Rytmi-Pojat, 1936 (public
+domain); fire from the Berklee College of Music Sampling Archive (CC BY 3.0);
+spell sound basis by Bart K. (CC BY 3.0); door sound by Iwan Gabovitch; sounds
+from The Battle for Wesnoth (GPL-2.0-or-later) edited by Petteri Tolonen and
+Sylvain Beucler; public-domain effects by qubodup and Frank Condello; scream by
+Maria and Fernando Carmona Varo (WTFPL). Per-file sources, hashes and licenses:
+licenses/AUDIO-FILES.tsv and licenses/AUDIO-REPLACEMENTS.txt. Editable music
+sources: third_party/freedink-audio-source/.
 
 New code is Apache-2.0. Retain required license and attribution notices.
 Supporting the project is optional; no payment or patronage is required.

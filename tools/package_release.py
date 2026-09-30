@@ -5,10 +5,18 @@ import hashlib
 import shutil
 import zipfile
 
+try:
+    from audio_provenance import verify as verify_audio
+except ImportError:  # imported as tools.package_release
+    from tools.audio_provenance import verify as verify_audio
+
 ROOT = Path(__file__).resolve().parents[1]
 
 
 def main():
+    problems = verify_audio()
+    if problems:
+        raise SystemExit('Audio provenance check failed; see licenses/AUDIO-FILES.tsv:\n  ' + '\n  '.join(problems))
     output = ROOT / 'builds'
     archives = []
     for platform, executable in [('linux', 'DinkSmallwood3D.x86_64'), ('windows', 'DinkSmallwood3D.exe')]:
