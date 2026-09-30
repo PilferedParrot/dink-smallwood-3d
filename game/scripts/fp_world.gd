@@ -906,7 +906,8 @@ func add_fitted_building(node: Node3D, e: Dictionary, id: int, screen: int, coll
 	var top_left := rect.position-screen_origin(screen)
 	var centre := top_left+box.get_center()
 	node.position = point(centre.x,centre.y)
-	var built: Dictionary = buildings.house(path,rect,parts,"%s|%s|%d" % [key,parts_signature(parts),int(host.vm.globals.get("vision",0))])
+	var sig := parts_signature(parts)
+	var built: Dictionary = buildings.house(path,rect,parts,"%s|%s|%d" % [key,sig,int(host.vm.globals.get("vision",0))],bake_key(key,sig),false)
 	var model: Node3D = built.node
 	model.name = "Model"
 	model.position = Vector3(-box.get_center().x*SCALE,0,-box.get_center().y*SCALE)
@@ -923,7 +924,11 @@ func parts_signature(parts: Dictionary) -> String:
 	var keys: Array = []
 	for group in ["details","roof","ground"]:
 		for p in parts.get(group,[]): keys.append("%s:%s:%s" % [group,frame_path(p[0]),str(p[1] if p[1] is Rect2 else p[2])])
-	return str(hash(",".join(keys)))
+	return ",".join(keys).sha1_text()
+
+# The house's key in the bake (tools/bake_houses.gd): the house and the parts it draws.
+func bake_key(key: String, signature: String) -> String:
+	return "%s|%s" % [key,signature]
 
 func model_height(model: Node3D) -> float:
 	var top := 0.0

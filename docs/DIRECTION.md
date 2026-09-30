@@ -811,32 +811,35 @@ first hit must be the face itself. The original camera's view is unchanged by co
   home-10. They differ in the game's lighting on everything else, its Blender stand-ins, and its
   lighter fog. No flat stand-in remains on a fitted building. The four `/Building/` sprites without a
   fit (build-01, 02, 03, 10) keep the Blender cottage.
-- `pytest`: 80 passed, after the rebase onto 7a778e0, and again after the second round. `tests/fps_wall_test.gd` is among them:
+- `pytest`: 80 passed, after the rebase onto 7a778e0, and again after the second and third
+  rounds. `tests/fps_wall_test.gd` is among them:
   eight walls stop 4.3 px from the drawn wall, the doors of 439 and 409 lead in, and all four
   points behind Dink's cottage are open. The first run failed 3
   tests, on the two fixtures above.
 - The letter campaign (`tools/playtest.py --mode campaign --milestone letter --rendered
   --max-commands 5000`) runs from Begin adventure to Aunt Maria's letter, with real input. It
-  passes in 3,122 commands, and in 3,823 after the second round (the duck search varies). The
+  passes in 3,122 commands, in 3,823 after the second round and in 4,106 after the third (the duck
+  search varies). The
   seventh pass took 3,201 and 8db1ff5 2,955, and collision is unchanged in source pixels. It found
   no stuck player.
 - Frame time, `tests/fps_perf.gd` (written by a Sonnet subagent and checked here), same camera and
   same screen in each checkout, 300 frames after 30 of warm-up, three repeats. The screen is loaded
   with its scripts off (scenario setup). llvmpipe under xvfb, so the numbers are relative only.
   The runs are interleaved: repeat, then screen, then checkout. Medians follow, with the spread of
-  the three repeats. The numbers are after the second round below.
+  the three repeats. The numbers are after the third round below (houses baked). The stand-in
+  column is from the second round's run.
 
   | Screen, camera | Old game (8db1ff5) | Stand-ins (seventh pass) | Now |
   |---|---|---|---|
-  | 439, the cottage: frame | 29.3 ms (29.2–29.5) | 27.0 (27.0–27.1) | 27.7 (27.7–27.7) |
-  | 440, the village: frame | 35.9 ms (35.8–35.9) | 33.5 (33.4–33.6) | 32.5 (32.4–32.5) |
-  | 505, the inn: frame | 44.0 ms (43.7–44.0) | 17.2 (17.0–17.2) | 15.3 (15.3–15.3) |
-  | 439: `load_map` | 30 ms | 54 | 41 |
-  | 440: `load_map` | 41 ms | 72 | 277 (275–289) |
-  | 505: `load_map` | 48 ms | 47 | 141 (136–145) |
+  | 439, the cottage: frame | 29.3 ms (29.3–29.4) | 27.0 | 27.7 (27.6–27.8) |
+  | 440, the village: frame | 36.0 ms (35.9–36.0) | 33.5 | 32.5 (32.5–32.6) |
+  | 505, the inn: frame | 43.8 ms (43.7–43.8) | 17.2 | 15.3 (15.3–15.4) |
+  | 439: `load_map` | 29 ms (29–29) | 54 | 42 (41–42) |
+  | 440: `load_map` | 42 ms (41–43) | 72 | 55 (54–57) |
+  | 505: `load_map` | 47 ms (46–49) | 47 | 66 (64–66) |
 
   Frame time: the textured buildings cost what the stand-ins did (439 +0.7 ms, 440 and 505 less),
-  and less than the Blender models everywhere. Loading is still slower; see the second round.
+  and less than the Blender models everywhere. Loading is 13–19 ms over the old game's.
 - Every Godot run used the Dummy audio driver. Headless runs imply it.
 
 **Judgment.** In the game, at eye level, the buildings are the prototype's buildings. Dink's cottage
@@ -877,10 +880,26 @@ changes only where the unseen-face painting did: the house on 501 loses the that
 its chimneys had painted onto its back wall and roof (mean |d| 2.0 there), and the cottage its
 stripe.
 
-With those changes, 505 loads in 141 ms (from 1.6 s; the old game took 48) and 440 in 277 ms (the
-old game took 41). That is not the old load time. 440 still composes its houses' textures on
-arrival, about 110 ms each, once per session. The next step is to bake the houses as the kits
-are baked, keyed by a house and the parts it draws (the cache key the game already uses).
+With those changes, 505 loaded in 141 ms (from 1.6 s; the old game took 48) and 440 in 277 ms (the
+old game took 41). 440 still composed its houses' textures on arrival, about 110 ms each.
+
+*Third round: the houses baked.* `tools/bake_houses.gd` bakes them the way the kits are baked.
+- The game's own plan (`fp_world.house_plan`) runs with every outdoor screen as the current one,
+  at every story layer its sprites use. Each house it gathers is keyed by the key the game already
+  uses: the house plus the parts it draws (`bake_key`: the house's world key and the SHA-1 of its
+  parts' signature).
+- The tool stores `sprite_buildings.gd house_images` for each key: the filled body images, then
+  one per roof piece and one per ground piece. That is the costly part, now split from the cheap
+  mesh build.
+- 31 houses, 2.4 MB, all read back byte-identical, with facades.json's SHA-256 in the manifest.
+  The export includes `data/houses/*`. A stale bake, or a house drawn with other parts (a sprite
+  the story removed), composes as before.
+- The prototype composes as before. Its regression is unchanged: ±0.0 through the original
+  camera, and at eye level identical to the second round.
+- 440 now loads in 55 ms against the old game's 42, 505 in 66 against 47, and 439 in 42 against
+  29. What remains is building meshes, textures and mipmaps from the loaded images, plus the
+  scene's other entities.
+- Generated assets in the repo: 3.5 MB of kit canvases and 2.4 MB of houses.
 
 *kit-417 missing: `is_inside`.* The game took a screen with three or more `innwalls`/`stnwalls`
 sprites for an interior. The original's own flag is the per-screen indoor flag of dink.dat
@@ -895,8 +914,8 @@ and their "walls" are the stonw and snak stone-wall pieces. `is_inside` is now t
 Mother's visibility, the grief cameras, the hearth) pass.
 
 **Defects I see, in order:**
-1. The houses' textures are composed on arrival (about 110 ms a house, once per session): 440
-   loads in 277 ms against the old 41. Bake them as the kits are baked.
+1. Loads are 13–19 ms over the old game's (440: 55 against 42). Mesh, texture and mipmap
+   creation for the baked images is the next cost, if it matters.
 2. Everything that is not a building is still a Blender stand-in: fences are dark slabs, tools are
    crates, flames are cones, bushes are blobs. The walled streets' stone walls, now outdoors, are
    flat plaster boxes (the `wall` model), seen across the water on the sheet. This is step 3's

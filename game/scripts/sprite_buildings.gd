@@ -29,6 +29,7 @@ var surface_cache: Dictionary = {} # house or kit key -> [[ArrayMesh, Texture2D]
 # The kit buildings' filled canvases, baked by tools/bake_kit_canvases.gd: composing them here takes
 # seconds of per-pixel GDScript per building. Used while the manifest's facades.json hash matches.
 const BAKED_DIR := "res://data/kits"
+const BAKED_HOUSES := "res://data/houses"
 const FACADES := "res://prototype/facades.json"
 var baked_ok := -1 # -1 unknown, 0 stale or missing, 1 usable
 
@@ -132,7 +133,9 @@ func claim(fit: Dictionary, rect: Rect2, s: Dictionary, n: int) -> Array:
 # Returns {node: Node3D (origin at rect.position), shade: the drawn shadow for the ground,
 # hull: its wall footprint in world pixels}. Meshes and textures are cached under `cache_key`
 # when one is given (the game rebuilds its scene on every screen change).
-func house(path: String, rect: Rect2, parts: Dictionary, cache_key: String = "") -> Dictionary:
+# `bake_key`: the house's key in the bake (tools/bake_houses.gd), whose images replace composing
+# them; `want_shade`: whether to compute the drawn shadow (the prototype paints it on its ground).
+func house(path: String, rect: Rect2, parts: Dictionary, cache_key: String = "", bake_key: String = "", want_shade: bool = true) -> Dictionary:
 	var fit: Dictionary = facades[path]
 	var foot := PackedVector2Array()
 	for f in fit.faces:
@@ -143,6 +146,34 @@ func house(path: String, rect: Rect2, parts: Dictionary, cache_key: String = "")
 	if not cache_key.is_empty() and surface_cache.has(cache_key):
 		var cached: Array = surface_cache[cache_key]
 		return {"node": node_from(cached[0]), "shade": cached[1], "hull": hull}
+	var imgs: Array = baked_house(bake_key) if not bake_key.is_empty() else []
+	var shade: Image = null
+	if imgs.is_empty():
+		var made := house_images(path, rect, parts)
+		imgs = made[0]
+		# The original's shadow: the isolated black dither pixels, which lie on the ground
+		# in this projection, for the ground at 50% like the engine's blend.
+		if want_shade: shade = _shade(made[1], dither_mask(made[1]))
+	var surfaces: Array = []
+	var k := 2
+	if fit.has("polys"):
+		_uv_house(surfaces, fit, [_texture(imgs[0]), _texture(imgs[1]), _texture(imgs[2])])
+		k = 3
+	else: _block_house(surfaces, fit, _texture(imgs[0]), _texture(imgs[1]))
+	for r in parts.roof:
+		_roof_piece(surfaces, r, fit, _texture(imgs[k]))
+		k += 1
+	for g in parts.ground:
+		_ground_piece(surfaces, g, rect.position, _texture(imgs[k]))
+		k += 1
+	if not cache_key.is_empty(): surface_cache[cache_key] = [surfaces, shade]
+	return {"node": node_from(surfaces), "shade": shade, "hull": hull}
+
+# The filled images a house's surfaces take, in order: its body's (front and back, or the three
+# of a parts building), then one per roof piece and one per ground piece; and the composed canvas.
+# This is the costly part, and what the bake stores.
+func house_images(path: String, rect: Rect2, parts: Dictionary) -> Array:
+	var fit: Dictionary = facades[path]
 	var canvas := image(path)
 	# Details drawn over the house in the original, in its draw order (type 0 first).
 	# The back, which the original camera never saw, mirrors the front without its doors.
@@ -156,18 +187,40 @@ func house(path: String, rect: Rect2, parts: Dictionary, cache_key: String = "")
 		if not doors.has(dpath):
 			back.blend_rect(img, Rect2i(Vector2i.ZERO, img.get_size()), Vector2i(dt[1].position - rect.position))
 	for r in parts.roof: _paint_roof_piece_foot(canvas, r, fit, back)
-	# The original's shadow: the isolated black dither pixels, which lie on the ground
-	# in this projection, for the ground at 50% like the engine's blend.
-	var shade := _shade(canvas, dither_mask(canvas))
-	var surfaces: Array = []
-	if fit.has("polys"): _uv_house(surfaces, fit, canvas, back)
-	else:
-		var sides := fill_all([canvas, back])
-		_block_house(surfaces, fit, _texture(sides[0]), _texture(sides[1]))
-	for r in parts.roof: _roof_piece(surfaces, r, fit)
-	for g in parts.ground: _ground_piece(surfaces, g, rect.position)
-	if not cache_key.is_empty(): surface_cache[cache_key] = [surfaces, shade]
-	return {"node": node_from(surfaces), "shade": shade, "hull": hull}
+	var srcs: Array = [canvas, back]
+	if fit.has("polys"):
+		# Upright pieces standing in front of the body (a chimney) are cleared from the body's
+		# texture, which is filled from its own pixels there; the pieces keep the full sprite.
+		var occ: Array = []
+		for poly in fit.get("occluders", []):
+			var pv := PackedVector2Array()
+			for q in poly: pv.append(Vector2(float(q[0]), float(q[1])))
+			occ.append(pv)
+		srcs = [_without(canvas, occ), _without(back, occ), canvas]
+	for r in parts.roof: srcs.append(_roof_piece_image(r))
+	for g in parts.ground: srcs.append(image(str(sprite_frame(g[0]).path)))
+	return [fill_all(srcs), canvas]
+
+# The baked images of a house (tools/bake_houses.gd), or [] if it is not in a current bake.
+var houses_baked: Variant = null # the manifest's "houses" when current, else {}
+func baked_house(key: String) -> Array:
+	if houses_baked == null:
+		houses_baked = {}
+		var path := BAKED_HOUSES + "/manifest.json"
+		var manifest: Variant = JSON.parse_string(FileAccess.get_file_as_string(path)) if FileAccess.file_exists(path) else null
+		if manifest is Dictionary and str(manifest.get("facades_sha256", "")) == FileAccess.get_sha256(FACADES):
+			houses_baked = manifest.get("houses", {})
+		elif FileAccess.file_exists(path):
+			push_warning("data/houses is stale for prototype/facades.json: composing houses at run time (tools/bake_houses.gd)")
+	var id := key.sha1_text()
+	if not (houses_baked as Dictionary).has(id): return []
+	var out: Array = []
+	for i in int(houses_baked[id]):
+		var img := Image.new()
+		if img.load_webp_from_buffer(FileAccess.get_file_as_bytes("%s/%s-%d.bin" % [BAKED_HOUSES, id, i])) != OK: return []
+		img.convert(Image.FORMAT_RGBA8)
+		out.append(img)
+	return out
 
 # One MeshInstance3D per [mesh, texture]: unshaded, as the light is baked into the art.
 func node_from(surfaces: Array) -> Node3D:
@@ -341,21 +394,15 @@ func _block_house(surfaces: Array, fit: Dictionary, t: ImageTexture, back: Image
 # sample the back canvas (no doors). Upright pieces standing in front of the body (a chimney)
 # are cleared from the body's texture, which is filled from its own pixels there, so the wall
 # behind a chimney does not wear the chimney; the pieces keep the full sprite.
-func _uv_house(surfaces: Array, fit: Dictionary, canvas: Image, back: Image) -> void:
-	var occ: Array = []
-	for poly in fit.get("occluders", []):
-		var pv := PackedVector2Array()
-		for q in poly: pv.append(Vector2(float(q[0]), float(q[1])))
-		occ.append(pv)
-	var fills := fill_all([_without(canvas, occ), _without(back, occ), canvas])
-	var texs := [_texture(fills[0]), _texture(fills[1]), _texture(fills[2])]
+# `texs`: the body without its pieces, its back without them, and the full sprite (house_images).
+func _uv_house(surfaces: Array, fit: Dictionary, texs: Array) -> void:
 	var sts: Array = []
 	var used := [false, false, false]
 	for k in 3:
 		var st := SurfaceTool.new()
 		st.begin(Mesh.PRIMITIVE_TRIANGLES)
 		sts.append(st)
-	var size := Vector2(canvas.get_width(), canvas.get_height())
+	var size := Vector2(texs[0].get_width(), texs[0].get_height())
 	for f in fit.polys:
 		var k := 2 if bool(f.piece) else (1 if bool(f.back) else 0)
 		used[k] = true
@@ -534,10 +581,9 @@ func _paint_unseen(img: Image, dither: PackedByteArray, r: Array, fit: Dictionar
 # frustum from its foot (on the ground, where the sprite shows it) to its top face (at its height),
 # textured by projection like a house; faces the original camera never saw take the point mirror
 # about its axis. `house_tl`: the house's world top-left, the node's origin.
-func _ground_piece(surfaces: Array, g: Array, house_tl: Vector2) -> void:
+func _ground_piece(surfaces: Array, g: Array, house_tl: Vector2, t: ImageTexture) -> void:
 	var rp: Dictionary = g[1]
 	var tl: Vector2 = g[2]
-	var img := image(str(sprite_frame(g[0]).path))
 	var h := float(rp.height)
 	var base: Array[Vector3] = []
 	for q in rp.base: base.append(Vector3(float(q[0]), 0.0, float(q[1])))
@@ -547,7 +593,7 @@ func _ground_piece(surfaces: Array, g: Array, house_tl: Vector2) -> void:
 	for q in base: cen += q / 4.0
 	var faces: Array = [top]
 	for k in 4: faces.append([base[k], base[(k+1) % 4], top[(k+1) % 4], top[k]] as Array[Vector3])
-	var size := Vector2(img.get_width(), img.get_height())
+	var size := Vector2(t.get_width(), t.get_height())
 	var off := Vector3(tl.x - house_tl.x, 0.0, tl.y - house_tl.y)
 	var st := SurfaceTool.new()
 	st.begin(Mesh.PRIMITIVE_TRIANGLES)
@@ -560,9 +606,19 @@ func _ground_piece(surfaces: Array, g: Array, house_tl: Vector2) -> void:
 				var m: Vector3 = q if n.z >= -1e-3 else Vector3(2*cen.x - q.x, q.y, 2*cen.z - q.z)
 				st.set_uv(Vector2(m.x, m.z - m.y) / size)
 				st.add_vertex((off + q)*S)
-	surfaces.append([st.commit(), fill_holes(img)])
+	surfaces.append([st.commit(), t])
 
-func _roof_piece(surfaces: Array, r: Array, fit: Dictionary) -> void:
+# A roof piece's sprite without its roof-lying parts (its foot's thatch and shadow, painted on the
+# roof), for its texture: stone is extended over the gaps when it is filled.
+func _roof_piece_image(r: Array) -> Image:
+	var rp: Dictionary = r[1]
+	var img := image(str(sprite_frame(r[0]).path))
+	for y in img.get_height():
+		for x in img.get_width():
+			if x < float(rp.top[0][0]) or x > float(rp.top[2][0]) or y > float(rp.foot[1]): img.set_pixel(x, y, Color(0,0,0,0))
+	return img
+
+func _roof_piece(surfaces: Array, r: Array, fit: Dictionary, t: ImageTexture) -> void:
 	var rp: Dictionary = r[1]
 	var at: Vector2 = r[2]
 	var zf: float = at.y + float(rp.foot[1]) + float(r[3]) # depth of the front edge
@@ -574,13 +630,7 @@ func _roof_piece(surfaces: Array, r: Array, fit: Dictionary) -> void:
 		var h := _roof_height(fit, c.x, c.z)
 		if not is_nan(h): yb = minf(yb, h)
 	yb -= 3.0 # into the roof, so no gap shows where the fit and the art differ
-	# Texture: the sprite without its roof-lying parts, stone extended over the gaps.
-	var img := image(str(sprite_frame(r[0]).path))
-	for y in img.get_height():
-		for x in img.get_width():
-			if x < float(rp.top[0][0]) or x > float(rp.top[2][0]) or y > float(rp.foot[1]): img.set_pixel(x, y, Color(0,0,0,0))
-	var t := fill_holes(img)
-	var size := Vector2(img.get_width(), img.get_height())
+	var size := Vector2(t.get_width(), t.get_height())
 	var centre := (top[0] + top[2]) / 2.0
 	var faces: Array = [top]
 	for k in 4:
