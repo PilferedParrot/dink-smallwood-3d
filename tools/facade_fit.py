@@ -1187,6 +1187,216 @@ BUILDINGS = [
 ]
 
 
+# ---- Cross-wing house: seq 63 frame 10, and frame 9 drawn mirrored -------------------------------
+# A two-storey stone core with a hip thatch roof at the crossing of two one-storey hip-roofed wings.
+# The bottom of the silhouette is a zig-zag of four straight runs (down, up, down, up) along the
+# art's two wall directions: runs 0-1 are the long wing's front wall and its end wall up to the
+# front wing, runs 2-3 the front wing's two walls. The "right wing behind the front wing" seen
+# above its roof is the long wing's other end: its end wall (the stone patch between the two roofs)
+# continues on the far side of the front wing, and the fit puts the long wing's width at 180 px.
+# The plan is one rectangle per wing plus the core, each hip-roofed (block_faces), in plan
+# coordinates (s along the wall direction of run 1, t along the direction of run 0) from the long
+# wing's front corner C1. Frame 9 is frame 10 mirrored (silhouette IoU 0.99), so its zig-zag is
+# read in reverse with the two directions swapped; the dimensions are shared, each sprite keeps
+# its own zig-zag.
+CROSS = (10, 9)
+CROSS_NAMES = ['long wing', 'front wing', 'core']
+
+
+def render_z(faces, shape) -> np.ndarray:
+    """Label map with a per-pixel depth test. The painter's order of render() sorts whole faces by
+    their mean depth, wrong for a tall core wall beside low wing roofs; the prototype has a depth
+    buffer, so the fit draws the same way. Depth along the view ray (0, 1, 1) is Y + Z."""
+    h, w = shape
+    zbuf = np.full((h, w), -1e18)
+    out = np.zeros((h, w), np.uint8)
+    for label, pts, _ in faces:
+        P = np.array(pts, float)
+        n = np.cross(P[1] - P[0], P[2] - P[0])
+        if abs(n[1] + n[2]) < 1e-9:
+            continue
+        sx, sy = P[:, 0], P[:, 2] - P[:, 1]
+        x0, x1 = max(int(np.floor(sx.min())), 0), min(int(np.ceil(sx.max())) + 1, w)
+        y0, y1 = max(int(np.floor(sy.min())), 0), min(int(np.ceil(sy.max())) + 1, h)
+        if x1 <= x0 or y1 <= y0:
+            continue
+        im = Image.new('L', (x1 - x0, y1 - y0), 0)
+        ImageDraw.Draw(im).polygon([(a - x0, b - y0) for a, b in zip(sx, sy)], fill=1)
+        yy, xx = np.nonzero(np.array(im))
+        xx, yy = xx + x0, yy + y0
+        Y = (n[0] * (P[0, 0] - xx) + n[1] * P[0, 1] + n[2] * (P[0, 2] - yy)) / (n[1] + n[2])
+        depth = 2 * Y + yy
+        upd = depth > zbuf[yy, xx]
+        zbuf[yy[upd], xx[upd]] = depth[upd]
+        out[yy[upd], xx[upd]] = label
+    return out
+
+
+def zigzag(mask, dR, dL):
+    """Fit the bottom of a silhouette with the chain [down, up, down, up] whose runs follow the
+    art's wall directions (slopes fixed): three breakpoints and one height, by a truncated
+    absolute-error search. front_polyline() smooths over 41 px and merges runs this short.
+    Returns the five points left to right: the wall base's two ends and the three corners."""
+    bot = np.array([np.nonzero(mask[:, x])[0].max() if mask[:, x].any() else -1 for x in range(mask.shape[1])], float)
+    xs = np.nonzero(bot >= 0)[0]
+    md, mu = dL[1] / dL[0], dR[1] / dR[0]
+    lo, hi = int(xs.min()) + 10, int(xs.max()) - 10
+    x = np.arange(lo, hi + 1).astype(float)
+    y = bot[lo:hi + 1]
+
+    def shape_(x1, x2, x3, x=x):
+        yk = mu * (x2 - x1)
+        yc = yk + md * (x3 - x2)
+        return np.where(x < x1, md * (x - x1), np.where(x < x2, mu * (x - x1),
+                                                        np.where(x < x3, yk + md * (x - x2), yc + mu * (x - x3))))
+
+    def cost(x1, x2, x3):
+        r = y - shape_(x1, x2, x3)
+        return float(np.minimum(np.abs(r - np.median(r)), 6).sum())
+    best, best_c = None, 1e18
+    for step, span in ((3, None), (1, 3)):
+        cands = [(a, b, c) for a in range(lo + 20, hi - 40, 3) for b in range(a + 15, hi - 25, 3) for c in range(b + 15, hi - 10, 3)] \
+            if span is None else [(a + i, b + j, c + k) for a, b, c in [best] for i in range(-3, 4) for j in range(-3, 4) for k in range(-3, 4)]
+        for a, b, c in cands:
+            v = cost(a, b, c)
+            if v < best_c:
+                best, best_c = (a, b, c), v
+    x1, x2, x3 = best
+    off = float(np.median(y - shape_(x1, x2, x3)))
+    f = lambda xq: off + float(shape_(x1, x2, x3, x=np.array([float(xq)]))[0])
+    xa = np.arange(int(xs.min()), int(xs.max()) + 1)
+    ok = np.array([bot[i] >= 0 and abs(bot[i] - f(i)) < 3 for i in xa])
+    left = [i for i, o_ in zip(xa, ok) if i <= x1 and o_]
+    right = [i for i, o_ in zip(xa, ok) if i >= x3 and o_]
+    xl, xr = min(left), max(right)
+    return [np.array([q, f(q)]) for q in (xl, x1, x2, x3, xr)]
+
+
+def cross_plan(Q, mirrored, dR, dL):
+    """(C1, e_s, e_t, dims) from the zig-zag Q: C1 the left wing's front corner (Q[1], or Q[3] read
+    in reverse for the mirrored sprite), e_s the direction of run 1, e_t of run 0, and the
+    measured run extents in plan coordinates: tL (the left wing's long wall), sK (its end wall,
+    to the concave corner), tC (how far the front wing's front corner stands in front), sE (its
+    right wall's end)."""
+    Qc = Q[::-1] if mirrored else Q
+    es, et = (dL, dR) if mirrored else (dR, dL)
+    C1 = Qc[1]
+    st = [np.linalg.solve(np.array([es, et]).T, q - C1) for q in Qc]
+    dims = {'tL': float(st[0][1]), 'sK': float((st[2][0] + st[3][0]) / 2), 'tC': float((st[3][1] + st[4][1]) / 2),
+            'sE': float(st[4][0])}
+    return C1, es, et, dims
+
+
+CROSS_P0 = [80., 10., 0.9, 180., 200., 42., 24., 118., 102., 10., 1.1]
+CROSS_GRIDS = [np.arange(50, 110, 2.), np.arange(0, 24, 2.), np.arange(0.6, 1.3, 0.05), np.arange(100, 260, 4.),
+               np.arange(60, 260, 4.), np.arange(10, 120, 2.), np.arange(-10, 100, 2.), np.arange(60, 160, 2.),
+               np.arange(60, 160, 2.), np.arange(0, 24, 2.), np.arange(0.6, 1.3, 0.05)]
+
+
+def cross_labels(rgba):
+    """Label map for the fit and a mask of pixels it cannot read. classify() takes the cast
+    shadows (near-black, opaque) for air and speckles the walls and roofs with the other class;
+    here each pixel takes the majority of stone and thatch in its 5 x 5 window, inside the drawn
+    silhouette, and where the window holds (almost) none of either the pixel is unread, shadow."""
+    lab = classify(rgba)
+    sil = silhouette(rgba)
+    c1 = ndimage.uniform_filter((lab == 1).astype(float), 5)
+    c2 = ndimage.uniform_filter((lab == 2).astype(float), 5)
+    out = np.where(c2 > c1, 2, 1).astype(np.uint8)
+    out[~sil] = 0
+    return out, sil & (c1 + c2 < 0.2)
+
+
+def cross_score(pred, lab, unk):
+    """score() with the unread pixels taking the model's label where it has one (a shadow on
+    the roof may be anything the model draws there) and thatch where it has none."""
+    ref = lab.copy()
+    ref[unk] = np.where(pred[unk] > 0, pred[unk], 2)
+    return score(pred, ref)
+
+
+def cross_faces(plan, p):
+    """Blocks 0 long wing, 1 front wing, 2 core. p = [h1, o, pitch, long wing width (s), front
+    wing depth (t, from its front corner), core s0, t0, size s, size t, core eave, core pitch].
+    The wings share wall height h1, eave o and pitch; the core is two storeys, 2 h1 (a rule: its
+    foot is hidden by the wings' roofs, so its height and its ground position trade off along the
+    view ray and the silhouette cannot tell them apart)."""
+    C1, es, et, d = plan
+    h1, o, pw, wL, fD, cs0, ct0, ca, cb, oc, pc = p
+    G = lambda s, t: C1 + s * es + t * et
+    rect = lambda s0, t0, ds, dt: (G(s0, t0), G(s0, t0 + dt), G(s0 + ds, t0))  # F, L, R
+    fD = max(fD, -d['tC'] + 8)
+    spec = [(rect(0, 0, wL, d['tL']), h1, o, pw), (rect(d['sK'], d['tC'], d['sE'] - d['sK'], fD), h1, o, pw),
+            (rect(cs0, ct0, ca, cb), 2 * h1, oc, pc)]
+    faces = []
+    for k, ((F, L, R), hw, oo, pp) in enumerate(spec):
+        faces += block_faces(F, L, R, 0.0, hw, oo, pp, k)
+    return faces
+
+
+def cross_fit(labs, unks, plans, grids=None, starts=(66., 80., 96.), p0=None):
+    """Shared parameters for the twin sprites (mean of cross_score), coordinate descent from
+    three wall heights as fit() does."""
+    grids = CROSS_GRIDS if grids is None else grids
+    sc = lambda p: float(np.mean([cross_score(render_z(cross_faces(pl, p), lab.shape), lab, u)
+                                  for pl, lab, u in zip(plans, labs, unks)]))
+    top, top_s = None, -1.0
+    for h0 in starts:
+        cur = list(CROSS_P0 if p0 is None else p0)
+        cur[0] = h0
+        cur, s_ = descend(cur, sc, grids, rounds=6)
+        if s_ > top_s:
+            top, top_s = cur, s_
+    return top, top_s
+
+def cross_houses(seqs, dR, dL, sheet, p=None):
+    """Fit the cross-wing house and its mirror twin jointly (see CROSS); returns {sprite path:
+    entry} in the format of the other houses (faces, centers, overhangs, score, params) plus
+    'blocks' (names, in order) and 'front' (the zig-zag). No F, L, R: they would enter wall_dirs()."""
+    rgbas, labs, unks, raws, plans, paths, zz = [], [], [], [], [], [], []
+    for fr in CROSS:
+        f = seqs['63']['frames'][fr - 1]
+        rgba = np.array(Image.open(ROOT / 'game' / f['path']).convert('RGBA'))
+        raw = classify(rgba)
+        lab, unk = cross_labels(rgba)
+        Q = zigzag(raw > 0, dR, dL)
+        plans.append(cross_plan(Q, fr == CROSS[1], dR, dL))
+        rgbas.append(rgba); labs.append(lab); unks.append(unk); raws.append(raw); paths.append(f['path']); zz.append(Q)
+    if p is None:
+        p, s_fit = cross_fit(labs, unks, plans)
+    out = {}
+    for k, fr in enumerate(CROSS):
+        lab, rgba = labs[k], rgbas[k]
+        s = cross_score(render_z(cross_faces(plans[k], p), lab.shape), lab, unks[k])
+        s_raw = score(render_z(cross_faces(plans[k], p), lab.shape), raws[k])
+        faces = clip_tips(cross_faces(plans[k], p), silhouette(rgba))
+        pred = render_z(faces, lab.shape)
+        iou = float(((pred > 0) & (lab > 0)).sum() / ((pred > 0) | (lab > 0)).sum())
+        out[paths[k]] = {
+            'score': round(s_raw, 3), 'score_clean': round(s, 3), 'iou': round(iou, 3),
+            'faces': [{'label': l_, 'block': b, 'pts': [[round(float(c), 2) for c in pt] for pt in pts]} for l_, pts, b in faces],
+            'centers': [block_center(faces, b) for b in range(3)],
+            'overhangs': [p[1], p[1], p[9]],
+            'params': [round(float(x), 3) for x in p], 'blocks': CROSS_NAMES,
+            'front': [[round(float(c), 2) for c in q] for q in zz[k]]}
+        pal = np.array([[255, 0, 255], [120, 120, 110], [220, 170, 60]], np.uint8)
+        bg = Image.new('RGBA', (rgba.shape[1], rgba.shape[0]), (255, 0, 255, 255))
+        bg.alpha_composite(Image.fromarray(rgba))
+        over = bg.copy()
+        d = ImageDraw.Draw(over)
+        cols = [(0, 255, 255, 255), (255, 255, 0, 255), (255, 128, 0, 255)]
+        for _, pts, b in faces:
+            d.polygon([(pt[0], pt[2] - pt[1]) for pt in pts], outline=cols[b])
+        row = [bg, Image.fromarray(pal[lab]).convert('RGBA'), Image.fromarray(pal[pred]).convert('RGBA'), over]
+        sh = Image.new('RGBA', (sum(r.width for r in row) + 30, row[0].height), (20, 20, 20, 255))
+        x = 0
+        for r in row:
+            sh.paste(r, (x, 0)); x += r.width + 10
+        sh.resize((sh.width * 2, sh.height * 2), Image.NEAREST).save(Path(sheet) / f'fit-63-{fr}.png')
+        print(paths[k], 'score raw %.3f clean %.3f (after tips %.3f)' % (s_raw, s, cross_score(pred, lab, unks[k])), 'silhouette IoU %.3f' % iou, 'params', [round(float(x), 2) for x in p])
+    return out
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('--out', default=str(ROOT / 'game/prototype/facades.json'))
@@ -1241,17 +1451,19 @@ def main():
         sheet = sheet.resize((sheet.width * 2, sheet.height * 2), Image.NEAREST)
         sheet.save(Path(args.sheet) / f'fit-{seq}-{frame}.png')
         print(fr['path'], 'score %.3f' % s, 'params', [round(x, 2) for x in p])
+    houses_only = list(out.values())  # the wall directions come from these alone
+    out.update(cross_houses(seqs, *wall_dirs(houses_only), args.sheet))
     out['_roof_pieces'] = {}
     for seq, frame in ROOF_PIECES:
         fr = seqs[str(seq)]['frames'][frame - 1]
         out['_roof_pieces'][fr['path']] = rp = roof_piece(np.array(Image.open(ROOT / 'game' / fr['path']).convert('RGBA')))
         print(fr['path'], rp)
-    dR, dL = wall_dirs([v for k, v in out.items() if not k.startswith('_')])
+    dR, dL = wall_dirs(houses_only)
     for seq, frame in GROUND_PIECES:
         fr = seqs[str(seq)]['frames'][frame - 1]
         out['_roof_pieces'][fr['path']] = rp = standing_piece(np.array(Image.open(ROOT / 'game' / fr['path']).convert('RGBA')), dR, dL)
         print(fr['path'], 'standing:', rp)
-    dR, dL = wall_dirs([v for k, v in out.items() if not k.startswith('_')])
+    dR, dL = wall_dirs(houses_only)
     print('wall directions', dR.round(4), dL.round(4))
     for bd in BUILDINGS:
         fr = seqs[str(bd['seq'])]['frames'][bd['frame'] - 1]

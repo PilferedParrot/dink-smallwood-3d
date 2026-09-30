@@ -532,7 +532,7 @@ core's height is twice the wings' wall height, because its foot is hidden and he
 along the view ray. The wing pitch fitted 0.65, under the 0.8-1.1 read from the other houses'
 art, and the core pitch is unresolved.
 
-Regression over every screen rendered since Sept 29, against e859386: none worse except 318 (+0.1,
+Regression over every screen rendered since Sept 29, against e859386: none worse except 318 (+0.2,
 home-10's core roof). Against the Sept 29 baseline, 497 stays +0.3 (tree-04, drawn under the house).
 
 **Defects I see, in order:**
