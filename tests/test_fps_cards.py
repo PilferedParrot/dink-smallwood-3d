@@ -50,7 +50,9 @@ def is_structure(path: str) -> bool:
         # isle-08 is a rail drawn along the depth axis, a 30 x 192 px post: a card in the +z plane would vanish
         # edge-on from the side, so it stays a billboard (fp_world.model_key)
         return bool(m) and 1 <= int(m.group(1)) <= 12 and int(m.group(1)) != 8
-    if "/struct/landmark/" in p:  # landm-01..03 the well, 04..06 bridges (built), 07..12 signs
+    if "/struct/bridge/" in p:  # brdge-04, 07, 09, 11 the rope railings stand as cards; the rest are decks, painted into the ground
+        return int(re.search(r"(\d+)", name).group(1)) in (4, 7, 9, 11)
+    if "/struct/landmark/" in p:  # landm-01..03 the well, 04..06 the stone bridge (a deck, painted), 07..12 signs
         return int(re.search(r"(\d+)", name).group(1)) >= 7
     if "/paper/" in p or "/inner/" in p:  # signs
         return True
