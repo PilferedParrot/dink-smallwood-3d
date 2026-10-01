@@ -216,7 +216,7 @@ func build_ground(screen: Dictionary) -> void:
 					var dedup: Dictionary = {}
 					for source in host.world.screens[str(n)].get("sprites",[]):
 						# What the screen loads on arrival, before its scripts run (game.gd editor_entity).
-						var e: Dictionary = host.editor_entity(n,source)
+						var e: Dictionary = host.editor_entity(n,source,false)
 						if e.is_empty() or int(e.get("type",1)) == 2: continue
 						var key := model_key(e)
 						if key in ["flame","effect","arrow",""]: continue

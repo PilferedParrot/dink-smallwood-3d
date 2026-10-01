@@ -215,8 +215,10 @@ func load_map(number: int, run_scripts: bool = true) -> void:
 # pframe; seq 0). {} when the screen does not load it (removed, waiting to return, another vision). The one
 # source of "what a screen loads": load_map builds its entities from it, and the neighbours the fps world
 # draws (fp_world.gd build_ground) are what their own screens would load.
-func editor_entity(number: int, source: Dictionary) -> Dictionary:
-	var e: Dictionary = source.duplicate(true)
+# `deep`: the current screen's entities are live and change (deep copies); a neighbour's are only read (fp_world.gd
+# draws them), so a shallow copy serves and saves its share of the load (about 2 ms of 3 on 439's block).
+func editor_entity(number: int, source: Dictionary, deep: bool = true) -> Dictionary:
+	var e: Dictionary = source.duplicate(deep)
 	var idx := int(e.get("index",0))
 	var key := "%d:%d" % [number,idx]
 	if editor_state.has(key):
