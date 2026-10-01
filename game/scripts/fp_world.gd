@@ -47,6 +47,12 @@ var sprite_heights: Dictionary = {} # sprite path -> drawn height above its hots
 const BUILT := ["cottage","inn","bridge","door","stairs","shelf","table","chair","bed",
 	"fireplace","cave_entrance","ruin","arrow",""]
 const ACTORS := ["man","woman","wizard","knight","pig","duck","pillbug","bonca","slime","dragon"]
+# What the original draws without a shadow casts none here (shadow_twin). The art says which: a drawn shadow is a
+# checkerboard of isolated black pixels (the dither clean_texture removes), and over every frame the map places
+# upright, the fire (fire1), sparks, coins, grass tufts and the seeds have 0-8 such pixels, the holes and burns of
+# the damage art 0-31 scattered specks, where a duck has 40-70, a tool 17-79, a barrel 133, a pig 123-277 and a
+# tree up to 4,150. Light and things lying on the ground cast no shadow.
+const SHADOWLESS := ["flame","effect","feed_grains","burn_scar","hole","coin","grass"]
 # Dink directions (numpad) -> facing in source space (x right, y toward the original viewer).
 const DIRS := {1: Vector2(-1,1), 2: Vector2(0,1), 3: Vector2(1,1), 4: Vector2(-1,0),
 	6: Vector2(1,0), 7: Vector2(-1,-1), 8: Vector2(0,-1), 9: Vector2(1,-1)}
@@ -1575,9 +1581,16 @@ func settle_depth(sp: Sprite3D, e: Dictionary) -> void:
 # from a twin, a plain card turned to face the sun: its silhouette as the sun sees it, the same for every
 # camera, shifted or not. (Before the twin only the fixed cards cast a shadow, and every tree was one: a
 # tree that stands up must not lose its shadow for it.) `shifted`: the depth rule has put sp's own shader on.
+# Except what the original draws without a shadow (SHADOWLESS): it casts none.
 func shadow_twin(sp: Sprite3D, shifted: bool) -> void:
 	var upright := sp.billboard == BaseMaterial3D.BILLBOARD_FIXED_Y
 	var twin := sp.get_node_or_null("ShadowTwin") as Sprite3D
+	if is_instance_valid(sp.get_parent()) and str(sp.get_parent().get_meta("model_key","")) in SHADOWLESS:
+		if twin != null:
+			sp.remove_child(twin)
+			twin.queue_free()
+		sp.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		return
 	if not upright and not shifted:
 		if twin != null:
 			sp.remove_child(twin)

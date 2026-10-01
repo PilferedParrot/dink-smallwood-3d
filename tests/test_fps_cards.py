@@ -117,6 +117,10 @@ def test_every_card_of_the_map_is_a_billboard_unless_its_art_is_a_structure(swep
     assert ("torch-01.png", "billboard") in island
 
 
+# What the original draws without a shadow (fp_world.gd SHADOWLESS: fire, effects, coins, grass, seeds, holes) casts none.
+SHADOWLESS = {"flame", "effect", "feed_grains", "burn_scar", "hole", "coin", "grass"}
+
+
 def test_loaded_scenes_agree_and_every_billboard_has_a_twin_on_the_sun(tmp_path):
     result = _run_godot(["--dump=" + ",".join(str(n) for n in SCENES)], False, tmp_path, 600)
     assert "SCRIPT ERROR" not in result.stderr, result.stderr[-2000:]
@@ -127,7 +131,11 @@ def test_loaded_scenes_agree_and_every_billboard_has_a_twin_on_the_sun(tmp_path)
     billboards = [c for c in cards if c["mode"] == "billboard"]
     fixed = [c for c in cards if c["mode"] == "fixed"]
     assert billboards and fixed
+    shadowless = [c for c in billboards if c["key"] in SHADOWLESS]
+    assert shadowless, "the scenes hold no shadowless sprite: the check below could not fail"
+    assert all(c["twin"] == "twin=none" for c in shadowless), [c for c in shadowless if c["twin"] != "twin=none"][:5]
     for c in billboards:
+        if c["key"] in SHADOWLESS: continue
         angle, _, state = c["twin"].replace("twin=", "").partition(",")
         assert state == "ok", c
         assert abs(float(angle)) < 0.01, c  # the twin's face is on the sun (degrees, horizontally)
