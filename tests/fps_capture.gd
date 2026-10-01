@@ -21,6 +21,7 @@ func _run() -> void:
 	var vision := 0 # --vision=N: the story layer to load (scenario setup)
 	var batch := "" # --batch=file.json --out-dir=DIR: many views of this screen in one run (see _shoot)
 	var out_dir := ""
+	var shadows := true # --shadows=0: the light's shadows off (the sprites' own pixels only: for before/after views)
 	for arg in OS.get_cmdline_user_args():
 		if arg.begins_with("--screen="): screen = int(arg.trim_prefix("--screen="))
 		if arg.begins_with("--x="): x = float(arg.trim_prefix("--x="))
@@ -34,6 +35,7 @@ func _run() -> void:
 		if arg.begins_with("--vision="): vision = int(arg.trim_prefix("--vision="))
 		if arg.begins_with("--batch="): batch = arg.trim_prefix("--batch=")
 		if arg.begins_with("--out-dir="): out_dir = arg.trim_prefix("--out-dir=")
+		if arg.begins_with("--shadows="): shadows = arg.trim_prefix("--shadows=") != "0"
 	game.vm.cancel_all()
 	# A walk measures collision: load the screen's editor layer without its scripts
 	# (scenario setup that skips progression, as tests/fps_wall_test.gd does).
@@ -45,6 +47,7 @@ func _run() -> void:
 		game.set_physics_process(false)
 		game.set_process(false)
 	await create_timer(0.6).timeout
+	if not shadows and game.fp_world != null and game.fp_world.light != null: game.fp_world.light.shadow_enabled = false
 	game.entities[1].x = x
 	game.entities[1].y = y
 	game.fps_yaw = yaw
