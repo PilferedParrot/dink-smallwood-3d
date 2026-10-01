@@ -198,6 +198,11 @@ func _mode(sprites: Array, saved: Dictionary, mode: String) -> void:
 		var twin := sp.get_node_or_null("ShadowTwin") as Sprite3D
 		if mode == "plain":
 			sp.material_override = null
+			if twin != null and sp.billboard == BaseMaterial3D.BILLBOARD_FIXED_Y:
+				# A billboard casts from its twin, shifted or not (turned to the sun): the twin stays.
+				sp.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+				twin.visible = shadows
+				continue
 			sp.cast_shadow = saved[sp][3] if shadows else GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 			if twin != null: twin.visible = false
 			continue

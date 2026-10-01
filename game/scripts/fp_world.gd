@@ -39,10 +39,11 @@ var sprite_heights: Dictionary = {} # sprite path -> drawn height above its hots
 # Everything that is not a building is the original sprite itself, drawn as the prototype draws it
 # (prototype/sprite_world_proto.gd _add_sprite; docs/DIRECTION.md, ninth pass): upright sprites
 # stand at their hotspots as Y-axis billboards, directional actors pick their frame from the camera
-# angle, fences, walls and wide sprites keep the orientation they were drawn in, and background
-# (type 0) sprites are painted into the ground. Castle and stone walls ("tower") are fixed cards of
-# their sprites, as the prototype draws them. These keys keep their 3D build: fitted and unfitted
-# houses, bridges, doors, stairs, interior furniture and interior walls, and the arrow.
+# angle, structures (fences, walls, signs, huts: is_structure) keep the orientation they were drawn
+# in, and background (type 0) sprites are painted into the ground. Castle and stone walls ("tower")
+# are fixed cards of their sprites, as the prototype draws them. These keys keep their 3D build:
+# fitted and unfitted houses, bridges, doors, stairs, interior furniture and interior walls, and
+# the arrow.
 const BUILT := ["cottage","inn","bridge","door","stairs","shelf","table","chair","bed",
 	"fireplace","cave_entrance","ruin","arrow",""]
 const ACTORS := ["man","woman","wizard","knight","pig","duck","pillbug","bonca","slime","dragon"]
@@ -110,7 +111,13 @@ func model_key(e: Dictionary) -> String:
 	if "/building/" in p: return "cottage"
 	if "/castle/" in p or "/stone/" in p: return "tower"
 	if "/bridge/" in p: return "bridge"
-	if "/island/" in p: return "rock"
+	if "/island/" in p:
+		# By the art's own file: isle-01..06 are round huts, isle-07..12 rail fences, isle-13..18 spears.
+		# (The torches of the same folder, seq 425, have frames 1-6 too, so the frame cannot say.)
+		var file := p.get_file()
+		var number := int(file.trim_prefix("isle-")) if file.begins_with("isle-") else 0
+		if number >= 1 and number <= 6: return "hut"
+		return "fence" if number >= 7 and number <= 12 else "rock"
 	if "/door/" in p: return "door"
 	if "/details/inacc" in p:
 		return {1:"shelf",2:"table",3:"bed",4:"shelf",5:"fireplace",6:"cave_entrance"}.get(frame,"table")
@@ -1209,13 +1216,25 @@ func add_ruin_skin(node: Node3D, model: Node3D) -> void:
 		nodes.append_array(current.get_children())
 
 # --- Sprites -----------------------------------------------------------------------------
+# Whether a card keeps the orientation it was drawn in. Only a structure does: a fence (and the island's
+# rail fences), a wall (stone and castle walls: "tower", but not the monuments of struct/Stone/mdink, the
+# statues, which stand upright), a sign (a signboard is a flat board: edge-on from the side is right) and
+# the island's round huts. Everything else is a Y-axis billboard whatever its width: the width of an art
+# includes its shadow dither, so it says nothing of what stands in it (every tree is over 100 px).
+func is_structure(key: String, path: String) -> bool:
+	if key in ["fence","wall","hut","sign"]: return true
+	return key == "tower" and not "/stone/" in path.to_lower()
+
 # The original sprite of a thing that is not a building, drawn as the prototype draws it
 # (sprite_world_proto.gd _add_sprite): at its hotspot, 0.025 m per pixel times its size, unshaded
 # with the light the art was drawn with, its shadow dither removed. Props, trees and actors are
-# Y-axis billboards; fences, walls and sprites over 100 px wide keep the orientation they were drawn
-# in (facing the original viewer, +Z), and a fence post column drawn along the depth axis is rebuilt
-# from the side-view rail (seq 93 frame 1) turned 90 degrees. Collision stays in source pixels
-# (game.gd); the body here is for rays (aim, projectiles, dialogue cameras).
+# Y-axis billboards, whatever their width; structures (is_structure: fences, walls, castle walls, signs,
+# huts) keep the orientation they were drawn in (facing the original viewer, +Z), and a fence post
+# column drawn along the depth axis is rebuilt from the side-view rail (seq 93 frame 1) turned 90
+# degrees. A tree is round: seen from the side it must stand whole, not as the edge of a card. Collision
+# stays in source pixels (game.gd); the body here is for rays (aim, projectiles, dialogue cameras).
+# A fixed card casts its own shadow; a billboard casts its silhouette from a twin turned to the sun
+# (shadow_twin).
 func add_billboard(node: Node3D, e: Dictionary, id: int, key: String, collision: bool, screen: int) -> void:
 	var path := frame_path(e)
 	var texture := clean_texture(path)
@@ -1232,7 +1251,7 @@ func add_billboard(node: Node3D, e: Dictionary, id: int, key: String, collision:
 	sp.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	var lower := path.to_lower()
 	var fence := "/fence/" in lower
-	var fixed := fence or key in ["wall","tower"] or texture.get_width() > 100
+	var fixed := fence or is_structure(key,lower)
 	if fence and texture.get_height() > 2*texture.get_width():
 		# The drawn post column spans the segment's depth; cover it with a side-view rail.
 		var rail := str(host._frame(93,1).get("path",""))
@@ -1254,6 +1273,7 @@ func add_billboard(node: Node3D, e: Dictionary, id: int, key: String, collision:
 		sp.billboard = BaseMaterial3D.BILLBOARD_DISABLED
 		sp.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_ON
 	node.add_child(sp)
+	if not fixed: shadow_twin(sp,false)
 	var height := maxf(0.2,sprite_height(e)*SCALE*factor)
 	node.set_meta("height",height)
 	node.set_meta("base_model_position",sp.position)
@@ -1541,29 +1561,42 @@ func settle_depth(sp: Sprite3D, e: Dictionary) -> void:
 	m.set_shader_parameter("wall",world_to_scene(rule.wall))
 	m.set_shader_parameter("normal",rule.normal)
 
-# A card that casts a shadow (the fixed ones) must not cast it from the shifted depth: the shadow pass
-# runs the same shader, and a shifted depth would move the shadow on the ground. So the shifted sprite
-# casts none, and a twin of it, drawn plain and in the shadow pass only, casts the sprite's own.
-func shadow_twin(sp: Sprite3D, on: bool) -> void:
+# Every card casts a shadow. A fixed card casts its own, but the shadow pass runs the same shader, and a
+# shifted depth would move the shadow on the ground, so a fixed card the depth rule shifts casts none and a
+# twin of it, drawn plain and in the shadow pass only, casts its own. A Y-axis billboard has no plane of its
+# own to cast with (it turns to whatever looks at it, and the sun is not the player's camera), so it casts
+# from a twin, a plain card turned to face the sun: its silhouette as the sun sees it, the same for every
+# camera, shifted or not. (Before the twin only the fixed cards cast a shadow, and every tree was one: a
+# tree that stands up must not lose its shadow for it.) `shifted`: the depth rule has put sp's own shader on.
+func shadow_twin(sp: Sprite3D, shifted: bool) -> void:
+	var upright := sp.billboard == BaseMaterial3D.BILLBOARD_FIXED_Y
 	var twin := sp.get_node_or_null("ShadowTwin") as Sprite3D
-	if not on:
+	if not upright and not shifted:
 		if twin != null:
 			sp.remove_child(twin)
 			twin.queue_free()
 			sp.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_ON
 		return
-	if sp.cast_shadow != GeometryInstance3D.SHADOW_CASTING_SETTING_ON and twin == null: return
 	if twin == null:
 		twin = Sprite3D.new()
 		twin.name = "ShadowTwin"
 		twin.shaded = false
 		twin.alpha_cut = SpriteBase3D.ALPHA_CUT_DISCARD
 		twin.texture_filter = sp.texture_filter
-		twin.billboard = sp.billboard
+		twin.billboard = BaseMaterial3D.BILLBOARD_DISABLED
 		twin.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_SHADOWS_ONLY
 		sp.add_child(twin)
 	sp.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	twin.rotation.y = sun_yaw(sp) if upright else 0.0
 	sync_twin(sp)
+
+# The yaw, in sp's own frame, that turns a card's face (+z) to the sun: the horizontal direction toward the
+# scene's light (a directional light shines along its -z, so +z points at it).
+func sun_yaw(sp: Sprite3D) -> float:
+	var toward := Vector3.BACK
+	if light != null and is_instance_valid(light) and light.is_inside_tree(): toward = light.global_transform.basis.z
+	var yaw := atan2(toward.x,toward.z) if Vector2(toward.x,toward.z).length() > 0.001 else 0.0
+	return yaw-(sp.global_rotation.y if sp.is_inside_tree() else 0.0)
 
 func sync_twin(sp: Sprite3D) -> void:
 	var twin := sp.get_node_or_null("ShadowTwin") as Sprite3D
