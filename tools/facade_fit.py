@@ -1447,11 +1447,331 @@ def cross_houses(seqs, dR, dL, sheet, p=None):
     return out
 
 
+# --- The castle (struct/Castle, seq 67): walls and towers ----------------------------------------
+# The same camera as the houses: screen = (X, Z - Y), the ground 1:1 in source px, so the drawn
+# base of a wall standing on the ground IS its base line in plan, and a vertical face is the sprite
+# sheared by its plan direction. Each castle sprite is a piece of wall, and a piece is a prism:
+#   * the front face: the wall's base line (x, b(x)) up to a height; the drawn bricks;
+#   * the walkway: a horizontal band of depth T behind the front face's top edge, seen from 45 degrees
+#     (vertical screen extent Tv = T sqrt(1 + s^2) at a fixed x, s the base line's slope);
+#   * the parapet: a thin crenellated wall standing on the walkway's far edge (frames 6, 8: the
+#     inner face, walkway visible and the merlons behind it) or on its near edge (frames 7, 9: the
+#     outer face, the merlons rise from the front face and hide the walkway). It stays in the
+#     texture, as a strip with the sprite's own alpha (the gaps between merlons are see-through);
+#   * the far face and the ends: the far face mirrors the front through the prism's centre.
+# The base line is the least-squares line through the lowest drawn pixel of each column (the shadow
+# dither, isolated black pixels, is left out). The face's top and the walkway's depth are found from
+# the median brightness along the base line's parallels, u = (b(x) - y): the brick face, the dark
+# walkway tiles and the bright merlon faces are three levels, and the best three-level fit puts the
+# two edges. Frames 7 and 9 draw no walkway: they take their sibling's (6 and 8: the same wall seen
+# from its other side, the same slope), and show their height as the top of the silhouette.
+CASTLE = 'assets/graphics/struct/Castle/castl-%02d.png'
+CASTLE_SEQ = 67
+CASTLE_WALLS = {6: None, 8: None, 7: 6, 9: 8}  # frame -> the sibling whose walkway it takes
+CASTLE_TOWERS = [4, 3, 1, 2]
+
+
+def castle_rgba(frame: int) -> np.ndarray:
+    return np.array(Image.open(ROOT / 'game' / (CASTLE % frame)).convert('RGBA'))
+
+
+def castle_body(rgba: np.ndarray) -> np.ndarray:
+    return (rgba[..., 3] >= 128) & ~is_dither(rgba)
+
+
+def base_line(body: np.ndarray):
+    """Slope and intercept of the wall's base: the lowest drawn pixel of each column, robust."""
+    w = body.shape[1]
+    xs = np.arange(w)
+    bot = np.array([np.nonzero(body[:, x])[0].max() for x in range(w)])
+    keep = np.ones(w, bool)
+    for _ in range(4):
+        s, c = np.polyfit(xs[keep], bot[keep], 1)
+        keep = np.abs(bot - (s * xs + c)) <= 1.5
+    return float(s), float(c), float(np.abs(bot - (s * xs + c)).std())
+
+
+def wall_profile(rgba, body, s, c, u_max):
+    """Median brightness of the drawn pixels on the base line's parallel u px above it (nan: fewer
+    than 20 drawn)."""
+    h, w = body.shape
+    lum = rgba[..., :3].astype(float).mean(-1)
+    prof = np.full(u_max, np.nan)
+    xs = np.arange(w)
+    for u in range(u_max):
+        ys = np.round(s * xs + c).astype(int) - u
+        ok = (ys >= 0) & (ys < h)
+        ok[ok] = body[ys[ok], xs[ok]]
+        if ok.sum() >= 20:
+            prof[u] = np.median(lum[ys[ok], xs[ok]])
+    return prof
+
+
+def three_levels(prof, lo, hi):
+    """The edges u1 < u2 in [lo, hi) where a three-level step through the profile fits best, the
+    middle level darker than both outer ones (face, walkway, merlons). Returns (u1, u2, levels, sse)."""
+    p = ndimage.median_filter(np.nan_to_num(prof, nan=0.0), size=3)
+    best = None
+    for u1 in range(lo + 10, hi - 12):
+        a = p[lo:u1]
+        for u2 in range(u1 + 8, hi - 6):
+            b, d = p[u1:u2], p[u2:hi]
+            la, lb, ld = a.mean(), b.mean(), d.mean()
+            if not (lb < la - 15 and lb < ld - 15):
+                continue
+            sse = ((a - la) ** 2).sum() + ((b - lb) ** 2).sum() + ((d - ld) ** 2).sum()
+            if best is None or sse < best[3]:
+                best = (u1, u2, (round(la, 1), round(lb, 1), round(ld, 1)), float(sse))
+    return best
+
+
+def wall_fit(frame: int, fits: dict):
+    """One wall sprite as a prism (see the section's comment); `fits` holds the siblings fitted so far."""
+    rgba = castle_rgba(frame)
+    body = castle_body(rgba)
+    h, w = body.shape
+    s, c, res = base_line(body)
+    top = np.array([np.nonzero(body[:, x])[0].min() for x in range(w)])
+    u_top = float(np.median(s * np.arange(w) + c - top))
+    root = math.sqrt(1 + s * s)
+    sib = CASTLE_WALLS[frame]
+    if sib is None:
+        u1, u2, levels, sse = three_levels(wall_profile(rgba, body, s, c, int(u_top) + 8), 60, int(u_top))
+        hw, tv = float(u1), float(u2 - u1)
+        parapet, y_top = 'back', u_top - tv  # the back plane's height: u = Y + Tv there
+        info = {'levels': [float(v) for v in levels]}
+    else:
+        hw, tv = fits[sib]['parts'][0]['hw'], fits[sib]['parts'][0]['tv']
+        parapet, y_top = 'front', u_top
+        info = {'sibling': CASTLE % sib, 'dz': round(fits[sib]['parts'][0]['c'] - c, 2)}
+    return {'size': [int(w), int(h)], 'resid': round(res, 2), 'parts': [{
+        'type': 'wall', 'x0': 0, 'x1': int(w), 's': round(s, 4), 'c': round(c, 2), 'hw': hw, 'tv': tv,
+        't': round(tv / root, 2), 'parapet': parapet, 'y_top': round(y_top, 1), 'u_top': round(u_top, 1), **info}]}
+
+
+# Round towers (frames 1-4). The art draws a horizontal circle of the ground as an ellipse (the
+# houses' rhombi are the same fact: the 2D game's ground is its screen), so a tower is an elliptic
+# cylinder in the 1:1 ground, its ellipse one aspect k = b / a for the whole castle (measured on the
+# plain tower, frame 4). A tower is a shaft (radius a, up to h1) and a wider body or crown (radius ar,
+# up to the platform at h3), with the parapet (merlons, m high) around the platform. The sprites differ in
+# the radii: the plain tower's wide body stands on a narrower plinth, frames 1 and 3 have a straight shaft
+# under a corbelled crown. Fitted from the silhouette's edges and the lowest drawn pixels:
+#   * the base arc (the lowest drawn pixel of the columns on the shaft's ellipse) and the silhouette's
+#     left/right edge row by row are what a swept stack of ellipses predicts: half(y) = the widest ellipse
+#     (a for heights up to h1, ar above) whose rows include y; least squares over (cx, cz, a, ar) for each h1
+#     in turn, the h1 with the smallest residual;
+#   * the parapet's height m is the walls' (the same castle: their measured merlon height above the walkway),
+#     and the platform's height h3 follows from the silhouette's top row (the far merlons).
+def swept(rows, cz, k, specs):
+    """Per row: the half-width of the union of the ellipses of aspect k centred on rows cz - Y: specs
+    [(radius, y_lo, y_hi), ...], or [(radius0, y0, radius1, y1)] for a frustum (a flare)."""
+    half = np.zeros(len(rows))
+    for sp in specs:
+        if len(sp) == 3:
+            r, y_lo, y_hi = sp
+            ys = np.arange(int(y_lo), int(y_hi) + 1, 2)
+            rs = np.full(len(ys), float(r))
+        else:
+            r0, y0, r1, y1 = sp
+            ys = np.arange(int(y0), int(y1) + 1, 2)
+            rs = r0 + (r1 - r0) * (ys - y0) / max(y1 - y0, 1e-9)
+        if not len(ys):
+            continue
+        t = 1 - ((rows[:, None] - (cz - ys)[None, :]) / (k * rs[None, :])) ** 2
+        half = np.maximum(half, (rs[None, :] * np.sqrt(np.clip(t, 0, None))).max(1))
+    return half
+
+
+def tower_edges(sil):
+    rows = np.nonzero(sil.any(1))[0]
+    left = np.array([np.nonzero(sil[y])[0].min() for y in rows], float)
+    right = np.array([np.nonzero(sil[y])[0].max() + 1 for y in rows], float)
+    return rows.astype(float), left, right
+
+
+def tower_solve(frame, k, parapet, sides, arc_cols=None, top_row=None):
+    """Fit one tower sprite: `sides` is which silhouette edges are the tower's ('L', 'R' or 'LR'), `arc_cols`
+    the columns of its base arc, if drawn."""
+    from scipy.optimize import least_squares
+    rgba = castle_rgba(frame)
+    body = castle_body(rgba)
+    sil = silhouette(rgba)
+    h, w = body.shape
+    rows, left, right = tower_edges(sil)
+    top_y = float(rows.min())
+    bot = np.array([np.nonzero(body[:, x])[0].max() for x in range(w)])
+    best = None
+    ar0 = 96.0
+    for h1, f in [(h1, f) for h1 in range(0, 230, 6) for f in (0, 8, 16, 24, 32, 40, 48) if h1 + f <= 230]:
+        def resid(q):
+            cx, cz, a, ar = q
+            h3 = cz - k * ar - top_y - parapet
+            half = swept(rows, cz, k, [(a, 0, h1), (a, h1, ar, h1 + f), (ar, h1 + f, h3 + parapet)] if f else [(a, 0, h1), (ar, h1, h3 + parapet)])
+            r = []
+            if 'L' in sides:
+                r.append((cx - half) - left)
+            if 'R' in sides:
+                r.append((cx + half) - right)
+            if arc_cols is not None:
+                t = 1 - ((arc_cols - cx) / a) ** 2
+                r.append(10 * (bot[arc_cols] - (cz + k * a * np.sqrt(np.clip(t, 0, None)))) / 10.0)
+            return np.concatenate(r)
+        r = least_squares(resid, [w / 2.0, 335.0, 80.0, ar0], loss='soft_l1', f_scale=2.0, bounds=([0, 250, 50, 60], [w, 400, 120, 120]))
+        if best is None or r.cost < best[0]:
+            best = (r.cost, h1, f, r.x, float(np.abs(r.fun).mean()))
+    cost, h1, f, (cx, cz, a, ar), mean_err = best
+    h3 = cz - k * ar - top_y - parapet
+    return {'size': [int(w), int(h)], 'cx': round(float(cx), 2), 'cz': round(float(cz), 2), 'a': round(float(a), 2), 'ar': round(float(ar), 2),
+            'h1': float(h1), 'flare': float(f), 'h3': round(float(h3), 1), 'm': round(float(parapet), 1), 'k': round(k, 4), 'edge_err': round(mean_err, 2)}, rows
+
+
+def plain_arc(frame):
+    """The plain tower's base ellipse aspect: the shaft's columns are those between the two big jumps of the
+    lowest drawn pixel (where the crown's underside takes over), a free ellipse through them."""
+    from scipy.optimize import least_squares
+    body = castle_body(castle_rgba(frame))
+    w = body.shape[1]
+    bot = np.array([np.nonzero(body[:, x])[0].max() for x in range(w)])
+    x0 = int(np.argmax(bot))
+    lo = hi = x0
+    while lo > 0 and abs(bot[lo - 1] - bot[lo]) <= 25:
+        lo -= 1
+    while hi < w - 1 and abs(bot[hi + 1] - bot[hi]) <= 25:
+        hi += 1
+    xs = np.arange(lo, hi + 1)
+
+    def resid(q):
+        cx, cz, a, b = q
+        return bot[xs] - (cz + b * np.sqrt(np.clip(1 - ((xs - cx) / a) ** 2, 0, None)))
+    r = least_squares(resid, [(lo + hi) / 2, bot.max() - 40, (hi - lo) / 2 + 1, 40.0], loss='soft_l1', f_scale=1.5)
+    cx, cz, a, b = (float(v) for v in r.x)
+    return b / a, (lo, hi)
+
+
+def attached_tower(frame: int, k: float, parapet: float, walls: dict):
+    """Frames 3 and 1 stand on a stub of wall (to the left, to the right) that ends at the sprite's edge, frame 2
+    in the corner of two walls (a V on the ground, the tower behind it, its shaft hidden). Each wall is a prism
+    with the castle wall's walkway (hw, tv: the stub's cap and the corner's dark tiles are that walkway) and no
+    parapet drawn."""
+    rgba = castle_rgba(frame)
+    body = castle_body(rgba)
+    h, w = body.shape
+    bot = np.array([np.nonzero(body[:, x])[0].max() for x in range(w)])
+    xs = np.arange(w)
+    wl, wr = walls[6]['parts'][0], walls[8]['parts'][0]  # the two directions: '/' (s < 0) and '\\' (s > 0)
+
+    def line_c(wall, cols):
+        return float(np.median(bot[cols] - wall['s'] * xs[cols]))
+
+    def prism(wall, x0, x1, c):
+        return {'type': 'wall', 'x0': round(float(x0), 2), 'x1': round(float(x1), 2), 's': wall['s'], 'c': round(c, 2), 'hw': wall['hw'],
+                'tv': wall['tv'], 't': wall['t'], 'parapet': 'none'}
+    if frame == 2:
+        xa = int(np.argmin(bot))  # the corner's apex, the farthest point of the V
+        walls_out = [prism(wl, 0, xa, line_c(wl, xs[:xa - 6])), prism(wr, xa, w, line_c(wr, xs[xa + 6:]))]
+        # The shaft is hidden behind the walls: only the crown shows. Its radius is the widest crown row's, the
+        # shaft's the other towers' (taken below), its centre the crown's.
+        sil = silhouette(rgba)
+        rows, left, right = tower_edges(sil)
+        crown = rows < 90
+        ar = float(((right - left)[crown].max()) / 2.0)
+        cx = float(((right + left) / 2.0)[crown][-1])
+        tw = {'size': [int(w), int(h)], 'cx': round(cx, 2), 'ar': round(ar, 2), 'h1': None, 'h3': None, 'm': round(parapet, 1), 'k': round(k, 4),
+              'cz': None, 'a': None, 'flare': None}
+        top_y = float(rows.min())
+        tw['top_y'] = top_y
+        return walls_out, tw, {'apex': xa}
+    left = frame == 3
+    wall = wl if left else wr
+    edge = xs[:24] if left else xs[-24:]
+    c = line_c(wall, edge)
+    resid = bot - (wall['s'] * xs + c)
+    run = 0
+    while run < w and abs(resid[run if left else w - 1 - run]) <= 1.5:
+        run += 1
+    xj = run if left else w - run  # where the bottom leaves the stub's line: the tower's plinth takes over
+    far = (xj + w) // 2 if left else xj // 2
+    step = 1 if left else -1
+    while 0 < far < w - 1 and abs(bot[far + step] - bot[far]) <= 25:
+        far += step
+    cols = xs[xj + 8:far - 8] if left else xs[far + 8:xj - 8]
+    tw, _ = tower_solve(frame, k, parapet, 'R' if left else 'L', cols)
+    tw['stub_junction'] = int(xj)
+    cx = tw['cx']
+    return [prism(wall, 0 if left else cx, cx if left else w, c)], tw, {'stub': 'left' if left else 'right'}
+
+
+def castle_fit(sheet: Path) -> dict:
+    """The castle's fitted pieces, keyed by sprite path (facades.json "_walls")."""
+    walls = {}
+    for frame in (6, 8, 7, 9):
+        walls[frame] = wall_fit(frame, walls)
+    parapet = float(np.mean([walls[f]['parts'][0]['y_top'] - walls[f]['parts'][0]['hw'] for f in (6, 8)]))
+    k, (lo, hi) = plain_arc(4)
+    towers = {}
+    tw, _ = tower_solve(4, k, parapet, 'LR', np.arange(lo, hi + 1))
+    towers[4] = {'size': tw.pop('size'), 'parts': [tw | {'type': 'tower'}]}
+    pending = {}
+    for frame in (3, 1, 2):
+        wl, tw, info = attached_tower(frame, k, parapet, walls)
+        pending[frame] = (wl, tw, info)
+    shafts = [pending[f][1]['a'] for f in (3, 1)]
+    for frame in (3, 1, 2):
+        wl, tw, info = pending[frame]
+        size = tw.pop('size')
+        if frame == 2:
+            # The shaft is the other attached towers' (hidden here); the platform's height the same stack's.
+            tw['a'] = round(float(np.mean(shafts)), 2)
+            tw['h3'] = round(float(np.mean([pending[f][1]['h3'] for f in (3, 1)])), 1)
+            tw['cz'] = round(tw.pop('top_y') + k * tw['ar'] + tw['h3'] + parapet, 2)
+            tw['h1'] = round(float(np.mean([pending[f][1]['h1'] for f in (3, 1)])), 1)
+            tw['flare'] = round(float(np.mean([pending[f][1]['flare'] for f in (3, 1)])), 1)
+        towers[frame] = {'size': size, 'parts': wl + [tw | {'type': 'tower'}], **info}
+    out = {}
+    for frame, entry in {**walls, **towers}.items():
+        out[CASTLE % frame] = entry
+        castle_overlay(frame, entry).save(sheet / f'castle-{frame:02d}.png')
+        print(CASTLE % frame, json.dumps(entry['parts']))
+    return out
+
+
+def castle_overlay(frame: int, entry: dict) -> Image.Image:
+    """The fitted parts drawn over the sprite (x2): cyan the front face, yellow the walkway, green the
+    parapet's strip, magenta the tower's ellipses (base, crown, platform, merlon tops)."""
+    rgba = castle_rgba(frame)
+    bg = Image.new('RGBA', (rgba.shape[1], rgba.shape[0]), (255, 0, 255, 255))
+    bg.alpha_composite(Image.fromarray(rgba))
+    d = ImageDraw.Draw(bg)
+    for q in entry['parts']:
+        if q['type'] == 'wall':
+            x0, x1, sl, c, hw, tv = q['x0'], q['x1'], q['s'], q['c'], q['hw'], q['tv']
+            b = lambda x: sl * x + c
+            d.polygon([(x0, b(x0)), (x1, b(x1)), (x1, b(x1) - hw), (x0, b(x0) - hw)], outline=(0, 255, 255, 255))
+            d.polygon([(x0, b(x0) - hw), (x1, b(x1) - hw), (x1, b(x1) - hw - tv), (x0, b(x0) - hw - tv)], outline=(255, 255, 0, 255))
+            off = tv if q['parapet'] == 'back' else 0.0
+            if q['parapet'] != 'none':
+                d.polygon([(x0, b(x0) - off - hw), (x1, b(x1) - off - hw), (x1, b(x1) - off - q['y_top']), (x0, b(x0) - off - q['y_top'])],
+                          outline=(0, 255, 0, 255))
+        else:
+            cx, cz, a, ar, k = q['cx'], q['cz'], q['a'], q['ar'], q['k']
+            for (rx, ry, y) in [(a, k * a, 0), (a, k * a, q['h1']), (ar, k * ar, q['h1']), (ar, k * ar, q['h3']), (ar, k * ar, q['h3'] + q['m'])]:
+                d.ellipse((cx - rx, cz - y - ry, cx + rx, cz - y + ry), outline=(255, 0, 255, 255))
+    return bg.resize((bg.width * 2, bg.height * 2), Image.NEAREST)
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('--out', default=str(ROOT / 'game/prototype/facades.json'))
     ap.add_argument('--sheet', default=str(ROOT / 'tmp/facades'))
+    ap.add_argument('--castle-only', action='store_true',
+                    help='fit only the castle and write it into the existing --out under "_walls"')
     args = ap.parse_args()
+    if args.castle_only:
+        Path(args.sheet).mkdir(parents=True, exist_ok=True)
+        existing = json.loads(Path(args.out).read_text())
+        existing['_walls'] = castle_fit(Path(args.sheet))
+        Path(args.out).write_text(json.dumps(existing, indent=1))
+        return
     seqs = json.loads((ROOT / 'game/data/sequences.json').read_text())['sequences']
     out = {}
     Path(args.sheet).mkdir(parents=True, exist_ok=True)
@@ -1613,6 +1933,7 @@ def main():
             d.polygon([(pt[0], pt[2] - pt[1]) for pt in pts], outline=cols[blk // 2 % 4])
         over.save(Path(args.sheet) / f"fit-{name}.png")
         print(name, screens, 'arms', len(arms), 'silhouette IoU %.3f' % s, len(members), 'pieces')
+    out['_walls'] = castle_fit(Path(args.sheet))
     Path(args.out).write_text(json.dumps(out, indent=1))
 
 
