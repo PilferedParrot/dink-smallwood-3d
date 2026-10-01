@@ -137,12 +137,7 @@ func claim(fit: Dictionary, rect: Rect2, s: Dictionary, n: int) -> Array:
 # them; `want_shade`: whether to compute the drawn shadow (the prototype paints it on its ground).
 func house(path: String, rect: Rect2, parts: Dictionary, cache_key: String = "", bake_key: String = "", want_shade: bool = true) -> Dictionary:
 	var fit: Dictionary = facades[path]
-	var foot := PackedVector2Array()
-	for f in fit.faces:
-		if int(f.label) != 1: continue
-		for q in f.pts:
-			if absf(float(q[1])) < 1e-3: foot.append(rect.position + Vector2(float(q[0]), float(q[2])))
-	var hull := Geometry2D.convex_hull(foot) if foot.size() >= 3 else PackedVector2Array()
+	var hull := hull_of(fit, rect)
 	if not cache_key.is_empty() and surface_cache.has(cache_key):
 		var cached: Array = surface_cache[cache_key]
 		return {"node": node_from(cached[0]), "shade": cached[1], "hull": hull}
@@ -168,6 +163,17 @@ func house(path: String, rect: Rect2, parts: Dictionary, cache_key: String = "",
 		k += 1
 	if not cache_key.is_empty(): surface_cache[cache_key] = [surfaces, shade]
 	return {"node": node_from(surfaces), "shade": shade, "hull": hull}
+
+# The wall footprint of the house fitted as `fit` at world `rect`, in world pixels: the convex hull of
+# its wall faces' feet (empty if it has fewer than three). Cheap, so a caller can have it before the
+# house is built (the trees' draw order, fp_world.gd depth_shift).
+func hull_of(fit: Dictionary, rect: Rect2) -> PackedVector2Array:
+	var foot := PackedVector2Array()
+	for f in fit.faces:
+		if int(f.label) != 1: continue
+		for q in f.pts:
+			if absf(float(q[1])) < 1e-3: foot.append(rect.position + Vector2(float(q[0]), float(q[2])))
+	return Geometry2D.convex_hull(foot) if foot.size() >= 3 else PackedVector2Array()
 
 # The filled images a house's surfaces take, in order: its body's (front and back, or the three
 # of a parts building), then one per roof piece and one per ground piece; and the composed canvas.

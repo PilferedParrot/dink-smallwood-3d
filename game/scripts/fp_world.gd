@@ -34,6 +34,7 @@ var fitted_built: Dictionary = {} # world position key -> the node holding it (n
 var plan_key := "" # scene, screen and story layer the plan below was gathered for
 var plan_claimed: Dictionary = {} # "screen:index" -> true: sprites a fitted house draws (itself, its parts)
 var plan_parts: Dictionary = {} # fitted_key -> the parts it draws (sprite_buildings.gd gather)
+var plan_hulls: Array = [] # [wall footprint (world px), the house's hotspot (world px), its que, its screen, its bounding box]: see depth_rule
 var sprite_heights: Dictionary = {} # sprite path -> drawn height above its hotspot, px
 # Everything that is not a building is the original sprite itself, drawn as the prototype draws it
 # (prototype/sprite_world_proto.gd _add_sprite; docs/DIRECTION.md, ninth pass): upright sprites
@@ -911,6 +912,7 @@ func house_plan() -> void:
 	plan_key = key
 	plan_claimed = {}
 	plan_parts = {}
+	plan_hulls = []
 	if is_inside(host.current_screen): return
 	var candidates: Array = []
 	var column: int = (host.current_screen-1)%32
@@ -925,7 +927,14 @@ func house_plan() -> void:
 		plan_claimed[c[2]] = true
 		var hk := fitted_key(c[0],int(c[1]))
 		if plan_parts.has(hk): continue
-		plan_parts[hk] = buildings.gather(facades[frame_path(c[0])],buildings.world_rect(c[0],int(c[1])),candidates,plan_claimed)
+		var rect: Rect2 = buildings.world_rect(c[0],int(c[1]))
+		plan_parts[hk] = buildings.gather(facades[frame_path(c[0])],rect,candidates,plan_claimed)
+		var hull: PackedVector2Array = buildings.hull_of(facades[frame_path(c[0])],rect)
+		if hull.size() >= 3:
+			var d: Dictionary = buildings.sprite_frame(c[0])
+			var box := Rect2(hull[0],Vector2.ZERO)
+			for q in hull: box = box.expand(q)
+			plan_hulls.append([hull,rect.position+Vector2(float(d.get("dx",0)),float(d.get("dy",0))),int(c[0].get("que",0)),int(c[1]),box])
 
 # Whether a fitted house draws this sprite of `screen` onto itself (a door, a window, damage, a
 # chimney): then it has no model of its own.
@@ -1243,6 +1252,8 @@ func add_billboard(node: Node3D, e: Dictionary, id: int, key: String, collision:
 	var actor := key in ACTORS
 	node.set_meta("actor",actor)
 	node.set_meta("billboard",true)
+	sp.set_meta("screen",screen)
+	if not (fence or "/struct/" in lower): settle_depth(sp,e)
 	if actor: update_billboard(sp,e)
 	var passable_fence := key == "fence" and int(e.get("hard",0)) != 0
 	if not collision or passable_fence or e.get("warp") != null: return
@@ -1273,6 +1284,7 @@ func add_billboard(node: Node3D, e: Dictionary, id: int, key: String, collision:
 # _face_actors).
 func update_billboard(sp: Sprite3D, e: Dictionary) -> void:
 	if sp.has_meta("static"): return
+	if sp.has_meta("depth_sig"): settle_depth(sp,e)
 	var seq := int(e.get("seq",0))
 	var frame := int(e.get("frame",1))
 	if seq == 0:
@@ -1299,6 +1311,7 @@ func update_billboard(sp: Sprite3D, e: Dictionary) -> void:
 	var d: Dictionary = host._frame(seq,frame)
 	var path := str(d.get("path",""))
 	sp.pixel_size = SCALE*maxf(0.01,float(e.get("size",100))/100.0)
+	sync_twin(sp)
 	if path.is_empty() or path == str(sp.get_meta("path","")): return
 	var texture := clean_texture(path)
 	if texture != null: set_sprite_texture(sp,path,texture,d)
@@ -1307,6 +1320,7 @@ func update_billboard(sp: Sprite3D, e: Dictionary) -> void:
 func set_sprite_texture(sp: Sprite3D, path: String, texture: Texture2D, d: Dictionary) -> void:
 	sp.texture = texture
 	sp.set_meta("path",path)
+	if sp.material_override is ShaderMaterial: (sp.material_override as ShaderMaterial).set_shader_parameter("tex",texture)
 	var dx := float(d.get("dx",texture.get_width()/2.0))
 	var dy := float(d.get("dy",texture.get_height()-10.0))
 	if sp.has_meta("on_surface"):
@@ -1315,6 +1329,7 @@ func set_sprite_texture(sp: Sprite3D, path: String, texture: Texture2D, d: Dicti
 		dy = foot.y
 	sp.centered = true
 	sp.offset = Vector2(texture.get_width()/2.0-dx,dy-texture.get_height()/2.0)
+	sync_twin(sp)
 
 # The prototype's clean(): the original draws shadows as a 50% black checkerboard on the ground;
 # standing upright, that dither floats in the air, so isolated pure-black pixels are removed.
@@ -1376,6 +1391,181 @@ func place_on_surface(node: Node3D, sp: Sprite3D, e: Dictionary, d: Dictionary, 
 	node.position = point(at.x,at.y)+Vector3(0,height*SCALE,0)
 	node.set_meta("surface_position",node.position)
 	sp.set_meta("on_surface",true)
+
+# --- Sprites against buildings (docs/DIRECTION.md, "Trees against buildings in the game") ---------
+# A sprite stands at its hotspot as a flat card, so a canopy wider than the distance from its trunk
+# to a house is cut by the house's walls wherever the card's plane passes inside them. The original
+# draws it whole, on the side of the house its draw order says: after the house (its que, else its y,
+# above the house's) it is over the house, before it, under. A card whose hotspot lies within its
+# half-width of a house's wall footprint therefore takes a depth shift of that half-width in its own
+# shader (the prototype's _flag_nudge and _push_back; sprite_world_proto.gd): drawn over, it is pulled
+# toward the camera, so the walls cannot cut it; drawn under, it is pushed away, so the house hides
+# its canopy. Only the depth moves: the sprite keeps its place and its size, and its trunk and its body
+# stay where the source puts them.
+# The original's draw order is fixed to one camera, which looks north: the y of the hotspots. The game's
+# camera looks every way. Seen from the original's side of the wall nearest the sprite (the side of that
+# wall's plane the original camera is on) the order is the original's, so from the original camera the
+# picture is the prototype's; seen from the other side of that wall the house stands between the camera
+# and the sprite, and the order is reversed: a tree that stands south of a house is under it from the
+# north (pulled toward that camera it stood on the house's back wall). A sprite inside the footprint, or
+# one a que orders (an explicit draw order, comparable on one screen), keeps the original's order from
+# every side.
+# Each fragment's push is capped at 0.9 of its clearance above the ground along the view ray, so a
+# trunk's foot is never pushed under the ground (which moving the sprite did), and a pull at 0.9 of
+# its distance from the camera. A fragment below the ground (the rows an art draws under its hotspot)
+# is not shifted at all: the ground hides it as before, and the shift moves only what the buildings do.
+# A moving sprite is settled again when it moves; actors are left to the walls' hardness (their
+# frames change with the camera, and they are not trees).
+# Compatibility renderer: window depth = NDC z * 0.5 + 0.5. With the reach at 0 the sprite equals the
+# plain one's pixels (tests/fps_trees_test.gd checks it).
+const DEPTH_SHADER := """shader_type spatial;
+render_mode unshaded, cull_disabled, depth_draw_opaque;
+uniform sampler2D tex : source_color, filter_nearest_mipmap;
+uniform float reach = 0.0; // metres: the sprite's half-width; 0 shifts nothing
+uniform float side0 = 1.0; // +1 over the house, -1 under it, as the original camera sees it
+uniform vec2 wall = vec2(0.0); // the nearest point of the house's walls, x z in metres
+uniform vec2 normal = vec2(0.0); // from there to the sprite's trunk, unit; 0: the same side from every camera
+uniform float flip = 1.0; // the tests' wrong-rule control: -1 swaps the sides
+uniform bool bill = true;
+void vertex() {
+	if (bill) {
+		MODELVIEW_MATRIX = VIEW_MATRIX * mat4(vec4(normalize(cross(vec3(0.0, 1.0, 0.0), INV_VIEW_MATRIX[2].xyz)), 0.0), vec4(0.0, 1.0, 0.0, 0.0), vec4(normalize(cross(INV_VIEW_MATRIX[0].xyz, vec3(0.0, 1.0, 0.0))), 0.0), MODEL_MATRIX[3]);
+		MODELVIEW_NORMAL_MATRIX = mat3(MODELVIEW_MATRIX);
+	}
+}
+void fragment() {
+	vec4 c = texture(tex, UV);
+	if (c.a < 0.5) { discard; }
+	ALBEDO = c.rgb;
+	bool ortho = PROJECTION_MATRIX[3][3] > 0.5;
+	// Which side of the wall's plane the camera is on, against the original camera's (it looks from +z).
+	vec2 toward = ortho ? INV_VIEW_MATRIX[2].xz : INV_VIEW_MATRIX[3].xz - wall;
+	float side = side0;
+	if (dot(normal, normal) > 0.5 && dot(toward, normal) * normal.y < 0.0) { side = -side0; }
+	float off = -side * flip * reach; // > 0 pushes away from the camera, < 0 pulls toward it
+	vec3 wp = (INV_VIEW_MATRIX * vec4(VERTEX, 1.0)).xyz;
+	vec3 dw = ortho ? -INV_VIEW_MATRIX[2].xyz : normalize(wp - INV_VIEW_MATRIX[3].xyz);
+	vec3 dv = ortho ? vec3(0.0, 0.0, -1.0) : normalize(VERTEX);
+	float shift = off;
+	if (off > 0.0) {
+		float room = -dw.y > 1e-4 ? 0.9 * max(wp.y, 0.0) / -dw.y : off;
+		shift = min(off, room);
+	} else if (!ortho) {
+		shift = max(off, -0.9 * length(VERTEX));
+	}
+	if (wp.y <= 0.0) { shift = 0.0; } // what the ground hides stays hidden: only the buildings' order moves
+	vec4 clip = PROJECTION_MATRIX * vec4(VERTEX + dv * shift, 1.0);
+	DEPTH = clip.z / clip.w * 0.5 + 0.5;
+}
+"""
+var depth_shader: Shader
+
+# The depth rule's reading of a sprite of entity `e` on `screen` whose half-width is `half` px: {} if no
+# house's wall footprint lies within `half` of its hotspot, else {"side": +1 over the house, -1 under it,
+# as the original draws it; "wall": the nearest point of the footprint, world px; "normal": the unit vector
+# from there to the sprite, or (0, 0) if the same side holds from every camera (a que orders it, or it
+# stands inside the footprint)}. The first house within reach decides, as in the prototype.
+func depth_rule(e: Dictionary, screen: int, half: float) -> Dictionary:
+	if interior or half <= 0.0: return {}
+	house_plan()
+	var at := screen_origin(screen)+Vector2(float(e.get("x",0)),float(e.get("y",0)))
+	for h in plan_hulls:
+		if not (h[4] as Rect2).grow(half).has_point(at): continue
+		var hull: PackedVector2Array = h[0]
+		var dist := 0.0
+		var wall := at
+		if not Geometry2D.is_point_in_polygon(at,hull):
+			dist = INF
+			for i in hull.size():
+				var q := Geometry2D.get_closest_point_to_segment(at,hull[i],hull[(i+1) % hull.size()])
+				if at.distance_to(q) < dist:
+					dist = at.distance_to(q)
+					wall = q
+		if dist >= half: continue
+		# The original's draw order: que, else y. A que is only comparable on its own screen.
+		var home: Vector2 = h[1]
+		var order := at.y
+		var house_order := home.y
+		var fixed := dist < 0.01
+		if int(h[3]) == screen and (int(e.get("que",0)) != 0 or int(h[2]) != 0):
+			order = float(e.get("que",0)) if int(e.get("que",0)) != 0 else float(e.get("y",0))
+			house_order = float(h[2]) if int(h[2]) != 0 else home.y-screen_origin(screen).y
+			fixed = true
+		return {"side": 1.0 if order > house_order else -1.0,"wall": wall,"normal": Vector2.ZERO if fixed else (at-wall)/dist}
+	return {}
+
+# A point in world px as the scene places it: metres from the centre of the current screen.
+func world_to_scene(world_px: Vector2) -> Vector2:
+	var local := world_px-screen_origin(host.current_screen)
+	return Vector2((local.x-320.0)*SCALE,(local.y-200.0)*SCALE)
+
+# Settle sp's depth rule for where its entity stands now (a sprite that moves is settled again).
+func settle_depth(sp: Sprite3D, e: Dictionary) -> void:
+	if interior or sp.texture == null or sp.has_meta("on_surface") or not is_instance_valid(sp.get_parent()): return
+	if str(sp.get_parent().get_meta("model_key","")) in ACTORS: return
+	var factor := maxf(0.01,float(e.get("size",100))/100.0)
+	var half := float(sp.texture.get_width())/2.0*factor
+	var sig := Vector3(float(e.get("x",0)),float(e.get("y",0)),half)
+	if sp.get_meta("depth_sig",Vector3.INF) == sig: return
+	sp.set_meta("depth_sig",sig)
+	var screen := int(sp.get_meta("screen",host.current_screen))
+	var rule := depth_rule(e,screen,half)
+	if rule.is_empty():
+		sp.material_override = null
+		if sp.has_meta("depth_px"): sp.remove_meta("depth_px")
+		shadow_twin(sp,false)
+		return
+	# What the original camera shows, in px: < 0 pulled toward the camera (over), > 0 pushed away (under).
+	sp.set_meta("depth_px",-float(rule.side)*half)
+	if not (sp.material_override is ShaderMaterial):
+		if depth_shader == null:
+			depth_shader = Shader.new()
+			depth_shader.code = DEPTH_SHADER
+		var material := ShaderMaterial.new()
+		material.shader = depth_shader
+		material.set_shader_parameter("tex",sp.texture)
+		material.set_shader_parameter("bill",sp.billboard == BaseMaterial3D.BILLBOARD_FIXED_Y)
+		sp.material_override = material
+		shadow_twin(sp,true)
+	var m := sp.material_override as ShaderMaterial
+	m.set_shader_parameter("reach",half*SCALE)
+	m.set_shader_parameter("side0",float(rule.side))
+	m.set_shader_parameter("wall",world_to_scene(rule.wall))
+	m.set_shader_parameter("normal",rule.normal)
+
+# A card that casts a shadow (the fixed ones) must not cast it from the shifted depth: the shadow pass
+# runs the same shader, and a shifted depth would move the shadow on the ground. So the shifted sprite
+# casts none, and a twin of it, drawn plain and in the shadow pass only, casts the sprite's own.
+func shadow_twin(sp: Sprite3D, on: bool) -> void:
+	var twin := sp.get_node_or_null("ShadowTwin") as Sprite3D
+	if not on:
+		if twin != null:
+			sp.remove_child(twin)
+			twin.queue_free()
+			sp.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_ON
+		return
+	if sp.cast_shadow != GeometryInstance3D.SHADOW_CASTING_SETTING_ON and twin == null: return
+	if twin == null:
+		twin = Sprite3D.new()
+		twin.name = "ShadowTwin"
+		twin.shaded = false
+		twin.alpha_cut = SpriteBase3D.ALPHA_CUT_DISCARD
+		twin.texture_filter = sp.texture_filter
+		twin.billboard = sp.billboard
+		twin.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_SHADOWS_ONLY
+		sp.add_child(twin)
+	sp.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	sync_twin(sp)
+
+func sync_twin(sp: Sprite3D) -> void:
+	var twin := sp.get_node_or_null("ShadowTwin") as Sprite3D
+	if twin == null: return
+	twin.texture = sp.texture
+	twin.pixel_size = sp.pixel_size
+	twin.centered = sp.centered
+	twin.offset = sp.offset
+	twin.region_enabled = sp.region_enabled
+	twin.region_rect = sp.region_rect
 
 var feet: Dictionary = {} # sprite path -> its foot: the centre of its lowest drawn row, bottom edge (px)
 func sprite_foot(path: String) -> Vector2:

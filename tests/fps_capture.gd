@@ -19,6 +19,8 @@ func _run() -> void:
 	var back := 0.0 # then mark where he stopped and step the camera back this many px
 	var scripts := true # --scripts=0: the screen's editor layer without its scripts, as a walk loads it
 	var vision := 0 # --vision=N: the story layer to load (scenario setup)
+	var batch := "" # --batch=file.json --out-dir=DIR: many views of this screen in one run (see _shoot)
+	var out_dir := ""
 	for arg in OS.get_cmdline_user_args():
 		if arg.begins_with("--screen="): screen = int(arg.trim_prefix("--screen="))
 		if arg.begins_with("--x="): x = float(arg.trim_prefix("--x="))
@@ -30,11 +32,18 @@ func _run() -> void:
 		if arg.begins_with("--back="): back = float(arg.trim_prefix("--back="))
 		if arg.begins_with("--scripts="): scripts = arg.trim_prefix("--scripts=") != "0"
 		if arg.begins_with("--vision="): vision = int(arg.trim_prefix("--vision="))
+		if arg.begins_with("--batch="): batch = arg.trim_prefix("--batch=")
+		if arg.begins_with("--out-dir="): out_dir = arg.trim_prefix("--out-dir=")
 	game.vm.cancel_all()
 	# A walk measures collision: load the screen's editor layer without its scripts
 	# (scenario setup that skips progression, as tests/fps_wall_test.gd does).
 	game.vm.globals["vision"] = vision
 	game.load_map(screen, walk == 0 and scripts)
+	if batch != "":
+		# Frozen from the load: the same scene before and after a change, whatever the timing of the run
+		# (live pigs and villagers move a few px in the time a run takes).
+		game.set_physics_process(false)
+		game.set_process(false)
 	await create_timer(0.6).timeout
 	game.entities[1].x = x
 	game.entities[1].y = y
@@ -42,6 +51,15 @@ func _run() -> void:
 	game.fps_pitch = pitch
 	game._sync_fps_camera()
 	game.vm.cancel_all()
+	if batch != "":
+		game.playing = false
+		game.ui.close_menu()
+		game.ui.visible = false
+		for view in JSON.parse_string(FileAccess.get_file_as_string(batch)): await _shoot(game, view, out_dir)
+		game.queue_free()
+		await process_frame
+		quit()
+		return
 	if walk > 0:
 		game.playing = true
 		game.changing = false
@@ -90,3 +108,40 @@ func _run() -> void:
 	await RenderingServer.frame_post_draw
 	await RenderingServer.frame_post_draw
 	quit()
+
+# One view of the loaded screen, without the HUD or the viewmodel, saved as <out_dir>/<name>.png. A view is
+# {"name", "x", "y", "yaw", "pitch"} (the player's eye in the screen's source pixels, as the other options),
+# or {"name", "original": true}: the original's camera (orthographic, 45 degrees down, as the prototype's
+# _original_view), the screen's 600 x 400 picture with the fog off.
+func _shoot(game, view: Dictionary, out_dir: String) -> void:
+	var cam: Camera3D = game.camera
+	var original := bool(view.get("original", false))
+	var environment: Environment = game.fp_world.environment
+	if original:
+		cam.projection = Camera3D.PROJECTION_ORTHOGONAL
+		cam.keep_aspect = Camera3D.KEEP_WIDTH
+		cam.size = 600.0 * GAME.SCALE
+		cam.near = 0.05
+		cam.far = 200.0
+		cam.position = Vector3(0, 1, 1).normalized() * 40.0
+		cam.look_at(Vector3.ZERO, Vector3.UP)
+		if environment: environment.fog_enabled = false
+	else:
+		if environment: environment.fog_enabled = true
+		cam.keep_aspect = Camera3D.KEEP_HEIGHT # as the game keeps it (an original-camera view before this one set KEEP_WIDTH)
+		game.entities[1].x = float(view.x)
+		game.entities[1].y = float(view.y)
+		game.fps_yaw = float(view.yaw)
+		game.fps_pitch = float(view.get("pitch", -0.05))
+		game._sync_fps_camera()
+	for model in [game.fps_viewmodel, game.fps_hand]:
+		if is_instance_valid(model): model.visible = false
+	await RenderingServer.frame_post_draw
+	await RenderingServer.frame_post_draw
+	var img := get_root().get_texture().get_image()
+	if original:
+		var rows := int(round(img.get_width() * (400.0 / sqrt(2.0)) / 600.0))
+		img = img.get_region(Rect2i(0, (img.get_height() - rows) / 2, img.get_width(), rows))
+		img.resize(600, 400, Image.INTERPOLATE_LANCZOS)
+	img.save_png(out_dir.path_join(str(view.name) + ".png"))
+	print("SHOT ", view.name)

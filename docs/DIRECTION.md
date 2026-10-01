@@ -1030,7 +1030,8 @@ blades and the viewmodel. The Blender stand-ins read as a different game. These 
    (408), and the castle walls seen obliquely. The prototype does the same. They need the houses'
    treatment, fitted to stand in 3D.
 5. The prototype moves or depth-pushes billboards whose canopy overlaps a building (`_flag_nudge`,
-   `_push_back`). That is not ported, though no case shows on the sheet.
+   `_push_back`). That is not ported, though no case shows on the sheet. (Ported October 1: see the
+   last section.)
 6. Billboards cast no shadow and have no blob shadow under them (the prototype's open item 3). Fixed
    cards do cast one.
 7. At 74 px, the game draws a door on walls where the prototype draws none: 439's back, 409's front,
@@ -1074,3 +1075,109 @@ unfitted house are kept. Evidence: `docs/images/story-fire-roof-sept30.jpg`, 887
 now, at vision 1, from three cameras. The flames now burn along the thatch, as the original draws them,
 and none stands on the ground. `pytest`: 81 passed, 1 skipped. fps_fire_world_test,
 fps_grief_presentation_test, fps_test and fps_world_test pass.
+
+## Trees against buildings, in the game — October 1 (Sonnet 5.5 subagent)
+
+The ninth pass's defect 5: the prototype's `_flag_nudge` and `_push_back`, ported to the game
+(`fp_world.gd` `depth_rule`, `settle_depth`, `DEPTH_SHADER`). Branch `claude/trees-under-buildings` on dfe0788;
+local, not pushed. Evidence: `docs/images/trees-buildings-oct1.jpg` (built by `tools/trees_sheet.py`).
+
+**What was predicted before any change** (and held or not): pytest 81 passed, 1 skipped plus the new tests (held:
+83 passed, 1 skipped); the push-at-0 picture equals the plain sprites' (held, below); screens with no flagged
+sprite are unchanged to the pixel at every camera (held: 407, 408, 470, 505, 586 from the original camera, 0 px);
+trunks and bodies stay where the source puts them (held by construction: only the shader's depth moves); the
+frame time does not change (not distinguishable, below). Not predicted, found by looking: the rule needed a
+camera side, a below-ground rule and a shadow twin (below).
+
+**The rule.** A sprite (not an actor, not a fence or structure) whose hotspot lies within its half-width of a
+fitted house's wall footprint (the convex hull of the wall faces' feet, `sprite_buildings.gd hull_of`) takes a
+depth shift of that half-width in its own shader. Over the house (the original draws it after: its que, else its
+y, above the house's hotspot): pulled toward the camera, so the walls cannot cut it. Under: pushed away, so the
+house hides its canopy; each fragment's push capped at 0.9 of its clearance above the ground along the view ray,
+a pull at 0.9 of its distance from the camera. The map has 34 such sprites on 15 screens (28 over, 6 under):
+trees on 251 (tree-08), 496/497 and 498/530 (tree-04, under) and 528 (tree-04, over), and barrels, boxes, tools,
+grass and a bush against houses on 274, 409, 439, 440, 501, 532, 537, 617, 734. Kit buildings (the inn) have
+no footprint in the list, as in the prototype.
+
+**Two changes from the prototype's mechanism, and why.**
+1. The nudge is the same depth shift with the sign reversed, not a move and a rescale. Moved along the view
+   ray and scaled to keep its size, a flat card gives the same picture and a different depth; here the depth is
+   written directly. Nothing moves, so there is no per-frame, camera-dependent update (`update_visual` rewrites
+   node positions every frame), the trunk and the ray body stay put, and a player standing next to the tree
+   (within its half-width of the camera) cannot flip its scale.
+2. The side depends on the camera. The ninth pass's note held that the prototype's rule is the original's draw
+   order. That order is the y of a camera that looks north; the game's camera looks every way. The first port
+   (the prototype's sign, whatever the camera) pulled the two conifers that stand south of the 251 cabin onto its
+   back wall when seen from the north (the sheet's third row is the same camera now). Now the side is the
+   original's from the side of the nearest wall's plane the original camera is on, and reversed from the other
+   side, where the house stands between the camera and the tree. From the original camera this is the
+   prototype's rule exactly (the plane test is multiplied by the original camera's own side). Tried and dropped:
+   comparing the trunk's depth with the house's hotspot along the view. The hotspot lies on the front wall, so
+   a tree beside that wall changes side with the lateral offset (251 from the north-west). A sprite inside the
+   footprint, or ordered by a que, keeps the original's order from every camera. The planes' flip is a hard
+   switch, as the draw order is; walking round a house a tree changes side where the camera crosses the wall's
+   plane. I did not smooth it: a blend over the half-width would also soften the original camera's own result.
+
+**Two things the sprite needs so that only the buildings' order moves.**
+- A fragment below the ground (the rows an art draws under its hotspot) is not shifted: pulled, those rows came
+  into view over the grass (190 px at the foot of one tree on 497).
+- A card that casts a shadow (the fixed, wide ones) casts it from a plain shadow-only twin child, because the
+  shadow pass runs the same shader and a shifted depth moved the shadow on the ground (8,000 px at 251).
+  `tests/fps_test.gd` and `fps_world_test.gd` accept the `ShadowTwin` child.
+
+**Verification.**
+- `pytest`: 83 passed, 1 skipped (the baseline in a scratch worktree at dfe0788: 81 passed, 1 skipped; the two new
+  tests are `tests/test_fps_trees.py`). Run with the input devices hidden, under xvfb, no Wayland.
+- Classification: the game's flags (a loaded scene, headless) equal an independent reading of the map data
+  written in the test from the prototype's rule: the same 34 sprites, the same signs and half-widths, and nothing
+  flagged on the quiet screens 407, 408, 470, 505, 586.
+- Control (`tests/fps_trees_test.gd`): with every reach at 0 the shader's picture equals the plain sprites'. Over
+  the eight cameras: exactly 0 on four of them; at most 2 px over 3/255 on the others, mean |d| at most 0.0004
+  (an edge texel, the shader's own billboard matrix against Godot's). The prototype's figure was 0.000.
+- The control cannot only pass. The draw-order check (R equals the houses-hidden picture on the sprite's pixels
+  when over; the house hides the canopy where it shows, the rest whole, when under) is run on wrong rules too,
+  and they go red: sides swapped, 25,402 / 17,984 px (251 over), 4,767 (528), 3,346 / 2,462 (497 under); the
+  original's side held from every camera, 3,853 / 7,095 (251 from behind), 4,407 (497 from behind); the push without
+  its ground cap, 644 / 245 px (497); and, by mutating `fp_world.gd` and running the tests, the side flipped
+  (classification test red), no cap, no shadow twin, camera-blind and no below-ground rule (each red; the
+  no-below-ground-rule mutation stayed green until I added the "sprite alone" check, which found the first
+  version of the test blind to it). The noise of the instrument is 0 px between two renders of one scene; the viewmodel sways, so the test
+  hides it.
+- From the original camera (`tests/fps_capture.gd --batch`, orthographic, 45 degrees, fog off), mean |RGB|
+  difference from the source reconstruction (`tools/facade_contact_sheet.py reference`), before and now:
+  251 22.49 to 22.16 (-0.335, 3,777 px changed), 440 -0.046, 734 -0.022, 530 -0.001, 528 and 497 0.000 (0 px). The
+  five screens where nothing is flagged (407, 408, 470, 505, 586) are 0 px changed. The number is blind to eye level.
+- Frame time (approximate: xvfb, llvmpipe, the machine shared; relative only): `tests/fps_perf.gd`, six
+  interleaved pairs on 251 (153, 520) and on 439 (505, 340), 300 frames each. Median of the runs' p50: 251 15.27
+  ms before, 15.23 now; 439 15.28 before, 15.65 now. The probe's frame pacing sits at about 15 ms and the p95 spikes
+  (to 28 ms) hit both builds at random, so a cost under a millisecond could not show: read it as "no cost the probe
+  can see". `load_map` on 439, eight interleaved runs: median 98.4 ms before, 98.3 ms now (the first port, without
+  the bounding-box reject, read +7 ms).
+- Every Godot run was `--audio-driver Dummy`, under `xvfb-run` with `WAYLAND_DISPLAY` unset: nothing on the
+  desktop and nothing to the speakers.
+
+**What I saw** (the sheet: each row eye level before, now, the original camera now, the source). 251 from the
+south-west and from the south: before, the tree-08 card (three conifers) is cut into slivers by the cabin's
+walls; now the conifers stand whole in front of the wall, as in the source picture, and from the original camera
+the cabin has its tree. 251 from behind the cabin: unchanged (0 px): the cabin hides them. 528 and 497: no
+visible change (0 and 2 px): there the plain card did not pass through the walls from these cameras. 530 (a tree
+under home-01, from the north-east): the canopy now goes behind the house's corner. 440 and 734: the barrels,
+the tool and the stack of boxes stand whole against the walls instead of sunk into them.
+
+**Defects I see, in order:**
+1. Actors are left to the walls' hardness (their frames change with the camera and they move). A villager or
+   pig standing against a wall can still be cut by it.
+2. The side flips as the camera crosses a wall's plane: a tree can change sides in one frame where the plane
+   passes through the view of both it and the house. Not seen as a defect on the sheet, not walked.
+3. Wide cards are fixed cards: seen edge-on they are slivers, with or without the rule (the 251 trees from the
+   east). Unchanged.
+4. A shifted sprite also sorts against other sprites within its half-width of it. No visible case found.
+5. The kit buildings (the inn) have no footprint in the list, as in the prototype.
+6. The probe could not see a frame cost; a machine free of other work should measure it.
+
+**Re-run:** `../../../.venv/bin/python -m pytest -q tests/test_fps_trees.py` (from the worktree root, inside
+`env -u WAYLAND_DISPLAY bwrap --dev-bind / / --tmpfs /dev/input --unshare-net xvfb-run -a -s "-screen 0 1920x1080x24"`);
+the control alone: `xvfb-run -a $GODOT --audio-driver Dummy --path game --script ../tests/fps_trees_test.gd -- --render`
+(prints each camera's push-at-0 line and the wrong controls' counts); the sheet:
+`/usr/bin/python3 tools/trees_sheet.py <checkout at dfe0788>`.
+

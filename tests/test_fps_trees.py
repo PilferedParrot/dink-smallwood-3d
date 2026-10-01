@@ -1,0 +1,210 @@
+"""Sprites against buildings in the game (docs/DIRECTION.md, "Trees against buildings in the game").
+
+A sprite whose hotspot lies within its half-width of a fitted house's wall footprint takes a depth shift in
+its own shader (fp_world.gd depth_shift): pulled toward the camera when the original draws it over the
+house, pushed away when it draws it under.
+
+Two tests, both through tests/fps_trees_test.gd:
+  - classification: the game's flags, read from a loaded scene, equal an independent reading of the map
+    data written here from the prototype's rule (sprite_world_proto.gd _flag_nudge): the sprites, the sign,
+    the magnitude. Headless.
+  - pixels: in rendered scenes the draw order holds (no tree cut by a wall, a tree under a house hidden by
+    it), the push-at-0 control equals the plain sprites, and the plausible wrong rules go red. Rendered under
+    xvfb with the Dummy audio driver and no Wayland: it never opens a window on the desktop.
+"""
+import json
+import math
+import os
+import shutil
+import struct
+import subprocess
+from pathlib import Path
+
+import pytest
+
+ROOT = Path(__file__).resolve().parents[1]
+GODOT = os.environ.get("GODOT") or shutil.which("godot") or shutil.which("godot4") or str(
+    Path.home() / ".local/bin/Godot_v4.6.1-stable_linux.x86_64"
+)
+pytestmark = pytest.mark.skipif(not Path(GODOT).is_file(), reason="Godot unavailable; set GODOT")
+
+ACTORS = {"man", "woman", "wizard", "knight", "pig", "duck", "pillbug", "bonca", "slime", "dragon"}
+# Screens with no flagged sprite, loaded too: the rule must flag nothing there (a rail).
+QUIET = [407, 408, 470, 505, 586]
+
+
+def _png_width(path: Path) -> int:
+    with open(path, "rb") as f:
+        head = f.read(24)
+    return struct.unpack(">I", head[16:20])[0]
+
+
+def _origin(n):
+    return ((n - 1) % 32 * 600, (n - 1) // 32 * 400)
+
+
+def _hull(points):
+    pts = sorted(set(points))
+    if len(pts) < 3:
+        return []
+
+    def cross(o, a, b):
+        return (a[0] - o[0]) * (b[1] - o[1]) - (a[1] - o[1]) * (b[0] - o[0])
+
+    lower, upper = [], []
+    for p in pts:
+        while len(lower) >= 2 and cross(lower[-2], lower[-1], p) <= 0:
+            lower.pop()
+        lower.append(p)
+    for p in reversed(pts):
+        while len(upper) >= 2 and cross(upper[-2], upper[-1], p) <= 0:
+            upper.pop()
+        upper.append(p)
+    return lower[:-1] + upper[:-1]
+
+
+def _inside(p, h):
+    inside = False
+    for i in range(len(h)):
+        a, b = h[i], h[(i + 1) % len(h)]
+        if (a[1] > p[1]) != (b[1] > p[1]) and p[0] < (b[0] - a[0]) * (p[1] - a[1]) / (b[1] - a[1]) + a[0]:
+            inside = not inside
+    return inside
+
+
+def _segment_distance(p, a, b):
+    dx, dy = b[0] - a[0], b[1] - a[1]
+    length = dx * dx + dy * dy
+    t = 0.0 if length == 0 else max(0.0, min(1.0, ((p[0] - a[0]) * dx + (p[1] - a[1]) * dy) / length))
+    return math.hypot(p[0] - (a[0] + t * dx), p[1] - (a[1] + t * dy))
+
+
+def _distance(p, h):
+    if _inside(p, h):
+        return 0.0
+    return min(_segment_distance(p, h[i], h[(i + 1) % len(h)]) for i in range(len(h)))
+
+
+@pytest.fixture(scope="module")
+def expected():
+    """{(screen, x, y): shift in px (> 0 pushed away, < 0 pulled toward)} for every upright, non-struct,
+    non-fence sprite of the map's default layer within its half-width of a fitted house, as the
+    prototype's rule says. Actors are left out later, by the game's own model keys."""
+    seqs = json.loads((ROOT / "game/data/sequences.json").read_text())["sequences"]
+    fits = json.loads((ROOT / "game/prototype/facades.json").read_text())
+    screens = json.loads((ROOT / "game/data/world.json").read_text())["screens"]
+
+    def frame(s):
+        frames = seqs.get(str(s["seq"]), {}).get("frames", [])
+        return frames[max(0, min(len(frames) - 1, int(s["frame"]) - 1))] if frames else None
+
+    def fitted(path):
+        return isinstance(fits.get(path), dict) and "faces" in fits[path]
+
+    houses, seen = [], set()
+    for number, screen in screens.items():
+        n = int(number)
+        if screen.get("indoor"):
+            continue
+        ox, oy = _origin(n)
+        for s in screen["sprites"]:
+            d = frame(s)
+            if s.get("vision", 0) != 0 or s["type"] == 2 or not d or not fitted(d["path"]):
+                continue
+            rx, ry = ox + s["x"] - 20 - d["dx"], oy + s["y"] - d["dy"]
+            key = (d["path"], int(rx), int(ry))
+            if key in seen:
+                continue
+            seen.add(key)
+            foot = [(rx + q[0], ry + q[2]) for f in fits[d["path"]]["faces"] if f.get("label") == 1
+                    for q in f["pts"] if abs(q[1]) < 1e-3]
+            hull = _hull(foot)
+            if hull:
+                houses.append({"hull": hull, "y": ry + d["dy"], "que": s.get("que", 0), "screen": n})
+    out = {}
+    for number, screen in screens.items():
+        n = int(number)
+        if screen.get("indoor"):
+            continue
+        ox, oy = _origin(n)
+        for s in screen["sprites"]:
+            d = frame(s)
+            if s.get("vision", 0) != 0 or s["type"] in (0, 2) or not d:
+                continue
+            path = d["path"]
+            if "/struct/" in path.lower() or "/fence/" in path.lower():
+                continue
+            file = ROOT / "game" / path
+            assert file.is_file(), path
+            half = _png_width(file) / 2 * max(0.01, s["size"] / 100)
+            at = (ox + s["x"] - 20, oy + s["y"])
+            for h in houses:
+                if _distance(at, h["hull"]) >= half:
+                    continue
+                order, house_order = at[1], h["y"]
+                if h["screen"] == n and (s["que"] != 0 or h["que"] != 0):
+                    order = s["que"] if s["que"] != 0 else s["y"]
+                    house_order = h["que"] if h["que"] != 0 else h["y"] - oy
+                out[(n, s["x"], s["y"])] = -half if order > house_order else half
+                break
+    return out
+
+
+def _run_godot(args, rendered, tmp_path, timeout):
+    env = {k: v for k, v in os.environ.items() if k != "WAYLAND_DISPLAY"}
+    env.update({"XDG_CONFIG_HOME": str(tmp_path / "xdg-config"), "XDG_DATA_HOME": str(tmp_path / "xdg-data"),
+                "XDG_CACHE_HOME": str(tmp_path / "xdg-cache")})
+    command = [GODOT, "--audio-driver", "Dummy", "--path", "game", "--script", str(ROOT / "tests/fps_trees_test.gd"), "--"] + args
+    if rendered:
+        if not shutil.which("xvfb-run"):
+            pytest.skip("xvfb-run unavailable")
+        command = ["xvfb-run", "-a", "-s", "-screen 0 1280x720x24"] + command[:1] + ["--resolution", "960x540"] + command[1:]
+    else:
+        command.insert(1, "--headless")
+    return subprocess.run(command, cwd=ROOT, env=env, capture_output=True, text=True, timeout=timeout, check=False)
+
+
+def test_the_games_flags_equal_an_independent_reading_of_the_map(expected, tmp_path):
+    screens = sorted({n for n, _, _ in expected} | set(QUIET))
+    result = _run_godot(["--dump=" + ",".join(str(n) for n in screens)], False, tmp_path, 600)
+    assert "SCRIPT ERROR" not in result.stderr, result.stderr[-2000:]
+    nodes = []
+    for line in result.stdout.splitlines():
+        if line.startswith("NODE "):
+            _, screen, x, y, key, shift = line.split()
+            nodes.append((int(screen), int(x), int(y), key, float(shift)))
+    assert nodes, result.stdout[-2000:]
+    flagged = {(s, x, y): shift for s, x, y, _, shift in nodes if abs(shift) > 0.01}
+    by_place = {}
+    for s, x, y, key, _ in nodes:
+        by_place.setdefault((s, x, y), set()).add(key)
+    problems = []
+    for place, shift in sorted(expected.items()):
+        keys = by_place.get(place)
+        if keys is None:
+            continue  # not a billboard in the game: painted into the ground, or a building kept in 3D
+        if keys <= ACTORS:
+            assert place not in flagged, place  # an actor is left to the walls' hardness
+            continue
+        if place not in flagged:
+            problems.append("not flagged: %s expected %.1f" % (place, shift))
+        elif abs(flagged[place] - shift) > 0.01:
+            problems.append("%s flagged %.2f, expected %.2f" % (place, flagged[place], shift))
+    for place, shift in sorted(flagged.items()):
+        if place not in expected:
+            problems.append("flagged but not expected: %s %.2f" % (place, shift))
+    assert not problems, "\n".join(problems)
+    # The instrument could have seen something: the cases the sheet and the pixel test use.
+    for place, sign in [((251, 153, 374), -1), ((497, 8, 235), 1), ((528, 752, 40), -1)]:
+        assert place in flagged and flagged[place] * sign > 0, (place, flagged.get(place))
+    # Both signs, and screens where nothing is flagged, are in the sample.
+    assert any(v > 0 for v in flagged.values()) and any(v < 0 for v in flagged.values())
+    assert not any(s in QUIET for s, _, _ in flagged)
+
+
+def test_the_draw_order_holds_in_rendered_scenes_and_the_controls_go_red(tmp_path):
+    result = _run_godot(["--render"], True, tmp_path, 900)
+    out = result.stdout + result.stderr
+    assert result.returncode == 0 and "FPS TREES PASS" in result.stdout, out[-6000:]
+    assert "SCRIPT ERROR" not in result.stderr, result.stderr[-2000:]
+    assert not list(tmp_path.glob("*.png"))

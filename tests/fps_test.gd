@@ -164,6 +164,9 @@ func _stray_sprite3d(node: Node) -> bool:
 	for child in node.get_children():
 		if child is Sprite3D:
 			var parent := child.get_parent()
+			# A card the depth rule shifts (fp_world.gd depth_shift) casts its shadow from a shadow-only twin
+			# of itself, a child of its "Model".
+			if child.name == "ShadowTwin" and parent is Sprite3D and parent.name == "Model" and (child as Sprite3D).cast_shadow == GeometryInstance3D.SHADOW_CASTING_SETTING_SHADOWS_ONLY: continue
 			if (child as Sprite3D).no_depth_test or child.name != "Model" or not parent.get_meta("billboard", false): return true
 		if _stray_sprite3d(child): return true
 	return false
