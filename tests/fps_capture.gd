@@ -136,6 +136,10 @@ func _shoot(game, view: Dictionary, out_dir: String) -> void:
 		game._sync_fps_camera()
 	for model in [game.fps_viewmodel, game.fps_hand]:
 		if is_instance_valid(model): model.visible = false
+	# The game redraws its sprites for the camera every frame (an actor's frame is the one drawn for its
+	# facing as seen from the camera); the batch is frozen, so redraw them once for this view.
+	for id in game.entities.keys(): game._update_visual(id)
+	if game.fp_world != null and game.fp_world.has_method("face_neighbours"): game.fp_world.face_neighbours()
 	await RenderingServer.frame_post_draw
 	await RenderingServer.frame_post_draw
 	var img := get_root().get_texture().get_image()
