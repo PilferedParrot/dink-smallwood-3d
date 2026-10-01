@@ -41,10 +41,11 @@ var sprite_heights: Dictionary = {} # sprite path -> drawn height above its hots
 # stand at their hotspots as Y-axis billboards, directional actors pick their frame from the camera
 # angle, structures (fences, walls, signs, huts: is_structure) keep the orientation they were drawn
 # in, and background (type 0) sprites are painted into the ground. Castle and stone walls ("tower")
-# are fixed cards of their sprites, as the prototype draws them. These keys keep their 3D build:
-# fitted and unfitted houses, bridges, doors, stairs, interior furniture and interior walls, and
-# the arrow.
-const BUILT := ["cottage","inn","bridge","door","stairs","shelf","table","chair","bed",
+# are fixed cards of their sprites, as the prototype draws them. Bridges are two kinds of art, not a
+# model: the decks (bridge_part) lie on the water and are painted into the ground whatever their type,
+# the railings stand as fixed cards. These keys keep their 3D build: fitted and unfitted houses,
+# doors, stairs, interior furniture and interior walls, and the arrow.
+const BUILT := ["cottage","inn","door","stairs","shelf","table","chair","bed",
 	"fireplace","cave_entrance","ruin","arrow",""]
 const ACTORS := ["man","woman","wizard","knight","pig","duck","pillbug","bonca","slime","dragon"]
 # What the original draws without a shadow casts none here (shadow_twin). The art says which: a drawn shadow is a
@@ -107,7 +108,7 @@ func model_key(e: Dictionary) -> String:
 		return "flowers" if frame >= 13 else "mushroom"
 	if "/landmark/" in p:
 		if frame <= 3: return "well"
-		return "bridge" if frame <= 6 else "sign"
+		return "bridge_deck" if frame <= 6 else "sign" # landm-04..06 the stone bridge: its deck, parapets and arches
 	if "/home/" in p:
 		if frame in [11,12,13]: return "ruin"
 		return "cottage" if frame in [1,4,5,6,7,8,9,10] else ""
@@ -116,7 +117,7 @@ func model_key(e: Dictionary) -> String:
 	if "/church/" in p: return "cottage" if frame == 1 else ""
 	if "/building/" in p: return "cottage"
 	if "/castle/" in p or "/stone/" in p: return "tower"
-	if "/bridge/" in p: return "bridge"
+	if "/bridge/" in p: return "bridge_" + bridge_part(p)
 	if "/island/" in p:
 		# By the art's own file: isle-01..06 are round huts, isle-07..12 rail fences, isle-13..18 spears.
 		# (The torches of the same folder, seq 425, have frames 1-6 too, so the frame cannot say.)
@@ -175,6 +176,18 @@ func model_key(e: Dictionary) -> String:
 	if "/teleport/" in p: return "save"
 	if "/damage/" in p: return ""
 	return "crate" if not str(e.get("script","")).is_empty() else "rock"
+
+# The two kinds of bridge art (struct/Bridge), by the art's own file: brdge-04, 07, 09 and 11 are rope railings
+# drawn standing (the near railing of an east-west bridge is a sprite of its own, drawn after the deck, in front
+# of it); the rest are decks: 01-03 the north-south plank bridge (start, middle, end, with its side rails), 05 the
+# diagonal rope bridge, 06, 08 and 10 the east-west deck with its far railing. A deck lies on the water: in the
+# original's projection (screen = X, Z - Y) a deck at water level is drawn at its own place on the ground, as a
+# background sprite is. The rails of a deck's own sprite, and the far railing drawn inside 06, 08 and 10, lie
+# flat on it.
+func bridge_part(path: String) -> String:
+	var file := path.get_file()
+	var number := int(file.trim_prefix("brdge-")) if file.begins_with("brdge-") else 0
+	return "rail" if number in [4,7,9,11] else "deck"
 
 func build_ground(screen: Dictionary) -> void:
 	scene_generation = host.generation
@@ -310,13 +323,24 @@ func background_sprites(number: int, vision: int) -> Array:
 	var sprites := drawn_sprites(number,vision)
 	var upright := {}
 	var out: Array = []
+	var decks: Array = []
 	for e in sprites:
-		if effective_type(e) == 1: upright["%d:%d:%d:%d" % [int(e.get("seq",0)),int(e.get("frame",1)),int(e.get("x",0)),int(e.get("y",0))]] = true
+		if effective_type(e) == 1 and model_key(e) != "bridge_deck": upright["%d:%d:%d:%d" % [int(e.get("seq",0)),int(e.get("frame",1)),int(e.get("x",0)),int(e.get("y",0))]] = true
 	for e in sprites:
 		if not paints_ground(e,number): continue
 		if upright.has("%d:%d:%d:%d" % [int(e.get("seq",0)),int(e.get("frame",1)),int(e.get("x",0)),int(e.get("y",0))]): continue
-		out.append(e)
+		if model_key(e) == "bridge_deck": decks.append(e)
+		else: out.append(e)
+	# The map draws a deck among the upright sprites, in their order (its que, else its y), over the background;
+	# ties keep the map's order (the sort is not stable).
+	var ranked: Array = []
+	for i in decks.size(): ranked.append([deck_order(decks[i]),i])
+	ranked.sort()
+	for r in ranked: out.append(decks[int(r[1])])
 	return out
+
+func deck_order(e: Dictionary) -> float:
+	return float(e.get("que",0)) if int(e.get("que",0)) != 0 else float(e.get("y",0))
 
 # A sprite's type as load_map gives it: a story persistence (editor_type 2-5) makes it background
 # (3, 5: a kill left lying) or upright.
@@ -337,6 +361,7 @@ func paint_background(sprites: Array, img: Image) -> void:
 
 # Whether a sprite is a background sprite painted into its screen's ground (paint_background).
 func paints_ground(e: Dictionary, screen: int) -> bool:
+	if model_key(e) == "bridge_deck": return true # whatever its type: the map draws a deck as an upright sprite
 	if effective_type(e) != 0 or source_path(e).contains("/struct/"): return false
 	if kit_member(e,screen): return false
 	var key := model_key(e)
@@ -676,14 +701,13 @@ func make_entity(e: Dictionary, id: int, parent: Node3D, collision: bool = true,
 	var bounds := model_bounds("fence_open" if passable_fence else key,model)
 	var rect: Rect2 = hard_rect(e)
 	var factor := maxf(0.05,float(e.get("size",100))/100.0)
-	var structural := key in ["wall","cottage","inn","tower","fence","bridge"]
+	var structural := key in ["wall","cottage","inn","tower","fence"]
 	if structural:
 		var size := rect.size*SCALE
 		var desired := Vector3(maxf(0.3,size.x),3.6,maxf(0.3,size.y))
 		if key in ["cottage","inn"]: desired.y = 5.8 if key == "cottage" else 7.0
 		if key == "tower": desired.y = 8.5
 		if key == "fence": desired.y = 1.05
-		if key == "bridge": desired.y = 0.4
 		model.scale = desired/Vector3(maxf(0.1,bounds.size.x),maxf(0.1,bounds.size.y),maxf(0.1,bounds.size.z))
 		node.position = point(rect.get_center().x,rect.get_center().y)
 		if key in ["cottage","inn"]: model.rotation.y = PI
@@ -791,7 +815,7 @@ func update_visual(id: int) -> void:
 	var key: String = node.get_meta("model_key","")
 	if node.has_meta("surface_position"):
 		node.position = node.get_meta("surface_position")
-	elif key not in ["wall","cottage","inn","tower","fence","bridge"]:
+	elif key not in ["wall","cottage","inn","tower","fence"]:
 		node.position = point(float(e.get("x",320)),float(e.get("y",200)))
 	var model: Node3D = node.get_node_or_null("Model")
 	if model == null: return
@@ -1228,11 +1252,12 @@ func add_ruin_skin(node: Node3D, model: Node3D) -> void:
 # --- Sprites -----------------------------------------------------------------------------
 # Whether a card keeps the orientation it was drawn in. Only a structure does: a fence (and the island's
 # rail fences), a wall (stone and castle walls: "tower", but not the monuments of struct/Stone/mdink, the
-# statues, which stand upright), a sign (a signboard is a flat board: edge-on from the side is right) and
-# the island's round huts. Everything else is a Y-axis billboard whatever its width: the width of an art
-# includes its shadow dither, so it says nothing of what stands in it (every tree is over 100 px).
+# statues, which stand upright), a sign (a signboard is a flat board: edge-on from the side is right), a
+# bridge's rope railing (bridge_part; a bridge's deck is painted into the ground) and the island's round
+# huts. Everything else is a Y-axis billboard whatever its width: the width of an art includes its shadow
+# dither, so it says nothing of what stands in it (every tree is over 100 px).
 func is_structure(key: String, path: String) -> bool:
-	if key in ["fence","wall","hut","sign"]: return true
+	if key in ["fence","wall","hut","sign","bridge_rail"]: return true
 	return key == "tower" and not "/stone/" in path.to_lower()
 
 # The original sprite of a thing that is not a building, drawn as the prototype draws it
@@ -1303,7 +1328,7 @@ func add_billboard(node: Node3D, e: Dictionary, id: int, key: String, collision:
 	body.collision_mask = 0
 	var shape := CollisionShape3D.new()
 	var box := BoxShape3D.new()
-	if key in ["fence","wall","tower"]:
+	if key in ["fence","wall","tower","bridge_rail"]:
 		# On the source hardbox, as the stand-ins' bodies were.
 		var rect: Rect2 = hard_rect(e)
 		box.size = Vector3(maxf(0.2,rect.size.x*SCALE),height,maxf(0.2,rect.size.y*SCALE))

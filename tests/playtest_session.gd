@@ -310,7 +310,7 @@ func _render_geometry() -> Dictionary:
 	for visual in game.visuals.values():
 		if not is_instance_valid(visual) or visual.is_queued_for_deletion(): continue
 		var key := str(visual.get_meta("model_key", ""))
-		if key not in ["wall", "cottage", "tower", "inn", "fence", "bridge"]: continue
+		if key not in ["wall", "cottage", "tower", "inn", "fence"]: continue
 		if visual.get_node_or_null("Model") != null: models[key] = int(models.get(key, 0)) + 1
 		if visual.get_node_or_null("HitBody") != null: bodies[key] = int(bodies.get(key, 0)) + 1
 	return {"structural_models": models, "structural_bodies": bodies}
