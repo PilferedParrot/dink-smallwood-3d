@@ -114,10 +114,14 @@ func model_key(e: Dictionary) -> String:
 	if "/island/" in p:
 		# By the art's own file: isle-01..06 are round huts, isle-07..12 rail fences, isle-13..18 spears.
 		# (The torches of the same folder, seq 425, have frames 1-6 too, so the frame cannot say.)
+		# isle-08 is the exception: it is a rail drawn along the depth axis (30 x 192 px: a lattice
+		# post as tall as its length), which as a card in the +z plane is a 4.8 m pole that vanishes
+		# edge-on from the side. It keeps its billboard until it is rebuilt from the side-view rail
+		# turned 90 degrees, as the fence post column is (add_billboard).
 		var file := p.get_file()
 		var number := int(file.trim_prefix("isle-")) if file.begins_with("isle-") else 0
 		if number >= 1 and number <= 6: return "hut"
-		return "fence" if number >= 7 and number <= 12 else "rock"
+		return "fence" if number in [7,9,10,11,12] else "rock"
 	if "/door/" in p: return "door"
 	if "/details/inacc" in p:
 		return {1:"shelf",2:"table",3:"bed",4:"shelf",5:"fireplace",6:"cave_entrance"}.get(frame,"table")

@@ -47,7 +47,9 @@ def is_structure(path: str) -> bool:
         return True
     if "/struct/island/" in p:  # isle-01..06 round huts, 07..12 rail fences; 13..18 spears and the torches stand up
         m = re.match(r"isle-(\d+)", name)
-        return bool(m) and 1 <= int(m.group(1)) <= 12
+        # isle-08 is a rail drawn along the depth axis, a 30 x 192 px post: a card in the +z plane would vanish
+        # edge-on from the side, so it stays a billboard (fp_world.model_key)
+        return bool(m) and 1 <= int(m.group(1)) <= 12 and int(m.group(1)) != 8
     if "/struct/landmark/" in p:  # landm-01..03 the well, 04..06 bridges (built), 07..12 signs
         return int(re.search(r"(\d+)", name).group(1)) >= 7
     if "/paper/" in p or "/inner/" in p:  # signs
@@ -111,6 +113,7 @@ def test_every_card_of_the_map_is_a_billboard_unless_its_art_is_a_structure(swep
     # The island: huts and rail fences fixed, spears and torches standing up.
     island = {(c["path"].rsplit("/", 1)[-1].lower(), c["mode"]) for c in swept if "/island/" in c["path"].lower()}
     assert ("isle-03.png", "fixed") in island and ("isle-07.png", "fixed") in island and ("isle-18.png", "billboard") in island
+    assert ("isle-08.png", "billboard") in island  # the depth-axis rail post: edge-on from the side as a card
     assert ("torch-01.png", "billboard") in island
 
 
