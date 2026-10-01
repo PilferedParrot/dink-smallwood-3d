@@ -29,7 +29,13 @@ GODOT = os.environ.get("GODOT") or shutil.which("godot") or shutil.which("godot4
 pytestmark = pytest.mark.skipif(not Path(GODOT).is_file(), reason="Godot unavailable; set GODOT")
 
 # Screens with no flagged sprite, loaded too: the rule must flag nothing there (a rail).
-QUIET = [407, 408, 470, 505, 586]
+QUIET = [407, 408, 470, 586]  # (505 left: its grass stands by the inn, a kit building, since the tenth pass)
+
+
+def _png_size(path: Path) -> tuple:
+    with open(path, "rb") as f:
+        head = f.read(24)
+    return struct.unpack(">I", head[16:20])[0], struct.unpack(">I", head[20:24])[0]
 
 
 def _png_width(path: Path) -> int:
@@ -121,6 +127,31 @@ def expected():
             hull = _hull(foot)
             if hull:
                 houses.append({"hull": hull, "y": ry + d["dy"], "que": s.get("que", 0), "screen": n})
+    # The kit buildings, after the houses: one footprint per block of wall faces; a sprite is over the kit unless one of
+    # the kit's upright (type 1) sprites that its picture overlaps lies at or below it (y), as the original draws them.
+    for b in fits.get("_kit_buildings", []):
+        members = []
+        for m in b["members"]:
+            if m[1] != "s":
+                continue
+            s = screens[str(int(m[0]))]["sprites"][int(m[2])]
+            d = frame(s)
+            if s.get("type", 1) != 1 or not d:
+                continue
+            ox, oy = _origin(int(m[0]))
+            f = max(0.01, s.get("size", 100) / 100)
+            w, h = _png_size(ROOT / "game" / d["path"])
+            x0, y0 = ox + s["x"] - 20 - d["dx"] * f, oy + s["y"] - d["dy"] * f
+            members.append(((x0, y0, x0 + w * f, y0 + h * f), oy + s["y"]))
+        rx, ry = b["rect"][0], b["rect"][1]
+        blocks = {}
+        for f in b["faces"]:
+            if f.get("label") == 1:
+                blocks.setdefault(int(f["block"]), []).extend((rx + q[0], ry + q[2]) for q in f["pts"] if abs(q[1]) < 1e-3)
+        for pts in blocks.values():
+            hull = _hull(pts)
+            if hull:
+                houses.append({"hull": hull, "kit": members})
     out = {}
     for number, screen in screens.items():
         n = int(number)
@@ -141,6 +172,13 @@ def expected():
             for h in houses:
                 if _distance(at, h["hull"]) >= half:
                     continue
+                if "kit" in h:
+                    f = max(0.01, s["size"] / 100)
+                    w, hh = _png_size(file)
+                    x0, y0 = at[0] - d["dx"] * f, at[1] - d["dy"] * f
+                    under = any(r[0] < x0 + w * f and r[2] > x0 and r[1] < y0 + hh * f and r[3] > y0 and my >= at[1] for r, my in h["kit"])
+                    out[(n, s["x"], s["y"])] = half if under else -half
+                    break
                 order, house_order = at[1], h["y"]
                 if h["screen"] == n and (s["que"] != 0 or h["que"] != 0):
                     order = s["que"] if s["que"] != 0 else s["y"]
@@ -192,7 +230,8 @@ def test_the_games_flags_equal_an_independent_reading_of_the_map(expected, tmp_p
             problems.append("flagged but not expected: %s %.2f" % (place, shift))
     assert not problems, "\n".join(problems)
     # The instrument could have seen something: the cases the sheet and the pixel test use.
-    for place, sign in [((251, 153, 374), -1), ((497, 8, 235), 1), ((528, 752, 40), -1)]:
+    # The kit cases (tenth pass): a barrel over the inn's block on 504, grass under its pieces on 506.
+    for place, sign in [((251, 153, 374), -1), ((497, 8, 235), 1), ((528, 752, 40), -1), ((504, 369, 115), -1), ((506, 103, 393), 1)]:
         assert place in flagged and flagged[place] * sign > 0, (place, flagged.get(place))
     # Both signs, and screens where nothing is flagged, are in the sample.
     assert any(v > 0 for v in flagged.values()) and any(v < 0 for v in flagged.values())

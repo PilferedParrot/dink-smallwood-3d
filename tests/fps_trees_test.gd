@@ -106,6 +106,7 @@ func _dump(screen: int) -> void:
 	_sprites(game.scene_root, sprites)
 	for sp in sprites:
 		if int(sp.get_meta("screen", -1)) != screen: continue
+		if not (sp.get_parent() as Node3D).visible: continue # never drawn (an invisible editor sprite, type 2): not the rule's
 		var shift: float = sp.get_meta("depth_px", 0.0)
 		var at := Vector3(0, 0, 0)
 		if sp.has_meta("depth_sig"): at = sp.get_meta("depth_sig")

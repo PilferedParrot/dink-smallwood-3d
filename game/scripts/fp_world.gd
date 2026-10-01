@@ -34,7 +34,7 @@ var fitted_built: Dictionary = {} # world position key -> the node holding it (n
 var plan_key := "" # scene, screen and story layer the plan below was gathered for
 var plan_claimed: Dictionary = {} # "screen:index" -> true: sprites a fitted house draws (itself, its parts)
 var plan_parts: Dictionary = {} # fitted_key -> the parts it draws (sprite_buildings.gd gather)
-var plan_hulls: Array = [] # [wall footprint (world px), the house's hotspot (world px), its que, its screen, its bounding box]: see depth_rule
+var plan_hulls: Array = [] # [wall footprint (world px), the house's hotspot (world px), its que, its screen, its bounding box(, a kit's upright sprites)]: see depth_rule
 var sprite_heights: Dictionary = {} # sprite path -> drawn height above its hotspot, px
 # Everything that is not a building is the original sprite itself, drawn as the prototype draws it
 # (prototype/sprite_world_proto.gd _add_sprite; docs/DIRECTION.md, ninth pass): upright sprites
@@ -940,12 +940,14 @@ func house_plan() -> void:
 	plan_hulls = []
 	if is_inside(host.current_screen): return
 	var candidates: Array = []
+	var block: Dictionary = {} # the screens of the block
 	var column: int = (host.current_screen-1)%32
 	for dz in range(-2,3):
 		for dx in range(-2,3):
 			if column+dx < 0 or column+dx >= 32: continue
 			var n: int = host.current_screen+dx+dz*32
 			if not host.world.screens.has(str(n)) or is_inside(n): continue
+			block[n] = true
 			for e in drawn_sprites(n,vision): candidates.append([e,n,"%d:%d" % [n,int(e.get("index",0))]])
 	for c in candidates:
 		if not buildings.is_fitted(c[0]): continue
@@ -960,6 +962,38 @@ func house_plan() -> void:
 			var box := Rect2(hull[0],Vector2.ZERO)
 			for q in hull: box = box.expand(q)
 			plan_hulls.append([hull,rect.position+Vector2(float(d.get("dx",0)),float(d.get("dy",0))),int(c[0].get("que",0)),int(c[1]),box])
+	# The kit buildings (the inn and its kin), after the houses: one footprint per block of wall faces (one hull round
+	# all of kit-417 would take in its courtyard). A kit is many sprites over its tiles and has no one hotspot to order
+	# by; its sixth field holds its upright sprites, [drawn world rect, world y], for depth_rule.
+	for b in facades.get("_kit_buildings",[]):
+		if not (b.screens as Array).any(func(m): return block.has(int(m))): continue
+		var members: Array = []
+		for m in b.members:
+			if str(m[1]) != "s": continue
+			var sprites: Array = host.world.screens.get(str(int(m[0])),{}).get("sprites",[])
+			if int(m[2]) >= sprites.size(): continue
+			var s: Dictionary = sprites[int(m[2])]
+			if int(s.get("type",1)) != 1: continue # background sprites are drawn under every upright one
+			var d: Dictionary = host._frame(int(s.get("seq",0)),int(s.get("frame",1)))
+			var tex: Texture2D = host._texture("res://"+str(d.get("path","")))
+			if tex == null: continue
+			var f := maxf(0.01,float(s.get("size",100))/100.0)
+			var at := screen_origin(int(m[0]))+Vector2(float(s.get("x",0)),float(s.get("y",0)))
+			members.append([Rect2(at-Vector2(float(d.get("dx",0)),float(d.get("dy",0)))*f,Vector2(tex.get_width(),tex.get_height())*f),at.y])
+		var top_left := Vector2(float(b.rect[0]),float(b.rect[1]))
+		var feet: Dictionary = {}
+		for f in b.faces:
+			if int(f.label) != 1: continue
+			for q in f.pts:
+				if absf(float(q[1])) < 1e-3:
+					if not feet.has(int(f.block)): feet[int(f.block)] = []
+					feet[int(f.block)].append(top_left+Vector2(float(q[0]),float(q[2])))
+		for k in feet:
+			var hull := Geometry2D.convex_hull(PackedVector2Array(feet[k]))
+			if hull.size() < 3: continue
+			var box := Rect2(hull[0],Vector2.ZERO)
+			for q in hull: box = box.expand(q)
+			plan_hulls.append([hull,Vector2.ZERO,0,-1,box,members])
 
 # Whether a fitted house draws this sprite of `screen` onto itself (a door, a window, damage, a
 # chimney): then it has no model of its own.
@@ -1506,7 +1540,8 @@ var depth_shader: Shader
 # house's wall footprint lies within `half` of its hotspot, else {"side": +1 over the house, -1 under it,
 # as the original draws it; "wall": the nearest point of the footprint, world px; "normal": the unit vector
 # from there to the sprite, or (0, 0) if the same side holds from every camera (a que orders it, or it
-# stands inside the footprint)}. The first house within reach decides, as in the prototype.
+# stands inside the footprint)}. The first house within reach decides, as in the prototype; kit blocks come after the
+# houses.
 func depth_rule(e: Dictionary, screen: int, half: float) -> Dictionary:
 	if interior or half <= 0.0: return {}
 	house_plan()
@@ -1524,6 +1559,17 @@ func depth_rule(e: Dictionary, screen: int, half: float) -> Dictionary:
 					dist = at.distance_to(q)
 					wall = q
 		if dist >= half: continue
+		if h.size() > 5:
+			# A kit block: the original draws the sprite over the kit unless one of the kit's upright sprites that its
+			# picture overlaps is drawn after it (its y at or below the sprite's); the kit's tiles are under every sprite.
+			var d: Dictionary = host._frame(int(e.get("pseq",e.get("seq",0))),int(e.get("pframe",e.get("frame",1))))
+			var tex := clean_texture(str(d.get("path","")))
+			var f := maxf(0.01,float(e.get("size",100))/100.0)
+			var drawn := Rect2(at-Vector2(float(d.get("dx",0)),float(d.get("dy",0)))*f,Vector2(tex.get_width(),tex.get_height())*f) if tex != null else Rect2(at,Vector2.ONE)
+			var side := 1.0
+			for m in h[5]:
+				if (m[0] as Rect2).intersects(drawn) and float(m[1]) >= at.y: side = -1.0
+			return {"side": side,"wall": wall,"normal": Vector2.ZERO if dist < 0.01 else (at-wall)/dist}
 		# The original's draw order: que, else y. A que is only comparable on its own screen.
 		var home: Vector2 = h[1]
 		var order := at.y
