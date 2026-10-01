@@ -1289,3 +1289,53 @@ it fails at once.
 xvfb-run -a -s "-screen 0 1920x1080x24" ../../../.venv/bin/python -m pytest -q tests`; the sheet:
 `env -u WAYLAND_DISPLAY bwrap --dev-bind / / --tmpfs /dev/input --unshare-net /usr/bin/python3 tools/view_sheet.py
 <views.json> --col before=<checkout at aa7388e> --col now=.` (the views are listed in the sheet's labels).
+
+## Bridges, the castle, the kit buildings' footprints, and the side flip walked — October 1-2, tenth pass, second half (Opus 5.5 lead, Sonnet 5.5 units)
+
+**Bridges are decks on the water and rope railings** (the first half's defect 2). The game built each bridge sprite
+as the Blender bridge model sized to its hardbox: a row of loose flat planks floating over the water, water between
+them. The art draws two kinds of thing (`fp_world.bridge_part`, by the art's file): decks (brdge-01..03 the north-south
+plank bridge, 05 the diagonal rope bridge, 06, 08 and 10 the east-west decks with their far railing, and the stone
+bridge landm-04..06) and standing rope railings (brdge-04, 07, 09 and 11; the near railing of an east-west bridge is a
+sprite of its own, drawn in front). In the original's projection a deck at water level is drawn at its own place on the
+ground, as a background sprite is: decks are now painted into their screen's ground whatever their type (the map places
+every deck upright, que -10), in the original's order over the background; railings are structures, fixed cards with a
+body on the hardbox. The Blender bridge path is gone (`game/assets/models/bridge.glb` is no longer loaded).
+Through the original camera every bridge screen comes nearer the original's picture (mean |RGB|: 404 23.94 to 20.82, 416
+22.63 to 21.11, 448 23.02 to 19.52, 480 21.35 to 19.59, 512 24.13 to 19.29, 693 23.40 to 21.13); other screens are
+unchanged to the pixel. Walks with the real W key cross 404's bridge and 448's whole length as before.
+`tests/test_fps_bridges.py`: all 40 bridge sprites of the map (112 builds over three story layers) against an
+independent reading of the art (unmodified: 112 wrong; five wrong variants 12-100 wrong), and a strip down 448's bridge
+from on it (now no water rows; before 62 of 232). Evidence: `docs/images/bridges-oct1.jpg`. Limits: the far railing
+drawn inside 06, 08 and 10 and the side rails of 01-03 lie flat on the deck (dark curves on the planks seen along the
+bridge); a near railing is a sliver from the bridge's own axis, as every structure card; decks have no ray body (an
+arrow passes over one).
+
+**What casts a shadow.** The first half gave every billboard a sun-facing shadow twin, flames and grass included. The
+art says what casts one: a drawn shadow is a checkerboard of isolated black pixels, and over every frame the map places
+upright the fire, sparks, coins, grass tufts and seeds have 0-8 such pixels and the damage holes 0-31 scattered specks,
+where a duck has 40-70, a tool 17-79, a pig 123-277 and a tree up to 4,150. Those keys (`fp_world.SHADOWLESS`) cast none.
+`tests/test_fps_cards.py` checks it on the loaded scenes (red with the list emptied: the grass of 251 and 439 cast).
+
+**The kit buildings' footprints** (the first half's defect 4). The trees' rule knew only the fitted houses. House_plan
+now adds one footprint per block of each kit building's wall faces (one hull round kit-417 would take in its
+courtyard). A kit has no single hotspot: the original draws a sprite over it unless one of the kit's own upright sprites
+that its picture overlaps lies at or below it (its tiles are under every sprite), and `depth_rule` reads it so. The
+tempting rule, the block's middle depth (a house's hotspot sits mid-depth), disagrees with that on 11 of 20 cases. 23
+sprites are within reach of a kit block (barrels, grass, signs, boxes, a bush by the inn and its kin); the classification
+test's independent reading gains the kit rule and the game equals it (red without the kit footprints). From four eye-level
+cameras by the inn's barrels the pictures change by 0-13 px: from where a player stands, this cut was rare.
+
+**Neighbours copy shallowly.** `editor_entity(n, source, deep)`: a neighbour's sprites are only read, so they are copied
+shallowly (unit A timed the copy at 3.2 ms deep, 1.3 shallow; `load_map` on 439, six interleaved runs: 101.6 to 101.1 ms,
+inside the probe's spread).
+
+**The side flip, walked** (the October 1 section's defect 2). The 251 cabin's tree-08 stands 2 px from the cabin's south
+wall: the rule's wall point (15732, 3172), normal (0.448, 0.894). Walking round the tree at 230 px, the camera crosses that
+wall's plane at 27.2 and 206.0 degrees (computed from the rule's own wall and normal). Rendered at 10, 1 and 0.25 degree
+steps: at 206.0 to 206.25 degrees a patch of canopy appears over the cabin's east wall beside the chimney in one step (about
+2,400 px of the 960 x 540 frame over the frame-to-frame motion, `tmp/look/side-flip-251-206deg.jpg` in the lead's worktree);
+at 27 degrees nothing stands out. A pop, small and at one place. Not fixed: a blend of the shift over the sprite's reach
+would remove it, but the reach (100 px here) is wide enough to bring back part of the cut the trees pass removed (its
+first sheet camera, 251 from the south-west, stands 43 px from this plane). A fix needs another quantity, such as whether
+the canopy and the house overlap on the screen at the crossing.
