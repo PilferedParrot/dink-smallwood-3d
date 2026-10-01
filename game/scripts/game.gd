@@ -196,31 +196,8 @@ func load_map(number: int, run_scripts: bool = true) -> void:
 		if generation != expected: return
 	var editor_entities: Array[int] = []
 	for source in screen.get("sprites",[]):
-		var e: Dictionary = source.duplicate(true)
-		var idx := int(e.get("index",0))
-		var key := "%d:%d" % [number,idx]
-		if editor_state.has(key):
-			e.merge(editor_state[key],true)
-		if e.get("removed",false): continue
-		var state: Dictionary = editor_state.get(key,{})
-		var persistence := int(state.get("editor_type",0))
-		if persistence in [6,7,8] and float(state.get("return_at",0)) > Time.get_unix_time_from_system(): continue
-		if persistence in [2,3,4,5]:
-			e["hard"] = 0 if persistence in [4,5] else 1
-			e["type"] = 0 if persistence in [3,5] else 1
-			e["brain"] = 0
-			e["script"] = ""
-		if int(e.get("vision",0)) != 0 and int(e.get("vision",0)) != int(vm.globals.get("vision",0)): continue
-		e["editor_num"] = idx
-		e["pseq"] = e.get("seq",0)
-		e["pframe"] = maxi(1,int(e.get("frame",1)))
-		e["seq"] = 0
-		e["frame"] = 1
-		e["active"] = 1
-		e["anim_time"] = 0.0
-		e["frozen"] = false
-		e["dir"] = 2
-		if int(e.get("size",100)) == 0: e["size"] = 100
+		var e := editor_entity(number,source)
+		if e.is_empty(): continue
 		entities[next_entity] = e
 		editor_entities.append(next_entity)
 		next_entity += 1
@@ -232,6 +209,39 @@ func load_map(number: int, run_scripts: bool = true) -> void:
 	changing = false
 	if run_scripts:
 		_run_screen_scripts.call_deferred(generation, editor_entities)
+
+# What a screen loads for one of its editor sprites on arrival, before any script runs: the map's sprite with
+# the story's changes (editor_state, persistence 2-8), the vision layer filter, and its still frame (pseq,
+# pframe; seq 0). {} when the screen does not load it (removed, waiting to return, another vision). The one
+# source of "what a screen loads": load_map builds its entities from it, and the neighbours the fps world
+# draws (fp_world.gd build_ground) are what their own screens would load.
+func editor_entity(number: int, source: Dictionary) -> Dictionary:
+	var e: Dictionary = source.duplicate(true)
+	var idx := int(e.get("index",0))
+	var key := "%d:%d" % [number,idx]
+	if editor_state.has(key):
+		e.merge(editor_state[key],true)
+	if e.get("removed",false): return {}
+	var state: Dictionary = editor_state.get(key,{})
+	var persistence := int(state.get("editor_type",0))
+	if persistence in [6,7,8] and float(state.get("return_at",0)) > Time.get_unix_time_from_system(): return {}
+	if persistence in [2,3,4,5]:
+		e["hard"] = 0 if persistence in [4,5] else 1
+		e["type"] = 0 if persistence in [3,5] else 1
+		e["brain"] = 0
+		e["script"] = ""
+	if int(e.get("vision",0)) != 0 and int(e.get("vision",0)) != int(vm.globals.get("vision",0)): return {}
+	e["editor_num"] = idx
+	e["pseq"] = e.get("seq",0)
+	e["pframe"] = maxi(1,int(e.get("frame",1)))
+	e["seq"] = 0
+	e["frame"] = 1
+	e["active"] = 1
+	e["anim_time"] = 0.0
+	e["frozen"] = false
+	e["dir"] = 2
+	if int(e.get("size",100)) == 0: e["size"] = 100
+	return e
 
 func _run_screen_scripts(expected: int, editor_entities: Array[int]) -> void:
 	if generation != expected: return

@@ -178,6 +178,7 @@ func _physics_process(delta: float) -> void:
 	_fps_update_jump(delta)
 	_fps_update_controller_look(delta)
 	_sync_fps_camera()
+	if fp_world != null: fp_world.face_neighbours() # the neighbours' actors, for the camera as it is now
 	_fps_update_viewmodel(delta)
 	if ui.modal:
 		fps_fire_held = fps_fire_held or Input.is_action_pressed("attack")

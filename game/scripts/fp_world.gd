@@ -51,6 +51,7 @@ const DIRS := {1: Vector2(-1,1), 2: Vector2(0,1), 3: Vector2(1,1), 4: Vector2(-1
 	6: Vector2(1,0), 7: Vector2(-1,-1), 8: Vector2(0,-1), 9: Vector2(1,-1)}
 var clean_cache: Dictionary = {} # sprite path -> its texture without the shadow dither
 var kit_members: Dictionary = {} # "screen:index" -> true: map sprites a kit building draws
+var neighbour_actors: Array = [] # [Sprite3D, entity dict] of the actors the neighbour screens draw, this scene
 
 func setup(game) -> void:
 	host = game
@@ -165,6 +166,7 @@ func build_ground(screen: Dictionary) -> void:
 	buildings.sequences = host.sequences
 	structural_seen.clear()
 	fitted_built.clear()
+	neighbour_actors.clear()
 	# The current screen's own buildings carry its story state; a neighbour showing the
 	# same building (one placed on both screens) leaves it to them.
 	for source in screen.get("sprites",[]):
@@ -196,22 +198,28 @@ func build_ground(screen: Dictionary) -> void:
 					host.scene_root.add_child(backdrop)
 					var dedup: Dictionary = {}
 					for source in host.world.screens[str(n)].get("sprites",[]):
-						if int(source.get("vision",0)) != 0 and int(source.vision) != int(host.vm.globals.get("vision",0)): continue
-						if int(source.get("type",1)) == 2: continue
-						var e: Dictionary = source.duplicate()
-						var state: Dictionary = host.editor_state.get("%d:%d" % [n,int(e.get("index",0))],{})
-						if state.get("removed",false): continue
-						e.merge(state,true)
+						# What the screen loads on arrival, before its scripts run (game.gd editor_entity).
+						var e: Dictionary = host.editor_entity(n,source)
+						if e.is_empty() or int(e.get("type",1)) == 2: continue
 						var key := model_key(e)
-						# Script-controlled actors only become active on their own map.
-						if key in ["flame","effect","arrow","man","woman","wizard","knight","pig","duck","pillbug","bonca","slime","dragon",""]: continue
+						if key in ["flame","effect","arrow",""]: continue
 						var fingerprint := "%s:%d:%d" % [key,int(e.x),int(e.y)]
 						if dedup.has(fingerprint): continue
 						dedup[fingerprint] = true
-						make_entity(e,0,backdrop,false,n)
+						var node := make_entity(e,0,backdrop,false,n)
+						# Their brains run only on their own screen (as in the original): they stand in the frame the
+						# screen loads them with, turned toward the camera each frame (face_neighbours).
+						var model: Node = node.get_node_or_null("Model")
+						if node.get_meta("actor",false) and model is Sprite3D: neighbour_actors.append([model,e])
 				else:
 					add_wilderness(host.scene_root,offset,n)
 		add_horizon()
+
+# The neighbours' actors show the frame drawn for their facing as seen from the camera, as the current
+# screen's actors do (update_visual -> update_billboard); the game calls this each frame after the camera is synced.
+func face_neighbours() -> void:
+	for pair in neighbour_actors:
+		if is_instance_valid(pair[0]): update_billboard(pair[0] as Sprite3D,pair[1])
 
 func configure_environment() -> void:
 	for child in host.get_children():
