@@ -363,7 +363,6 @@ func add_ground(number: int, parent: Node3D, offset: Vector3) -> void:
 	ground.material_override = mat
 	parent.add_child(ground)
 	add_kit_buildings(number,parent,offset)
-	if not is_inside(number): add_grass(number,parent,offset,mat.albedo_texture.get_image())
 	if offset == Vector3.ZERO:
 		var body := StaticBody3D.new()
 		body.collision_layer = 1
@@ -413,41 +412,6 @@ func add_ceiling(screen: Dictionary) -> void:
 	glow.light_energy = 1.8
 	glow.omni_range = 22
 	host.scene_root.add_child(glow)
-
-func add_grass(number: int, parent: Node3D, offset: Vector3, terrain: Image) -> void:
-	var rng := RandomNumberGenerator.new()
-	rng.seed = number*7193
-	var transforms: Array[Transform3D] = []
-	for i in 300:
-		var px := rng.randi_range(0,599)
-		var py := rng.randi_range(0,399)
-		var color := terrain.get_pixel(px,py)
-		if color.g < color.r*1.05 or color.g < 0.19 or color.b > color.g*0.85: continue
-		var t := Transform3D.IDENTITY
-		t = t.rotated(Vector3.UP,rng.randf()*TAU)
-		t = t.scaled(Vector3.ONE*rng.randf_range(0.6,1.5))
-		t.origin = point(px+20,py)+offset
-		transforms.append(t)
-	if transforms.is_empty(): return
-	var mesh := ArrayMesh.new()
-	var verts := PackedVector3Array([Vector3(-0.06,0,0),Vector3(0,0.20,0.03),Vector3(0.05,0,0),Vector3(0,0,-0.05),Vector3(0.02,0.24,0),Vector3(0,0,0.06)])
-	var arrays: Array = []
-	arrays.resize(Mesh.ARRAY_MAX)
-	arrays[Mesh.ARRAY_VERTEX] = verts
-	arrays[Mesh.ARRAY_NORMAL] = PackedVector3Array([Vector3.UP,Vector3.UP,Vector3.UP,Vector3.UP,Vector3.UP,Vector3.UP])
-	mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES,arrays)
-	var grass_mat := mat("grass",Color("546f30"))
-	grass_mat.cull_mode = BaseMaterial3D.CULL_DISABLED
-	mesh.surface_set_material(0,grass_mat)
-	var multi := MultiMesh.new()
-	multi.transform_format = MultiMesh.TRANSFORM_3D
-	multi.mesh = mesh
-	multi.instance_count = transforms.size()
-	for i in transforms.size(): multi.set_instance_transform(i,transforms[i])
-	var inst := MultiMeshInstance3D.new()
-	inst.multimesh = multi
-	inst.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-	parent.add_child(inst)
 
 func add_wilderness(parent: Node3D, offset: Vector3, seed_number: int) -> void:
 	box_mesh(parent,Vector3(WIDTH,0.3,DEPTH),offset-Vector3(0,0.2,0),mat("wilderness",Color("647548")))
@@ -584,8 +548,6 @@ func primitive_model(key: String) -> Node3D:
 			node.add_child(lamp)
 		"stairs":
 			for i in 6: box_mesh(node,Vector3(2.0,0.2*(i+1),0.4),Vector3(0,0.1*(i+1),-i*0.4),stone)
-		"grass":
-			return node # Ground uses batched blades instead.
 		_:
 			var visual := MeshInstance3D.new()
 			var mesh := SphereMesh.new()

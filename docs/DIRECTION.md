@@ -1044,3 +1044,17 @@ blades and the viewmodel. The Blender stand-ins read as a different game. These 
 quiet machine, before and after this pass. If the 5×5 block costs too much, bake the cleaned sprite
 textures as the kits are baked. Then remove the procedural grass blades (defect 1), and port
 `_flag_nudge`/`_push_back` (defect 5).
+
+**Addendum, the same evening: the grass blades are gone** (defect 1 above). `add_grass` scattered 300
+dark green blade meshes per outdoor screen over the tile art. Neither the original nor the prototype
+has them. The function, its call in `add_ground` and the dead `"grass"` stand-in case in
+`primitive_model` are removed. Nothing else read them: no setting, density table or test. The tests'
+geometry count still counts MultiMeshInstance3D, which is harmless. The original grass is the map's
+own: its tiles, and its grass sprites (`/grass/`, `lands/details`), which the pass above already draws
+as billboards or paints into the ground. Evidence: `docs/images/grass-sept30.jpg`. It shows the twelve
+rows of the sheet above where grass shows: the eighth pass's 300 px views and the extra building views,
+407's pen, 439's pen and village, and 472. Each row has three columns: 9784925 with the blades, the
+game now, and the prototype. The ground is now the tile art, as in the prototype. What still differs is
+the game's real-time light and shadow, its sky and fog, and the viewmodel. `pytest`: 81 passed,
+1 skipped; fps_test and fps_world_test (644 screens) pass. Rendered under
+`bwrap --dev-bind / / --tmpfs /dev/input --tmpfs /tmp --unshare-net`, with xvfb-run for each capture.
