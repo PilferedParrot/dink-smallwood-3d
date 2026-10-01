@@ -41,12 +41,13 @@ var sprite_heights: Dictionary = {} # sprite path -> drawn height above its hots
 # stand at their hotspots as Y-axis billboards, directional actors pick their frame from the camera
 # angle, structures (fences, walls, signs, huts: is_structure) keep the orientation they were drawn
 # in, and background (type 0) sprites are painted into the ground. Castle and stone walls ("tower")
-# are fixed cards of their sprites, as the prototype draws them. Bridges are two kinds of art, not a
-# model: the decks (bridge_part) lie on the water and are painted into the ground whatever their type,
-# the railings stand as fixed cards. These keys keep their 3D build: fitted and unfitted houses,
-# doors, stairs, interior furniture and interior walls, and the arrow.
+# are fixed cards of their sprites, as the prototype draws them, except the castle's fitted walls and
+# towers (key "castle", built in 3D: add_castle_piece). Bridges are two kinds of art, not a model: the
+# decks (bridge_part) lie on the water and are painted into the ground whatever their type, the railings
+# stand as fixed cards. These keys keep their 3D build: fitted and unfitted houses, the castle's fitted
+# pieces, doors, stairs, interior furniture and interior walls, and the arrow.
 const BUILT := ["cottage","inn","door","stairs","shelf","table","chair","bed",
-	"fireplace","cave_entrance","ruin","arrow",""]
+	"fireplace","cave_entrance","ruin","arrow","castle",""]
 const ACTORS := ["man","woman","wizard","knight","pig","duck","pillbug","bonca","slime","dragon"]
 # What the original draws without a shadow casts none here (shadow_twin). The art says which: a drawn shadow is a
 # checkerboard of isolated black pixels (the dither clean_texture removes), and over every frame the map places
@@ -116,6 +117,9 @@ func model_key(e: Dictionary) -> String:
 	if "/cabin/" in p: return "cottage" if frame == 1 else ""
 	if "/church/" in p: return "cottage" if frame == 1 else ""
 	if "/building/" in p: return "cottage"
+	# A castle piece fitted from its sprite (tools/facade_fit.py castle_fit) stands in 3D; the rest of struct/Castle
+	# and the monuments of struct/Stone are cards ("tower").
+	if "/castle/" in p and not buildings.castle_fit(frame_path(e)).is_empty() and absf(float(e.get("size",100)) - 100.0) < 0.5: return "castle"
 	if "/castle/" in p or "/stone/" in p: return "tower"
 	if "/bridge/" in p: return "bridge_" + bridge_part(p)
 	if "/island/" in p:
@@ -203,6 +207,8 @@ func build_ground(screen: Dictionary) -> void:
 		if int(source.get("vision",0)) != 0 and int(source.vision) != int(host.vm.globals.get("vision",0)): continue
 		var key := fitted_key(source,host.current_screen)
 		if not key.is_empty(): fitted_built[key] = null
+		key = castle_key(source,host.current_screen)
+		if not key.is_empty(): fitted_built[key] = null
 	interior = is_inside(host.current_screen)
 	configure_environment()
 	add_ground(host.current_screen,host.scene_root,Vector3.ZERO)
@@ -234,6 +240,7 @@ func build_ground(screen: Dictionary) -> void:
 						var key := model_key(e)
 						if key in ["flame","effect","arrow",""]: continue
 						var fingerprint := "%s:%d:%d" % [key,int(e.x),int(e.y)]
+						if key == "castle": fingerprint += ":" + frame_path(e)
 						if dedup.has(fingerprint): continue
 						dedup[fingerprint] = true
 						var node := make_entity(e,0,backdrop,false,n)
@@ -689,6 +696,9 @@ func make_entity(e: Dictionary, id: int, parent: Node3D, collision: bool = true,
 	if paints_ground(e,screen):
 		node.set_meta("ground_painted",true) # painted into the ground (paint_background)
 		return node
+	if key == "castle":
+		add_castle_piece(node,e,id,screen,collision)
+		return node
 	if sprite_drawn(key):
 		add_billboard(node,e,id,key,collision,screen)
 		return node
@@ -787,7 +797,8 @@ func create_visual(id: int) -> void:
 	var e: Dictionary = host.entities[id]
 	var key := model_key(e)
 	var fingerprint := "%s:%s:%s" % [key,e.get("x",0),e.get("y",0)]
-	if key in ["cottage","tower","wall"] and structural_seen.has(fingerprint):
+	if key == "castle": fingerprint += ":" + frame_path(e) # two different pieces may share a hotspot
+	if key in ["cottage","tower","wall","castle"] and structural_seen.has(fingerprint):
 		var existing: Node = structural_seen[fingerprint]
 		if is_instance_valid(existing) and not existing.is_queued_for_deletion():
 			var duplicate := Node3D.new()
@@ -795,7 +806,7 @@ func create_visual(id: int) -> void:
 			host.visuals[id] = duplicate
 			return
 	var node := make_entity(e,id,host.scene_root)
-	if key in ["cottage","tower","wall"]: structural_seen[fingerprint] = node
+	if key in ["cottage","tower","wall","castle"]: structural_seen[fingerprint] = node
 	host.visuals[id] = node
 	update_visual(id)
 
@@ -1018,6 +1029,28 @@ func house_plan() -> void:
 			var box := Rect2(hull[0],Vector2.ZERO)
 			for q in hull: box = box.expand(q)
 			plan_hulls.append([hull,Vector2.ZERO,0,-1,box,members])
+	# The castle's walls and towers: the same rule (a door in a castle wall is drawn over it).
+	for piece in castle_pieces():
+		var fit: Dictionary = buildings.castle_fit(str(piece[1]))
+		var at: Vector2 = piece[2]
+		for q in fit.parts:
+			var hull := PackedVector2Array()
+			if str(q.type) == "wall":
+				var s := float(q.s)
+				var c := float(q.c)
+				var tv := float(q.tv)
+				var x0 := float(q.x0)
+				var x1 := float(q.x1)
+				for p in [Vector2(x0,s*x0+c),Vector2(x1,s*x1+c),Vector2(x1,s*x1+c-tv),Vector2(x0,s*x0+c-tv)]: hull.append(at+p)
+			else:
+				for i in 24:
+					var t := TAU*float(i)/24.0
+					hull.append(at+Vector2(float(q.cx)+float(q.ar)*cos(t),float(q.cz)+float(q.k)*float(q.ar)*sin(t)))
+			var box := Rect2(hull[0],Vector2.ZERO)
+			for p in hull: box = box.expand(p)
+			# The order the original draws it in: the hotspot's y, a background (type 0) piece before everything else.
+			var order: Vector2 = piece[3]
+			plan_hulls.append([hull,Vector2(at.x,order.y if order.x > 0.0 else order.y-100000.0),0,int(piece[4]),box])
 
 # Whether a fitted house draws this sprite of `screen` onto itself (a door, a window, damage, a
 # chimney): then it has no model of its own.
@@ -1063,6 +1096,100 @@ func add_fitted_building(node: Node3D, e: Dictionary, id: int, screen: int, coll
 	if is_story_house(e):
 		if int(host.vm.globals.get("vision",0)) == 1: add_story_fire(node,box.size.x*SCALE,roof_spots(fit,box.get_center()))
 		elif int(host.vm.globals.get("vision",0)) == 2: add_ruin_skin(node,model)
+
+# The castle pieces of the 5x5 block as drawn now: [key, path, sprite top-left (world px), draw order], once per
+# scene, screen and story layer.
+var castle_plan_key := ""
+var castle_list: Array = []
+func castle_pieces() -> Array:
+	var vision := int(host.vm.globals.get("vision",0))
+	var key := "%d:%d:%d" % [host.generation,host.current_screen,vision]
+	if key == castle_plan_key: return castle_list
+	castle_plan_key = key
+	castle_list = []
+	if is_inside(host.current_screen): return castle_list
+	var seen := {}
+	var column: int = (host.current_screen-1)%32
+	for dz in range(-2,3):
+		for dx in range(-2,3):
+			if column+dx < 0 or column+dx >= 32: continue
+			var n: int = host.current_screen+dx+dz*32
+			if not host.world.screens.has(str(n)) or is_inside(n): continue
+			for e in drawn_sprites(n,vision):
+				var ck := castle_key(e,n)
+				if ck.is_empty() or seen.has(ck): continue
+				seen[ck] = true
+				castle_list.append([ck,frame_path(e),castle_origin(e,n),castle_order(e,n),n])
+	return castle_list
+
+func castle_origin(e: Dictionary, screen: int) -> Vector2:
+	var d: Dictionary = host._frame(int(e.get("pseq",e.get("seq",0))),int(e.get("pframe",e.get("frame",1))))
+	return screen_origin(screen)+Vector2(float(e.get("x",0))-float(d.get("dx",0)),float(e.get("y",0))-float(d.get("dy",0)))
+
+# The original's draw order: background (type 0) sprites first, then by que, else y (world px, the hotspot's).
+func castle_order(e: Dictionary, screen: int) -> Vector2:
+	var que := float(e.get("que",0))
+	return Vector2(0.0 if effective_type(e) == 0 else 1.0,que if que != 0.0 else screen_origin(screen).y+float(e.get("y",0)))
+
+# Where a later-drawn piece lies along the same wall (same slope, same base line, to a pixel) covers this piece,
+# the original draws it over: this piece's wall parts are clipped to the span left of it, part index -> [x0, x1]
+# in the sprite's own pixels. A piece wholly inside another one is left whole.
+func castle_clips(e: Dictionary, screen: int) -> Dictionary:
+	var key := castle_key(e,screen)
+	var path := frame_path(e)
+	var fit: Dictionary = buildings.castle_fit(path)
+	var here := castle_origin(e,screen)
+	var order := castle_order(e,screen)
+	var clips := {}
+	for i in fit.parts.size():
+		var q: Dictionary = fit.parts[i]
+		if str(q.type) != "wall": continue
+		var lo := float(q.x0)
+		var hi := float(q.x1)
+		var line := float(q.c)+here.y-float(q.s)*here.x # the base line's intercept in world px
+		for other in castle_pieces():
+			if other[0] == key: continue
+			var o_order: Vector2 = other[3]
+			if not (o_order.x > order.x or (o_order.x == order.x and o_order.y > order.y)): continue
+			var o_fit: Dictionary = buildings.castle_fit(str(other[1]))
+			for oq in o_fit.parts:
+				if str(oq.type) != "wall" or absf(float(oq.s)-float(q.s)) > 0.002: continue
+				var o_at: Vector2 = other[2]
+				if absf(float(oq.c)+o_at.y-float(oq.s)*o_at.x-line) > 2.0: continue
+				var o_lo := o_at.x+float(oq.x0)-here.x
+				var o_hi := o_at.x+float(oq.x1)-here.x
+				if o_lo <= lo+1.0 and o_hi > lo: lo = minf(o_hi,hi)
+				elif o_hi >= hi-1.0 and o_lo < hi: hi = maxf(o_lo,lo)
+		if lo != float(q.x0) or hi != float(q.x1): clips[i] = [lo,hi]
+	return clips
+
+# "castle|path|x|y" of a fitted castle piece's sprite top-left in world pixels, or "" if it is not one.
+func castle_key(e: Dictionary, screen: int) -> String:
+	if int(e.get("type",1)) == 2 or model_key(e) != "castle": return ""
+	var d: Dictionary = host._frame(int(e.get("pseq",e.get("seq",0))),int(e.get("pframe",e.get("frame",1))))
+	var o := screen_origin(screen)
+	return "castle|%s|%d|%d" % [frame_path(e),int(o.x+float(e.get("x",0))-float(d.get("dx",0))),int(o.y+float(e.get("y",0))-float(d.get("dy",0)))]
+
+# A castle piece fitted from its sprite (scripts/sprite_buildings.gd castle: a prism of wall or a round tower)
+# stands in 3D where the fixed card stood: its model has its sprite's top-left for origin, its ray body is its
+# faces' (as a house's); movement still reads the source hardbox (game.gd). One placed twice at a spot, or on two
+# screens, is built once (the current screen's own placement wins, as for houses).
+func add_castle_piece(node: Node3D, e: Dictionary, id: int, screen: int, collision: bool) -> void:
+	var key := castle_key(e,screen)
+	var own: bool = screen == host.current_screen and id != 0
+	if fitted_built.has(key):
+		var holder: Variant = fitted_built[key]
+		if holder == null and not own: return
+		if holder != null and is_instance_valid(holder) and not holder.is_queued_for_deletion(): return
+	fitted_built[key] = node
+	var d: Dictionary = host._frame(int(e.get("pseq",e.get("seq",0))),int(e.get("pframe",e.get("frame",1))))
+	var model: Node3D = buildings.castle(frame_path(e),castle_clips(e,screen))
+	model.name = "Model"
+	model.position = Vector3(-float(d.get("dx",0))*SCALE,0,-float(d.get("dy",0))*SCALE)
+	node.add_child(model)
+	if collision and e.get("warp") == null: node.add_child(ray_body(model,id))
+	node.set_meta("height",model_height(model))
+	node.set_meta("castle",true)
 
 # What a house draws, for its cache key: the same parts give the same textures.
 func parts_signature(parts: Dictionary) -> String:
@@ -1350,7 +1477,8 @@ func add_billboard(node: Node3D, e: Dictionary, id: int, key: String, collision:
 	node.set_meta("actor",actor)
 	node.set_meta("billboard",true)
 	sp.set_meta("screen",screen)
-	if not (fence or "/struct/" in lower): settle_depth(sp,e)
+	# A door or gate drawn in a castle wall is drawn over it (the wall's hull is in plan_hulls: castle_pieces).
+	if not (fence or ("/struct/" in lower and not ("/cdoor" in lower or "/cgate" in lower))): settle_depth(sp,e)
 	if actor: update_billboard(sp,e)
 	var passable_fence := key == "fence" and int(e.get("hard",0)) != 0
 	if not collision or passable_fence or e.get("warp") != null: return
@@ -1366,7 +1494,7 @@ func add_billboard(node: Node3D, e: Dictionary, id: int, key: String, collision:
 		# On the source hardbox, as the stand-ins' bodies were.
 		var rect: Rect2 = hard_rect(e)
 		box.size = Vector3(maxf(0.2,rect.size.x*SCALE),height,maxf(0.2,rect.size.y*SCALE))
-		shape.position = point(rect.get_center().x,rect.get_center().y)-point(float(e.get("x",320)),float(e.get("y",200)))
+		shape.position = point(rect.get_center().x,rect.get_center().y)-node.position
 	else:
 		var width := maxf(0.3,float(texture.get_width())*SCALE*factor)
 		box.size = Vector3(width,height,minf(width,0.6))
@@ -1484,7 +1612,17 @@ func place_on_surface(node: Node3D, sp: Sprite3D, e: Dictionary, d: Dictionary, 
 		var hit: Array = buildings.ray_hit(facades[frame_path(h)],world_foot.x-rect.position.x,world_foot.y-rect.position.y)
 		if hit.is_empty() or float(hit[0]) <= 0.5: continue
 		if best.is_empty() or float(hit[0]) > float(best[0]): best = [float(hit[0])]
-	if best.is_empty(): return
+	if best.is_empty():
+		# A door or gate drawn in a castle wall stands on the wall's base, anchored by its foot: the art's hotspot lies
+		# above the foot (cdoor-01: 40 px), and a card standing at the hotspot sinks its lower rows under the ground. The
+		# picture from the original camera is the same; settle_depth then draws it over the wall.
+		var lower := frame_path(e).to_lower()
+		if "/cdoor" in lower or "/cgate" in lower:
+			node.position = point(world_foot.x-o.x,world_foot.y-o.y)
+			node.set_meta("surface_position",node.position)
+			sp.set_meta("on_surface",true)
+			sp.set_meta("castle_door",true)
+		return
 	var height: float = best[0]
 	# The hit point (x, Y, y + Y): its ground point lies Y deeper than the foot's screen y.
 	var at := world_foot+Vector2(0,height)-o
@@ -1614,7 +1752,7 @@ func world_to_scene(world_px: Vector2) -> Vector2:
 
 # Settle sp's depth rule for where its entity stands now (a sprite that moves is settled again).
 func settle_depth(sp: Sprite3D, e: Dictionary) -> void:
-	if interior or sp.texture == null or sp.has_meta("on_surface") or not is_instance_valid(sp.get_parent()): return
+	if interior or sp.texture == null or (sp.has_meta("on_surface") and not sp.has_meta("castle_door")) or not is_instance_valid(sp.get_parent()): return
 	var factor := maxf(0.01,float(e.get("size",100))/100.0)
 	var half := float(sp.texture.get_width())/2.0*factor
 	var sig := Vector3(float(e.get("x",0)),float(e.get("y",0)),half)

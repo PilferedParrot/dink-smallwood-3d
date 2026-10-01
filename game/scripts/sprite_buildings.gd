@@ -841,3 +841,193 @@ func _dormer(surfaces: Array, dm: Dictionary) -> void:
 				st.set_uv(Vector2(float(uv[k][0]), float(uv[k][1])) / size)
 				st.add_vertex(Vector3(float(pts[k][0]), float(pts[k][1]), float(pts[k][2]))*S)
 	surfaces.append([st.commit(), ImageTexture.create_from_image(img)])
+
+# --- The castle (docs/DIRECTION.md, tenth pass) --------------------------------------------------
+# A castle sprite (struct/Castle, frames 1-4 and 6-9) is a piece of wall or a tower, fitted by
+# tools/facade_fit.py castle_fit (prototype/facades.json "_walls", by sprite path). Vertices are in the
+# sprite's own pixel frame (x east, z = screen y at ground level, Y up) times S, so a piece's origin is its
+# sprite's top-left, as a house's. Every face is textured by projecting the sprite back through the
+# original camera, UV = (x, z - Y), exact on planes; a face the camera never saw takes the point mirror
+# of the one it did (through the prism's centre, the tower's axis).
+#   wall:  a prism on the drawn base line (x, s x + c): the front face up to the walkway at height hw, the
+#          walkway (a band tv deep behind it), the far face (the front mirrored), the two end cuts
+#          (vertical planes x = x0, x1: where the sprite is cut), and the parapet: a thin crenellated
+#          wall of the sprite's own alpha on the walkway's far edge (parapet "back") or near edge
+#          ("front": the outer face, which hides the walkway; its walkway comes from the sibling
+#          sprite's, the same wall seen from the inside).
+#   tower: an elliptic cylinder (the art draws a ground circle as an ellipse, the 1:1 ground's rhombi
+#          again): a narrower plinth (radius a, to h1), the body (radius ar, to the platform at h3), the
+#          platform, and the parapet around it (m high, alpha-cut). The far half takes the point-mirrored
+#          front; the parapet, seen from the inside on the far side, is projected as drawn.
+var castle_cache: Dictionary = {} # sprite path -> [[mesh, texture or material], ...]
+var castle_textures: Dictionary = {} # sprite path -> [solid ImageTexture, cut ImageTexture]
+const CASTLE_SEGMENTS := 48
+
+func castle_fit(path: String) -> Dictionary:
+	var walls: Variant = facades.get("_walls", {})
+	if walls is Dictionary and (walls as Dictionary).has(path) and walls[path] is Dictionary: return walls[path]
+	return {}
+
+# The sprite's texture without holes (the pixels the shadow dither and the empty air leave are filled
+# from their nearest drawn neighbours) for the solid faces, and with its own alpha (dither cleared) for
+# the parapet's strips: the colours there are the filled ones, so a merlon's edge does not blend with the
+# empty pixels' black.
+func castle_images(path: String) -> Array:
+	if castle_textures.has(path): return castle_textures[path]
+	var src := image(path)
+	var solid := filled(src)
+	var dither := dither_mask(src)
+	var cut := solid.duplicate() as Image
+	var data := cut.get_data()
+	var sd := src.get_data()
+	for p in dither.size():
+		data[p*4+3] = 255 if sd[p*4+3] >= 128 and dither[p] == 0 else 0
+	cut.set_data(src.get_width(), src.get_height(), false, Image.FORMAT_RGBA8, data)
+	var out := [_texture(solid), _texture(cut)]
+	castle_textures[path] = out
+	return out
+
+func _castle_cut_material(t: ImageTexture) -> StandardMaterial3D:
+	var m := StandardMaterial3D.new()
+	m.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	m.albedo_texture = t
+	m.texture_filter = BaseMaterial3D.TEXTURE_FILTER_NEAREST_WITH_MIPMAPS
+	m.cull_mode = BaseMaterial3D.CULL_DISABLED
+	m.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA_SCISSOR
+	m.alpha_scissor_threshold = 0.5
+	return m
+
+# One quad (a, b, c, d in order) with each corner's texture coordinate in sprite pixels.
+func _castle_quad(st: SurfaceTool, pts: Array, uvs: Array, size: Vector2) -> void:
+	for k in [0, 1, 2, 0, 2, 3]:
+		st.set_uv((uvs[k] as Vector2) / size)
+		st.add_vertex((pts[k] as Vector3)*S)
+
+func _proj(p: Vector3) -> Vector2:
+	return Vector2(p.x, p.z - p.y)
+
+func _castle_wall(q: Dictionary, size: Vector2, solid: SurfaceTool, cut: SurfaceTool, top: SurfaceTool, top_size: Vector2) -> void:
+	var x0 := float(q.x0)
+	var x1 := float(q.x1)
+	var s := float(q.s)
+	var c := float(q.c)
+	var hw := float(q.hw)
+	var tv := float(q.tv)
+	var yt := float(q.get("y_top", hw))
+	var xm := (float(q.get("m0", x0)) + float(q.get("m1", x1)))/2.0 # the unclipped centre: the far face's mirror
+	var zc := s*xm + c - tv/2.0
+	var P := func(x: float, y: float, off: float) -> Vector3: return Vector3(x, y, s*x + c - off)
+	var mirrored := func(p: Vector3) -> Vector2: return _proj(Vector3(2.0*xm - p.x, p.y, 2.0*zc - p.z))
+	# The front face, to the walkway.
+	var f: Array = [P.call(x0, 0.0, 0.0), P.call(x1, 0.0, 0.0), P.call(x1, hw, 0.0), P.call(x0, hw, 0.0)]
+	_castle_quad(solid, f, f.map(_proj), size)
+	# The far face: the front mirrored through the centre.
+	var b: Array = [P.call(x0, 0.0, tv), P.call(x1, 0.0, tv), P.call(x1, hw, tv), P.call(x0, hw, tv)]
+	_castle_quad(solid, b, b.map(mirrored), size)
+	# The walkway.
+	var w: Array = [P.call(x0, hw, 0.0), P.call(x1, hw, 0.0), P.call(x1, hw, tv), P.call(x0, hw, tv)]
+	if q.has("sibling"):
+		# Hidden behind the parapet in this sprite: the sibling's, whose base line lies dz above this one's.
+		var dz := float(q.dz)
+		_castle_quad(top, w, w.map(func(p: Vector3) -> Vector2: return Vector2(p.x, p.z + dz - hw)), top_size)
+	else:
+		_castle_quad(solid, w, w.map(_proj), size)
+	# The ends, where the sprite is cut.
+	for x in [x0, x1]:
+		var e: Array = [P.call(x, 0.0, 0.0), P.call(x, 0.0, tv), P.call(x, hw, tv), P.call(x, hw, 0.0)]
+		_castle_quad(solid, e, e.map(_proj), size)
+	# The parapet: a strip standing on the walkway's far or near edge, with the sprite's own alpha.
+	var off := tv if str(q.parapet) == "back" else 0.0
+	if str(q.parapet) != "none":
+		var pp: Array = [P.call(x0, hw, off), P.call(x1, hw, off), P.call(x1, yt, off), P.call(x0, yt, off)]
+		_castle_quad(cut, pp, pp.map(_proj), size)
+
+func _castle_tower(q: Dictionary, size: Vector2, solid: SurfaceTool, cut: SurfaceTool) -> void:
+	var cx := float(q.cx)
+	var cz := float(q.cz)
+	var a := float(q.a)
+	var asp := float(q.k) # the ground ellipse's aspect b / a
+	var b := asp*a
+	var ar := float(q.ar)
+	var br := asp*ar
+	var h1 := float(q.h1)
+	var h3 := float(q.h3)
+	var m := float(q.m)
+	var n := CASTLE_SEGMENTS
+	var ring := func(rx: float, rz: float, t: float, y: float) -> Vector3: return Vector3(cx + rx*cos(t), y, cz + rz*sin(t))
+	# The texture coordinate of a point of the tower's surface: projected if on the front half (z
+	# toward the camera), else through the axis from the front.
+	var uv := func(p: Vector3) -> Vector2:
+		return _proj(p) if p.z >= cz else _proj(Vector3(2.0*cx - p.x, p.y, 2.0*cz - p.z))
+	var flare := float(q.get("flare", 0.0))
+	var h2 := h1 + flare
+	for i in n:
+		var t0 := TAU*float(i)/n
+		var t1 := TAU*float(i + 1)/n
+		var plinth: Array = [ring.call(a, b, t0, 0.0), ring.call(a, b, t1, 0.0), ring.call(a, b, t1, h1), ring.call(a, b, t0, h1)]
+		_castle_quad(solid, plinth, plinth.map(uv), size)
+		if flare > 0.0:
+			# The corbel: the shaft's radius widening to the crown's.
+			var cone: Array = [ring.call(a, b, t0, h1), ring.call(a, b, t1, h1), ring.call(ar, br, t1, h2), ring.call(ar, br, t0, h2)]
+			_castle_quad(solid, cone, cone.map(uv), size)
+		else:
+			# A step: its underside, where the body overhangs the plinth, takes the plinth's own stone just below.
+			var under: Array = [ring.call(a, b, t0, h1), ring.call(a, b, t1, h1), ring.call(ar, br, t1, h1), ring.call(ar, br, t0, h1)]
+			var below: Array = [ring.call(a, b, t0, h1 - 3.0), ring.call(a, b, t1, h1 - 3.0), ring.call(a, b, t1, h1 - 3.0), ring.call(a, b, t0, h1 - 3.0)]
+			_castle_quad(solid, under, below.map(uv), size)
+		var body: Array = [ring.call(ar, br, t0, h2), ring.call(ar, br, t1, h2), ring.call(ar, br, t1, h3), ring.call(ar, br, t0, h3)]
+		_castle_quad(solid, body, body.map(uv), size)
+		# The platform.
+		var disc: Array = [Vector3(cx, h3, cz), ring.call(ar, br, t0, h3), ring.call(ar, br, t1, h3)]
+		for k in 3:
+			solid.set_uv(_proj(disc[k] as Vector3)/size)
+			solid.add_vertex((disc[k] as Vector3)*S)
+		# The parapet: alpha-cut, projected as drawn on both halves.
+		var par: Array = [ring.call(ar, br, t0, h3), ring.call(ar, br, t1, h3), ring.call(ar, br, t1, h3 + m), ring.call(ar, br, t0, h3 + m)]
+		_castle_quad(cut, par, par.map(_proj), size)
+
+# The surfaces of a fitted castle sprite ([[mesh, texture or material], ...]), cached by path.
+func castle_surfaces(path: String, clips: Dictionary = {}) -> Array:
+	var cache_key := path + str(clips)
+	if castle_cache.has(cache_key): return castle_cache[cache_key]
+	var fit := castle_fit(path)
+	var imgs := castle_images(path)
+	var size := Vector2(float(fit.size[0]), float(fit.size[1]))
+	var solid := SurfaceTool.new()
+	solid.begin(Mesh.PRIMITIVE_TRIANGLES)
+	var cut := SurfaceTool.new()
+	cut.begin(Mesh.PRIMITIVE_TRIANGLES)
+	var top := SurfaceTool.new()
+	top.begin(Mesh.PRIMITIVE_TRIANGLES)
+	var top_path := ""
+	var top_size := size
+	var has_cut := false
+	for i in fit.parts.size():
+		var q: Dictionary = fit.parts[i]
+		if clips.has(i):
+			# The part is hidden where a later-drawn piece of the same wall covers it (fp_world.gd castle_clips).
+			q = q.duplicate()
+			q.m0 = q.x0
+			q.m1 = q.x1
+			q.x0 = float(clips[i][0])
+			q.x1 = float(clips[i][1])
+		if str(q.type) == "tower" or str(q.parapet) != "none": has_cut = true
+		if str(q.type) == "tower":
+			_castle_tower(q, size, solid, cut)
+		else:
+			if q.has("sibling"):
+				top_path = str(q.sibling)
+				var sf := castle_fit(top_path)
+				top_size = Vector2(float(sf.size[0]), float(sf.size[1]))
+			_castle_wall(q, size, solid, cut, top, top_size)
+	var surfaces: Array = [[solid.commit(), imgs[0]]]
+	if has_cut: surfaces.append([cut.commit(), _castle_cut_material(imgs[1])])
+	if not top_path.is_empty(): surfaces.append([top.commit(), castle_images(top_path)[0]])
+	castle_cache[cache_key] = surfaces
+	return surfaces
+
+# The piece as a node: origin at its sprite's top-left. `clips`: part index -> [x0, x1], the span of a wall part
+# not hidden by a later-drawn piece (the pieces of a wall overlap where the sprites do: the original draws the
+# later over the earlier, and two coplanar faces must not both be drawn).
+func castle(path: String, clips: Dictionary = {}) -> Node3D:
+	return node_from(castle_surfaces(path, clips))

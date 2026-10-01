@@ -29970,5 +29970,241 @@
     ]
    ]
   }
+ },
+ "_walls": {
+  "assets/graphics/struct/Castle/castl-06.png": {
+   "size": [
+    350,
+    509
+   ],
+   "resid": 0.17,
+   "parts": [
+    {
+     "type": "wall",
+     "x0": 0,
+     "x1": 350,
+     "s": -0.5019,
+     "c": 498.88,
+     "hw": 232.0,
+     "tv": 41.0,
+     "t": 36.64,
+     "parapet": "back",
+     "y_top": 284.8,
+     "u_top": 325.8,
+     "levels": [
+      106.0,
+      57.5,
+      122.5
+     ]
+    }
+   ]
+  },
+  "assets/graphics/struct/Castle/castl-08.png": {
+   "size": [
+    350,
+    505
+   ],
+   "resid": 0.15,
+   "parts": [
+    {
+     "type": "wall",
+     "x0": 0,
+     "x1": 350,
+     "s": 0.484,
+     "c": 325.47,
+     "hw": 233.0,
+     "tv": 40.0,
+     "t": 36.0,
+     "parapet": "back",
+     "y_top": 284.9,
+     "u_top": 324.9,
+     "levels": [
+      81.0,
+      40.6,
+      72.5
+     ]
+    }
+   ]
+  },
+  "assets/graphics/struct/Castle/castl-07.png": {
+   "size": [
+    350,
+    463
+   ],
+   "resid": 0.14,
+   "parts": [
+    {
+     "type": "wall",
+     "x0": 0,
+     "x1": 350,
+     "s": -0.5019,
+     "c": 452.26,
+     "hw": 232.0,
+     "tv": 41.0,
+     "t": 36.64,
+     "parapet": "front",
+     "y_top": 277.6,
+     "u_top": 277.6,
+     "sibling": "assets/graphics/struct/Castle/castl-06.png",
+     "dz": 46.62
+    }
+   ]
+  },
+  "assets/graphics/struct/Castle/castl-09.png": {
+   "size": [
+    350,
+    457
+   ],
+   "resid": 0.15,
+   "parts": [
+    {
+     "type": "wall",
+     "x0": 0,
+     "x1": 350,
+     "s": 0.4841,
+     "c": 277.98,
+     "hw": 233.0,
+     "tv": 40.0,
+     "t": 36.0,
+     "parapet": "front",
+     "y_top": 277.4,
+     "u_top": 277.4,
+     "sibling": "assets/graphics/struct/Castle/castl-08.png",
+     "dz": 47.49
+    }
+   ]
+  },
+  "assets/graphics/struct/Castle/castl-04.png": {
+   "size": [
+    193,
+    384
+   ],
+   "parts": [
+    {
+     "cx": 96.45,
+     "cz": 335.29,
+     "a": 78.55,
+     "ar": 96.65,
+     "h1": 30.0,
+     "flare": 24.0,
+     "h3": 235.8,
+     "m": 52.3,
+     "k": 0.4878,
+     "edge_err": 0.92,
+     "type": "tower"
+    }
+   ]
+  },
+  "assets/graphics/struct/Castle/castl-03.png": {
+   "size": [
+    193,
+    407
+   ],
+   "parts": [
+    {
+     "type": "wall",
+     "x0": 0.0,
+     "x1": 95.92,
+     "s": -0.5019,
+     "c": 395.77,
+     "hw": 232.0,
+     "tv": 41.0,
+     "t": 36.64,
+     "parapet": "none"
+    },
+    {
+     "cx": 95.92,
+     "cz": 334.44,
+     "a": 83.12,
+     "ar": 95.21,
+     "h1": 222.0,
+     "flare": 8.0,
+     "h3": 235.7,
+     "m": 52.3,
+     "k": 0.4878,
+     "edge_err": 3.82,
+     "stub_junction": 59,
+     "type": "tower"
+    }
+   ],
+   "stub": "left"
+  },
+  "assets/graphics/struct/Castle/castl-01.png": {
+   "size": [
+    193,
+    409
+   ],
+   "parts": [
+    {
+     "type": "wall",
+     "x0": 94.1,
+     "x1": 193.0,
+     "s": 0.484,
+     "c": 306.02,
+     "hw": 233.0,
+     "tv": 40.0,
+     "t": 36.0,
+     "parapet": "none"
+    },
+    {
+     "cx": 94.1,
+     "cz": 337.88,
+     "a": 79.88,
+     "ar": 89.94,
+     "h1": 222.0,
+     "flare": 8.0,
+     "h3": 241.6,
+     "m": 52.3,
+     "k": 0.4878,
+     "edge_err": 5.08,
+     "stub_junction": 132,
+     "type": "tower"
+    }
+   ],
+   "stub": "right"
+  },
+  "assets/graphics/struct/Castle/castl-02.png": {
+   "size": [
+    193,
+    429
+   ],
+   "parts": [
+    {
+     "type": "wall",
+     "x0": 0.0,
+     "x1": 92.0,
+     "s": -0.5019,
+     "c": 418.33,
+     "hw": 232.0,
+     "tv": 41.0,
+     "t": 36.64,
+     "parapet": "none"
+    },
+    {
+     "type": "wall",
+     "x0": 92.0,
+     "x1": 193.0,
+     "s": 0.484,
+     "c": 322.4,
+     "hw": 233.0,
+     "tv": 40.0,
+     "t": 36.0,
+     "parapet": "none"
+    },
+    {
+     "cx": 97.5,
+     "ar": 94.0,
+     "h1": 222.0,
+     "h3": 238.6,
+     "m": 52.3,
+     "k": 0.4878,
+     "cz": 336.81,
+     "a": 81.5,
+     "flare": 8.0,
+     "type": "tower"
+    }
+   ],
+   "apex": 92
+  }
  }
 }
