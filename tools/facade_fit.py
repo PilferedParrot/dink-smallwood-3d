@@ -31,7 +31,14 @@ dormers drawn into kit roof panels, as gabled prisms on the roof (dormers, place
 For the backs, which mirror the fronts, door panels are swapped for their door-less twins
 (back_twins).
 
-Usage: /usr/bin/python3 tools/facade_fit.py [--out game/prototype/facades.json] [--sheet DIR]
+Also fitted (castle_fit, written under "_walls"): the castle's walls (struct/Castle castl-06..09) as prisms on their
+drawn base line with a walkway and a parapet strip, and its round towers (castl-01..04) as elliptic cylinders with
+the stub or corner walls some carry; see the section's comment.
+
+Usage: /usr/bin/python3 tools/facade_fit.py [--out game/prototype/facades.json] [--sheet DIR] [--castle-only]
+  --castle-only fits just the castle and adds "_walls" to the existing --out file (about 40 s; every other key stays
+  byte-identical); re-run tools/bake_houses.gd and tools/bake_kit_canvases.gd afterwards (their manifests hold the
+  file's hash; the baked images do not change).
 Verdict (2026-09-29, Opus 5.5): works for seq 63 frames 1, 4, 6, 8; see the sheet for IoU.
 Verdict (2026-09-29, Opus 5.5, second pass): chimneys home-11/12 and the Stonebrook inn
 (screens 472-474, 504-506, 537-538) and the second kit house (kit-538) fit, with one
@@ -43,6 +50,9 @@ Verdict (2026-09-29, Opus 5.5, fourth pass): seq 63 frames 5 and 7 fit jointly w
 twins 4 and 8; the log cabin (seq 59 frame 1) as a gable block with a standing chimney read from
 its foot and top (BUILDINGS); the church (seq 60 frame 1) as nave, chancel, apse, spire and
 buttresses, silhouette IoU 0.956 (built by a Sonnet 5.5 subagent). See DIRECTION.md.
+Verdict (2026-10-01, Sonnet 5.5 subagent): castle_fit fits the eight castle frames 1-4 and 6-9; base lines to 0.2 px,
+the walkway edges to a px (hw 232-233, T 36 px), the plain tower's silhouette to IoU 0.98; the attached towers' edge
+profiles to 4-5 px mean (a stepped corbel where the art flares), the corner tower 02's hidden shaft from the others'.
 """
 from __future__ import annotations
 import argparse, colorsys, json, math
