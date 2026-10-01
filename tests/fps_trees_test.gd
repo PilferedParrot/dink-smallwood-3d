@@ -22,6 +22,12 @@ extends SceneTree
 #             its back wall from the north); the push without its ground cap (the foot goes under the
 #             ground). A check that cannot go red on these is blind.
 #   rail      a camera with no sprite flagged: the rule changes nothing (R equals plain).
+# Actors (tenth pass) are settled like any sprite: a case with "move" is scenario setup that moves a pig (the
+# map has no actor within its half-width of a wall: fp_world.depth_rule over every outdoor screen's actors,
+# vision 0 and 1, finds none) to stand against a house's wall. Its draw-order check is the trees' (over from the
+# open side, under from behind the house), plus two more: the "off" control (the actor as before, left out of the
+# rule) must be cut by the wall from the open side, and the actor's frame changes with the camera, which must keep
+# its depth shader, its shadow twin and its reach in step with the new frame.
 # Verdict: written 2026-10-01 (Sonnet 5.5 subagent); runs 1-2 min under xvfb.
 const GAME = preload("res://scripts/fps_game.gd")
 const FP = preload("res://scripts/fp_world.gd")
@@ -36,6 +42,10 @@ const CASES := [
 		"cams": [[700, 330, -0.3, -0.05, "over"]]},
 	{"name": "497 tree-04 under home-07", "screen": 497, "target": [497, 8, 235], "kind": "under",
 		"cams": [[60, 430, -0.1, -0.05, "under"], [120, 480, 0.3, -0.05, "under"], [8, -65, 3.14, -0.05, "over"]]},
+	# Scenario setup: the pig of the pen (289, 302) stands at the south corner of the village house of screen 439, 11 px
+	# from its south-east wall (the pig is 56 px wide: its half is 28), south of the house: over it, from the open side.
+	{"name": "407 pig at the house's corner (scenario)", "screen": 407, "target": [407, 290, 728], "kind": "over", "move": {"from": [289, 302], "to": [290, 728]},
+		"cams": [[420, 728, 1.5708, -0.05, "over"], [260, 854, -0.234, -0.05, "over"], [150, 700, -1.7682, -0.05, "under"]]},
 	{"name": "407 the pigpen: nothing flagged in view", "screen": 407, "target": [], "kind": "rail",
 		"cams": [[300, 470, 0.0, -0.05, ""]]},
 ]
@@ -188,6 +198,7 @@ func _and(a: PackedByteArray, b: PackedByteArray, invert_b := false) -> PackedBy
 # How the depth rule is switched. "rule" as built; "plain" no shader at all, as before the rule; "zero"
 # the shader with every reach 0 (the push-at-0 control); "wrong" the sides swapped; "blind" the original's
 # order held whatever the camera sees (the prototype's rule); "nocap" the push without its ground cap.
+# "off" is "plain" for the draw-order verdict: no rule at all, as an actor was before the tenth pass.
 # `shadows` false takes every flagged sprite out of the shadow pass.
 var nocap_shader: Shader
 var shadows := true
@@ -219,9 +230,48 @@ func _mode(sprites: Array, saved: Dictionary, mode: String) -> void:
 			"blind": m.set_shader_parameter("normal", Vector2.ZERO)
 			"nocap": m.shader = nocap_shader
 
+# Scenario setup (labelled: it skips the actor's own movement): the actor of the map at `from` stands at `to`.
+func _move_actor(spec: Dictionary) -> void:
+	for id in game.entities.keys():
+		var e: Dictionary = game.entities[id]
+		if id == 1 or absf(float(e.get("x", -999)) - float(spec.from[0])) > 1.0 or absf(float(e.get("y", -999)) - float(spec.from[1])) > 1.0: continue
+		if not (game.fp_world.model_key(e) in FP.ACTORS): continue
+		e.x = float(spec.to[0])
+		e.y = float(spec.to[1])
+		game._update_visual(id)
+		return
+	_fail("no actor stands at %s to be moved" % str(spec.from))
+
+# The actor's frame is the one drawn for its facing as seen from the camera: it changes as the camera turns round
+# it, and so does its width, its reach. After each change its depth shader, its shadow twin and its depth_sig must
+# hold the new frame (a settled reach of the old frame is a wall's cut left on the new one).
+func _actor_frames(c: Dictionary) -> void:
+	var target := _find_target(c.target)
+	if target == null:
+		_fail("%s: the actor is not flagged for its frames" % c.name)
+		return
+	var id := int(target.get_parent().get_meta("entity_id"))
+	var factor := maxf(0.01, float(game.entities[id].get("size", 100)) / 100.0)
+	var paths := {}
+	for yaw in [0.0, PI / 2.0, PI, -PI / 2.0, 0.0]:
+		_set_camera([float(c.target[1]) + 200.0 * sin(yaw), float(c.target[2]) + 200.0 * cos(yaw), yaw, -0.05])
+		game._update_visual(id)
+		var path := str(target.get_meta("path", ""))
+		paths[path] = true
+		var half := float(target.texture.get_width()) / 2.0 * factor
+		var sig: Vector3 = target.get_meta("depth_sig")
+		var m := target.material_override as ShaderMaterial
+		var twin := target.get_node_or_null("ShadowTwin") as Sprite3D
+		var ok: bool = m != null and m.get_shader_parameter("tex") == target.texture and twin != null and twin.texture == target.texture and absf(sig.z - half) < 0.01 and absf(float(m.get_shader_parameter("reach")) - half * 0.025) < 0.0001
+		print("  frame %s yaw %.2f: width %d, reach %.4f m, shader texture %s, twin texture %s" % [path.get_file(), yaw, target.texture.get_width(), float(m.get_shader_parameter("reach")) if m != null else -1.0, "ok" if m != null and m.get_shader_parameter("tex") == target.texture else "STALE", "ok" if twin != null and twin.texture == target.texture else "STALE"])
+		if not ok: _fail("%s: from yaw %.2f the actor's frame %s is not in step (reach %.1f of %.1f px, shader or twin texture)" % [c.name, yaw, path.get_file(), sig.z, half])
+	print("  the actor showed %d different frames" % paths.size())
+	if paths.size() < 2: _fail("%s: the actor kept one frame from every side: the frame check is blind" % c.name)
+
 func _case(c: Dictionary, out_dir: String) -> void:
 	print("CASE ", c.name)
 	await _load(int(c.screen))
+	if c.has("move"): _move_actor(c.move)
 	var sprites := _flagged()
 	var target: Sprite3D = null
 	var saved := {}
@@ -245,6 +295,15 @@ func _case(c: Dictionary, out_dir: String) -> void:
 			return
 		var shift: float = target.get_meta("depth_px")
 		if (kind == "over" and shift >= 0.0) or (kind == "under" and shift <= 0.0): _fail("%s: shift %.1f px has the wrong sign for '%s'" % [c.name, shift, kind])
+		if c.has("move"):
+			print("  the actor: %d px wide, shift %.1f px" % [target.texture.get_width(), shift])
+			_actor_frames(c)
+			# The frames check moved the camera and the actor's frame: settle the saved state again.
+			sprites = _flagged()
+			saved = {}
+			for sp in sprites:
+				var m0 := sp.material_override as ShaderMaterial
+				saved[sp] = [m0, {"reach": m0.get_shader_parameter("reach"), "normal": m0.get_shader_parameter("normal")}, m0.shader, GeometryInstance3D.SHADOW_CASTING_SETTING_ON if sp.get_node_or_null("ShadowTwin") != null else sp.cast_shadow]
 	var houses: Array = []
 	_houses(game.scene_root, houses)
 	# A tree on the border of two screens is drawn by both: hiding "the target" hides every copy.
@@ -255,6 +314,7 @@ func _case(c: Dictionary, out_dir: String) -> void:
 		for sp in all:
 			if sp.global_position.distance_to(target.global_position) < 0.05 and sp.texture == target.texture: group.append(sp)
 	var k := 0
+	var off_cut := 0 # the most the wall cuts the actor with the rule off, over the "over" cameras
 	for cam in c.cams:
 		k += 1
 		var tag := "%s cam %d" % [str(c.name).get_slice(" ", 0), k]
@@ -302,8 +362,8 @@ func _case(c: Dictionary, out_dir: String) -> void:
 		if tm < 200: _fail("%s: the target sprite is not in view (%d px)" % [tag, tm])
 		var verdicts := {}
 		var rule_img: Image = null
-		for mode in ["rule", "wrong", "blind", "nocap"]:
-			_mode(sprites, saved, mode)
+		for mode in ["rule", "wrong", "blind", "nocap", "off"]:
+			_mode(sprites, saved, "plain" if mode == "off" else mode)
 			var m_img := await _grab()
 			var bad := 0
 			if ckind == "over":
@@ -312,6 +372,7 @@ func _case(c: Dictionary, out_dir: String) -> void:
 				bad = _differ_on(m_img, no_target, overlap) # the house must hide the canopy where it shows
 				bad += _differ_on(m_img, hidden_houses, _and(seen_alone, house_shows, true)) # and the rest stands whole
 			verdicts[mode] = bad
+			if mode == "off" and out_dir != "": m_img.save_png(out_dir.path_join(str(c.name).get_slice(" ", 0) + "-" + str(k) + "-OFF.png"))
 			if mode == "rule":
 				rule_img = m_img
 				if out_dir != "":
@@ -324,7 +385,8 @@ func _case(c: Dictionary, out_dir: String) -> void:
 					for i in wrong_px.size():
 						if wrong_px[i] == 1 and (seen_alone[i] == 1): viz.set_pixel(i % viz.get_width(), i / viz.get_width(), Color(1, 0, 0.8))
 					viz.save_png(out_dir.path_join(tag_name + "-viol.png"))
-		print("  %s (%s): draw-order violations: rule %d, sides swapped %d, original order held from any camera %d, push without its cap %d" % [tag, ckind, verdicts.rule, verdicts.wrong, verdicts.blind, verdicts.nocap])
+		print("  %s (%s): draw-order violations: rule %d, sides swapped %d, original order held from any camera %d, push without its cap %d, rule off %d" % [tag, ckind, verdicts.rule, verdicts.wrong, verdicts.blind, verdicts.nocap, verdicts.off])
+		if c.has("move") and ckind == "over": off_cut = maxi(off_cut, int(verdicts.off))
 		var tol := maxi(4, int(0.005 * float(maxi(_count(overlap), tm)))) # raster edges: 0.5% of the area
 		if verdicts.rule > tol: _fail("%s: the rule as built violates the draw order at %d px" % [tag, verdicts.rule])
 		var informative := ckind == "over" or _count(overlap) > 100
@@ -374,3 +436,7 @@ func _case(c: Dictionary, out_dir: String) -> void:
 		print("  %s: shadows: %d px of shadow beyond the sprites in view; rule vs plain differ there on %d px" % [tag, shadow_px, shadow_moved])
 		if shadow_moved > 16: _fail("%s: the depth shift moved a shadow (%d px)" % [tag, shadow_moved])
 		_mode(sprites, saved, "rule")
+	if c.has("move"):
+		print("  with the rule off the wall cuts the actor at most %d px from the open side" % off_cut)
+		# The actor as it was before the tenth pass (left out of the rule) is cut by the wall from the open side.
+		if off_cut < 20: _fail("%s: with the rule off no wall cuts the actor (%d px): the check is blind" % [c.name, off_cut])

@@ -1312,7 +1312,6 @@ func add_billboard(node: Node3D, e: Dictionary, id: int, key: String, collision:
 # _face_actors).
 func update_billboard(sp: Sprite3D, e: Dictionary) -> void:
 	if sp.has_meta("static"): return
-	if sp.has_meta("depth_sig"): settle_depth(sp,e)
 	var seq := int(e.get("seq",0))
 	var frame := int(e.get("frame",1))
 	if seq == 0:
@@ -1340,9 +1339,13 @@ func update_billboard(sp: Sprite3D, e: Dictionary) -> void:
 	var path := str(d.get("path",""))
 	sp.pixel_size = SCALE*maxf(0.01,float(e.get("size",100))/100.0)
 	sync_twin(sp)
-	if path.is_empty() or path == str(sp.get_meta("path","")): return
-	var texture := clean_texture(path)
-	if texture != null: set_sprite_texture(sp,path,texture,d)
+	if not path.is_empty() and path != str(sp.get_meta("path","")):
+		var texture := clean_texture(path)
+		if texture != null: set_sprite_texture(sp,path,texture,d)
+	# Settled for the frame it shows now: its half-width is the sprite's reach, and an actor's frame (and its
+	# width) changes with where it stands and where the camera looks. The texture, the depth shader's and the
+	# shadow twin's, is the new frame's by now (set_sprite_texture).
+	if sp.has_meta("depth_sig"): settle_depth(sp,e)
 
 # The texture of frame `d`, anchored at its hotspot (the prototype's _set_anchor).
 func set_sprite_texture(sp: Sprite3D, path: String, texture: Texture2D, d: Dictionary) -> void:
@@ -1442,8 +1445,9 @@ func place_on_surface(node: Node3D, sp: Sprite3D, e: Dictionary, d: Dictionary, 
 # trunk's foot is never pushed under the ground (which moving the sprite did), and a pull at 0.9 of
 # its distance from the camera. A fragment below the ground (the rows an art draws under its hotspot)
 # is not shifted at all: the ground hides it as before, and the shift moves only what the buildings do.
-# A moving sprite is settled again when it moves; actors are left to the walls' hardness (their
-# frames change with the camera, and they are not trees).
+# A moving sprite is settled again when it moves or when its frame changes its width (depth_sig holds its
+# hotspot and its half-width): an actor standing against a wall is not cut by it either, from the side it
+# stands on.
 # Compatibility renderer: window depth = NDC z * 0.5 + 0.5. With the reach at 0 the sprite equals the
 # plain one's pixels (tests/fps_trees_test.gd checks it).
 const DEPTH_SHADER := """shader_type spatial;
@@ -1530,7 +1534,6 @@ func world_to_scene(world_px: Vector2) -> Vector2:
 # Settle sp's depth rule for where its entity stands now (a sprite that moves is settled again).
 func settle_depth(sp: Sprite3D, e: Dictionary) -> void:
 	if interior or sp.texture == null or sp.has_meta("on_surface") or not is_instance_valid(sp.get_parent()): return
-	if str(sp.get_parent().get_meta("model_key","")) in ACTORS: return
 	var factor := maxf(0.01,float(e.get("size",100))/100.0)
 	var half := float(sp.texture.get_width())/2.0*factor
 	var sig := Vector3(float(e.get("x",0)),float(e.get("y",0)),half)
