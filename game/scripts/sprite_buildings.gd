@@ -55,10 +55,14 @@ func frame_data(seq: int, frame: int) -> Dictionary:
 func sprite_frame(s: Dictionary) -> Dictionary:
 	return frame_data(int(s.get("pseq",s.get("seq",0))), int(s.get("pframe",s.get("frame",1))))
 
+# A private copy of the sprite's pixels: callers paint into it (a house's canvas, a chimney's crop). Under
+# the headless (dummy) renderer get_image() returns the texture's own stored Image, so painting into it
+# changed the sprite for every later caller: the house bake (tools/bake_houses.gd, headless) composed each
+# house's back from a canvas that already held its doors, and the game drew those doors on the backs.
 func image(path: String) -> Image:
 	var t := tex(path)
 	if t == null: return null
-	var img := t.get_image()
+	var img := t.get_image().duplicate() as Image
 	if img.is_compressed(): img.decompress()
 	img.convert(Image.FORMAT_RGBA8)
 	return img
