@@ -16,7 +16,9 @@ camera from its own shot file at its 1.6 m eye and 75 degree field of view. Each
 source pixels, so the two game columns differ in scale (0.06 m/px then, 0.025 now) as they ship.
 Renders under xvfb with the Dummy audio driver (llvmpipe, no GPU). Both checkouts need their Godot
 import done.
-Verdict (2026-09-30, Opus 5.5): used for docs/images/buildings-sept30.jpg.
+Verdict (2026-09-30, Opus 5.5): used for docs/images/buildings-sept30.jpg, and (ninth pass, with
+--old-label, the INLINE prop views and the PROPS views) for docs/images/props-sept30.jpg.
+    --only-inline renders only INLINE, --props only PROPS: quick looks.
 """
 from __future__ import annotations
 import argparse, json, math, os, subprocess, sys, tempfile
@@ -36,7 +38,18 @@ EXTRA = [('church-219.json', 's188-4-front'), ('cabin-270.json', 's270-6-front')
          ('kit-419.json', 'kit-417-back'), ('kit-586.json', 'kit-587-front')]
 # kit-417's front from the walled street south of it (450), which the game took for an interior
 # until the eighth pass: (tag, world camera, world look point).
-INLINE = [('kit-417-street', (1100.0, 5700.0), (1100.0, 5300.0))]
+INLINE = [('kit-417-street', (1100.0, 5700.0), (1100.0, 5300.0)),
+          # The props round the pigpen (the prototype's own shots of 407, in world pixels): its
+          # rail fences, pigs, trees and rocks, and the village street east of Dink's cottage.
+          ('pen-from-south', (13480.0, 5270.0), (13480.0, 5020.0)),
+          ('pen-inside', (13380.0, 5100.0), (13560.0, 5030.0)),
+          ('village-east', (13740.0, 5360.0), (14180.0, 5360.0))]
+# Props that had Blender stand-ins until the ninth pass (--props): tools leaning on a house (440),
+# boxes and a bush (499), the save machine (408), and two villagers (402).
+PROPS = [('tools-440', (14240.0, 5690.0), (14240.0, 5490.0)),
+         ('boxes-499', (11150.0, 6200.0), (10995.0, 6325.0)),
+         ('save-408', (13913.0, 5140.0), (13913.0, 4959.0)),
+         ('people-402', (10420.0, 5190.0), (10420.0, 5050.0))]
 
 
 def extra_views():
@@ -46,7 +59,7 @@ def extra_views():
     for fname, tag in EXTRA:
         shots = {s[0]: s for s in json.loads((ROOT / 'tools/shots' / fname).read_text())}
         views.append(shots[tag])
-    views += [[tag, list(pos), list(look)] for tag, pos, look in INLINE]
+    views += [[tag, list(pos), list(look)] for tag, pos, look in INLINE + PROPS]
     for tag, (wx, wy), (lx, ly) in views:
         col, row = int(wx // 600), int(wy // 400)
         n = row * 32 + col + 1
@@ -100,19 +113,24 @@ def main():
     ap.add_argument('old', type=Path)
     ap.add_argument('--out', default=str(ROOT / 'docs/images/buildings-sept30.jpg'))
     ap.add_argument('--work', default=str(ROOT / 'tmp/building-sheet'))
+    ap.add_argument('--old-label', default='old game', help="the first column's label")
+    ap.add_argument('--only-inline', action='store_true', help='only the INLINE views (a quick look)')
+    ap.add_argument('--props', action='store_true', help='only the PROPS views')
     args = ap.parse_args()
     work = Path(args.work); work.mkdir(parents=True, exist_ok=True)
     world = json.loads((ROOT / 'game/data/world.json').read_text())
     seqs = json.loads((ROOT / 'game/data/sequences.json').read_text())['sequences']
     fac = json.loads((ROOT / 'game/prototype/facades.json').read_text())
     plan = {}  # screen -> [(tag, cam, yaw, pitch)]
-    for n, name, side in cs.SHOTS:
+    for n, name, side in ([] if args.only_inline or args.props else cs.SHOTS):
         start, wall, inward = cs.approach(world, seqs, fac, n, name, side)
         yaw = math.atan2(-inward[0], -inward[1])
         for d in (NEAR, WIDE):
             cam = (wall[0] - inward[0] * d, wall[1] - inward[1] * d)
             plan.setdefault(n, []).append((f'{name}-{side}-{d}', cam, yaw, PITCH[d]))
     for n, tag, cam, yaw, pitch in extra_views():
+        if args.only_inline and tag not in [t for t, *_ in INLINE]: continue
+        if args.props and tag not in [t for t, *_ in PROPS]: continue
         plan.setdefault(n, []).append((tag, cam, yaw, pitch))
     rows = []
     for n, shots in plan.items():
@@ -120,7 +138,7 @@ def main():
         proto_capture(n, shots, proto)
         for tag, cam, yaw, pitch in shots:
             imgs = []
-            for label, checkout in (('old game', args.old), ('game now', ROOT)):
+            for label, checkout in ((args.old_label, args.old), ('game now', ROOT)):
                 png = work / f'{n}-{tag}-{label.replace(" ", "-")}.png'
                 game_capture(checkout, n, cam, yaw, pitch, png)
                 imgs.append(cell(png, f'{label}: {n} {tag}, camera ({cam[0]:.0f}, {cam[1]:.0f})'))

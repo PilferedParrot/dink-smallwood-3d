@@ -30,7 +30,10 @@ func _run() -> void:
 	check(is_equal_approx(game.camera.position.y, EYE_HEIGHT), "Camera eye height is 1.65m at rest")
 	check(is_equal_approx(game.camera.position.x, (float(game.entities[1].x)-320.0)*SCALE), "Camera follows source x coordinate")
 	check(is_equal_approx(game.camera.position.z, (float(game.entities[1].y)-200.0)*SCALE), "Camera follows source y coordinate")
-	check(not _contains_sprite3d(game.scene_root), "Active FPS scene contains no Sprite3D nodes")
+	check(not _stray_sprite3d(game.scene_root), "Active FPS scene draws sprites only as fp_world's depth-tested billboards")
+	check(_billboard_count(game.scene_root) > 0, "The opening screens draw their original sprites")
+	var stand_ins := _stand_ins(game.scene_root)
+	check(stand_ins.is_empty(), "Nothing that is not a building keeps a stand-in model: %s" % [stand_ins])
 	check(_mesh_count(game.scene_root) > 0, "Active FPS scene contains rendered 3D geometry")
 	check(_body_count(game.scene_root) > 0, "Active FPS scene contains solid 3D bodies")
 	# Aim rays respect the actor's vertical hit band, so looking over or under
@@ -154,10 +157,33 @@ func _run() -> void:
 	else: print("FPS FAILURES: ", failures)
 	quit(0 if failures.is_empty() else 1)
 
-func _contains_sprite3d(node: Node) -> bool:
+# Sprites are drawn only as fp_world's billboards (docs/DIRECTION.md supersedes the old "no
+# Sprite3D" rule): depth-tested, each the "Model" of an entity visual. A Sprite3D anywhere else, or
+# without the depth test, is the 2D renderer's leaking into the 3D scene.
+func _stray_sprite3d(node: Node) -> bool:
 	for child in node.get_children():
-		if child is Sprite3D or _contains_sprite3d(child): return true
+		if child is Sprite3D:
+			var parent := child.get_parent()
+			if (child as Sprite3D).no_depth_test or child.name != "Model" or not parent.get_meta("billboard", false): return true
+		if _stray_sprite3d(child): return true
 	return false
+
+func _billboard_count(node: Node) -> int:
+	var count := 0
+	for child in node.get_children():
+		if child is Sprite3D: count += 1
+		count += _billboard_count(child)
+	return count
+
+# Visuals of things that are not buildings whose model is not their sprite (a Blender stand-in).
+func _stand_ins(node: Node) -> Array:
+	var out: Array = []
+	for child in node.get_children():
+		var key := str(child.get_meta("model_key", ""))
+		var model: Node = child.get_node_or_null("Model")
+		if model != null and game.fp_world.sprite_drawn(key) and not model is Sprite3D: out.append("%s:%s" % [child.name, key])
+		out.append_array(_stand_ins(child))
+	return out
 
 func _mesh_count(node: Node) -> int:
 	var count := 0

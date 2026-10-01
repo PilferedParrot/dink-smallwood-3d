@@ -933,3 +933,114 @@ Mother's visibility, the grief cameras, the hearth) pass.
    drawn on. `add_story_fire` puts its own flames on the roof.
 7. The prototype's open building defects carry over: home-10's core roof sits a few px low (318),
    and the footprints are still rhombic.
+
+## The props are their sprites, and the 5×5 block — September 30, ninth pass (Opus 5.5)
+
+The eighth pass's defects 2 and 3. Evidence: `docs/images/props-sept30.jpg`. Each row is one camera,
+in the game before this pass (fb244ac), in the game now, and in the prototype. The first nineteen rows
+are the eighth pass's cameras. Then come the walled street south of kit-417, three of the prototype's
+own pigpen and village shots (407, 439), and four new views of props that had stand-ins: tools leaning
+on a house (440), boxes and a bush (499), the save machine (408), and the castle with two knights (402).
+`docs/images/story-fire-sept30.jpg` shows Dink's cottage burning (vision 1), before and now.
+
+**Everything that is not a building is its sprite.** `fp_world.make_entity` draws it as the
+prototype's `_add_sprite` does (`add_billboard`):
+- At its hotspot, 0.025 m per pixel times its `size`, unshaded, with the art's own light.
+- The shadow dither is removed from the upright sprite (`clean_texture`, the prototype's `clean()`).
+- Props, trees and actors are Y-axis billboards. Fences, outdoor stone walls, castle walls (`tower`)
+  and any sprite over 100 px wide keep the orientation they were drawn in, facing the original viewer.
+- A fence post column drawn along the depth axis is the side-view rail (seq 93 frame 1) turned 90°.
+- Every frame, `update_visual` shows the frame the 2D game would show: the entity's animation, else its
+  still frame. A directional actor (walk, idle or attack, directions 1–9) shows the frame drawn for its
+  facing as seen from the camera (`update_billboard`, the prototype's `_face_actors`). So pigs, ducks,
+  villagers, knights and the fire animate in their own frames. The Blender limbs and bobbing are gone
+  for them.
+- The ray body (aim, projectiles, dialogue cameras) is the sprite's width and drawn height; fences and
+  walls keep theirs on the source hardbox. Movement is unchanged: it reads the source data only
+  (`game.gd _blocked`).
+- These keep their 3D build (`BUILT`): fitted and unfitted houses, bridges, doors, stairs, interior
+  furniture, interior walls, and the arrow.
+
+**Background sprites are painted into the ground** (`paint_background`), as the original engine and
+the prototype do. That covers type 0 sprites that are not structures: rocks, grass, the walled street's
+paving, the ground details. One with an upright twin at the same spot is left to the twin. A sprite the
+story left as background (`editor_type` 3 or 5, a kill left lying) is painted too, as `load_map` types
+it. The ground texture is cached by the list of sprites painted into it, so a story change to them
+recomposes it on the next load. Sprites a kit building draws (`kit_member`, its
+`members` in facades.json) get no model of their own, as in the prototype. The walled streets' plaster
+boxes were these. A scripted piece without a warp (the talking door of 497, 505's s4-md3) keeps the
+unseen body a house part keeps, so it can still be talked to and hit.
+
+**The burning cottage** (vision 1): `add_story_fire`'s flames on the roof are the original fire
+(seq 427, fire1), playing its ten frames (`story_flame`), not orange cones. The fire's hotspot lies
+21 px below its drawn flames, where the raised view puts the ground under the roof. Anchored there,
+the first build floated the flames above the roof (seen in the playtest's alktree-fire shot). On a
+roof spot, the frame's bottom centre is now the anchor.
+
+**The 5×5 block.** `build_ground` now builds the screen and its 24 neighbours, as the prototype does and
+as `house_plan` already gathered. At 0.025 m/px a 3×3 block ended the world one screen (15 m) from the
+screen's edge. The sheet shows the gain on 439 (village-east) and 472, where houses two screens away
+now stand where the prototype has them. Neighbours still show no actors.
+
+**Tests.** `tests/fps_test.gd` and `tests/fps_world_test.gd` asserted "no Sprite3D": the rule this file
+supersedes. They now assert that sprites are drawn only as fp_world's depth-tested billboards, each the
+`Model` of an entity (the 2D renderer's sprites must not leak in). fps_test also asserts that the
+opening screens draw sprites, and that no sprite-drawn key keeps a stand-in model.
+`tests/fps_capture.gd` takes `--vision=N` (scenario setup, for the fire sheet).
+`tools/building_sheet.py` takes `--old-label`, `--only-inline` and `--props`, and has the new views.
+
+**Verification.**
+- Looked at first: every row of the sheet. The fences, pigs, trees, bushes, barrels, boxes, the rake on
+  Ethel's wall, the save machine, the castle, the knights and the stone walls are the prototype's, from
+  the same cameras. No stand-in remains on the sheet except the arrow, bridges and the four unfitted
+  `/Building/` cottages, none of which are in view.
+- `pytest`: 81 passed, 1 skipped, with every change in (`.venv/bin/python -m pytest -q tests`, run
+  with the input devices hidden).
+- No timings. The GPUs were shared tonight, and every render was llvmpipe under xvfb. The cost of
+  `clean_texture` on a sprite's first use, and of the 16 extra neighbour screens, is not measured.
+- Every Godot run used the Dummy audio driver.
+- The letter campaign (`tools/playtest.py --mode campaign --milestone letter --rendered
+  --max-commands 5000`) runs from Begin adventure to Aunt Maria's letter, with real input. It passes
+  in 3,686 commands, and in 3,045 after the background and roof-flame fixes. fb244ac, run alongside
+  the first under the same conditions, passes in 3,666. That last run came before the scripted kit
+  pieces got their bodies (above); after that change, pytest and the wall, world and reload tests
+  pass again. It found no stuck player.
+- `tools/playtest.py --rendered` opens its Godot window on the session's own display: it has no Xvfb
+  of its own. Run it under `xvfb-run`, and with the machine's input devices hidden (`bwrap --dev-bind
+  / / --tmpfs /dev/input --tmpfs /tmp --unshare-net xvfb-run -a ...`). The first three runs tonight
+  went to the desktop. Each stopped at a pause menu that opened in the middle of a walk or a wait,
+  at a different place each time: input from the desktop reached the game window. They were
+  harness faults ("inconclusive"), not game failures, and are not counted.
+
+**Judgment.** At eye level the props are now Dink's own: the rail fences with their yellow ties, the
+pigs, the trees, the bushes, the barrels, the rake on Ethel's wall, the boxes and the save machine. The
+stone walls of the walled streets and the castle are the drawn stones, not plaster boxes. From the same
+cameras, the game and the prototype now differ mainly in the lighting, the fog, the procedural grass
+blades and the viewmodel. The Blender stand-ins read as a different game. These read as Dink.
+
+**Defects I see, in order:**
+1. The procedural grass blades (`add_grass`) still cover the original tile art on every outdoor
+   screen. The original and the prototype have none. The structural change says "the original tile
+   art everywhere". This is the largest remaining difference on the sheet.
+2. Neighbour screens draw no actors. 407's pigs are missing from 439's view of the pen
+   (pen-from-south), as before.
+3. The story fire's source flames (fire1, eighth pass defect 6) stand at their hotspots. They are now
+   tall animated fire sprites on the ground in front of the cottage, more visible than the cones were.
+4. Structures drawn as one wide fixed card read as cardboard up close: the well by the save machine
+   (408), and the castle walls seen obliquely. The prototype does the same. They need the houses'
+   treatment, fitted to stand in 3D.
+5. The prototype moves or depth-pushes billboards whose canopy overlaps a building (`_flag_nudge`,
+   `_push_back`). That is not ported, though no case shows on the sheet.
+6. Billboards cast no shadow and have no blob shadow under them (the prototype's open item 3). Fixed
+   cards do cast one.
+7. At 74 px, the game draws a door on walls where the prototype draws none: 439's back, 409's front,
+   440's back. It did so before this pass too, and it was not investigated.
+8. Bridges and the four unfitted `/Building/` cottages keep their Blender models. Interiors keep their
+   box walls and Blender furniture.
+9. Not measured: the load cost of `clean_texture` on a sprite's first use, and of the 16 extra
+   neighbour screens.
+
+**Next step:** measure `load_map` and frame time for 439, 440 and 505 with `tests/fps_perf.gd`, on a
+quiet machine, before and after this pass. If the 5×5 block costs too much, bake the cleaned sprite
+textures as the kits are baked. Then remove the procedural grass blades (defect 1), and port
+`_flag_nudge`/`_push_back` (defect 5).

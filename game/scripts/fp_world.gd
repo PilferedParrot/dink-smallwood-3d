@@ -35,6 +35,21 @@ var plan_key := "" # scene, screen and story layer the plan below was gathered f
 var plan_claimed: Dictionary = {} # "screen:index" -> true: sprites a fitted house draws (itself, its parts)
 var plan_parts: Dictionary = {} # fitted_key -> the parts it draws (sprite_buildings.gd gather)
 var sprite_heights: Dictionary = {} # sprite path -> drawn height above its hotspot, px
+# Everything that is not a building is the original sprite itself, drawn as the prototype draws it
+# (prototype/sprite_world_proto.gd _add_sprite; docs/DIRECTION.md, ninth pass): upright sprites
+# stand at their hotspots as Y-axis billboards, directional actors pick their frame from the camera
+# angle, fences, walls and wide sprites keep the orientation they were drawn in, and background
+# (type 0) sprites are painted into the ground. Castle and stone walls ("tower") are fixed cards of
+# their sprites, as the prototype draws them. These keys keep their 3D build: fitted and unfitted
+# houses, bridges, doors, stairs, interior furniture and interior walls, and the arrow.
+const BUILT := ["cottage","inn","bridge","door","stairs","shelf","table","chair","bed",
+	"fireplace","cave_entrance","ruin","arrow",""]
+const ACTORS := ["man","woman","wizard","knight","pig","duck","pillbug","bonca","slime","dragon"]
+# Dink directions (numpad) -> facing in source space (x right, y toward the original viewer).
+const DIRS := {1: Vector2(-1,1), 2: Vector2(0,1), 3: Vector2(1,1), 4: Vector2(-1,0),
+	6: Vector2(1,0), 7: Vector2(-1,-1), 8: Vector2(0,-1), 9: Vector2(1,-1)}
+var clean_cache: Dictionary = {} # sprite path -> its texture without the shadow dither
+var kit_members: Dictionary = {} # "screen:index" -> true: map sprites a kit building draws
 
 func setup(game) -> void:
 	host = game
@@ -162,10 +177,12 @@ func build_ground(screen: Dictionary) -> void:
 	if interior:
 		add_ceiling(screen)
 	else:
-		# Only outdoor neighbors are connected. Interior maps live in their own spaces.
+		# Only outdoor neighbors are connected. Interior maps live in their own spaces. The block is
+		# 5x5 screens, as the prototype builds it and as house_plan gathers: at 0.025 m/px a 3x3
+		# block ended the world 15 m from the player and left buildings two screens away undrawn.
 		var column: int = (host.current_screen-1)%32
-		for dz in range(-1,2):
-			for dx in range(-1,2):
+		for dz in range(-2,3):
+			for dx in range(-2,3):
 				if dx == 0 and dz == 0: continue
 				if column+dx < 0 or column+dx >= 32: continue
 				var n: int = host.current_screen+dx+dz*32
@@ -228,9 +245,15 @@ func configure_environment() -> void:
 		light.directional_shadow_mode = DirectionalLight3D.SHADOW_PARALLEL_2_SPLITS
 
 func ground_texture(number: int) -> Texture2D:
-	if terrain_cache.has(number): return terrain_cache[number]
+	# Keyed by the background sprites painted in, so a story change to them (a kill left as
+	# background, a removed sprite) recomposes the ground on the next load.
+	var background := background_sprites(number,int(host.vm.globals.get("vision",0)))
+	var signature := []
+	for e in background: signature.append("%d:%d:%d:%d" % [int(e.get("seq",0)),int(e.get("frame",1)),int(e.get("x",0)),int(e.get("y",0))])
+	var cache_key := "%d:%s" % [number,",".join(signature).md5_text()]
+	if terrain_cache.has(cache_key): return terrain_cache[cache_key]
 	var screen: Dictionary = host.world.screens[str(number)]
-	var img := Image.create(600,400,false,Image.FORMAT_RGB8)
+	var img := Image.create(600,400,false,Image.FORMAT_RGBA8)
 	img.fill(Color("677744"))
 	var sheets: Dictionary = {}
 	var kit_tiles: Dictionary = {}
@@ -244,14 +267,70 @@ func ground_texture(number: int) -> Texture2D:
 			if texture == null: texture = host._texture("res://assets/tiles/ts%d.png" % sheet)
 			var image: Image = texture.get_image() if texture else null
 			if image and image.is_compressed(): image.decompress()
-			if image: image.convert(Image.FORMAT_RGB8)
+			if image: image.convert(Image.FORMAT_RGBA8)
 			sheets[sheet] = image
 		var source: Image = sheets[sheet]
 		if source: img.blit_rect(source,Rect2i((cell%12)*50,int(cell/12)*50,50,50),Vector2i((i%12)*50,int(i/12)*50))
+	paint_background(background,img)
+	img.convert(Image.FORMAT_RGB8)
 	img.generate_mipmaps()
 	var result := ImageTexture.create_from_image(img)
-	terrain_cache[number] = result
+	terrain_cache[cache_key] = result
 	return result
+
+# The background (type 0) sprites of screen n as drawn now, in the map's order. One with an upright
+# twin at the same spot is left to the twin.
+func background_sprites(number: int, vision: int) -> Array:
+	var sprites := drawn_sprites(number,vision)
+	var upright := {}
+	var out: Array = []
+	for e in sprites:
+		if effective_type(e) == 1: upright["%d:%d:%d:%d" % [int(e.get("seq",0)),int(e.get("frame",1)),int(e.get("x",0)),int(e.get("y",0))]] = true
+	for e in sprites:
+		if not paints_ground(e,number): continue
+		if upright.has("%d:%d:%d:%d" % [int(e.get("seq",0)),int(e.get("frame",1)),int(e.get("x",0)),int(e.get("y",0))]): continue
+		out.append(e)
+	return out
+
+# A sprite's type as load_map gives it: a story persistence (editor_type 2-5) makes it background
+# (3, 5: a kill left lying) or upright.
+func effective_type(e: Dictionary) -> int:
+	var persistence := int(e.get("editor_type",0))
+	if persistence in [3,5]: return 0
+	if persistence in [2,4]: return 1
+	return int(e.get("type",1))
+
+# Background sprites painted into the ground, exactly where and as the original draws them (the
+# prototype's _build_screen), shadow dither included: on the ground it is a shadow.
+func paint_background(sprites: Array, img: Image) -> void:
+	for e in sprites:
+		var d: Dictionary = host._frame(int(e.get("seq",0)),int(e.get("frame",1)))
+		var sprite := sprite_image(str(d.get("path","")))
+		if sprite == null: continue
+		img.blend_rect(sprite,Rect2i(Vector2i.ZERO,sprite.get_size()),Vector2i(int(float(e.get("x",0))-20.0-float(d.get("dx",0))),int(float(e.get("y",0))-float(d.get("dy",0)))))
+
+# Whether a sprite is a background sprite painted into its screen's ground (paint_background).
+func paints_ground(e: Dictionary, screen: int) -> bool:
+	if effective_type(e) != 0 or source_path(e).contains("/struct/"): return false
+	if kit_member(e,screen): return false
+	var key := model_key(e)
+	return key != "wall" and sprite_drawn(key)
+
+# Keys drawn as their sprite (see BUILT). Outdoor walls are the stone-wall sprites; a room's
+# walls stay boxes.
+func sprite_drawn(key: String) -> bool:
+	if key == "wall": return not interior
+	return key not in BUILT
+
+func kit_member(e: Dictionary, screen: int) -> bool:
+	if kit_members.is_empty():
+		kit_members["-"] = true
+		for b in facades.get("_kit_buildings",[]):
+			for m in b.members:
+				if str(m[1]) != "s": continue
+				var sprites: Array = host.world.screens.get(str(int(m[0])),{}).get("sprites",[])
+				if int(m[2]) < sprites.size(): kit_members["%d:%d" % [int(m[0]),int(sprites[int(m[2])].get("index",-1))]] = true
+	return kit_members.has("%d:%d" % [screen,int(e.get("editor_num",e.get("index",-1)))])
 
 # A kit building's own tiles are pictures of its upper storey, which now stands in 3D: the
 # ground continues the row they interrupt (ground tiles alternate in pairs, so keep the column
@@ -570,8 +649,9 @@ func make_entity(e: Dictionary, id: int, parent: Node3D, collision: bool = true,
 	if key == "cottage" and not fitted_key(e,screen).is_empty():
 		add_fitted_building(node,e,id,screen,collision)
 		return node
-	if house_part(e,screen):
-		# Drawn onto its fitted house (a door, a window, damage, a chimney): no model of its own.
+	if house_part(e,screen) or (not interior and kit_member(e,screen)):
+		# Drawn onto its fitted house (a door, a window, damage, a chimney) or into its kit building
+		# (kit_member, as the prototype leaves its pieces to the kit): no model of its own.
 		# A scripted part without a warp (a door to talk to or hit) keeps an unseen body where
 		# it is drawn, turned into the wall.
 		node.set_meta("house_part",true)
@@ -592,6 +672,12 @@ func make_entity(e: Dictionary, id: int, parent: Node3D, collision: bool = true,
 			body.add_child(shape)
 			node.add_child(body)
 			set_in_wall(node,body,e,screen)
+		return node
+	if paints_ground(e,screen):
+		node.set_meta("ground_painted",true) # painted into the ground (paint_background)
+		return node
+	if sprite_drawn(key):
+		add_billboard(node,e,id,key,collision)
 		return node
 	var passable_fence := key == "fence" and int(e.get("hard",0)) != 0
 	# Hard=1 fence artwork marks an opening. Keep a readable gate shape while
@@ -719,6 +805,9 @@ func update_visual(id: int) -> void:
 		node.position = point(float(e.get("x",320)),float(e.get("y",200)))
 	var model: Node3D = node.get_node_or_null("Model")
 	if model == null: return
+	if model is Sprite3D:
+		update_billboard(model as Sprite3D,e)
+		return
 	if node.get_meta("actor",false):
 		var direction: Vector2 = host._dir_vector(int(e.get("dir",2)))
 		if not direction.is_zero_approx(): model.rotation.y = atan2(-direction.x,-direction.y)
@@ -1071,17 +1160,51 @@ func add_story_fire(node: Node3D, house_width: float, roof_spots: Array = []) ->
 		# A fitted house: flames stand on its own roof slopes that face +X.
 		var sizes := [0.95,1.25,1.08,0.88]
 		for i in roof_spots.size():
-			var fire := primitive_model("flame")
+			var fire := story_flame(i)
 			fire.position = roof_spots[i]
 			fire.scale = Vector3.ONE*float(sizes[i%sizes.size()])
 			treatment.add_child(fire)
 		return
 	var face_x := house_width*0.5+0.28
 	for spec in [[4.00,-1.70,0.95],[4.72,-0.60,1.25],[4.46,0.72,1.08],[3.92,1.72,0.88]]:
-		var fire := primitive_model("flame")
+		var fire := story_flame(int(spec[0]*10))
 		fire.position = Vector3(face_x,float(spec[0]),float(spec[1]))
 		fire.scale = Vector3.ONE*float(spec[2])
 		treatment.add_child(fire)
+
+# A flame of the original fire (seq 427, fire1, the burning house's own sprites), playing its
+# frames at the sequence's delay from frame `phase`: a billboard standing on its roof spot.
+var fire_frames: SpriteFrames
+func story_flame(phase: int) -> Node3D:
+	var node := Node3D.new()
+	if fire_frames == null:
+		fire_frames = SpriteFrames.new()
+		var frames: Array = host.sequences.get("427",{}).get("frames",[])
+		var delay := float(frames[0].get("delay",100)) if not frames.is_empty() else 100.0
+		fire_frames.set_animation_speed("default",1000.0/maxf(delay,15.0))
+		for f in frames:
+			var t := clean_texture(str(f.get("path","")))
+			if t != null: fire_frames.add_frame("default",t)
+	if fire_frames.get_frame_count("default") == 0: return primitive_model("flame")
+	var t0: Texture2D = fire_frames.get_frame_texture("default",0)
+	var sp := AnimatedSprite3D.new()
+	sp.sprite_frames = fire_frames
+	sp.pixel_size = SCALE
+	sp.shaded = false
+	sp.alpha_cut = SpriteBase3D.ALPHA_CUT_DISCARD
+	sp.texture_filter = BaseMaterial3D.TEXTURE_FILTER_NEAREST_WITH_MIPMAPS
+	sp.billboard = BaseMaterial3D.BILLBOARD_FIXED_Y
+	sp.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	sp.centered = true
+	# The fire's hotspot lies 21 px below and right of its drawn flames (the original's raised view
+	# puts it on the ground under the roof). On a roof spot the flames stand on the thatch: the
+	# frame's bottom centre, a few pixels sunk in, is the anchor.
+	sp.offset = Vector2(0,t0.get_height()/2.0-4.0)
+	sp.frame = phase%fire_frames.get_frame_count("default")
+	sp.autoplay = "default"
+	node.add_child(sp)
+	sp.play("default")
+	return node
 
 func add_ruin_skin(node: Node3D, model: Node3D) -> void:
 	# Vision 2 keeps the original cottage mesh and collision body.  Each mesh
@@ -1108,3 +1231,152 @@ func add_ruin_skin(node: Node3D, model: Node3D) -> void:
 					charred.emission_enabled = false
 					mesh_instance.set_surface_override_material(surface,charred)
 		nodes.append_array(current.get_children())
+
+# --- Sprites -----------------------------------------------------------------------------
+# The original sprite of a thing that is not a building, drawn as the prototype draws it
+# (sprite_world_proto.gd _add_sprite): at its hotspot, 0.025 m per pixel times its size, unshaded
+# with the light the art was drawn with, its shadow dither removed. Props, trees and actors are
+# Y-axis billboards; fences, walls and sprites over 100 px wide keep the orientation they were drawn
+# in (facing the original viewer, +Z), and a fence post column drawn along the depth axis is rebuilt
+# from the side-view rail (seq 93 frame 1) turned 90 degrees. Collision stays in source pixels
+# (game.gd); the body here is for rays (aim, projectiles, dialogue cameras).
+func add_billboard(node: Node3D, e: Dictionary, id: int, key: String, collision: bool) -> void:
+	var path := frame_path(e)
+	var texture := clean_texture(path)
+	if texture == null: return
+	var d: Dictionary = host._frame(int(e.get("pseq",e.get("seq",0))),int(e.get("pframe",e.get("frame",1))))
+	var factor := maxf(0.01,float(e.get("size",100))/100.0)
+	var sp := Sprite3D.new()
+	sp.name = "Model"
+	sp.shaded = false
+	sp.alpha_cut = SpriteBase3D.ALPHA_CUT_DISCARD
+	sp.texture_filter = BaseMaterial3D.TEXTURE_FILTER_NEAREST_WITH_MIPMAPS
+	sp.pixel_size = SCALE*factor
+	sp.billboard = BaseMaterial3D.BILLBOARD_FIXED_Y
+	sp.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	var lower := path.to_lower()
+	var fence := "/fence/" in lower
+	var fixed := fence or key in ["wall","tower"] or texture.get_width() > 100
+	if fence and texture.get_height() > 2*texture.get_width():
+		# The drawn post column spans the segment's depth; cover it with a side-view rail.
+		var rail := str(host._frame(93,1).get("path",""))
+		var rt := clean_texture(rail)
+		if rt != null:
+			var length := float(texture.get_height())*0.8
+			sp.texture = rt
+			sp.region_enabled = true
+			sp.region_rect = Rect2(0,0,minf(length,rt.get_width()),rt.get_height())
+			sp.centered = true
+			sp.offset = Vector2(0,rt.get_height()/2.0-8.0)
+			sp.rotation_degrees.y = 90
+			sp.position.z = -(float(d.get("dy",texture.get_height()))-texture.get_height()/2.0)*SCALE*factor
+			sp.set_meta("static",true)
+	if not sp.has_meta("static"):
+		set_sprite_texture(sp,path,texture,d)
+	if fixed:
+		sp.billboard = BaseMaterial3D.BILLBOARD_DISABLED
+		sp.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_ON
+	node.add_child(sp)
+	var height := maxf(0.2,sprite_height(e)*SCALE*factor)
+	node.set_meta("height",height)
+	node.set_meta("base_model_position",sp.position)
+	var actor := key in ACTORS
+	node.set_meta("actor",actor)
+	node.set_meta("billboard",true)
+	if actor: update_billboard(sp,e)
+	var passable_fence := key == "fence" and int(e.get("hard",0)) != 0
+	if not collision or passable_fence or e.get("warp") != null: return
+	if key in ["grass","flowers","mushroom","effect","feed_grains","flame","burn_scar","hole","arrow"]: return
+	var body := StaticBody3D.new()
+	body.name = "HitBody"
+	body.set_meta("entity_id",id)
+	body.collision_layer = 2 if actor or not str(e.get("script","")).is_empty() else 1
+	body.collision_mask = 0
+	var shape := CollisionShape3D.new()
+	var box := BoxShape3D.new()
+	if key in ["fence","wall","tower"]:
+		# On the source hardbox, as the stand-ins' bodies were.
+		var rect: Rect2 = hard_rect(e)
+		box.size = Vector3(maxf(0.2,rect.size.x*SCALE),height,maxf(0.2,rect.size.y*SCALE))
+		shape.position = point(rect.get_center().x,rect.get_center().y)-point(float(e.get("x",320)),float(e.get("y",200)))
+	else:
+		var width := maxf(0.3,float(texture.get_width())*SCALE*factor)
+		box.size = Vector3(width,height,minf(width,0.6))
+		if key in ["oak_tree","pine_tree","dead_tree"]: box.size = Vector3(0.8,height,0.8)
+	shape.position.y = height*0.5
+	shape.shape = box
+	body.add_child(shape)
+	node.add_child(body)
+
+# The frame the original shows now (its animation, else its still frame); a directional actor's
+# frame is the one drawn for its facing as seen from the camera, as Doom does (the prototype's
+# _face_actors).
+func update_billboard(sp: Sprite3D, e: Dictionary) -> void:
+	if sp.has_meta("static"): return
+	var seq := int(e.get("seq",0))
+	var frame := int(e.get("frame",1))
+	if seq == 0:
+		seq = int(e.get("pseq",0))
+		frame = int(e.get("pframe",1))
+	var camera: Camera3D = host.camera if "camera" in host else null
+	if camera != null and is_instance_valid(camera) and str(sp.get_parent().get_meta("model_key","")) in ACTORS:
+		for base_key in ["base_walk","base_idle","base_attack"]:
+			var base := int(e.get(base_key,-1))
+			if base <= 0 or seq <= base or seq > base+9 or not DIRS.has(seq-base): continue
+			var at := sp.get_parent() as Node3D
+			var to_actor := Vector2(at.global_position.x-camera.global_position.x,at.global_position.z-camera.global_position.z)
+			if to_actor.length() < 0.001: break
+			var rel: Vector2 = (DIRS[seq-base] as Vector2).normalized().rotated(-Vector2(0,-1).angle_to(to_actor.normalized()))
+			var best := seq-base
+			var best_dot := -2.0
+			for k in DIRS:
+				var dd: float = (DIRS[k] as Vector2).normalized().dot(rel)
+				if dd > best_dot and host.sequences.has(str(base+k)):
+					best_dot = dd
+					best = k
+			seq = base+best
+			break
+	var d: Dictionary = host._frame(seq,frame)
+	var path := str(d.get("path",""))
+	sp.pixel_size = SCALE*maxf(0.01,float(e.get("size",100))/100.0)
+	if path.is_empty() or path == str(sp.get_meta("path","")): return
+	var texture := clean_texture(path)
+	if texture != null: set_sprite_texture(sp,path,texture,d)
+
+# The texture of frame `d`, anchored at its hotspot (the prototype's _set_anchor).
+func set_sprite_texture(sp: Sprite3D, path: String, texture: Texture2D, d: Dictionary) -> void:
+	sp.texture = texture
+	sp.set_meta("path",path)
+	var dx := float(d.get("dx",texture.get_width()/2.0))
+	var dy := float(d.get("dy",texture.get_height()-10.0))
+	sp.centered = true
+	sp.offset = Vector2(texture.get_width()/2.0-dx,dy-texture.get_height()/2.0)
+
+# The prototype's clean(): the original draws shadows as a 50% black checkerboard on the ground;
+# standing upright, that dither floats in the air, so isolated pure-black pixels are removed.
+func clean_texture(path: String) -> Texture2D:
+	if path.is_empty(): return null
+	if clean_cache.has(path): return clean_cache[path]
+	var img := sprite_image(path)
+	if img == null:
+		clean_cache[path] = null
+		return null
+	var w := img.get_width()
+	var h := img.get_height()
+	var src := img.get_data()
+	var out := src.duplicate()
+	var dark := PackedByteArray()
+	dark.resize(w*h)
+	for i in w*h:
+		var o := i*4
+		dark[i] = 1 if src[o+3] > 127 and int(src[o])+int(src[o+1])+int(src[o+2]) < 11 else 0
+	for y in h:
+		for x in w:
+			var i := y*w+x
+			if dark[i] == 0: continue
+			if (x > 0 and dark[i-1] == 1) or (x < w-1 and dark[i+1] == 1) or (y > 0 and dark[i-w] == 1) or (y < h-1 and dark[i+w] == 1): continue
+			out[i*4+3] = 0
+	var cleaned := Image.create_from_data(w,h,false,Image.FORMAT_RGBA8,out)
+	cleaned.generate_mipmaps()
+	clean_cache[path] = ImageTexture.create_from_image(cleaned)
+	return clean_cache[path]

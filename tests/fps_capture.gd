@@ -18,6 +18,7 @@ func _run() -> void:
 	var walk := 0 # frames to hold W (the real input path) before the capture
 	var back := 0.0 # then mark where he stopped and step the camera back this many px
 	var scripts := true # --scripts=0: the screen's editor layer without its scripts, as a walk loads it
+	var vision := 0 # --vision=N: the story layer to load (scenario setup)
 	for arg in OS.get_cmdline_user_args():
 		if arg.begins_with("--screen="): screen = int(arg.trim_prefix("--screen="))
 		if arg.begins_with("--x="): x = float(arg.trim_prefix("--x="))
@@ -28,10 +29,11 @@ func _run() -> void:
 		if arg.begins_with("--walk="): walk = int(arg.trim_prefix("--walk="))
 		if arg.begins_with("--back="): back = float(arg.trim_prefix("--back="))
 		if arg.begins_with("--scripts="): scripts = arg.trim_prefix("--scripts=") != "0"
+		if arg.begins_with("--vision="): vision = int(arg.trim_prefix("--vision="))
 	game.vm.cancel_all()
 	# A walk measures collision: load the screen's editor layer without its scripts
 	# (scenario setup that skips progression, as tests/fps_wall_test.gd does).
-	game.vm.globals["vision"] = 0
+	game.vm.globals["vision"] = vision
 	game.load_map(screen, walk == 0 and scripts)
 	await create_timer(0.6).timeout
 	game.entities[1].x = x
