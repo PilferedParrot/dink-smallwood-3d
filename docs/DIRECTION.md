@@ -1181,3 +1181,78 @@ the control alone: `xvfb-run -a $GODOT --audio-driver Dummy --path game --script
 (prints each camera's push-at-0 line and the wrong controls' counts); the sheet:
 `/usr/bin/python3 tools/trees_sheet.py <checkout at dfe0788>`.
 
+
+## Trees from every side, the neighbours' people, and no doors on the backs — October 1, tenth pass, first half (Opus 5.5 lead, Sonnet 5.5 units)
+
+The open defects, taken in the order a player sees them. Evidence: `docs/images/tenth-pass-m1.jpg`, each row one
+camera, the game before this pass (aa7388e) and now. The units' own sheets are `docs/images/doors-oct1.jpg` (with
+the prototype and the original's picture), `docs/images/neighbours-oct1.jpg` and `docs/images/billboards-oct1.jpg`.
+`tools/view_sheet.py` renders any views file in several checkouts, one column each; `tests/fps_capture.gd --batch`
+now redraws every sprite for each view, as the game does every frame (an actor showed the frame chosen for the
+load-time camera in every view before).
+
+**Trees stood edge-on from the side** (the October 1 section's defect 3, and the ninth pass's 4). A card kept the
+orientation it was drawn in if its art was over 100 px wide. The ninth pass meant that for structures, but an art's
+width includes its shadow dither: tree-01 is 128 px, tree-02 204, tree-03 169, tree-04 249. So nearly every tree
+outdoors (about 650), the bushes, the brambles, the well, the save machine, and the knights and dragons over 100 px
+were fixed cards facing south, and looking east or west the forest was a field of slivers. Two measures from the art
+were tried first and failed: the hardbox's aspect (tree-01's is 94 × 36, a bush's 122 × 37, a fence's 175 × 23) and
+the straightness of the drawn bottom edge (tree-01's cone is as straight as a stone wall's: 0.047 of its height
+against 0.005-0.048 for the walls). What a sprite depicts is in the original's own data: its folder and file. So a card
+keeps its drawn plane only if it is a structure (`fp_world.is_structure`): a fence, a wall, a castle wall, a sign (a
+board: thin edge-on is right) or one of the island's round huts. The island's art is classified by its file in
+`model_key` (isle-01..06 huts, 07..12 rail fences, 13..18 spears), as the landmark and garden art already were by
+frame. Everything else is a Y-axis billboard whatever its width, as the ninth pass intended. Looking north, a
+Y-billboard faces +Z exactly as the card did, so the sprites' own pixels are unchanged there and through the original
+camera. A billboard has no plane of its own to cast a shadow with, and before this every tree cast one as a card: each
+billboard now casts its silhouette from a shadow-only twin turned to face the sun (the existing `ShadowTwin`; a shifted
+fixed card's twin stays a plain +Z card). The props and actors that cast none before now do: the prototype's open item 3.
+`tests/fps_cards_test.gd`: every card of every outdoor screen is fixed exactly when an independent reading of its art's
+path says it is a structure. The old rule gets 996 of 2,909 cards wrong, and the plausible fix "measure the width
+without the dither" 702. A tree-04 is 243 px wide from the east, west and north as from the south (0 px from the side
+before), and still casts a shadow.
+
+**The neighbour screens drew no people or animals** (the ninth pass's defect 2). The 5×5 block drew a neighbour's
+scenery and skipped its actors, so beyond the screen you stood on the world was empty: from Dink's yard the pen on 407
+had no pigs. A neighbour now shows what its own screen loads on arrival, before its scripts run. The body of
+`load_map`'s editor-sprite loop is one function, `game.gd editor_entity` (the story's editor state, persistence 2-8
+with its return time, the vision filter, the still frame), which `load_map` and the neighbour build both call. So
+neighbours now also honour persistence as arrival does. Their actors stand where the editor put them, in their editor
+frame, with no body, and `fp_world.face_neighbours()` turns each to the frame drawn for its facing as seen from the
+camera every frame, as the current screen's actors are turned. Their brains run only on their own screen, as in the
+original. The vision is the current screen's, as for all neighbour sprites (a known limit: the original sets it per
+screen from the screen's script). `tests/fps_neighbours_test.gd`: which actors (against an independent reading of
+world.json), which frame from four sides, and each pig in the picture (render noise 0). It was red on the unmodified
+code, with `face_neighbours` a no-op, with the vision filter dropped (406 showed 14 ducks, not 8) and with the per-frame
+call removed. Every non-actor neighbour node is byte-identical before and after.
+
+**The door on the backs of houses** (the ninth pass's defect 7: at 74 px the game drew a door on 439's back, 440's
+back and 409's front, where the prototype draws none). It was in the house bake. Under the headless (dummy) renderer
+a texture's `get_image()` returns the texture's own stored Image, and `house_images` painted the doors and windows into
+it. Every later composition of the same sprite started from a canvas that already held them: its door-less back
+mirrored a door, and the second house drawn with home-06 on 409 (the map places it twice, 1 px apart) took the first
+one's doors and the cuts in its thatch. `tools/bake_houses.gd` runs headless, so the bake carried them. The game under
+GL composes correctly (with the bake moved aside it drew no door, as the prototype). `sprite_buildings.gd image()` now
+returns a private copy, and the houses are re-baked: 45 of 75 images change, the same 31 houses; the kit canvases re-bake
+byte-identical. `tests/fps_bake_test.gd` composes every house twice in one headless run and checks both against the
+bake: on aa7388e 17 houses came out different the second time and 9 differed from the bake; now 0 and 0. Through the
+original camera the game is nearer the original's picture: mean |RGB| on 409 21.77 to 21.42, 439 22.56 to 22.50, 440
+unchanged.
+
+<!-- C: actors against walls, filled at merge -->
+
+**Verification.**
+- Looked at first: every row of the three unit sheets and the combined one. From the side the trees, the well and the
+  save machine stand whole; looking north the sprites are the same pictures; fences and castle walls are unchanged;
+  the pigs stand in 407's pen seen from 439 and 408, and 374's ducks from 406; the backs are plain stone, as in the
+  prototype; 409 through the original camera matches the original's picture.
+- `pytest`, with the units merged: 91 passed, 1 skipped (aa7388e: 83 passed, 1 skipped).
+- Frame time and loading (approximate: llvmpipe under xvfb, the machine shared with the units' renders; relative only):
+  `tests/fps_perf.gd`, four interleaved pairs, aa7388e against the merge, 300 frames. Median of p50: 439 (505, 340)
+  16.0 ms before, 17.6 now; 376 (120, 250) 17.1 before, 17.6 now. The spreads are 3-8 ms, so a cost under about 1.5 ms
+  cannot be told from the noise. `load_map` median 439 94.8 ms before, 114 now (one run of 187), 376 104 and 104. The
+  scene on 439 has 1,089 nodes, from 830 (the neighbours' actors and the shadow twins). Unit A measured the neighbours'
+  actors at about 5 ms of load; `editor_entity`'s deep copy is 3.2 ms of it, and a shallow copy for neighbours would save
+  about 2.
+- Every Godot run: xvfb with WAYLAND_DISPLAY unset and the input devices hidden (bwrap), or headless; the Dummy audio
+  driver.
