@@ -22,6 +22,7 @@ func _run() -> void:
 	var batch := "" # --batch=file.json --out-dir=DIR: many views of this screen in one run (see _shoot)
 	var out_dir := ""
 	var shadows := true # --shadows=0: the light's shadows off (the sprites' own pixels only: for before/after views)
+	var move := PackedStringArray() # --move=x,y,toX,toY: scenario setup, the map's actor at (x, y) stands at (toX, toY)
 	for arg in OS.get_cmdline_user_args():
 		if arg.begins_with("--screen="): screen = int(arg.trim_prefix("--screen="))
 		if arg.begins_with("--x="): x = float(arg.trim_prefix("--x="))
@@ -36,6 +37,7 @@ func _run() -> void:
 		if arg.begins_with("--batch="): batch = arg.trim_prefix("--batch=")
 		if arg.begins_with("--out-dir="): out_dir = arg.trim_prefix("--out-dir=")
 		if arg.begins_with("--shadows="): shadows = arg.trim_prefix("--shadows=") != "0"
+		if arg.begins_with("--move="): move = arg.trim_prefix("--move=").split(",")
 	game.vm.cancel_all()
 	# A walk measures collision: load the screen's editor layer without its scripts
 	# (scenario setup that skips progression, as tests/fps_wall_test.gd does).
@@ -48,6 +50,14 @@ func _run() -> void:
 		game.set_process(false)
 	await create_timer(0.6).timeout
 	if not shadows and game.fp_world != null and game.fp_world.light != null: game.fp_world.light.shadow_enabled = false
+	if move.size() == 4:
+		for id in game.entities.keys():
+			var e: Dictionary = game.entities[id]
+			if id == 1 or absf(float(e.get("x", -999)) - float(move[0])) > 1.0 or absf(float(e.get("y", -999)) - float(move[1])) > 1.0: continue
+			e.x = float(move[2])
+			e.y = float(move[3])
+			game._update_visual(id)
+			print("MOVED the actor of entity ", id, " to ", move[2], ",", move[3], " (scenario setup)")
 	game.entities[1].x = x
 	game.entities[1].y = y
 	game.fps_yaw = yaw

@@ -2,7 +2,7 @@
 
 A sprite whose hotspot lies within its half-width of a fitted house's wall footprint takes a depth shift in
 its own shader (fp_world.gd depth_shift): pulled toward the camera when the original draws it over the
-house, pushed away when it draws it under.
+house, pushed away when it draws it under. Actors are sprites like any: a pig against a wall is not cut by it.
 
 Two tests, both through tests/fps_trees_test.gd:
   - classification: the game's flags, read from a loaded scene, equal an independent reading of the map
@@ -28,7 +28,6 @@ GODOT = os.environ.get("GODOT") or shutil.which("godot") or shutil.which("godot4
 )
 pytestmark = pytest.mark.skipif(not Path(GODOT).is_file(), reason="Godot unavailable; set GODOT")
 
-ACTORS = {"man", "woman", "wizard", "knight", "pig", "duck", "pillbug", "bonca", "slime", "dragon"}
 # Screens with no flagged sprite, loaded too: the rule must flag nothing there (a rail).
 QUIET = [407, 408, 470, 505, 586]
 
@@ -89,7 +88,8 @@ def _distance(p, h):
 def expected():
     """{(screen, x, y): shift in px (> 0 pushed away, < 0 pulled toward)} for every upright, non-struct,
     non-fence sprite of the map's default layer within its half-width of a fitted house, as the
-    prototype's rule says. Actors are left out later, by the game's own model keys."""
+    prototype's rule says. Actors too (the tenth pass settles them like any sprite): the map has none
+    within its half-width of a wall (see the actor case of tests/fps_trees_test.gd)."""
     seqs = json.loads((ROOT / "game/data/sequences.json").read_text())["sequences"]
     fits = json.loads((ROOT / "game/prototype/facades.json").read_text())
     screens = json.loads((ROOT / "game/data/world.json").read_text())["screens"]
@@ -183,9 +183,6 @@ def test_the_games_flags_equal_an_independent_reading_of_the_map(expected, tmp_p
         keys = by_place.get(place)
         if keys is None:
             continue  # not a billboard in the game: painted into the ground, or a building kept in 3D
-        if keys <= ACTORS:
-            assert place not in flagged, place  # an actor is left to the walls' hardness
-            continue
         if place not in flagged:
             problems.append("not flagged: %s expected %.1f" % (place, shift))
         elif abs(flagged[place] - shift) > 0.01:
