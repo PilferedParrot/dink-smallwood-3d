@@ -639,7 +639,7 @@ func make_entity(e: Dictionary, id: int, parent: Node3D, collision: bool = true,
 		node.set_meta("ground_painted",true) # painted into the ground (paint_background)
 		return node
 	if sprite_drawn(key):
-		add_billboard(node,e,id,key,collision)
+		add_billboard(node,e,id,key,collision,screen)
 		return node
 	var passable_fence := key == "fence" and int(e.get("hard",0)) != 0
 	# Hard=1 fence artwork marks an opening. Keep a readable gate shape while
@@ -763,7 +763,9 @@ func update_visual(id: int) -> void:
 	if body: body.collision_layer = (2 if node.get_meta("actor",false) or not str(e.get("script","")).is_empty() else 1) if visible and not e.get("dead",false) else 0
 	if not visible: return
 	var key: String = node.get_meta("model_key","")
-	if key not in ["wall","cottage","inn","tower","fence","bridge"]:
+	if node.has_meta("surface_position"):
+		node.position = node.get_meta("surface_position")
+	elif key not in ["wall","cottage","inn","tower","fence","bridge"]:
 		node.position = point(float(e.get("x",320)),float(e.get("y",200)))
 	var model: Node3D = node.get_node_or_null("Model")
 	if model == null: return
@@ -1119,13 +1121,8 @@ func add_story_fire(node: Node3D, house_width: float, roof_spots: Array = []) ->
 	treatment.set_meta("story_house_treatment",true)
 	node.add_child(treatment)
 	if not roof_spots.is_empty():
-		# A fitted house: flames stand on its own roof slopes that face +X.
-		var sizes := [0.95,1.25,1.08,0.88]
-		for i in roof_spots.size():
-			var fire := story_flame(i)
-			fire.position = roof_spots[i]
-			fire.scale = Vector3.ONE*float(sizes[i%sizes.size()])
-			treatment.add_child(fire)
+		# A fitted house burns with the map's own fire: its fire1-0x sprites, standing on the roof
+		# where they are drawn (place_on_surface). No second set of flames is added.
 		return
 	var face_x := house_width*0.5+0.28
 	for spec in [[4.00,-1.70,0.95],[4.72,-0.60,1.25],[4.46,0.72,1.08],[3.92,1.72,0.88]]:
@@ -1202,7 +1199,7 @@ func add_ruin_skin(node: Node3D, model: Node3D) -> void:
 # in (facing the original viewer, +Z), and a fence post column drawn along the depth axis is rebuilt
 # from the side-view rail (seq 93 frame 1) turned 90 degrees. Collision stays in source pixels
 # (game.gd); the body here is for rays (aim, projectiles, dialogue cameras).
-func add_billboard(node: Node3D, e: Dictionary, id: int, key: String, collision: bool) -> void:
+func add_billboard(node: Node3D, e: Dictionary, id: int, key: String, collision: bool, screen: int) -> void:
 	var path := frame_path(e)
 	var texture := clean_texture(path)
 	if texture == null: return
@@ -1234,6 +1231,7 @@ func add_billboard(node: Node3D, e: Dictionary, id: int, key: String, collision:
 			sp.position.z = -(float(d.get("dy",texture.get_height()))-texture.get_height()/2.0)*SCALE*factor
 			sp.set_meta("static",true)
 	if not sp.has_meta("static"):
+		place_on_surface(node,sp,e,d,screen)
 		set_sprite_texture(sp,path,texture,d)
 	if fixed:
 		sp.billboard = BaseMaterial3D.BILLBOARD_DISABLED
@@ -1311,6 +1309,10 @@ func set_sprite_texture(sp: Sprite3D, path: String, texture: Texture2D, d: Dicti
 	sp.set_meta("path",path)
 	var dx := float(d.get("dx",texture.get_width()/2.0))
 	var dy := float(d.get("dy",texture.get_height()-10.0))
+	if sp.has_meta("on_surface"):
+		var foot := sprite_foot(path)
+		dx = foot.x
+		dy = foot.y
 	sp.centered = true
 	sp.offset = Vector2(texture.get_width()/2.0-dx,dy-texture.get_height()/2.0)
 
@@ -1342,3 +1344,55 @@ func clean_texture(path: String) -> Texture2D:
 	cleaned.generate_mipmaps()
 	clean_cache[path] = ImageTexture.create_from_image(cleaned)
 	return clean_cache[path]
+
+# A sprite drawn over a fitted house stands on the surface it is drawn on, found as the chimneys'
+# feet are (sprite_buildings.gd claim, ray_hit): the original camera's view ray through the
+# sprite's foot (its lowest drawn pixels) meets the house where the sprite stands. "Drawn over"
+# is the original's draw order: its que, else its y, after the house's. The story fire's flames
+# (fire1-0x, que 1000) were drawn on the cottage's roof with their hotspots 21 px below them, on the
+# ground; they now stand on the roof. A sprite whose foot misses every house, or lies in front of
+# its walls, keeps its hotspot.
+func place_on_surface(node: Node3D, sp: Sprite3D, e: Dictionary, d: Dictionary, screen: int) -> void:
+	if interior or node.get_meta("model_key","") in ACTORS: return
+	var foot := sprite_foot(frame_path(e))
+	if foot.y <= 0.0: return
+	var o := screen_origin(screen)
+	var factor := maxf(0.01,float(e.get("size",100))/100.0)
+	var world_foot := o+Vector2(float(e.get("x",0)),float(e.get("y",0)))+(foot-Vector2(float(d.get("dx",0)),float(d.get("dy",0))))*factor
+	var order := float(e.get("que",0)) if int(e.get("que",0)) != 0 else float(e.get("y",0))
+	var best := []
+	for h in drawn_sprites(screen,int(host.vm.globals.get("vision",0))):
+		if not buildings.is_fitted(h): continue
+		var h_order := float(h.get("que",0)) if int(h.get("que",0)) != 0 else float(h.get("y",0))
+		if order <= h_order: continue
+		var rect: Rect2 = buildings.world_rect(h,screen)
+		var hit: Array = buildings.ray_hit(facades[frame_path(h)],world_foot.x-rect.position.x,world_foot.y-rect.position.y)
+		if hit.is_empty() or float(hit[0]) <= 0.5: continue
+		if best.is_empty() or float(hit[0]) > float(best[0]): best = [float(hit[0])]
+	if best.is_empty(): return
+	var height: float = best[0]
+	# The hit point (x, Y, y + Y): its ground point lies Y deeper than the foot's screen y.
+	var at := world_foot+Vector2(0,height)-o
+	node.position = point(at.x,at.y)+Vector3(0,height*SCALE,0)
+	node.set_meta("surface_position",node.position)
+	sp.set_meta("on_surface",true)
+
+var feet: Dictionary = {} # sprite path -> its foot: the centre of its lowest drawn row, bottom edge (px)
+func sprite_foot(path: String) -> Vector2:
+	if feet.has(path): return feet[path]
+	var result := Vector2(0,-1)
+	var img := sprite_image(path)
+	if img != null:
+		for y in range(img.get_height()-1,-1,-1):
+			var xs := 0.0
+			var count := 0
+			for x in img.get_width():
+				var c := img.get_pixel(x,y)
+				if c.a > 0.5 and c.r+c.g+c.b >= 0.04:
+					xs += x+0.5
+					count += 1
+			if count > 0:
+				result = Vector2(xs/count,y+1.0)
+				break
+	feet[path] = result
+	return result

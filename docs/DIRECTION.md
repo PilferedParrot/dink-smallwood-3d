@@ -1058,3 +1058,19 @@ game now, and the prototype. The ground is now the tile art, as in the prototype
 the game's real-time light and shadow, its sky and fog, and the viewmodel. `pytest`: 81 passed,
 1 skipped; fps_test and fps_world_test (644 screens) pass. Rendered under
 `bwrap --dev-bind / / --tmpfs /dev/input --tmpfs /tmp --unshare-net`, with xvfb-run for each capture.
+
+**Addendum: the story fire stands on the roof** (defect 3 above; the eighth pass's defect 6). The map's
+own fire sprites (fire1-0x and the small fire2-4 pieces on 439 at vision 1) were drawn over the cottage.
+Their que (1000, 950) sets the original's draw order after the house. Their hotspots lie 21 px below
+the drawn flames, on the ground, so in 3D they stood in front of the house as tall flames.
+`place_on_surface` now places any sprite that is drawn after a fitted house and whose foot (the centre
+of its lowest drawn row) projects onto it. The rule is the chimneys' (`sprite_buildings.gd claim` and
+`ray_hit`): the original camera's view ray through the foot meets the house where the sprite stands.
+The sprite is anchored there by its foot. It is one rule, with nothing tuned per screen. A sprite in
+front of the walls projects below their base, so the ray misses and it keeps its hotspot. With the
+source flames on the roof, `add_story_fire`'s own roof flames on a fitted house were a second set, and
+an invented one. They are removed: the map's set is kept. The state meta and the fallback flames for an
+unfitted house are kept. Evidence: `docs/images/story-fire-roof-sept30.jpg`, 8878d0e beside the game
+now, at vision 1, from three cameras. The flames now burn along the thatch, as the original draws them,
+and none stands on the ground. `pytest`: 81 passed, 1 skipped. fps_fire_world_test,
+fps_grief_presentation_test, fps_test and fps_world_test pass.
