@@ -1239,14 +1239,24 @@ bake: on aa7388e 17 houses came out different the second time and 9 differed fro
 original camera the game is nearer the original's picture: mean |RGB| on 409 21.77 to 21.42, 439 22.56 to 22.50, 440
 unchanged.
 
-<!-- C: actors against walls, filled at merge -->
+**Actors were cut by walls** (the October 1 section's defect 1). `settle_depth` left actors out, so a villager or pig
+within its half-width of a fitted house's wall was cut by it when seen obliquely. The exclusion is gone: actors take
+the trees' rule, settled again when they move or when a frame changes their width. `update_billboard` now settles after
+it has set the frame's texture, not before (the old order left every depth shift one frame behind an actor's turn); the
+depth shader's texture and the shadow twin follow the frame. No editor-placed actor stands that close to a wall (the
+game's own `depth_rule` over all 1,085 actor sprites of the outdoor screens, vision 0 and 1: none; the nearest is a duck
+27 px out), so no screen changes as loaded: 44 views of 11 actor screens differ by 0 px. It matters for actors that
+walk. The test moves a pig to a house's corner (scenario setup, `tests/fps_trees_test.gd`; `tests/fps_capture.gd
+--move`): whole from the open side (with the rule off the wall cuts it on up to 468 px), hidden by the house from behind
+(sides swapped: 62 px wrong), and every frame change kept in step (red with the old order). With the exclusion restored
+it fails at once.
 
 **Verification.**
 - Looked at first: every row of the three unit sheets and the combined one. From the side the trees, the well and the
   save machine stand whole; looking north the sprites are the same pictures; fences and castle walls are unchanged;
   the pigs stand in 407's pen seen from 439 and 408, and 374's ducks from 406; the backs are plain stone, as in the
   prototype; 409 through the original camera matches the original's picture.
-- `pytest`, with the units merged: 91 passed, 1 skipped (aa7388e: 83 passed, 1 skipped).
+- `pytest`, with all three units merged (61e541a): 91 passed, 1 skipped (aa7388e: 83 passed, 1 skipped).
 - Frame time and loading (approximate: llvmpipe under xvfb, the machine shared with the units' renders; relative only):
   `tests/fps_perf.gd`, four interleaved pairs, aa7388e against the merge, 300 frames. Median of p50: 439 (505, 340)
   16.0 ms before, 17.6 now; 376 (120, 250) 17.1 before, 17.6 now. The spreads are 3-8 ms, so a cost under about 1.5 ms
@@ -1256,3 +1266,26 @@ unchanged.
   about 2.
 - Every Godot run: xvfb with WAYLAND_DISPLAY unset and the input devices hidden (bwrap), or headless; the Dummy audio
   driver.
+
+**Defects I see, in order:**
+1. Castle walls are fixed cards: seen along the wall they are tall slivers (402, `billboards-oct1.jpg`). They need the
+   houses' treatment, fitted to stand in 3D, as do the island's huts (now fixed cards) and the shrine (monum-07, now a
+   billboard).
+2. Bridges: the game builds them from the Blender bridge model sized to each hardbox, so a bridge is a row of loose flat
+   planks over the water (448, 404); the prototype stands the same sprites up as wooden walls. Both are wrong: the art
+   draws a deck (brdge-01..03, 06/08/10, horizontal) and rope railings (07/09/11, the near ones as their own sprites,
+   vertical). The unfitted /Building/ pieces are one building, on 149.
+3. Neighbours show what their screens load before their scripts run: a sprite a screen's script hides, moves or
+   creates on arrival is shown as the editor placed it, and the vision is the current screen's. (Proposed for a Sol lane:
+   the screens' startup scripts in a sandboxed VM.) Their actors stand still in their editor frames.
+4. Kit buildings (the inn and its kin) have no footprint in the depth rule: 23 sprites (barrels, grass, signs, boxes) lie
+   within reach of one. A kit needs one footprint per block (the convex hull of kit-417 would take in its courtyard).
+5. The side flip at a wall's plane is not walked yet.
+6. Some trees float in two pieces (tree-09/10 pairs on 376) or hang over the top edge of a screen (251), as before this
+   pass; not investigated.
+7. 409's home-06 is built twice, 1 px apart, from the map's own two placements; no z-fighting seen.
+
+**Re-run:** from the worktree root, `env -u WAYLAND_DISPLAY bwrap --dev-bind / / --tmpfs /dev/input --unshare-net
+xvfb-run -a -s "-screen 0 1920x1080x24" ../../../.venv/bin/python -m pytest -q tests`; the sheet:
+`env -u WAYLAND_DISPLAY bwrap --dev-bind / / --tmpfs /dev/input --unshare-net /usr/bin/python3 tools/view_sheet.py
+<views.json> --col before=<checkout at aa7388e> --col now=.` (the views are listed in the sheet's labels).
