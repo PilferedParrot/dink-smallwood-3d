@@ -19,6 +19,10 @@ func _run() -> void:
 	var back := 0.0 # then mark where he stopped and step the camera back this many px
 	var scripts := true # --scripts=0: the screen's editor layer without its scripts, as a walk loads it
 	var vision := 0 # --vision=N: the story layer to load (scenario setup)
+	var story := -1 # --story=N: explicit story-state fixture; skips progression
+	var duck := -1 # --duck=N: Ethel quest fixture; skips progression
+	var nuttree := -1 # --nuttree=N: letter milestone fixture; skips progression
+	var neighbour_seed := -1 # --neighbour-seed=N: reproducible private startup draws
 	var batch := "" # --batch=file.json --out-dir=DIR: many views of this screen in one run (see _shoot)
 	var out_dir := ""
 	var shadows := true # --shadows=0: the light's shadows off (the sprites' own pixels only: for before/after views)
@@ -34,11 +38,19 @@ func _run() -> void:
 		if arg.begins_with("--back="): back = float(arg.trim_prefix("--back="))
 		if arg.begins_with("--scripts="): scripts = arg.trim_prefix("--scripts=") != "0"
 		if arg.begins_with("--vision="): vision = int(arg.trim_prefix("--vision="))
+		if arg.begins_with("--story="): story = int(arg.trim_prefix("--story="))
+		if arg.begins_with("--duck="): duck = int(arg.trim_prefix("--duck="))
+		if arg.begins_with("--nuttree="): nuttree = int(arg.trim_prefix("--nuttree="))
+		if arg.begins_with("--neighbour-seed="): neighbour_seed = int(arg.trim_prefix("--neighbour-seed="))
 		if arg.begins_with("--batch="): batch = arg.trim_prefix("--batch=")
 		if arg.begins_with("--out-dir="): out_dir = arg.trim_prefix("--out-dir=")
 		if arg.begins_with("--shadows="): shadows = arg.trim_prefix("--shadows=") != "0"
 		if arg.begins_with("--move="): move = arg.trim_prefix("--move=").split(",")
 	game.vm.cancel_all()
+	if story >= 0: game.vm.globals["story"] = story
+	if duck >= 0: game.vm.globals["old_womans_duck"] = duck
+	if nuttree >= 0: game.vm.globals["nuttree"] = nuttree
+	if neighbour_seed >= 0 and "neighbour_seed_override" in game: game.neighbour_seed_override = neighbour_seed
 	# A walk measures collision: load the screen's editor layer without its scripts
 	# (scenario setup that skips progression, as tests/fps_wall_test.gd does).
 	game.vm.globals["vision"] = vision

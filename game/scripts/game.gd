@@ -2,6 +2,8 @@
 extends Node3D
 const VM = preload("res://scripts/dink_vm.gd")
 const UI = preload("res://scripts/game_ui.gd")
+const NEIGHBOUR_SANDBOX = preload("res://scripts/neighbour_script_sandbox.gd")
+const STARTUP_CUT_COMMANDS := ["wait", "say_stop", "say_stop_npc", "say_stop_xy", "move_stop", "freeze", "freeeze", "choice", "fade_down", "fade_up", "load_screen", "force_vision", "show_bmp", "activate_bow", "stop_entire_game", "restart_game", "kill_game", "load_game"]
 const UNIT := 0.025
 const DEPTH := 0.035
 var vm
@@ -51,6 +53,13 @@ var screen_footprints: Array = [] # [PackedVector2Array]: kit buildings (tiles a
 var footprint_tiles: Dictionary = {} # tile index -> 0: no tile hardness, 1: the tile's default mask
 var asset_frames: Array = []
 var original_sequences: Dictionary = {}
+var neighbour_arrival_cache: Dictionary = {} # screen and story/editor state -> sandbox arrival
+var neighbour_seed_override := -1 # deterministic probes; ordinary previews use their own RNG
+var _startup_random_tape: Array = []
+var _startup_random_index := 0
+var _startup_random_active := false
+var _startup_random_cut_tasks: Dictionary = {}
+var _incoming_arrival_basis: Dictionary = {} # pure post-startup state used only while building its neighbours
 
 func _ready() -> void:
 	_input_map()
@@ -140,6 +149,7 @@ func _new_game() -> void:
 	vm.cancel_all()
 	vm = VM.new(self)
 	vm.load_story()
+	neighbour_arrival_cache.clear()
 	sequences = original_sequences.duplicate(true)
 	dialogue_busy = false
 	walk_off_screen = false
@@ -163,6 +173,15 @@ func load_map(number: int, run_scripts: bool = true) -> void:
 	if not world.get("screens",{}).has(str(number)):
 		ui.notify("The path ends here.")
 		return
+	# A preview's random choices belong to this visit. Reuse them only when the
+	# incoming story/editor state still matches the preview; later calls to random
+	# (after a blocking command) keep the live VM's normal behavior.
+	var arrival: Dictionary = neighbour_arrival_state(number) if run_scripts else {}
+	_incoming_arrival_basis = arrival
+	_startup_random_tape = (arrival.get("random_tape", []) as Array).duplicate(true)
+	_startup_random_index = 0
+	_startup_random_active = false
+	_startup_random_cut_tasks.clear()
 	generation += 1
 	changing = true
 	locked = false
@@ -192,7 +211,9 @@ func load_map(number: int, run_scripts: bool = true) -> void:
 		vm.globals["vision"] = 0
 		var script := str(screen.get("script", ""))
 		if not script.is_empty() and not vm._procedure_code(script.to_lower(), "main").is_empty():
+			_startup_random_active = true
 			vm.run(script, "main", 0)
+			if generation == expected: _startup_random_active = false
 		if generation != expected: return
 	var editor_entities: Array[int] = []
 	for source in screen.get("sprites",[]):
@@ -210,21 +231,56 @@ func load_map(number: int, run_scripts: bool = true) -> void:
 	if run_scripts:
 		_run_screen_scripts.call_deferred(generation, editor_entities)
 
-# What a screen loads for one of its editor sprites on arrival, before any script runs: the map's sprite with
-# the story's changes (editor_state, persistence 2-8), the vision layer filter, and its still frame (pseq,
-# pframe; seq 0). {} when the screen does not load it (removed, waiting to return, another vision). The one
-# source of "what a screen loads": load_map builds its entities from it, and the neighbours the fps world
-# draws (fp_world.gd build_ground) are what their own screens would load.
-# `deep`: the current screen's entities are live and change (deep copies); a neighbour's are only read (fp_world.gd
-# draws them), so a shallow copy serves and saves its share of the load (about 2 ms of 3 on 439's block).
-func editor_entity(number: int, source: Dictionary, deep: bool = true) -> Dictionary:
+# The incoming screen resets player_map and vision before its mains, so neither
+# distinguishes two previews. Script locals and inventory do: their queries can
+# branch before the first blocking command. A persistence return time changes
+# effective editor state when it expires even if the dictionary does not change.
+func _neighbour_arrival_signature(number: int, base_state: Dictionary = {}) -> String:
+	var globals: Dictionary = (base_state.get("globals", vm.globals) as Dictionary).duplicate(true)
+	globals.erase("player_map")
+	globals.erase("vision")
+	var now := Time.get_unix_time_from_system()
+	var availability: Array[String] = []
+	var state_map: Dictionary = base_state.get("editor_state", editor_state)
+	for key in state_map:
+		var state: Dictionary = state_map[key]
+		if state.has("return_at"):
+			availability.append("%s:%d" % [str(key), int(float(state.return_at) > now)])
+	availability.sort()
+	# Editor sprites receive fresh ids on every load. The only locals retained
+	# across entries that a target startup can read are its screen main's id 0.
+	var script := str(world.get("screens", {}).get(str(number), {}).get("script", ""))
+	var locals_map: Dictionary = base_state.get("sprite_locals", vm._sprite_locals)
+	var screen_locals: Dictionary = locals_map.get("%s:0" % vm._script_name(script), {})
+	return JSON.stringify([globals, base_state.get("global_names", vm._global_names), screen_locals, state_map, availability, base_state.get("items", items), base_state.get("magic_items", magic_items)]).sha256_text()
+
+func neighbour_arrival_state(number: int, base_state: Dictionary = {}) -> Dictionary:
+	if not world.get("screens", {}).has(str(number)):
+		return {"vision": 0, "sprites": [], "random_tape": [], "uncertain": ["missing screen"]}
+	var signature := _neighbour_arrival_signature(number, base_state)
+	var key := "%d:%s" % [number, signature]
+	if neighbour_arrival_cache.has(key): return neighbour_arrival_cache[key]
+	var seed: int = neighbour_seed_override if neighbour_seed_override >= 0 else Time.get_ticks_usec()
+	var sandbox = NEIGHBOUR_SANDBOX.new(self, number, seed, base_state)
+	var result: Dictionary = sandbox.run_startup()
+	if neighbour_arrival_cache.size() >= 256:
+		neighbour_arrival_cache.erase(neighbour_arrival_cache.keys()[0])
+	neighbour_arrival_cache[key] = result
+	return result
+
+# One editor sprite's arrival state: editor persistence, vision filter, and its
+# still frame. Both the live load and the neighbour sandbox use this source.
+# Empty means removed, waiting to return, or on another vision layer. The
+# sandbox supplies its private vision and editor state through the overrides.
+func editor_entity(number: int, source: Dictionary, deep: bool = true, vision_override: int = -1, state_override: Variant = null) -> Dictionary:
 	var e: Dictionary = source.duplicate(deep)
 	var idx := int(e.get("index",0))
 	var key := "%d:%d" % [number,idx]
-	if editor_state.has(key):
-		e.merge(editor_state[key],true)
+	var state_map: Dictionary = editor_state if state_override == null else state_override
+	if state_map.has(key):
+		e.merge(state_map[key],true)
 	if e.get("removed",false): return {}
-	var state: Dictionary = editor_state.get(key,{})
+	var state: Dictionary = state_map.get(key,{})
 	var persistence := int(state.get("editor_type",0))
 	if persistence in [6,7,8] and float(state.get("return_at",0)) > Time.get_unix_time_from_system(): return {}
 	if persistence in [2,3,4,5]:
@@ -232,7 +288,8 @@ func editor_entity(number: int, source: Dictionary, deep: bool = true) -> Dictio
 		e["type"] = 0 if persistence in [3,5] else 1
 		e["brain"] = 0
 		e["script"] = ""
-	if int(e.get("vision",0)) != 0 and int(e.get("vision",0)) != int(vm.globals.get("vision",0)): return {}
+	var vision: int = int(vm.globals.get("vision",0)) if vision_override < 0 else vision_override
+	if int(e.get("vision",0)) != 0 and int(e.get("vision",0)) != vision: return {}
 	e["editor_num"] = idx
 	e["pseq"] = e.get("seq",0)
 	e["pframe"] = maxi(1,int(e.get("frame",1)))
@@ -247,13 +304,17 @@ func editor_entity(number: int, source: Dictionary, deep: bool = true) -> Dictio
 
 func _run_screen_scripts(expected: int, editor_entities: Array[int]) -> void:
 	if generation != expected: return
+	_startup_random_active = true
 	# Runtime sprites start main when sp_script attaches it; only editor
 	# sprites need startup here, or screen-created actors would run twice.
 	for id in editor_entities:
-		if generation != expected: return
+		if generation != expected: break
 		if id == 1 or not entities.has(id): continue
 		var e: Dictionary = entities[id]
 		if int(e.get("type",1)) == 1 and not str(e.get("script","")).is_empty() and not vm._procedure_code(str(e.script).to_lower(),"main").is_empty(): vm.run(e.script,"main",id)
+	if generation == expected:
+		_startup_random_active = false
+		_startup_random_tape.clear()
 
 func _texture(path: String) -> Texture2D:
 	if path.is_empty(): return null
@@ -925,6 +986,8 @@ func _script_move(id: int, dir: int, destination: float, speed: float) -> void:
 
 func dink_call(command: String, args: Array, context: Dictionary) -> Variant:
 	var cmd := command.to_lower()
+	if _startup_random_active and cmd in STARTUP_CUT_COMMANDS:
+		_startup_random_cut_tasks[int(context.get("task_id",0))] = true
 	var a: Variant = args[0] if args.size()>0 else 0
 	var b: Variant = args[1] if args.size()>1 else 0
 	var c: Variant = args[2] if args.size()>2 else 0
@@ -948,7 +1011,15 @@ func dink_call(command: String, args: Array, context: Dictionary) -> Variant:
 			var name := str(a).trim_prefix("&")
 			vm.globals[name] = b
 			return vm.globals[name]
-		"random": return randi_range(0,maxi(0,int(a)-1))+int(b)
+		"random":
+			if _startup_random_active and not _startup_random_cut_tasks.has(int(context.get("task_id",0))) and _startup_random_index < _startup_random_tape.size():
+				var preview_roll: Variant = _startup_random_tape[_startup_random_index]
+				if preview_roll is Array and preview_roll.size() == 5 and int(preview_roll[0]) == int(a) and int(preview_roll[1]) == int(b) and str(preview_roll[3]) == str(context.get("script","")) and str(preview_roll[4]) == str(context.get("procedure","")):
+					_startup_random_index += 1
+					return int(preview_roll[2])
+				# A branch changed since the preview. Use the original RNG from here.
+				_startup_random_tape.clear()
+			return randi_range(0,maxi(0,int(a)-1))+int(b)
 		"wait":
 			await get_tree().create_timer(maxf(0.001,float(a)/1000.0)).timeout
 		"freeze", "freeeze", "unfreeze", "unfreeeze":

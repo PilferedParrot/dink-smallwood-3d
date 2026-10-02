@@ -43,6 +43,8 @@ func _run() -> void:
 	root.add_child(game)
 	await process_frame
 	await game._new_game()
+	# Stable private preview rolls for scripted neighbours (408's gate girl).
+	if "neighbour_seed_override" in game: game.neighbour_seed_override = 1701
 	await create_timer(1.0).timeout
 	for n in dump:
 		await _load(int(n))

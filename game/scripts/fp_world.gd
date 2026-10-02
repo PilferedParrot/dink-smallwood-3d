@@ -61,6 +61,7 @@ const DIRS := {1: Vector2(-1,1), 2: Vector2(0,1), 3: Vector2(1,1), 4: Vector2(-1
 var clean_cache: Dictionary = {} # sprite path -> its texture without the shadow dither
 var kit_members: Dictionary = {} # "screen:index" -> true: map sprites a kit building draws
 var neighbour_actors: Array = [] # [Sprite3D, entity dict] of the actors the neighbour screens draw, this scene
+var neighbour_states: Dictionary = {} # screen -> sandboxed startup state for this 5x5 block
 
 func setup(game) -> void:
 	host = game
@@ -211,6 +212,7 @@ func build_ground(screen: Dictionary) -> void:
 	structural_seen.clear()
 	fitted_built.clear()
 	neighbour_actors.clear()
+	neighbour_states.clear()
 	# The current screen's own buildings carry its story state; a neighbour showing the
 	# same building (one placed on both screens) leaves it to them.
 	for source in screen.get("sprites",[]):
@@ -220,6 +222,17 @@ func build_ground(screen: Dictionary) -> void:
 		key = castle_key(source,host.current_screen)
 		if not key.is_empty(): fitted_built[key] = null
 	interior = is_inside(host.current_screen)
+	if not interior:
+		# Ground painting and house_plan also read neighbouring sprites. Compute
+		# each arrival once before any of those readers build the scene.
+		var column: int = (host.current_screen-1)%32
+		for dz in range(-2,3):
+			for dx in range(-2,3):
+				if dx == 0 and dz == 0: continue
+				if column+dx < 0 or column+dx >= 32: continue
+				var n: int = host.current_screen+dx+dz*32
+				if host.world.screens.has(str(n)) and not is_inside(n):
+					neighbour_states[n] = host.neighbour_arrival_state(n, host._incoming_arrival_basis)
 	configure_environment()
 	add_ground(host.current_screen,host.scene_root,Vector3.ZERO)
 	add_terrain_walls(screen)
@@ -243,10 +256,8 @@ func build_ground(screen: Dictionary) -> void:
 					backdrop.position = offset
 					host.scene_root.add_child(backdrop)
 					var dedup: Dictionary = {}
-					for source in host.world.screens[str(n)].get("sprites",[]):
-						# What the screen loads on arrival, before its scripts run (game.gd editor_entity).
-						var e: Dictionary = host.editor_entity(n,source,false)
-						if e.is_empty() or int(e.get("type",1)) == 2: continue
+					for e in neighbour_states[n].get("sprites", []):
+						if int(e.get("type",1)) == 2 or int(e.get("active",1)) == 0 or int(e.get("nodraw",0)) != 0 or int(e.get("disabled",0)) != 0: continue
 						var key := model_key(e)
 						if key in ["flame","effect","arrow",""]: continue
 						var fingerprint := "%s:%d:%d" % [key,int(e.x),int(e.y)]
@@ -254,9 +265,10 @@ func build_ground(screen: Dictionary) -> void:
 						if dedup.has(fingerprint): continue
 						dedup[fingerprint] = true
 						var node := make_entity(e,0,backdrop,false,n)
+						var model: Node = node.get_node_or_null("Model")
+						if model is Sprite3D: update_billboard(model as Sprite3D,e)
 						# Their brains run only on their own screen (as in the original): they stand in the frame the
 						# screen loads them with, turned toward the camera each frame (face_neighbours).
-						var model: Node = node.get_node_or_null("Model")
 						if node.get_meta("actor",false) and model is Sprite3D: neighbour_actors.append([model,e])
 				else:
 					add_wilderness(host.scene_root,offset,n)
@@ -305,7 +317,7 @@ func ground_texture(number: int) -> Texture2D:
 	# background, a removed sprite) recomposes the ground on the next load.
 	var background := background_sprites(number,int(host.vm.globals.get("vision",0)))
 	var signature := []
-	for e in background: signature.append("%d:%d:%d:%d" % [int(e.get("seq",0)),int(e.get("frame",1)),int(e.get("x",0)),int(e.get("y",0))])
+	for e in background: signature.append(background_key(e))
 	var cache_key := "%d:%s" % [number,",".join(signature).md5_text()]
 	if terrain_cache.has(cache_key): return terrain_cache[cache_key]
 	var screen: Dictionary = host.world.screens[str(number)]
@@ -342,10 +354,10 @@ func background_sprites(number: int, vision: int) -> Array:
 	var out: Array = []
 	var decks: Array = []
 	for e in sprites:
-		if effective_type(e) == 1 and model_key(e) != "bridge_deck": upright["%d:%d:%d:%d" % [int(e.get("seq",0)),int(e.get("frame",1)),int(e.get("x",0)),int(e.get("y",0))]] = true
+		if effective_type(e) == 1 and model_key(e) != "bridge_deck": upright[background_key(e)] = true
 	for e in sprites:
 		if not paints_ground(e,number): continue
-		if upright.has("%d:%d:%d:%d" % [int(e.get("seq",0)),int(e.get("frame",1)),int(e.get("x",0)),int(e.get("y",0))]): continue
+		if upright.has(background_key(e)): continue
 		if model_key(e) == "bridge_deck": decks.append(e)
 		else: out.append(e)
 	# The map draws a deck among the upright sprites, in their order (its que, else its y), over the background;
@@ -369,9 +381,22 @@ func effective_type(e: Dictionary) -> int:
 
 # Background sprites painted into the ground, exactly where and as the original draws them (the
 # prototype's _build_screen), shadow dither included: on the ground it is a shadow.
+func display_frame(e: Dictionary) -> Vector2i:
+	var seq := int(e.get("seq",0))
+	var frame := int(e.get("frame",1))
+	if seq == 0:
+		seq = int(e.get("pseq",0))
+		frame = int(e.get("pframe",1))
+	return Vector2i(seq,frame)
+
+func background_key(e: Dictionary) -> String:
+	var display: Vector2i = display_frame(e)
+	return "%d:%d:%d:%d" % [display.x,display.y,int(e.get("x",0)),int(e.get("y",0))]
+
 func paint_background(sprites: Array, img: Image) -> void:
 	for e in sprites:
-		var d: Dictionary = host._frame(int(e.get("seq",0)),int(e.get("frame",1)))
+		var display: Vector2i = display_frame(e)
+		var d: Dictionary = host._frame(display.x,display.y)
 		var sprite := sprite_image(str(d.get("path","")))
 		if sprite == null: continue
 		img.blend_rect(sprite,Rect2i(Vector2i.ZERO,sprite.get_size()),Vector2i(int(float(e.get("x",0))-20.0-float(d.get("dx",0))),int(float(e.get("y",0))-float(d.get("dy",0)))))
@@ -731,10 +756,10 @@ func make_entity(e: Dictionary, id: int, parent: Node3D, collision: bool = true,
 		model.scale = desired/Vector3(maxf(0.1,bounds.size.x),maxf(0.1,bounds.size.y),maxf(0.1,bounds.size.z))
 		node.position = point(rect.get_center().x,rect.get_center().y)
 		if key in ["cottage","inn"]: model.rotation.y = PI
-		if key == "cottage" and is_story_house(e):
-			if int(host.vm.globals.get("vision",0)) == 1:
+		if key == "cottage" and is_story_house(e,screen):
+			if screen_vision(screen) == 1:
 				add_story_fire(node,size.x)
-			elif int(host.vm.globals.get("vision",0)) == 2:
+			elif screen_vision(screen) == 2:
 				add_ruin_skin(node,model)
 	else:
 		# Stand-in models of sprites are as tall as their sprites stand (see sprite_height).
@@ -960,6 +985,12 @@ func screen_origin(n: int) -> Vector2:
 
 # The map's sprites of screen n as drawn now: the story layer, removed sprites, type 2 left out.
 func drawn_sprites(n: int, vision: int) -> Array:
+	if n != host.current_screen and neighbour_states.has(n):
+		var predicted: Array = []
+		for e in neighbour_states[n].get("sprites", []):
+			if int(e.get("type",1)) != 2 and int(e.get("active",1)) != 0 and int(e.get("nodraw",0)) == 0 and int(e.get("disabled",0)) == 0:
+				predicted.append(e)
+		return predicted
 	var out: Array = []
 	for source in host.world.screens.get(str(n),{}).get("sprites",[]):
 		if int(source.get("vision",0)) != 0 and int(source.vision) != vision: continue
@@ -1095,7 +1126,8 @@ func add_fitted_building(node: Node3D, e: Dictionary, id: int, screen: int, coll
 	var centre := top_left+box.get_center()
 	node.position = point(centre.x,centre.y)
 	var sig := parts_signature(parts)
-	var built: Dictionary = buildings.house(path,rect,parts,"%s|%s|%d" % [key,sig,int(host.vm.globals.get("vision",0))],bake_key(key,sig),false)
+	var vision := screen_vision(screen)
+	var built: Dictionary = buildings.house(path,rect,parts,"%s|%s|%d" % [key,sig,vision],bake_key(key,sig),false)
 	var model: Node3D = built.node
 	model.name = "Model"
 	model.position = Vector3(-box.get_center().x*SCALE,0,-box.get_center().y*SCALE)
@@ -1103,9 +1135,9 @@ func add_fitted_building(node: Node3D, e: Dictionary, id: int, screen: int, coll
 	if collision: node.add_child(ray_body(model,id))
 	node.set_meta("height",model_height(model))
 	node.set_meta("fitted",true)
-	if is_story_house(e):
-		if int(host.vm.globals.get("vision",0)) == 1: add_story_fire(node,box.size.x*SCALE,roof_spots(fit,box.get_center()))
-		elif int(host.vm.globals.get("vision",0)) == 2: add_ruin_skin(node,model)
+	if is_story_house(e,screen):
+		if vision == 1: add_story_fire(node,box.size.x*SCALE,roof_spots(fit,box.get_center()))
+		elif vision == 2: add_ruin_skin(node,model)
 
 # The castle pieces of the 5x5 block as drawn now: [key, path, sprite top-left (world px), draw order], once per
 # scene, screen and story layer.
@@ -1335,10 +1367,15 @@ func set_in_wall(node: Node3D, model: Node3D, e: Dictionary, screen: int) -> voi
 	# The door model faces its local +Z (the knob side); turn that outward.
 	model.rotation.y = atan2(outward.x,outward.y)
 
-func is_story_house(e: Dictionary) -> bool:
+func screen_vision(screen: int) -> int:
+	if screen != host.current_screen and neighbour_states.has(screen):
+		return int(neighbour_states[screen].get("vision",0))
+	return int(host.vm.globals.get("vision",0))
+
+func is_story_house(e: Dictionary, screen: int) -> bool:
 	# Map 439's home-01 at this anchor is Dink's house.  The other Home and
 	# fire sprites on the map are scenery, and must not inherit its story state.
-	return host.current_screen == 439 and int(e.get("x",-1)) == 275 and int(e.get("y",-1)) == 234 and source_path(e).ends_with("/home/home-01.png")
+	return screen == 439 and int(e.get("x",-1)) == 275 and int(e.get("y",-1)) == 234 and source_path(e).ends_with("/home/home-01.png")
 
 func add_story_fire(node: Node3D, house_width: float, roof_spots: Array = []) -> void:
 	# The discovery camera approaches from the house's +X side.  Keep flames
