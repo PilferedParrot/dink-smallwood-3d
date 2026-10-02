@@ -1290,7 +1290,7 @@ xvfb-run -a -s "-screen 0 1920x1080x24" ../../../.venv/bin/python -m pytest -q t
 `env -u WAYLAND_DISPLAY bwrap --dev-bind / / --tmpfs /dev/input --unshare-net /usr/bin/python3 tools/view_sheet.py
 <views.json> --col before=<checkout at aa7388e> --col now=.` (the views are listed in the sheet's labels).
 
-## Bridges, the castle, the kit buildings' footprints, and the side flip walked — October 1-2, tenth pass, second half (Opus 5.5 lead, Sonnet 5.5 units)
+## Bridges, the castle, the kit buildings' footprints, and the side flip walked — October 1, tenth pass, second half (Opus 5.5 lead, Sonnet 5.5 units)
 
 **Bridges are decks on the water and rope railings** (the first half's defect 2). The game built each bridge sprite
 as the Blender bridge model sized to its hardbox: a row of loose flat planks floating over the water, water between
@@ -1310,6 +1310,40 @@ from on it (now no water rows; before 62 of 232). Evidence: `docs/images/bridges
 drawn inside 06, 08 and 10 and the side rails of 01-03 lie flat on the deck (dark curves on the planks seen along the
 bridge); a near railing is a sliver from the bridge's own axis, as every structure card; decks have no ray body (an
 arrow passes over one).
+
+**The castle stands in 3D** (the first half's defect 1). Its walls and towers (struct/Castle, about 70 sprites on 25
+screens) were fixed cards facing south: walls drawn diagonally became slanted pictures standing east-west, tall slivers
+from anywhere but the front, and cut at their hotspots they left holes in the courtyards. `tools/facade_fit.py castle_fit`
+(`--castle-only`) fits eight frames from their pixels into facades.json's `_walls`, as the houses were fitted:
+- walls (castl-06..09): a prism on the drawn base line (least squares on the lowest non-shadow pixel of each column,
+  residual 0.2 px; slopes -0.50 and +0.48), the face's height and the walkway's depth (36-37 px, about 0.9 m) from the
+  best three-level step of the art's brightness along the base line's parallels (brick, the dark walkway, the bright
+  merlons); 07 and 09, which hide their walkway behind the parapet, take their sibling's. The merlons are a strip with
+  the sprite's own alpha.
+- towers (castl-01..04): elliptic cylinders. The art draws a ground circle as an ellipse of aspect 0.4878, one aspect for
+  the castle (the houses' base lines show the same 2:1); a circle, as this section's brief assumed, would have been a
+  factor of two wrong in depth. Radii and the corbel flare per sprite, from the silhouette and the base arc.
+`sprite_buildings.gd castle` builds them textured by the original camera's projection, the unseen far half the point
+mirror of the front, as a house's back. In the game (`fp_world.add_castle_piece`, key "castle") a piece placed twice is
+built once; the pieces of one wall overlap where their sprites do, and a coplanar overlap z-fought (368: mean |RGB|
+16.4 to 20.6), so each wall part is clipped to the span a later-drawn piece of the same wall leaves (the original's order).
+The castle pieces' footprints are in the depth rule, so the castle doors (cdoor-01 on 402, cdoor-06 on 80), anchored by
+their foot, are drawn over their walls; three other sprites take them (a pine on 336 under a wall, a mushroom on 400). The
+trees test's independent reading does not cover the castle pieces yet.
+Through the original camera, mean |RGB| against the original's picture (whole screen; over the castle's own pixels): 402
+28.12 to 21.20 (38.14 to 16.29), 401 26.48 to 16.83, 369 15.36 to 13.65, 368 16.81 to 15.87, 16 18.97 to 14.50, 48 23.63
+to 19.13, 80 56.83 to 29.95, and 370 19.62 to 19.99 (the castle's pixels 14.28 to 14.10; the sun's shadow on the grass is
+not the drawn dither). `tests/test_fps_castle.py`: every fitted frame is built in 3D and placed once; seen from above, a
+wall covers its walkway's depth (the card: 0 of 41 px; the prism 40.97); each piece's silhouette through the original
+camera matches its sprite (disagreement 0.009-0.074), and a spoiled geometry (base line 8 px off, a tower 10 px aside) goes
+worse by at least 0.02 (0.041-0.137). A finding worth keeping: through the original camera a projected picture is the
+sprite's whatever depth its face has, so the mean |RGB| cannot see a wrong geometry; only the silhouette can. Evidence:
+`docs/images/castle-oct1.jpg` and the fit overlays `docs/images/castle-fit-oct1.jpg`. On 402 `load_map` costs about 4.5 ms
+more (the pieces are built) and the frame is cheaper (p50 17.8 to 15.1 ms, the 3D castle draws less than its cards).
+
+**A sprite's model key is cached by its picture** (and whether it has a script: all it depends on). The second half
+added two more passes over the block's sprites (the decks' ground pass, the castle's pieces); with the cache, `load_map`
+on 439 is 101.6 ms before the second half and 102.0 now (112 without it), four interleaved runs each, approximate.
 
 **What casts a shadow.** The first half gave every billboard a sun-facing shadow twin, flames and grass included. The
 art says what casts one: a drawn shadow is a checkerboard of isolated black pixels, and over every frame the map places
@@ -1339,3 +1373,34 @@ at 27 degrees nothing stands out. A pop, small and at one place. Not fixed: a bl
 would remove it, but the reach (100 px here) is wide enough to bring back part of the cut the trees pass removed (its
 first sheet camera, 251 from the south-west, stands 43 px from this plane). A fix needs another quantity, such as whether
 the canopy and the house overlap on the screen at the crossing.
+
+**Verification.**
+- Looked at first: the four unit sheets (`bridges-oct1.jpg`, `castle-oct1.jpg`, the kit and side-flip views) and the
+  pass's one sheet for Chris, `docs/images/tenth-pass.jpg`: before the pass (aa7388e) and now, eight cameras.
+- `pytest` with everything merged: 95 passed, 1 skipped (aa7388e: 83 passed, 1 skipped).
+- Frame time and loading: approximate (llvmpipe under xvfb, the machine shared), interleaved, medians; see each paragraph.
+- Every Godot run: headless, or xvfb with WAYLAND_DISPLAY unset and the input devices hidden (bwrap); Dummy audio.
+
+**Defects I see, in order:**
+1. The castle's gatehouse (castl-05, on 80), its corner and gate pieces (castl-10..15, cgate, c-s*) and the island's huts
+   are still fixed cards; the gatehouse is a sliver between 3D walls from the side. The same fit (towers and a vaulted
+   block) would take them. A wall piece ends in a flat vertical cut where its sprite was cut; the far sides are the
+   mirrored fronts (06/08's far parapet is the wrong way round); the merlons have no thickness.
+2. Neighbours show their screens' editor layer before their scripts run, with the current screen's vision, and their
+   people stand still. Proposed for GPT-6 Sol: `tmp/briefs/sol-dinkc-vm.md` in the lead's worktree (the screens' startup
+   scripts in a sandboxed VM); the lane starts October 2 and reports to the Dink lead.
+3. The side flip: one small pop where the camera crosses a wall's plane (above); a fix needs a better quantity than the
+   sprite's reach.
+4. A bridge's far railing drawn inside its deck (06, 08, 10) lies flat on the deck; a near railing is a sliver from the
+   bridge's axis; decks have no ray body.
+5. Castle doors are flat cards pulled over the wall by the depth shift: at a steep angle a door stands in front of its
+   wall, not in it (a decal on the wall's plane would be right).
+6. Some trees float in two pieces (tree-09/10 pairs on 376) or hang over the top of a screen (251); not investigated.
+7. `game/assets/models/bridge.glb` and its entry in `tools/build_3d_assets.py` are no longer used.
+
+**Re-run:** the full suite, from the worktree root: `env -u WAYLAND_DISPLAY bwrap --dev-bind / / --tmpfs /dev/input
+--unshare-net xvfb-run -a -s "-screen 0 1920x1080x24" ../../../.venv/bin/python -m pytest -q tests`; the sheet:
+`env -u WAYLAND_DISPLAY bwrap --dev-bind / / --tmpfs /dev/input --unshare-net /usr/bin/python3 tools/view_sheet.py
+<views.json> --col before=<checkout at aa7388e> --col now=.` (each cell's label carries its camera); the castle fit:
+`/usr/bin/python3 tools/facade_fit.py --castle-only`, then `tools/bake_kit_canvases.gd` and `tools/bake_houses.gd`
+(headless Godot), which rewrite the two manifests' facades hash.
