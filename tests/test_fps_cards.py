@@ -106,15 +106,18 @@ def test_every_card_of_the_map_is_a_billboard_unless_its_art_is_a_structure(swep
     keys = {(c["key"], c["mode"]) for c in swept}
     for kind in [("oak_tree", "billboard"), ("pine_tree", "billboard"), ("dead_tree", "billboard"), ("bush", "billboard"),
                  ("rock", "billboard"), ("well", "billboard"), ("save", "billboard"), ("knight", "billboard"), ("dragon", "billboard"),
-                 ("fence", "fixed"), ("wall", "fixed"), ("tower", "fixed"), ("sign", "fixed"), ("hut", "fixed")]:
+                 ("fence", "fixed"), ("wall", "fixed"), ("tower", "fixed"), ("sign", "fixed")]:
         assert kind in keys, kind
+    # The island's huts are no cards any more: all 16 stand in 3D (tests/test_fps_huts.py), so no ("hut", "fixed") is swept.
+    assert ("hut", "fixed") not in keys
     assert sum(1 for c in swept if c["key"] == "oak_tree") > 500
     # The statues (struct/Stone/mdink: key "tower") stand upright; the castle's walls are fixed.
     assert any("/stone/mdink/" in c["path"].lower() and c["mode"] == "billboard" for c in swept)
     assert any("/castle/" in c["path"].lower() and c["mode"] == "fixed" for c in swept)
-    # The island: huts and rail fences fixed, spears and torches standing up.
+    # The island: rail fences fixed, spears and torches standing up (the huts, isle-01..06, are 3D pieces: no cards at all).
     island = {(c["path"].rsplit("/", 1)[-1].lower(), c["mode"]) for c in swept if "/island/" in c["path"].lower()}
-    assert ("isle-03.png", "fixed") in island and ("isle-07.png", "fixed") in island and ("isle-18.png", "billboard") in island
+    assert ("isle-07.png", "fixed") in island and ("isle-18.png", "billboard") in island
+    assert not any(name in ("isle-%02d.png" % n for n in range(1, 7)) for name, mode in island)
     assert ("isle-08.png", "billboard") in island  # the depth-axis rail post: edge-on from the side as a card
     assert ("torch-01.png", "billboard") in island
 

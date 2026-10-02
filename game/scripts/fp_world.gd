@@ -734,6 +734,9 @@ func make_entity(e: Dictionary, id: int, parent: Node3D, collision: bool = true,
 	if key == "castle":
 		add_castle_piece(node,e,id,screen,collision)
 		return node
+	if key == "hut" and hut_fitted(e):
+		add_hut(node,e,id,collision)
+		return node
 	if sprite_drawn(key):
 		add_billboard(node,e,id,key,collision,screen)
 		return node
@@ -1232,6 +1235,23 @@ func add_castle_piece(node: Node3D, e: Dictionary, id: int, screen: int, collisi
 	if collision and e.get("warp") == null: node.add_child(ray_body(model,id))
 	node.set_meta("height",model_height(model))
 	node.set_meta("castle",true)
+
+# A hut of struct/Island (isle-01..06) fitted from its sprite (tools/hut_fit.py) stands in 3D where the fixed card
+# stood (docs/DIRECTION.md, M3): a solid of revolution about its axis, textured by the original camera's projection
+# (scripts/sprite_buildings.gd hut). Drawn at its own size only; its ray body is its faces' (as a castle piece's), and
+# movement still reads the source hardbox (game.gd).
+func hut_fitted(e: Dictionary) -> bool:
+	return absf(float(e.get("size",100)) - 100.0) < 0.5 and not buildings.hut_fit(frame_path(e)).is_empty()
+
+func add_hut(node: Node3D, e: Dictionary, id: int, collision: bool) -> void:
+	var d: Dictionary = host._frame(int(e.get("pseq",e.get("seq",0))),int(e.get("pframe",e.get("frame",1))))
+	var model: Node3D = buildings.hut(frame_path(e))
+	model.name = "Model"
+	model.position = Vector3(-float(d.get("dx",0))*SCALE,0,-float(d.get("dy",0))*SCALE)
+	node.add_child(model)
+	if collision and e.get("warp") == null: node.add_child(ray_body(model,id))
+	node.set_meta("height",model_height(model))
+	node.set_meta("hut",true)
 
 # What a house draws, for its cache key: the same parts give the same textures.
 func parts_signature(parts: Dictionary) -> String:
