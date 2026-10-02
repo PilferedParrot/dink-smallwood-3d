@@ -204,6 +204,145 @@ func bridge_part(path: String) -> String:
 	var number := int(file.trim_prefix("brdge-")) if file.begins_with("brdge-") else 0
 	return "rail" if number in [4,7,9,11] else "deck"
 
+# The original draws each screen alone, clipped to its 600 x 400 playfield, so the map stitches an object across a
+# seam by placing a copy of it in each screen (437 of the 4,199 outdoor placements have their hotspot outside their own
+# screen; 311 seam pairs stand at the same world point, the rest offset across the seam by up to 200 px); and two
+# trees' arts, tree-09/10, draw two half-trees one above the other, the upper one a tree standing about 190 px further
+# north in the original's projection (screen = X, Z - Y). The 5x5 block draws every screen's sprites whole, so a seam
+# tree stood twice, and a stacked strip stood as one card with its far tree floating in the air (docs/DIRECTION.md, M3).
+# Each part of an art (stack_rows: parts split by a fully transparent band of > 3 rows, each >= 30 rows tall) stands at
+# its own foot, its lowest drawn row; and a part of static scenery (type 1, no script, no brain, size 100) is not built
+# when no drawn pixel of it lies in its own screen (the original never drew it), or when its foot lies outside its own
+# screen and the screen holding the foot (across one seam, or diagonally across two) places the same art (same vision)
+# crossing those seams at the same coordinates along them, with a part whose foot lies in that screen: that copy is the object. An object whose copies both stand outside (a crossing
+# pair) keeps both. tools/seam_objects.py is the independent reading tests/test_fps_seams.py compares with.
+var stack_cache: Dictionary = {}
+# The screens the scene being built holds (the 5x5 block; seam_partner): a copy whose partner screen is not built stays,
+# so an object at the block's edge stands where it will stand when the next screen loads. Empty: every screen (the
+# classification test).
+var scene_block: Dictionary = {}
+var art_cache: Dictionary = {}
+func art_image(path: String) -> Image:
+	if not art_cache.has(path): art_cache[path] = sprite_image(path)
+	return art_cache[path]
+
+func stack_rows(path: String) -> Array:
+	if stack_cache.has(path): return stack_cache[path]
+	var out: Array = []
+	var img := art_image(path)
+	if img != null:
+		var drawn: Array[int] = []
+		for y in img.get_height():
+			if not img.get_region(Rect2i(0,y,img.get_width(),1)).is_invisible(): drawn.append(y)
+		if not drawn.is_empty():
+			var cuts: Array[int] = [0]
+			for j in range(1,drawn.size()):
+				if drawn[j]-drawn[j-1] > 3 and drawn[j-1]+1-drawn[cuts[-1]] >= 30 and drawn[-1]+1-drawn[j] >= 30: cuts.append(j)
+			for k in cuts.size():
+				var last: int = (cuts[k+1] if k+1 < cuts.size() else drawn.size())-1
+				out.append([drawn[cuts[k]],drawn[last]+1,drawn[last]])
+	stack_cache[path] = out
+	return out
+
+func static_scenery(e: Dictionary) -> bool:
+	return int(e.get("type",1)) == 1 and str(e.get("script","")).is_empty() and int(e.get("brain",0)) == 0 and absf(float(e.get("size",100))-100.0) < 0.5
+
+# [[row0 or -1 if the art is one part, row1, foot row, shown], ...] for e on screen n (seam_parts' comment above).
+func seam_parts(e: Dictionary, n: int) -> Array:
+	var path := frame_path(e)
+	var rows := stack_rows(path)
+	if rows.size() <= 1: rows = [[-1,0,0]]
+	var d: Dictionary = host._frame(int(e.get("pseq",e.get("seq",0))),int(e.get("pframe",e.get("frame",1))))
+	var x := float(e.get("x",0))
+	var y := float(e.get("y",0))
+	var out: Array = []
+	var still := static_scenery(e) and not interior
+	for r in rows:
+		var shown := true
+		if still:
+			var foot := y if int(r[0]) < 0 else y-float(d.get("dy",0))+float(r[2])
+			if not drawn_inside(path,d,x,y,int(r[0]),int(r[1])): shown = false
+			else:
+				var sx := -1 if x < 20.0 else (1 if x >= 620.0 else 0)
+				var sy := -1 if foot < 0.0 else (1 if foot >= 400.0 else 0)
+				if (sx != 0 or sy != 0) and seam_partner(n,path,d,x,y,sx,sy,int(e.get("vision",0))): shown = false
+		out.append([int(r[0]),int(r[1]),int(r[2]),shown])
+	return out
+
+# Whether a drawn pixel of the art's rows [r0, r1) (all rows if r0 < 0) placed at (x, y) lies in the playfield.
+func drawn_inside(path: String, d: Dictionary, x: float, y: float, r0: int, r1: int) -> bool:
+	var img := art_image(path)
+	if img == null: return false
+	var left := int(x-float(d.get("dx",0)))
+	var top := int(y-float(d.get("dy",0)))
+	if r0 < 0:
+		r0 = 0
+		r1 = img.get_height()
+	var rows := Vector2i(maxi(r0,-top),mini(r1,400-top))
+	var cols := Vector2i(maxi(0,20-left),mini(img.get_width(),620-left))
+	if rows.y <= rows.x or cols.y <= cols.x: return false
+	return not img.get_region(Rect2i(cols.x,rows.x,cols.y-cols.x,rows.y-rows.x)).is_invisible()
+
+func crosses(path: String, d: Dictionary, x: float, y: float, side: String) -> bool:
+	var img := art_image(path)
+	if img == null: return false
+	var top := y-float(d.get("dy",0))
+	var left := x-float(d.get("dx",0))
+	match side:
+		"top": return top < 0.0 and 0.0 < top+img.get_height()
+		"bottom": return top < 400.0 and 400.0 < top+img.get_height()
+		"left": return left < 20.0 and 20.0 < left+img.get_width()
+		_: return left < 620.0 and 620.0 < left+img.get_width()
+
+# Whether the screen holding the foot (sx, sy: -1, 0, 1 screens across) places the same static art, of the same vision,
+# lined up with this copy exactly along every seam both cross (x along a top or bottom seam, y along a side seam: a pair
+# 2 px apart, 409's fence and 408's, kept apart, since one copy for both would kink the fence where it joins its own screen's),
+# with a part whose foot lies in that screen.
+func seam_partner(n: int, path: String, d: Dictionary, x: float, y: float, sx: int, sy: int, vision: int) -> bool:
+	var m: int = n+sx+32*sy
+	if sx != 0 and int((n+sx-1)/32) != int((n-1)/32): return false
+	if not host.world.screens.has(str(m)) or is_inside(m): return false
+	if not scene_block.is_empty() and not scene_block.has(m): return false
+	if sx != 0 and not crosses(path,d,x,y,"left" if sx < 0 else "right"): return false
+	if sy != 0 and not crosses(path,d,x,y,"top" if sy < 0 else "bottom"): return false
+	for r in host.world.screens[str(m)].get("sprites",[]):
+		if not static_scenery(r) or int(r.get("vision",0)) != vision: continue
+		var rd: Dictionary = host._frame(int(r.get("seq",0)),int(r.get("frame",1)))
+		if str(rd.get("path","")) != path: continue
+		var rx := float(r.x)
+		var ry := float(r.y)
+		if sy != 0 and absf(rx+600.0*sx-x) > 0.5: continue
+		if sx != 0 and absf(ry+400.0*sy-y) > 0.5: continue
+		if sx != 0 and not crosses(path,rd,rx,ry,"right" if sx < 0 else "left"): continue
+		if sy != 0 and not crosses(path,rd,rx,ry,"bottom" if sy < 0 else "top"): continue
+		var parts := stack_rows(path)
+		if parts.size() <= 1: parts = [[-1,0,int(rd.get("dy",0))]]
+		for p in parts:
+			var foot := ry-float(rd.get("dy",0))+float(p[2])
+			if foot >= 0.0 and foot < 400.0 and rx >= 20.0 and rx < 620.0: return true
+	return false
+
+# The placement of part k of a stacked art: the same sprite, its frame the part's rows, standing at the part's foot.
+func stack_part(e: Dictionary, k: int, r: Array) -> Dictionary:
+	if int(r[0]) < 0: return e
+	var seq := int(e.get("pseq",e.get("seq",0)))
+	var frame := int(e.get("pframe",e.get("frame",1)))
+	var d: Dictionary = host._frame(seq,frame)
+	var vseq := 1000000+seq*10+k
+	var key := str(vseq)
+	if not host.sequences.has(key): host.sequences[key] = {"frames":(host.sequences.get(str(seq),{}).get("frames",[]) as Array).duplicate(true),"delay":100}
+	var frames: Array = host.sequences[key].frames
+	var part_path := "%s#%d-%d" % [str(d.get("path","")),int(r[0]),int(r[1])]
+	if frame >= 1 and frame <= frames.size() and str(frames[frame-1].get("path","")) != part_path:
+		frames[frame-1] = {"path":part_path,"dx":d.get("dx",0),"dy":int(r[2])-int(r[0]),"hardbox":[0,0,0,0],"delay":d.get("delay",100),"special":0}
+	var out := e.duplicate()
+	out.seq = 0
+	out.frame = frame
+	out.pseq = vseq
+	out.pframe = frame
+	out.y = float(e.get("y",0))-float(d.get("dy",0))+float(r[2])
+	return out
+
 func build_ground(screen: Dictionary) -> void:
 	scene_generation = host.generation
 	# The campaign data is read after setup(); the builder keeps its caches across scenes.
@@ -222,6 +361,8 @@ func build_ground(screen: Dictionary) -> void:
 		key = castle_key(source,host.current_screen)
 		if not key.is_empty(): fitted_built[key] = null
 	interior = is_inside(host.current_screen)
+	scene_block.clear()
+	scene_block[host.current_screen] = true
 	if not interior:
 		# Ground painting and house_plan also read neighbouring sprites. Compute
 		# each arrival once before any of those readers build the scene.
@@ -232,6 +373,7 @@ func build_ground(screen: Dictionary) -> void:
 				if column+dx < 0 or column+dx >= 32: continue
 				var n: int = host.current_screen+dx+dz*32
 				if host.world.screens.has(str(n)) and not is_inside(n):
+					scene_block[n] = true
 					neighbour_states[n] = host.neighbour_arrival_state(n, host._incoming_arrival_basis)
 	configure_environment()
 	add_ground(host.current_screen,host.scene_root,Vector3.ZERO)
@@ -262,6 +404,10 @@ func build_ground(screen: Dictionary) -> void:
 						if key in ["flame","effect","arrow",""]: continue
 						var fingerprint := "%s:%d:%d" % [key,int(e.x),int(e.y)]
 						if key == "castle": fingerprint += ":" + frame_path(e)
+						# A copy painted into the ground stands nothing: it must not take the fingerprint of a standing
+						# twin at the same place (the map places 9 trees twice, type 0 and type 1: from the next screen
+						# they never stood; M3, U7).
+						if paints_ground(e,n): fingerprint += ":ground"
 						if dedup.has(fingerprint): continue
 						dedup[fingerprint] = true
 						var node := make_entity(e,0,backdrop,false,n)
@@ -735,7 +881,22 @@ func make_entity(e: Dictionary, id: int, parent: Node3D, collision: bool = true,
 		add_castle_piece(node,e,id,screen,collision)
 		return node
 	if sprite_drawn(key):
-		add_billboard(node,e,id,key,collision,screen)
+		# Seam copies and stacked art (seam_parts): one billboard per object part the original shows standing here.
+		var parts := seam_parts(e,screen)
+		if parts.size() == 1 and bool(parts[0][3]) and int(parts[0][0]) < 0:
+			add_billboard(node,e,id,key,collision,screen)
+			return node
+		for k in parts.size():
+			if not bool(parts[k][3]):
+				node.set_meta("seam_hidden",true)
+				continue
+			var part: Dictionary = stack_part(e,k,parts[k])
+			var holder := Node3D.new()
+			holder.name = "Part_%d" % k
+			holder.set_meta("model_key",key)
+			holder.position = point(float(part.x),float(part.y))-node.position
+			node.add_child(holder)
+			add_billboard(holder,part,id,key,collision,screen)
 		return node
 	var passable_fence := key == "fence" and int(e.get("hard",0)) != 0
 	# Hard=1 fence artwork marks an opening. Keep a readable gate shape while
@@ -1251,11 +1412,18 @@ func model_height(model: Node3D) -> float:
 	return top
 
 func sprite_image(path: String) -> Image:
+	var rows := ""
+	if "#" in path: # a stacked part's rows (stack_part): "art.png#r0-r1"
+		rows = path.get_slice("#",1)
+		path = path.get_slice("#",0)
 	var texture: Texture2D = host._texture("res://"+path)
 	if texture == null: return null
 	var image := texture.get_image()
 	if image.is_compressed(): image.decompress()
 	image.convert(Image.FORMAT_RGBA8)
+	if not rows.is_empty():
+		var r0 := int(rows.get_slice("-",0))
+		image = image.get_region(Rect2i(0,r0,image.get_width(),int(rows.get_slice("-",1))-r0))
 	return image
 
 # The height of a sprite's drawn pixels above its hotspot, in source pixels (0 if it has none):

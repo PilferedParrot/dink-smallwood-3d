@@ -116,10 +116,13 @@ func _classify() -> void:
 			var key: String = fw.model_key(e)
 			if key in fw.BUILT: continue
 			var node: Node3D = fw.make_entity(e, 0, scratch, false, n)
-			var line := _card_line(n, e, node, false)
-			if line != "":
-				print(line)
-				cards += 1
+			# Stacked art stands as one card per part (fp_world.seam_parts, M3): each part's holder carries its Model.
+			var holders: Array = [node] if node.get_node_or_null("Model") != null else node.get_children().filter(func(c): return str(c.name).begins_with("Part_"))
+			for holder in holders:
+				var line := _card_line(n, e, holder, false)
+				if line != "":
+					print(line)
+					cards += 1
 			scratch.remove_child(node)
 			node.free()
 	scratch.free()

@@ -1404,3 +1404,55 @@ the canopy and the house overlap on the screen at the crossing.
 <views.json> --col before=<checkout at aa7388e> --col now=.` (each cell's label carries its camera); the castle fit:
 `/usr/bin/python3 tools/facade_fit.py --castle-only`, then `tools/bake_kit_canvases.gd` and `tools/bake_houses.gd`
 (headless Godot), which rewrite the two manifests' facades hash.
+
+## Stacked trees and seam copies, and the rest of the "still wrong" list — October 2, M3 (Opus 5.5 leads, Sonnet 5.5 units)
+
+**Floating two-piece trees and the tree over 251** (the tenth pass's defect 6; root cause by the second M3 lead,
+claude:7346da90, finished and measured by the third). Two causes, both in the map's data. (1) *Stacked art:* tree-09 and
+tree-10 (123 placements) each draw two half-trees one above the other, a fully transparent band between them (rows
+177-199). In the original's projection (screen = X, Z - Y) the upper one is a tree standing about 200 px further north.
+The game stood the strip as one card at its hotspot: the far tree floated, the near one sank 100 px. No other placed art
+has such a band. (2) *Seam copies:* the original draws each screen alone, clipped to its playfield, so the map stitches
+an object across a seam with a copy in each screen; the game's 5x5 block drew every copy whole, so a seam tree stood twice,
+and a copy whose hotspot lies past its screen's edge stood whole where the original shows only the part inside (251: 283's
+tree-09 stood over 283's top edge, in front of 251's cabin). `fp_world.seam_parts`: a stacked art (a transparent band of
+more than 3 rows between parts at least 30 rows tall, read from the art) stands as one billboard per part at the part's own
+foot, its lowest drawn row, so each part projects through the original camera to the pixels it had; a part of static
+scenery (type 1, no script, no brain, size 100) is not built when no drawn pixel of it lies in its own screen (133 parts:
+the original never draws them), or when its foot lies outside its screen and the screen holding the foot places the same
+art, same vision, lined up along the seams both cross, with a part whose foot is inside (231 copies; 224 of them stand
+within 2 px of the copy kept). A copy whose partner screen is not in the scene's block stays, so an object at the block's
+edge stands where it will stand when the next screen loads. Measuring it found an older bug the drop exposed: the
+neighbour loop of `build_ground` dedups by key and position, and 9 trees are placed twice on one screen, type 0 (painted
+into the ground) and type 1 (standing): the painted copy took the fingerprint, so seen from the next screen those trees
+never stood (319 lost its tree-02 once its own copy was dropped). A ground-painted copy no longer takes a standing one's
+fingerprint.
+
+Through the original camera, mean |RGB| against the original's picture, all 217 screens holding a dropped or split part
+and 5 screens with none in their block (one Godot run renders many screens, `tmp/m3/orig_multi.gd`: pixel-identical to
+`tests/fps_capture.gd` on 471 and independent of the order; two renders of one build differ on 2 of 222 screens, 440
+and 531): 74 nearer, 11 further, 137 unchanged, the sum -66.2. 376 26.23 to 25.31, 251 22.20 to 21.62, 344 24.69 to
+23.70, 497 26.41 to 22.59 (the largest), 283 24.95 to 24.92; the five control screens 0 px changed. The pre-registered rail
+(no screen worse beyond noise) **failed on 11 screens**, worst 270 +0.50, 301 +0.35, 536 +0.25, 188 +0.16, the rest
++0.11 or less; each was traced by a controlled render: with the light's shadows off 269, 363, 569 and 188 do not change
+(the split trees cast two short shadows where the strip cast one long one); with shadows off and the split disabled 270
+and 301 do not change (a part standing at its own foot is occluded by what stands in front of it, where the original drew
+the whole strip by its hotspot's order, e.g. over 270's cabin roof); 536's rocks are kept from 568, whose copies stand 1-3
+px off 536's. These are the cost of one object per world point where the original's two screens disagree.
+`tests/test_fps_seams.py`: every billboard part of every outdoor screen (3,887) built exactly as `tools/seam_objects.py`
+reads the map (the same rule written again from the art and the map: it checks the implementation, not the rule; the
+pictures check the rule); on 376, 251 and 319 no tree-09/10 part off the ground by more than 2 px, no two trees of one art
+within 2 px, the block's edge (314's tree-09 seen from 251) and 320's standing tree-02 seen from 319. Red on: the
+unmodified code (14 and 26 parts off the ground on 376 and 251), the parts anchored at the strip's hotspot (14 off the
+ground), dedup by world distance alone (19 of 3,887 parts disagree), no seam dedup (11 and 5 trees drawn twice), no block
+edge, and no ground-painted fingerprint. The trees test's 528 case ("tree-04 over home-07", 528 at x 752) is gone: no drawn
+pixel of it lies in 528 and 529 places no copy, so the original never draws it; 497's case now targets 496's copy, the
+same world point. The cards test counts a stacked art's parts. `load_map` on 376, six interleaved pairs on a machine
+shared with four other renders: median 227.9 ms before, 230.5 now (ranges 162-281, 188-319): no cost the probe can see.
+Evidence: `docs/images/trees-seams-m3.jpg` (376 north, east and west and 251 south at eye level, then 376, 251, 344 and
+283 through the original camera beside the original's picture). Limits: 19 pairs of one art still stand within 4 px of
+each other (stacked strips overlapping on one screen, and 1-3 px seam pairs; the original draws them so too); through the
+original camera 283 and 344 show horizontal cuts across rows of trees, before and now alike (not investigated).
+**Re-run:** from the worktree root, `/usr/bin/python3 tools/seam_objects.py` (the counts), and inside `env -u
+WAYLAND_DISPLAY bwrap --dev-bind / / --tmpfs /dev/input --unshare-net`: `../../../.venv/bin/python -m pytest -q
+tests/test_fps_seams.py tests/test_fps_trees.py tests/test_fps_cards.py` (with xvfb-run for the trees and cards renders).
