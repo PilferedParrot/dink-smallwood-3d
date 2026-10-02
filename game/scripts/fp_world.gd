@@ -8,6 +8,7 @@ const SCALE := 0.025
 const WIDTH := 600.0*SCALE # one screen
 const DEPTH := 400.0*SCALE
 const BUILDINGS := preload("res://scripts/sprite_buildings.gd")
+const RAILS := preload("res://scripts/bridge_rails.gd")
 # Models that stand in for a sprite, sized to it; the rest keep their own sizes (or their hardbox).
 # Not "crate": it stands in for anything scripted or unknown (tools leaning on walls, sacks), and a
 # cube as tall as a leaning rake is a wall.
@@ -30,6 +31,7 @@ var structural_seen: Dictionary = {}
 # the prototype's own build; see add_fitted_building.
 var facades: Dictionary = {}
 var buildings # sprite_buildings.gd
+var rails # bridge_rails.gd: the bridges' railings and decks' ray plates
 var fitted_built: Dictionary = {} # world position key -> the node holding it (null: reserved), this scene
 var plan_key := "" # scene, screen and story layer the plan below was gathered for
 var plan_claimed: Dictionary = {} # "screen:index" -> true: sprites a fitted house draws (itself, its parts)
@@ -69,6 +71,8 @@ func setup(game) -> void:
 	var parsed: Variant = JSON.parse_string(FileAccess.get_file_as_string(path)) if FileAccess.file_exists(path) else null
 	facades = parsed if parsed is Dictionary else {}
 	buildings = BUILDINGS.new(host.sequences,host.world,facades,SCALE)
+	rails = RAILS.new()
+	rails.setup(self)
 
 func point(x: float, y: float) -> Vector3:
 	return Vector3((x-320.0)*SCALE,0,(y-200.0)*SCALE)
@@ -399,6 +403,7 @@ func paint_background(sprites: Array, img: Image) -> void:
 		var d: Dictionary = host._frame(display.x,display.y)
 		var sprite := sprite_image(str(d.get("path","")))
 		if sprite == null: continue
+		if model_key(e) == "bridge_deck": sprite = rails.plank_image(str(d.get("path","")),sprite) # the railing stands (add_deck)
 		img.blend_rect(sprite,Rect2i(Vector2i.ZERO,sprite.get_size()),Vector2i(int(float(e.get("x",0))-20.0-float(d.get("dx",0))),int(float(e.get("y",0))-float(d.get("dy",0)))))
 
 # Whether a sprite is a background sprite painted into its screen's ground (paint_background).
@@ -730,9 +735,13 @@ func make_entity(e: Dictionary, id: int, parent: Node3D, collision: bool = true,
 		return node
 	if paints_ground(e,screen):
 		node.set_meta("ground_painted",true) # painted into the ground (paint_background)
+		if key == "bridge_deck": rails.add_deck(node,e,id,collision) # its railing stands on it; rays hit it
 		return node
 	if key == "castle":
 		add_castle_piece(node,e,id,screen,collision)
+		return node
+	if key == "bridge_rail" and rails.has(frame_path(e)):
+		rails.add_near(node,e,id,collision) # stands on the line its posts' feet lie on, its posts as prisms
 		return node
 	if sprite_drawn(key):
 		add_billboard(node,e,id,key,collision,screen)

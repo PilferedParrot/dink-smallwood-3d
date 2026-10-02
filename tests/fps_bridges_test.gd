@@ -81,6 +81,9 @@ func _sweep() -> void:
 				var model := node.get_node_or_null("Model")
 				if model is Sprite3D: card = "fixed" if (model as Sprite3D).billboard == BaseMaterial3D.BILLBOARD_DISABLED else "billboard"
 				elif model != null: card = "model"
+				# A near railing stands as a card in the plane it was drawn in with its posts as prisms (bridge_rails.gd: a "Rail"
+				# child of meshes, no Sprite3D). A deck, painted into the ground, keeps no card of its own: its railing is its own node.
+				elif not node.has_meta("ground_painted") and node.get_node_or_null("Rail") != null: card = "fixed"
 				print("BRIDGE %d %d %d %s painted=%d in_ground=%d card=%s" % [n, int(e.get("index", -1)), vision, fw.frame_path(e),
 					1 if node.has_meta("ground_painted") else 0, 1 if in_ground.has(int(e.get("index", -1))) else 0, card])
 				lines += 1
