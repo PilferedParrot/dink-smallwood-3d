@@ -91,8 +91,18 @@ func source_path(e: Dictionary) -> String:
 	var frame := int(e.get("pframe",e.get("frame",1)))
 	return str(host._frame(seq,frame).get("path","")).to_lower()
 
+# What a sprite is drawn as. It depends only on its picture (sequence and frame) and whether it has a script, so
+# it is cached by those: the scene build asks it of every sprite of the 5x5 block several times a load.
+var key_cache: Dictionary = {} # seq * 100000 + frame * 2 + scripted -> model key
 func model_key(e: Dictionary) -> String:
 	if e.has("fps_model"): return str(e.fps_model)
+	var ck := int(e.get("pseq",e.get("seq",0)))*100000+int(e.get("pframe",e.get("frame",1)))*2+(0 if str(e.get("script","")).is_empty() else 1)
+	if key_cache.has(ck): return key_cache[ck]
+	var key := _model_key(e)
+	key_cache[ck] = key
+	return key
+
+func _model_key(e: Dictionary) -> String:
 	var p := source_path(e)
 	var frame := int(e.get("pframe",e.get("frame",1)))
 	if p.is_empty(): return ""
