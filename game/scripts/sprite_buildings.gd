@@ -1202,3 +1202,134 @@ func castle_surfaces(path: String, clips: Dictionary = {}) -> Array:
 # later over the earlier, and two coplanar faces must not both be drawn).
 func castle(path: String, clips: Dictionary = {}) -> Node3D:
 	return node_from(castle_surfaces(path, clips))
+
+# --- The island's round huts (docs/DIRECTION.md, M3) -----------------------------------------------
+# A hut sprite (struct/Island isle-01..06) is a solid of revolution about a vertical axis, fitted by tools/hut_fit.py
+# (prototype/facades.json "_huts", by sprite path): the axis (cx, cz) in the sprite's pixel frame (x east, z = screen y
+# at ground level, Y up, times S), the ground ellipse's aspect k (the castle's: one camera) and the profile r(h) at
+# nodes up the height. Each node's ring is HUT_SEGMENTS points; the fit also says which of them the original camera
+# sees ("vis", a 0/1 string per node). A surface point whose picture the camera has well is textured by projecting the
+# sprite back through the camera, UV = (x, z - Y), exact; the rest of the hut (its far side, and the grazing flanks)
+# takes the picture of the part seen well, back and forth round the hut (_hut_source); a point of the front hidden by the
+# thatch above takes the visible ring just below (the wall under the eave), else above.
+var hut_cache: Dictionary = {} # sprite path -> [[mesh, texture], ...]
+const HUT_SEGMENTS := 48
+
+func hut_fit(path: String) -> Dictionary:
+	var huts: Variant = facades.get("_huts", {})
+	if huts is Dictionary and (huts as Dictionary).has(path) and huts[path] is Dictionary: return huts[path]
+	return {}
+
+# The ring's columns run from the north (the far side from the original camera) round to the north again, the first and
+# last the same point of the surface: the texture may be discontinuous there, and nowhere else.
+func _hut_theta(c: int) -> float:
+	return -PI/2.0 + TAU*float(c)/HUT_SEGMENTS
+
+# The texture coordinate (sprite px) of each ring column: [node][column 0..HUT_SEGMENTS] -> Vector2.
+func _hut_uvs(fit: Dictionary) -> Array:
+	var nodes: Array = fit.nodes
+	var cx := float(fit.cx)
+	var cz := float(fit.cz)
+	var k := float(fit.k)
+	var n := HUT_SEGMENTS
+	var proj := func(i: int, j: int) -> Vector2:
+		var t := TAU*float(j)/n
+		var r := float(nodes[i][1])
+		return Vector2(cx + r*cos(t), cz + k*r*sin(t) - float(nodes[i][0]))
+	var seen := func(i: int, j: int) -> bool:
+		return str(nodes[i][2]).substr(j, 1) == "1"
+	var out: Array = []
+	for i in nodes.size():
+		var row: Array = []
+		for c in n + 1:
+			var src := _hut_source(_hut_theta(c))
+			var uv: Variant = null
+			if seen.call(i, src): uv = proj.call(i, src)
+			else: # hidden by the thatch above: the nearest ring up or down the wall that shows this point
+				for step in [-1, 1]:
+					var q: int = i + step
+					while uv == null and q >= 0 and q < nodes.size():
+						if seen.call(q, src): uv = proj.call(q, src)
+						q += step
+					if uv != null: break
+			row.append(uv if uv != null else proj.call(i, src))
+		out.append(row)
+	return out
+
+# The ring point (of the fit's HUT_SEGMENTS, counted from the east) whose picture the surface takes at angle theta. The
+# original camera sees only the front of a hut, the half towards it (sin t > 0), and the flanks of that at a grazing
+# angle where one source pixel spans several of surface; the rest takes the picture of the part seen well. With alpha the
+# angle from the front, the picture is the sprite's at s(alpha), a triangle wave of period 4 HUT_GRAZE: the sprite
+# as drawn within HUT_GRAZE of the front, then reflected at +-HUT_GRAZE, back and forth round the hut. It is continuous
+# everywhere but at the far north, where the wave's phases meet (their pictures differ), and never uses the grazing
+# flank. (Reflected across the plane through the axis instead, the east and west views are mirror images of themselves
+# about the flank; turned half a turn, a hard seam runs down their middle: both measured on 764 and 680, 2026-10-02.
+# Projecting the far-side points the camera does see, the back of the dome, lowered the original-camera colour error by
+# about 1.2 but left patch seams on the oblique views, so they take the wave too.)
+const HUT_GRAZE := 70.0
+func _hut_source(theta: float) -> int:
+	var n := HUT_SEGMENTS
+	var alpha := rad_to_deg(theta - PI/2.0) # -180 at the first column to 180 at the last: not wrapped, so each of
+	var u := fposmod(alpha + HUT_GRAZE, 4.0*HUT_GRAZE) # the seam's two points takes its own side's picture
+	if u > 2.0*HUT_GRAZE: u = 4.0*HUT_GRAZE - u
+	return posmod(roundi((deg_to_rad(u - HUT_GRAZE) + PI/2.0)/TAU*n), n)
+
+# The hut sprite's picture with its holes filled (the shadow dither and the empty air round the body take the nearest drawn
+# colour, so a texel at the body's edge does not blend with black): the bake's (tools/bake_houses.gd, key "hut:" + path,
+# the same manifest as the houses' and so current while facades.json is) or, with no current bake, composed (~100 ms a sprite).
+func hut_image(path: String) -> Image:
+	var baked := baked_house("hut:" + path)
+	if not baked.is_empty(): return baked[0]
+	return filled(image(path))
+
+# The surfaces of a fitted hut sprite ([[mesh, texture], ...]), cached by path. One vertex per ring point and node, the
+# faces as an index buffer: the ring points carry their texture coordinates, so a quad's corners are shared.
+func hut_surfaces(path: String) -> Array:
+	if hut_cache.has(path): return hut_cache[path]
+	var fit := hut_fit(path)
+	var size := Vector2(float(fit.size[0]), float(fit.size[1]))
+	var nodes: Array = fit.nodes
+	var cx := float(fit.cx)
+	var cz := float(fit.cz)
+	var k := float(fit.k)
+	var n := HUT_SEGMENTS
+	var uvs := _hut_uvs(fit)
+	var verts := PackedVector3Array()
+	var tex_uv := PackedVector2Array()
+	var index := PackedInt32Array()
+	var cols := n + 1
+	for i in nodes.size():
+		var h := float(nodes[i][0])
+		var r := float(nodes[i][1])
+		for c in cols:
+			var t := _hut_theta(c)
+			verts.append(Vector3(cx + r*cos(t), h, cz + k*r*sin(t))*S)
+			tex_uv.append((uvs[i][c] as Vector2)/size)
+	for i in nodes.size() - 1:
+		for c in n:
+			var a := i*cols + c
+			var b := a + 1
+			var d := (i + 1)*cols + c
+			var e := d + 1
+			index.append_array(PackedInt32Array([a, b, e, a, e, d]))
+	# The apex: a fan to the axis over the last ring.
+	var top := nodes.size() - 1
+	var apex := verts.size()
+	verts.append(Vector3(cx, float(nodes[top][0]), cz)*S)
+	tex_uv.append(Vector2(cx, cz - float(nodes[top][0]))/size)
+	for c in n:
+		index.append_array(PackedInt32Array([apex, top*cols + c + 1, top*cols + c]))
+	var arrays := []
+	arrays.resize(Mesh.ARRAY_MAX)
+	arrays[Mesh.ARRAY_VERTEX] = verts
+	arrays[Mesh.ARRAY_TEX_UV] = tex_uv
+	arrays[Mesh.ARRAY_INDEX] = index
+	var mesh := ArrayMesh.new()
+	mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays)
+	var surfaces: Array = [[mesh, _texture(hut_image(path))]]
+	hut_cache[path] = surfaces
+	return surfaces
+
+# The hut as a node: origin at its sprite's top-left, as a castle piece.
+func hut(path: String) -> Node3D:
+	return node_from(hut_surfaces(path))

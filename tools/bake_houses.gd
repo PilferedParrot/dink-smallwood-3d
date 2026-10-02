@@ -9,6 +9,7 @@ extends SceneTree
 # Re-run after tools/facade_fit.py:
 #   godot --headless --audio-driver Dummy --path game --script <repo>/tools/bake_houses.gd
 # Each file is read back and compared with the composed image before the manifest is written.
+# The island's fitted huts (facades.json "_huts") are baked too, their filled sprites keyed "hut:" + path.
 # Verdict (2026-09-30, Opus 5.5): used for the first bake; every image read back byte-identical.
 const GAME := preload("res://scripts/fps_game.gd")
 const BUILDINGS := preload("res://scripts/sprite_buildings.gd")
@@ -62,6 +63,23 @@ func _run() -> void:
 						ok = false
 						print("MISMATCH ", hk, " ", i)
 				houses[id] = imgs.size()
+	# The island's fitted huts (scripts/sprite_buildings.gd hut_image): each sprite's filled picture, key "hut:" + path.
+	for path in fw.buildings.facades.get("_huts", {}):
+		var id: String = ("hut:" + str(path)).sha1_text()
+		var img: Image = fw.buildings.filled(fw.buildings.image(str(path)))
+		var bytes: PackedByteArray = img.save_webp_to_buffer(false)
+		var file := "%s/%s-0.bin" % [dir, id]
+		var f := FileAccess.open(file, FileAccess.WRITE)
+		f.store_buffer(bytes)
+		f.close()
+		total += bytes.size()
+		var back := Image.new()
+		back.load_webp_from_buffer(FileAccess.get_file_as_bytes(file))
+		back.convert(Image.FORMAT_RGBA8)
+		if back.get_data() != img.get_data():
+			ok = false
+			print("MISMATCH ", path)
+		houses[id] = 1
 	if not ok:
 		print("BAKE FAILED: an image did not read back identically; no manifest written")
 		quit(1)
