@@ -1,0 +1,36 @@
+RUN repeat=1 screen=439 checkout=old
+old repeat=1 PERF screen=439 load_ms=154.7 frames=300 mean_ms=35.77 p50_ms=32.44 p95_ms=55.10 nodes=992
+RUN repeat=1 screen=439 checkout=new
+new repeat=1 PERF screen=439 load_ms=238.9 frames=300 mean_ms=45.38 p50_ms=45.21 p95_ms=77.76 nodes=998
+RUN repeat=1 screen=440 checkout=old
+old repeat=1 PERF screen=440 load_ms=442.4 frames=300 mean_ms=35.93 p50_ms=31.44 p95_ms=55.89 nodes=1023
+RUN repeat=1 screen=440 checkout=new
+new repeat=1 PERF screen=440 load_ms=235.4 frames=300 mean_ms=38.64 p50_ms=35.62 p95_ms=59.60 nodes=1044
+RUN repeat=1 screen=505 checkout=old
+old repeat=1 PERF screen=505 load_ms=443.3 frames=300 mean_ms=30.53 p50_ms=25.69 p95_ms=51.41 nodes=955
+RUN repeat=1 screen=505 checkout=new
+new repeat=1 PERF screen=505 load_ms=313.9 frames=300 mean_ms=30.49 p50_ms=26.38 p95_ms=50.73 nodes=1062
+RUN repeat=2 screen=439 checkout=old
+old repeat=2 PERF screen=439 load_ms=166.6 frames=300 mean_ms=34.69 p50_ms=29.98 p95_ms=55.81 nodes=992
+RUN repeat=2 screen=439 checkout=new
+new repeat=2 PERF screen=439 load_ms=151.6 frames=300 mean_ms=35.15 p50_ms=33.00 p95_ms=54.84 nodes=998
+RUN repeat=2 screen=440 checkout=old
+old repeat=2 PERF screen=440 load_ms=242.6 frames=300 mean_ms=36.81 p50_ms=33.33 p95_ms=57.65 nodes=1023
+RUN repeat=2 screen=440 checkout=new
+new repeat=2 PERF screen=440 load_ms=244.0 frames=300 mean_ms=38.10 p50_ms=34.81 p95_ms=57.52 nodes=1032
+RUN repeat=2 screen=505 checkout=old
+old repeat=2 PERF screen=505 load_ms=436.7 frames=300 mean_ms=31.73 p50_ms=28.68 p95_ms=49.96 nodes=955
+RUN repeat=2 screen=505 checkout=new
+new repeat=2 PERF screen=505 load_ms=285.5 frames=300 mean_ms=23.58 p50_ms=17.33 p95_ms=45.45 nodes=1062
+RUN repeat=3 screen=439 checkout=old
+old repeat=3 PERF screen=439 load_ms=283.6 frames=300 mean_ms=27.94 p50_ms=21.56 p95_ms=52.87 nodes=992
+RUN repeat=3 screen=439 checkout=new
+new repeat=3 PERF screen=439 load_ms=122.6 frames=300 mean_ms=30.32 p50_ms=25.16 p95_ms=52.41 nodes=1001
+RUN repeat=3 screen=440 checkout=old
+old repeat=3 PERF screen=440 load_ms=130.9 frames=300 mean_ms=31.72 p50_ms=27.05 p95_ms=54.65 nodes=1023
+RUN repeat=3 screen=440 checkout=new
+new repeat=3 PERF screen=440 load_ms=222.1 frames=300 mean_ms=37.39 p50_ms=36.99 p95_ms=61.89 nodes=1044
+RUN repeat=3 screen=505 checkout=old
+old repeat=3 PERF screen=505 load_ms=718.3 frames=300 mean_ms=37.46 p50_ms=37.55 p95_ms=60.49 nodes=955
+RUN repeat=3 screen=505 checkout=new
+new repeat=3 PERF screen=505 load_ms=358.7 frames=300 mean_ms=36.53 p50_ms=38.92 p95_ms=58.47 nodes=1062

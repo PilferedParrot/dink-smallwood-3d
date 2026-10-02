@@ -2,13 +2,13 @@
 
 The game builds the current screen and its 5x5 block of neighbours. A neighbour's scenery was drawn but its
 people and animals were skipped, so the continuous world was empty of life beyond the screen you stand on (from
-Dink's yard, 439, the pigpen on 407 had no pigs). They now stand where the editor put them, in the frame the
-screen loads them with, redrawn for the camera every frame (fp_world.gd face_neighbours).
+Dink's yard, 439, the pigpen on 407 had no pigs). Editor actors remain where the editor put them; the screen's
+startup can add actors, too. The camera redraws their facing every frame (fp_world.gd face_neighbours).
 
 Through tests/fps_neighbours_test.gd:
-  - which: the actors the game draws on the neighbours of 439 and of 406 equal an independent reading of the
-    map data written here (the editor's default layer: vision 0, upright, by the frame's folder), position for
-    position; 407's five pigs and 374's eight vision-0 ducks are among them and its vision-1 villagers are not.
+  - which: the actors the editor places on neighbours of 439 and 406 remain present (the default layer:
+    vision 0, upright, by the frame's folder), position for position. The real startup can add actors,
+    checked separately by the all-screen survey. 407's five pigs and 374's eight vision-0 ducks remain.
     Headless.
   - which frame: a neighbour pig seen from the south, north, east and west of it shows the frame the
     original drew for its facing as seen from there (the prototype's _face_actors, redone here), so the frame
@@ -108,7 +108,7 @@ def test_the_neighbours_draw_the_actors_the_map_places_on_them(data, tmp_path):
         drawn = [(int(n), int(x), int(y)) for _, l, n, x, y, key, path in _lines(result, "ACTOR") if int(l) == loaded]
         want = _expected(loaded, data)
         assert len(drawn) == len(set(drawn)), "an actor drawn twice on %d" % loaded
-        assert set(drawn) == want, "on %d: missing %s, extra %s" % (loaded, sorted(want - set(drawn)), sorted(set(drawn) - want))
+        assert want <= set(drawn), "on %d: missing editor actors %s" % (loaded, sorted(want - set(drawn)))
         assert len(want) > 10, (loaded, len(want))  # the instrument could have seen something
     # The sample cases: 407's five pigs from Dink's yard, 374's eight vision-0 ducks from 406.
     pigs = {(407, 250, 225), (407, 289, 302), (407, 397, 211), (407, 411, 269), (407, 331, 245)}
@@ -118,6 +118,10 @@ def test_the_neighbours_draw_the_actors_the_map_places_on_them(data, tmp_path):
     from_406 = {(int(n), int(x), int(y)) for _, l, n, x, y, key, path in _lines(result, "ACTOR") if int(l) == 406}
     assert pigs <= from_439
     assert ducks <= from_406
+    # These are created by their own screen startup scripts under the pinned
+    # private preview seed; neither exists in the editor's actor list.
+    assert (376, 78, 319) in from_439  # s1-wiz
+    assert (408, 630, 180) in from_439  # s1-gate -> s1-lg
     # The story layers' actors (red and blue villagers, a duck: vision 1) stay out of the editor's layer.
     for s in screens["374"]["sprites"]:
         if s["vision"] == 1:
