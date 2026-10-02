@@ -269,9 +269,6 @@ def simple_asset(asset):
         cube(n+"_lock",(0,.73,-.55),(.22,.25,.08),"gold",.02)
     elif asset=="sign": cube(n+"_post",(0,.8,0),(.15,1.6,.15),"wood"); cube(n+"_board",(0,1.55,0),(1.6,.65,.14),"wood_light")
     elif asset=="fountain": cyl(n+"_basin",(0,.25,0),1.3,.35,"stone_light",16); cyl(n+"_pedestal",(0,.8,0),.35,1.1,"stone",10); sphere(n+"_water",(0,1.45,0),(.5,.12,.5),"water")
-    elif asset=="bridge":
-        for x in (-1.3,-.65,0,.65,1.3): cube(n+"_plank",(x,.8,0),(.58,.18,2.5),"wood_light")
-        beam_between(n+"_rail_l",(-1.4,.9,-1.0),(1.4,1.4,-1.0),.1,"wood"); beam_between(n+"_rail_r",(-1.4,.9,1.0),(1.4,1.4,1.0),.1,"wood")
     elif asset=="cave_entrance": sphere(n+"_mountain",(0,1.8,0),(2.5,2.0,1.2),"stone"); sphere(n+"_dark_opening",(0,1.0,-1.05),(1.1,1.2,.25),"iron")
     elif asset=="gravestone": cube(n+"_stone",(0,.65,0),(.8,1.3,.25),"stone_light",.15); sphere(n+"_roundtop",(0,1.3,0),(.4,.4,.13),"stone_light")
     elif asset=="mushroom": cyl(n+"_stem",(0,.3,0),.13,.6,"white",8); sphere(n+"_cap",(0,.65,0),(.5,.22,.5),"red")
@@ -339,7 +336,7 @@ def simple_asset(asset):
             cyl(n+"_wrist",(0,.20,.04),.105,.40,"skin",10)
             cyl(n+"_sleeve",(0,.02,.07),.13,.18,"cloth",10)
 
-ASSETS = ["oak_tree","pine_tree","dead_tree","bush","rock","cottage","inn","castle","tower","fence","barrel","crate","table","chair","bed","chest","sign","well","fountain","bridge","cave_entrance","gravestone","mushroom","flowers","torch","pig","duck","pillbug","bonca","slime","dragon","knight","man","woman","wizard","bow","sword","fist"]
+ASSETS = ["oak_tree","pine_tree","dead_tree","bush","rock","cottage","inn","castle","tower","fence","barrel","crate","table","chair","bed","chest","sign","well","fountain","cave_entrance","gravestone","mushroom","flowers","torch","pig","duck","pillbug","bonca","slime","dragon","knight","man","woman","wizard","bow","sword","fist"]
 CHARACTERS = {"pig", "duck", "pillbug", "bonca", "slime", "dragon", "knight", "man", "woman", "wizard"}
 MANIFEST = []
 

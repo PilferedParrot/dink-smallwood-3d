@@ -249,19 +249,6 @@
       "up": "+Y"
     },
     {
-      "name": "bridge",
-      "path": "models/bridge.glb",
-      "dimensions_m": [
-        3.18,
-        1.402,
-        2.5
-      ],
-      "base_y_m": 0.0,
-      "mesh_nodes": 2,
-      "front": "-Z",
-      "up": "+Y"
-    },
-    {
       "name": "cave_entrance",
       "path": "models/cave_entrance.glb",
       "dimensions_m": [
