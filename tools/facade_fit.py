@@ -1467,8 +1467,14 @@ def cross_houses(seqs, dR, dL, sheet, p=None):
 #   * the parapet: a thin crenellated wall standing on the walkway's far edge (frames 6, 8: the
 #     inner face, walkway visible and the merlons behind it) or on its near edge (frames 7, 9: the
 #     outer face, the merlons rise from the front face and hide the walkway). It stays in the
-#     texture, as a strip with the sprite's own alpha (the gaps between merlons are see-through);
-#   * the far face and the ends: the far face mirrors the front through the prism's centre.
+#     texture, as a strip with the sprite's own alpha (the gaps between merlons are see-through). M3: the
+#     strip has a thickness pt (a solid: front, top and back face, one alpha), on the OUTER edge;
+#   * the far face and the ends: M3 (October 2): one wall is one solid, and 06/08 (inner face) and 07/09 (outer
+#     face) are the same wall seen from its two sides, so the far face takes the sibling's picture (`far`). The
+#     ninth pass mirrored the front through the prism's centre, as a house's back; the stubs of frames 1-3 still do.
+# The merlons' thickness pt is the depth of the notches in the top silhouette of 06/08 (the merlons' end faces run
+# along the wall's normal, one thickness back); 07/09 show no notches, so theirs is what their silhouette leaves
+# over the walkway (u_top - hw - tv).
 # The base line is the least-squares line through the lowest drawn pixel of each column (the shadow
 # dither, isolated black pixels, is left out). The face's top and the walkway's depth are found from
 # the median brightness along the base line's parallels, u = (b(x) - y): the brick face, the dark
@@ -1479,6 +1485,7 @@ CASTLE = 'assets/graphics/struct/Castle/castl-%02d.png'
 CASTLE_SEQ = 67
 CASTLE_WALLS = {6: None, 8: None, 7: 6, 9: 8}  # frame -> the sibling whose walkway it takes
 CASTLE_TOWERS = [4, 3, 1, 2]
+CASTLE_GATE, CASTLE_CORNER = 5, 12
 
 
 def castle_rgba(frame: int) -> np.ndarray:
@@ -1548,15 +1555,43 @@ def wall_fit(frame: int, fits: dict):
     if sib is None:
         u1, u2, levels, sse = three_levels(wall_profile(rgba, body, s, c, int(u_top) + 8), 60, int(u_top))
         hw, tv = float(u1), float(u2 - u1)
-        parapet, y_top = 'back', u_top - tv  # the back plane's height: u = Y + Tv there
+        # M3: the parapet is a solid strip pt thick. The drawn merlons' end faces (a notch of the top silhouette, a
+        # bevel whose depth in u is the thickness) measure it; the merlon face stands on the walkway's far edge
+        # (u = Y + tv there), its top face is the last pt rows: Y_top = u_top - tv - pt.
+        pt = parapet_thickness(body, s, c, u_top)
+        parapet, y_top = 'back', u_top - tv - pt
         info = {'levels': [float(v) for v in levels]}
     else:
         hw, tv = fits[sib]['parts'][0]['hw'], fits[sib]['parts'][0]['tv']
-        parapet, y_top = 'front', u_top
+        # The outer face draws no end faces: the wall is as deep as its own silhouette allows (the far face's top edge
+        # u = hw + tv + pt must stay inside the drawn top, u_top), the strip's front face stands on the face itself.
+        pt = max(3.0, round(u_top - hw - tv, 1))
+        parapet, y_top = 'front', u_top - pt
         info = {'sibling': CASTLE % sib, 'dz': round(fits[sib]['parts'][0]['c'] - c, 2)}
     return {'size': [int(w), int(h)], 'resid': round(res, 2), 'parts': [{
         'type': 'wall', 'x0': 0, 'x1': int(w), 's': round(s, 4), 'c': round(c, 2), 'hw': hw, 'tv': tv,
-        't': round(tv / root, 2), 'parapet': parapet, 'y_top': round(y_top, 1), 'u_top': round(u_top, 1), **info}]}
+        't': round(tv / root, 2), 'parapet': parapet, 'y_top': round(y_top, 1), 'u_top': round(u_top, 1),
+        'pt': float(pt), **info}]}
+
+
+def parapet_thickness(body, s, c, u_top):
+    """The merlons' thickness in the drawn wall's own units (z at a fixed x, as tv): the top silhouette u(x) = s x + c - top(x)
+    is flat at u_top along a merlon's top face and dips along each end face (the crenel) by exactly the thickness: the
+    end face runs along the wall's normal, one thickness back. The median depth of the dips, ends of the sprite left out."""
+    h, w = body.shape
+    u = np.array([s * x + c - np.nonzero(body[:, x])[0].min() for x in range(w)])
+    dip = u < u_top - 2.5
+    depths, x = [], 12
+    while x < w - 12:
+        if dip[x]:
+            x1 = x
+            while x1 < w - 12 and dip[x1]:
+                x1 += 1
+            if x1 - x >= 3:
+                depths.append(u_top - u[x:x1].min())
+            x = x1
+        x += 1
+    return float(round(np.median(depths), 1)) if depths else 0.0
 
 
 # Round towers (frames 1-4). The art draws a horizontal circle of the ground as an ellipse (the
@@ -1711,12 +1746,237 @@ def attached_tower(frame: int, k: float, parapet: float, walls: dict):
     return [prism(wall, 0 if left else cx, cx if left else w, c)], tw, {'stub': 'left' if left else 'right'}
 
 
+# --- M3: the gatehouse (castl-05) and the corner (castl-12): blocks, prisms on a plan polygon ------------------------
+# The art draws the castle's ground circle as an ellipse of aspect k = 0.4878, a wall's base line at slope -0.50 or +0.48:
+# the real ground is the sprite's ground with z scaled by r = 1/k (a 45 degree wall is a slope of 0.5). Every vertical
+# face of a block is therefore one of four things in the sprite frame: a '\\' plane z = s_f x + c (slope +0.484), a '/'
+# plane z = s_b x + c (-0.502), a flat plane z = c (the real ground's diagonal), or edge-on (x = const: the camera's
+# own shear; it has no picture). The base profile (the lowest drawn pixel of every column) is piecewise exactly one of
+# those; its planes are measured, not drawn by hand. What the camera never saw (the far half of the plan) is the
+# front's point mirror through the middle of the plan, as a house's back.
+def base_segments(bot, x_lo, x_hi, classes, min_len=8, tol=1.2):
+    """Runs of the bottom profile on one plane family each: [(name, x0, x1, c)] sorted, c the plane's constant."""
+    xs = np.arange(len(bot))
+    cand = []
+    for name, sl in classes.items():
+        r = bot - sl * xs
+        ok = np.zeros(len(bot), bool)
+        for x in range(x_lo, x_hi + 1):
+            win = r[max(x_lo, x - 4):min(x_hi, x + 4) + 1]
+            ok[x] = abs(r[x] - np.median(win)) <= tol
+        x = x_lo
+        while x <= x_hi:
+            if ok[x]:
+                x1 = x
+                while x1 + 1 <= x_hi and ok[x1 + 1] and abs(r[x1 + 1] - np.median(r[x:x1 + 1])) <= tol:
+                    x1 += 1
+                if x1 - x + 1 >= min_len:
+                    cand.append((x1 - x + 1, name, x, x1, float(np.median(r[x:x1 + 1]))))
+                x = x1 + 1
+            else:
+                x += 1
+    taken = np.zeros(len(bot), bool)
+    out = []
+    for n, name, x0, x1, c in sorted(cand, key=lambda t: -t[0]):
+        free = ~taken[x0:x1 + 1]
+        if free.sum() < min_len:
+            continue
+        idx = np.nonzero(free)[0]
+        x0n, x1n = x0 + idx.min(), x0 + idx.max()
+        if x1n - x0n + 1 < min_len:
+            continue
+        taken[x0n:x1n + 1] = True
+        out.append((name, int(x0n), int(x1n), c))
+    return sorted(out, key=lambda t: t[1])
+
+
+def polyline_from_segments(segs, slopes):
+    """The base outline's vertices: where two planes meet, their intersection; where they do not within a few px of
+    each other (an edge-on jump), the two points above one another at the gap's middle."""
+    pts = []
+    for i, (name, x0, x1, c) in enumerate(segs):
+        sl = slopes[name]
+        if i == 0:
+            pts.append((float(x0), sl * x0 + c))
+        if i + 1 == len(segs):
+            break
+        n2, y0, y1, c2 = segs[i + 1]
+        s2 = slopes[n2]
+        xi = (c2 - c) / (sl - s2) if abs(sl - s2) > 1e-6 else None
+        if xi is not None and x1 - 8 <= xi <= y0 + 8:
+            pts.append((float(xi), sl * xi + c))
+        else:
+            xg = (x1 + y0) / 2.0
+            pts.append((xg, sl * xg + c))
+            pts.append((xg, s2 * xg + c2))
+    return pts
+
+
+def miter_offset(poly, delta, r):
+    """The polygon pushed out by `delta` (real ground units: z scaled by r), mitred; poly any orientation."""
+    p = np.array([(x, z * r) for x, z in poly], float)
+    area = 0.5 * np.sum(p[:, 0] * np.roll(p[:, 1], -1) - np.roll(p[:, 0], -1) * p[:, 1])
+    sign = 1.0 if area > 0 else -1.0
+    n = len(p)
+    lines = []
+    for i in range(n):
+        a, b = p[i], p[(i + 1) % n]
+        d = b - a
+        d = d / np.linalg.norm(d)
+        nrm = np.array([d[1], -d[0]]) * sign  # outward
+        lines.append((a + nrm * delta, d))
+    out = []
+    for i in range(n):
+        (a1, d1), (a2, d2) = lines[i - 1], lines[i]
+        cross = d1[0] * d2[1] - d1[1] * d2[0]
+        if abs(cross) < 1e-9:
+            out.append(a2)
+            continue
+        t = ((a2[0] - a1[0]) * d2[1] - (a2[1] - a1[1]) * d2[0]) / cross
+        out.append(a1 + d1 * t)
+    return [(float(q[0]), float(q[1] / r)) for q in out]
+
+
+def step_edge(profile, lo, hi, down):
+    """The u in [lo, hi) of the sharpest brightness step (up: dark below to light above, `down` the other way)."""
+    best, bu = 0.0, lo
+    for u in range(lo + 6, hi - 6):
+        a = np.nanmean(profile[u - 6:u])
+        b = np.nanmean(profile[u:u + 6])
+        v = (a - b) if down else (b - a)
+        if v > best:
+            best, bu = v, u
+    return bu
+
+
+def block_silhouette_error(frame: int, part: dict) -> float:
+    """The fit's own check, no render: the fraction of the sprite's opaque pixels where the block (its walls, the cornice band
+    and the deck, projected as the camera draws them: screen = (x, z - y)) and the sprite disagree about covered or empty."""
+    sil = castle_body(castle_rgba(frame))  # opaque, the shadow dither left out (as the render test counts)
+    h, w = sil.shape
+    img = Image.new('L', (w, h), 0)
+    dr = ImageDraw.Draw(img)
+    pr = lambda p, y: (p[0], p[1] - y)
+    poly, ov, hb, hf = part['poly'], part.get('poly_ov'), part.get('hb'), part['hf']
+    for i, a in enumerate(poly):
+        b = poly[(i + 1) % len(poly)]
+        dr.polygon([pr(a, 0), pr(b, 0), pr(b, hb or hf), pr(a, hb or hf)], fill=255)
+        if ov and hb:
+            oa, ob = ov[i], ov[(i + 1) % len(ov)]
+            dr.polygon([pr(oa, hb), pr(ob, hb), pr(ob, hf), pr(oa, hf)], fill=255)
+    dr.polygon([pr(p, hf) for p in (ov or poly)], fill=255)
+    m = np.asarray(img) > 0
+    return float((m ^ sil).sum() / sil.sum())
+
+
+def gate_fit(frame: int, s_f: float, s_b: float, k: float) -> dict:
+    """The gatehouse (castl-05) as a block: a polygon prism with a corbelled cornice band and a flat deck.
+      * the front of the plan: the base profile's planes (base_segments), exact;
+      * the back of the plan is measured from the silhouette's top edge, not mirrored: the top-left edge is ONE '/' line
+        over 185 px (residual 0.3 px), the NW face's deck edge; the top-right edge is a '\' line at one height over two
+        stretches (the notch between them is a cap and a recess: not modelled); they meet at the back corner. A point
+        mirror of the front chain would have given the back the front's steps, which the silhouette refutes;
+      * the cornice's overhang ov follows from the leftmost silhouette column against the leftmost base column;
+      * heights: the wall ends at the cornice's lower edge hb (the sharpest dark-to-light step along the parallels of a
+        pier's face), the band at hf (the top-left edge's intercept)."""
+    rgba = castle_rgba(frame)
+    body = castle_body(rgba)
+    h, w = body.shape
+    bot = np.array([np.nonzero(body[:, x])[0].max() for x in range(w)])
+    sil = rgba[..., 3] >= 128
+    top = np.array([np.nonzero(sil[:, x])[0].min() if sil[:, x].any() else 10 ** 6 for x in range(w)], float)
+    jumps = np.nonzero(np.abs(np.diff(bot)) > 40)[0]
+    x_lo, x_hi = int(jumps.min()) + 1, int(jumps.max())  # the base columns: the cornice's overhang hangs outside them
+    slopes = {'\\': s_f, '/': s_b, '-': 0.0}
+    segs = base_segments(bot, x_lo, x_hi, slopes)
+    pts = polyline_from_segments(segs, slopes)
+    xs_sil = np.nonzero(sil.any(0))[0]
+    sil_lo = int(xs_sil.min())
+    xl, zl = pts[0]
+    ov = (xl - sil_lo) * (s_f - s_b) / 2.0
+    c2_left = zl - s_b * xl  # the NW face's ground plane, through the leftmost vertex
+    b_top = float(np.median(top[2:170] - s_b * np.arange(2, 170)))
+    hf = c2_left - ov - b_top
+    # The top-right edge: the commonest intercept of (top - s_f x) over the right half (caps and the recess are the minority).
+    r = np.round(top[190:w] - s_f * np.arange(190, w)).astype(int)
+    vals, counts = np.unique(r, return_counts=True)
+    b_r = float(np.median(r[np.abs(r - vals[np.argmax(counts)]) <= 1]))
+    c1_far = b_r + hf + ov
+    # The east end of the base: the last '/' run, its right edge; the NE plane's z there may differ (an edge-on jog).
+    c2_east = [c for n, x0, x1, c in segs if n == '/'][-1]
+    x_r = float(x_hi + 1)
+    z_se = s_b * x_r + c2_east
+    z_ne = s_f * x_r + c1_far
+    pts.append((x_r, z_se))
+    if abs(z_ne - z_se) > 1.0:
+        pts.append((x_r, z_ne))
+    x_a = (c2_left - c1_far) / (s_f - s_b)  # the back corner, where the NW and NE planes meet
+    pts.append((x_a, s_f * x_a + c1_far))
+    poly = pts
+    # Heights along the parallels of the overhang's plane over the two piers (A, B: the '\\' runs on the outermost plane).
+    c1_out = max(c for n, x0, x1, c in segs if n == '\\')
+    lum = rgba[..., :3].astype(float).mean(-1)
+    prof = np.full(300, np.nan)
+    runs = [(x0 + 4, x1 - 4) for n, x0, x1, c in segs if n == '\\' and abs(c - c1_out) < 1.5]
+    for u in range(300):
+        v = []
+        for x0, x1 in runs:
+            xx = np.arange(x0, x1)
+            yy = np.round(s_f * xx + c1_out + ov - u).astype(int)
+            ok = (yy >= 0) & (yy < h)
+            v += list(lum[yy[ok], xx[ok]])
+        if v:
+            prof[u] = np.median(v)
+    hb = float(step_edge(prof, 140, 200, down=False)) - 0.5
+    hf_step = float(step_edge(prof, 200, 240, down=True)) - 0.5
+    rr = 1.0 / k
+    delta = ov / (math.sqrt(1 + (rr * s_f) ** 2) / rr)
+    poly_ov = miter_offset(poly, delta, rr)
+    L, R = np.array(pts[0]), np.array([x_r, z_se])
+    part = {'type': 'block', 'poly': [[round(x, 2), round(z, 2)] for x, z in poly],
+            'poly_ov': [[round(x, 2), round(z, 2)] for x, z in poly_ov], 'mirror': [round(float((L + R)[0] / 2), 2), round(float((L + R)[1] / 2), 2)],
+            'hb': round(hb, 1), 'hf': round(hf, 1), 'hf_step': round(hf_step, 1), 'ov': round(ov, 2), 'c1_far': round(c1_far, 1),
+            'caps': []}  # the vaulted tops on the deck are not fitted (sprite_buildings.gd _castle_cap builds them if listed)
+    part['sil_err'] = round(block_silhouette_error(frame, part), 4)
+    return {'size': [int(w), int(h)], 'segments': [{'plane': n, 'x0': x0, 'x1': x1, 'c': round(c, 2)} for n, x0, x1, c in segs],
+            'parts': [part]}
+
+
+def corner_fit(frame: int, walls: dict) -> dict:
+    """The corner (castl-12): the end of a wall, cut by a '\\' plane. Its one base line (slope -0.5, residual 0.004 over
+    all 100 px) is the front face; the top edge of the silhouette is a '\\' line at the walls' height over the whole sprite,
+    the end plane's deck edge (residual 1 px): the deck is the triangle between the front edge, that line and the sprite's
+    left cut. (The first reading, a walkway tv deep, stopped the deck at the back edge of the walkway and lost the
+    triangle's upper left.) The faces the camera never sees take the walls' own pictures: the end plane the '\\' sprite's
+    (castl-08), the left cut, hidden by the next piece, nothing."""
+    rgba = castle_rgba(frame)
+    body = castle_body(rgba)
+    sil = rgba[..., 3] >= 128
+    h, w = body.shape
+    s, c, res = base_line(body)
+    hw, s_f = walls[6]['parts'][0]['hw'], walls[8]['parts'][0]['s']
+    top = np.array([np.nonzero(sil[:, x])[0].min() for x in range(w)], float)
+    xs = np.arange(10, w - 2)
+    c_top = float(np.median(top[xs] - s_f * xs))  # the end plane's top edge: y = s_f x + c_top = z - hw
+    c_end = c_top + hw
+    x_r = (c - c_end) / (s_f - s)  # where the end plane meets the front line
+    if w - 2.5 < x_r < w:
+        x_r = float(w)  # the corner is the sprite's own right edge to within the fit's 1 px (the picture shows brick to it)
+    poly = [[0.0, round(c, 2)], [round(x_r, 2), round(s * x_r + c, 2)], [0.0, round(c_end, 2)]]
+    far = [{'path': CASTLE % 8, 'plane': '\\'}, {'path': CASTLE % 7, 'plane': '/'}]
+    part = {'type': 'block', 'poly': poly, 'hb': None, 'hf': hw, 'ov': 0.0, 'poly_ov': None, 'caps': [], 'far': far,
+            's': round(s, 4), 'c': round(c, 2), 'c_end': round(c_end, 2)}
+    part['sil_err'] = round(block_silhouette_error(frame, part), 4)
+    return {'size': [int(w), int(h)], 'resid': round(res, 2), 'parts': [part]}
+
+
 def castle_fit(sheet: Path) -> dict:
     """The castle's fitted pieces, keyed by sprite path (facades.json "_walls")."""
     walls = {}
     for frame in (6, 8, 7, 9):
         walls[frame] = wall_fit(frame, walls)
-    parapet = float(np.mean([walls[f]['parts'][0]['y_top'] - walls[f]['parts'][0]['hw'] for f in (6, 8)]))
+    # The tower platforms keep the walls' merlon height as the first fit measured it (the top face included).
+    parapet = float(np.mean([walls[f]['parts'][0]['u_top'] - walls[f]['parts'][0]['tv'] - walls[f]['parts'][0]['hw'] for f in (6, 8)]))
     k, (lo, hi) = plain_arc(4)
     towers = {}
     tw, _ = tower_solve(4, k, parapet, 'LR', np.arange(lo, hi + 1))
@@ -1737,8 +1997,23 @@ def castle_fit(sheet: Path) -> dict:
             tw['h1'] = round(float(np.mean([pending[f][1]['h1'] for f in (3, 1)])), 1)
             tw['flare'] = round(float(np.mean([pending[f][1]['flare'] for f in (3, 1)])), 1)
         towers[frame] = {'size': size, 'parts': wl + [tw | {'type': 'tower'}], **info}
+    # M3: the true far side. One wall is one solid; castl-06/08 draw its inner face, 07/09 the outer one, so each
+    # sprite's far face takes its sibling's art, the face that belongs there. `far`: the sibling's sprite and its base
+    # line (the sibling's near face is this wall's far face). The merlons' back keeps their own pixels (one alpha).
+    pair = {6: 7, 7: 6, 8: 9, 9: 8}
+    for frame, sib in pair.items():
+        q, sq = walls[frame]['parts'][0], walls[sib]['parts'][0]
+        q['far'] = {'path': CASTLE % sib, 's': sq['s'], 'c': sq['c']}
+        q['depth'] = round(q['tv'] + q['pt'], 2)
+    pt = float(np.mean([walls[f]['parts'][0]['pt'] for f in (6, 8)]))  # the castle's parapet: the towers' ring is as thick
+    for entry in towers.values():
+        for q in entry['parts']:
+            if q['type'] == 'tower':
+                q['pt'] = round(pt, 1)
+    gate = gate_fit(CASTLE_GATE, walls[8]['parts'][0]['s'], walls[6]['parts'][0]['s'], k)
+    corner = corner_fit(CASTLE_CORNER, walls)
     out = {}
-    for frame, entry in {**walls, **towers}.items():
+    for frame, entry in {**walls, **towers, CASTLE_GATE: gate, CASTLE_CORNER: corner}.items():
         out[CASTLE % frame] = entry
         castle_overlay(frame, entry).save(sheet / f'castle-{frame:02d}.png')
         print(CASTLE % frame, json.dumps(entry['parts']))
@@ -1746,14 +2021,35 @@ def castle_fit(sheet: Path) -> dict:
 
 
 def castle_overlay(frame: int, entry: dict) -> Image.Image:
-    """The fitted parts drawn over the sprite (x2): cyan the front face, yellow the walkway, green the
-    parapet's strip, magenta the tower's ellipses (base, crown, platform, merlon tops)."""
+    """The fitted parts drawn over the sprite (x2): cyan the front face (a block: the base outline), yellow the walkway
+    (a block: the cornice's lower edge), green the parapet's strip (a block: the top of its walls), blue the strip's back
+    edge (the silhouette), orange a block's deck edge with the cornice's overhang, magenta the tower's ellipses (base,
+    crown, platform, merlon tops)."""
     rgba = castle_rgba(frame)
     bg = Image.new('RGBA', (rgba.shape[1], rgba.shape[0]), (255, 0, 255, 255))
     bg.alpha_composite(Image.fromarray(rgba))
     d = ImageDraw.Draw(bg)
     for q in entry['parts']:
-        if q['type'] == 'wall':
+        if q['type'] == 'block':
+            pl = [tuple(p) for p in q['poly']]
+            for i in range(len(pl)):
+                a, b = pl[i], pl[(i + 1) % len(pl)]
+                d.line([a, b], fill=(0, 255, 255, 255))                                   # the base outline (cyan)
+                if q['hb']:
+                    d.line([(a[0], a[1] - q['hb']), (b[0], b[1] - q['hb'])], fill=(255, 255, 0, 255))  # the cornice's lower edge
+                top_h = q['hf']
+                d.line([(a[0], a[1] - top_h), (b[0], b[1] - top_h)], fill=(0, 255, 0, 255))  # the top of the walls
+            if q['poly_ov']:
+                po = [tuple(p) for p in q['poly_ov']]
+                for i in range(len(po)):
+                    a, b = po[i], po[(i + 1) % len(po)]
+                    d.line([(a[0], a[1] - q['hf']), (b[0], b[1] - q['hf'])], fill=(255, 128, 0, 255))  # the deck's edge (orange)
+            for cap in q.get('caps', []):
+                cp = [tuple(p) for p in cap['poly']]
+                for i in range(len(cp)):
+                    a, b = cp[i], cp[(i + 1) % len(cp)]
+                    d.line([(a[0], a[1] - cap['y1']), (b[0], b[1] - cap['y1'])], fill=(255, 0, 255, 255))
+        elif q['type'] == 'wall':
             x0, x1, sl, c, hw, tv = q['x0'], q['x1'], q['s'], q['c'], q['hw'], q['tv']
             b = lambda x: sl * x + c
             d.polygon([(x0, b(x0)), (x1, b(x1)), (x1, b(x1) - hw), (x0, b(x0) - hw)], outline=(0, 255, 255, 255))
@@ -1762,6 +2058,8 @@ def castle_overlay(frame: int, entry: dict) -> Image.Image:
             if q['parapet'] != 'none':
                 d.polygon([(x0, b(x0) - off - hw), (x1, b(x1) - off - hw), (x1, b(x1) - off - q['y_top']), (x0, b(x0) - off - q['y_top'])],
                           outline=(0, 255, 0, 255))
+                pt = q.get('pt', 0.0)  # M3: the strip's thickness, its top face's back edge (blue): the silhouette's top
+                d.line([(x0, b(x0) - off - pt - q['y_top']), (x1, b(x1) - off - pt - q['y_top'])], fill=(0, 128, 255, 255))
         else:
             cx, cz, a, ar, k = q['cx'], q['cz'], q['a'], q['ar'], q['k']
             for (rx, ry, y) in [(a, k * a, 0), (a, k * a, q['h1']), (ar, k * ar, q['h1']), (ar, k * ar, q['h3']), (ar, k * ar, q['h3'] + q['m'])]:

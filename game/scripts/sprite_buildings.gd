@@ -843,22 +843,27 @@ func _dormer(surfaces: Array, dm: Dictionary) -> void:
 	surfaces.append([st.commit(), ImageTexture.create_from_image(img)])
 
 # --- The castle (docs/DIRECTION.md, tenth pass) --------------------------------------------------
-# A castle sprite (struct/Castle, frames 1-4 and 6-9) is a piece of wall or a tower, fitted by
-# tools/facade_fit.py castle_fit (prototype/facades.json "_walls", by sprite path). Vertices are in the
-# sprite's own pixel frame (x east, z = screen y at ground level, Y up) times S, so a piece's origin is its
-# sprite's top-left, as a house's. Every face is textured by projecting the sprite back through the
-# original camera, UV = (x, z - Y), exact on planes; a face the camera never saw takes the point mirror
-# of the one it did (through the prism's centre, the tower's axis).
+# A castle sprite (struct/Castle, frames 1-4 and 6-9; M3: the gatehouse 5 and the corner 12) is a piece of wall, a
+# tower or a block, fitted by tools/facade_fit.py castle_fit (prototype/facades.json "_walls", by sprite path).
+# Vertices are in the sprite's own pixel frame (x east, z = screen y at ground level, Y up) times S, so a piece's
+# origin is its sprite's top-left, as a house's. Every face is textured by projecting the sprite back through the
+# original camera, UV = (x, z - Y), exact on planes; a face the camera never saw takes the point mirror of the one it
+# did (through the prism's centre, the tower's axis), except a wall's far face (below).
 #   wall:  a prism on the drawn base line (x, s x + c): the front face up to the walkway at height hw, the
-#          walkway (a band tv deep behind it), the far face (the front mirrored), the two end cuts
-#          (vertical planes x = x0, x1: where the sprite is cut), and the parapet: a thin crenellated
-#          wall of the sprite's own alpha on the walkway's far edge (parapet "back") or near edge
-#          ("front": the outer face, which hides the walkway; its walkway comes from the sibling
-#          sprite's, the same wall seen from the inside).
+#          walkway (a band tv deep behind it), the far face, the two end cuts (vertical planes x = x0, x1: where the
+#          sprite is cut), and the parapet. M3: one wall is one solid. castl-06/08 draw its inner face and 07/09 its
+#          outer one, so the far face is the SIBLING sprite's picture (`far`; the point mirror of the front only on
+#          the stubs of frames 1-3), and the parapet is a solid strip pt thick on the OUTER edge (parapet "back": behind
+#          the walkway; "front": flush with the face, whose walkway comes from the sibling's picture): alpha-cut front,
+#          top and back faces of the sprite's own merlon pixels, one alpha for the three (a gap is a gap through).
+#   block: a prism on a plan polygon (the gatehouse: its front measured from the lowest drawn pixels, its back from the
+#          silhouette, a cornice band that overhangs the wall up to a flat deck; the corner: the end of a wall, cut by a
+#          plane the camera never sees). A face the camera cannot see takes a sibling's picture (`far`) or the point
+#          mirror; an edge-on face (x = const) is a stripe of the sprite's column. Its picture: castle_edges.
 #   tower: an elliptic cylinder (the art draws a ground circle as an ellipse, the 1:1 ground's rhombi
 #          again): a narrower plinth (radius a, to h1), the body (radius ar, to the platform at h3), the
-#          platform, and the parapet around it (m high, alpha-cut). The far half takes the point-mirrored
-#          front; the parapet, seen from the inside on the far side, is projected as drawn.
+#          platform, and the parapet around it (m high, alpha-cut, a ring pt thick). The far half takes the
+#          point-mirrored front; the parapet, seen from the inside on the far side, is projected as drawn.
 var castle_cache: Dictionary = {} # sprite path -> [[mesh, texture or material], ...]
 var castle_textures: Dictionary = {} # sprite path -> [solid ImageTexture, cut ImageTexture]
 const CASTLE_SEGMENTS := 48
@@ -887,6 +892,25 @@ func castle_images(path: String) -> Array:
 	castle_textures[path] = out
 	return out
 
+# A sibling sprite's picture as it is drawn (no fill of the shadow dither and the empty air: that is a per-pixel pass of
+# about 0.15 s a sprite), for the faces that lie inside its drawn brick: a wall's far face and the walkway of an outer face.
+var castle_raws: Dictionary = {} # sprite path -> ImageTexture
+func castle_raw(path: String) -> ImageTexture:
+	if not castle_raws.has(path): castle_raws[path] = _texture(image(path))
+	return castle_raws[path]
+
+# A block's picture (the gatehouse, the corner): the sprite with the colour of its empty edge pixels borrowed from their
+# neighbours (Image.fix_alpha_edges, native), where castle_images fills every empty pixel by a breadth-first pass in
+# GDScript (0.15 to 0.5 s a sprite, measured). The block's faces lie inside the drawn body except at its silhouette, a
+# one pixel band; the shadow dither below the base stays as drawn.
+var castle_edge_textures: Dictionary = {} # sprite path -> ImageTexture
+func castle_edges(path: String) -> ImageTexture:
+	if not castle_edge_textures.has(path):
+		var img: Image = image(path).duplicate()
+		img.fix_alpha_edges()
+		castle_edge_textures[path] = _texture(img)
+	return castle_edge_textures[path]
+
 func _castle_cut_material(t: ImageTexture) -> StandardMaterial3D:
 	var m := StandardMaterial3D.new()
 	m.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
@@ -902,11 +926,35 @@ func _castle_quad(st: SurfaceTool, pts: Array, uvs: Array, size: Vector2) -> voi
 	for k in [0, 1, 2, 0, 2, 3]:
 		st.set_uv((uvs[k] as Vector2) / size)
 		st.add_vertex((pts[k] as Vector3)*S)
+	st.set_meta("n", int(st.get_meta("n", 0)) + 1)
+
+# A horizontal polygon `pts` (Vector3, one height) by its triangulation, texture coordinates from `uv`.
+func _castle_poly(st: SurfaceTool, pts: Array, uv: Callable, size: Vector2) -> void:
+	var flat := PackedVector2Array()
+	for p in pts: flat.append(Vector2((p as Vector3).x, (p as Vector3).z))
+	var tri := Geometry2D.triangulate_polygon(flat)
+	for i in tri:
+		st.set_uv((uv.call(pts[i]) as Vector2) / size)
+		st.add_vertex((pts[i] as Vector3)*S)
+	if tri.size() > 0: st.set_meta("n", int(st.get_meta("n", 0)) + 1)
 
 func _proj(p: Vector3) -> Vector2:
 	return Vector2(p.x, p.z - p.y)
 
-func _castle_wall(q: Dictionary, size: Vector2, solid: SurfaceTool, cut: SurfaceTool, top: SurfaceTool, top_size: Vector2) -> void:
+# A SurfaceTool for the texture of a sibling sprite (its solid or its alpha-cut picture), made on first use.
+func _castle_extra(table: Dictionary, path: String) -> SurfaceTool:
+	if not table.has(path):
+		var st := SurfaceTool.new()
+		st.begin(Mesh.PRIMITIVE_TRIANGLES)
+		table[path] = st
+	return table[path]
+
+# A wall: ONE solid however it is seen (docs/DIRECTION.md, M3). castl-06/08 draw its inner face, 07/09 its outer, so
+# the sprite's own face is the front and the sibling's art is what belongs on the far face (`far`: the sibling's
+# brick, its walkway). The parapet is a solid strip pt thick on the OUTER edge (06/08: behind the walkway, 07/09:
+# flush with the face), alpha-cut (the crenels see-through): a front face, a top face and a back face of the sprite's
+# own merlon pixels (one alpha for all three: a gap is a gap through the whole thickness).
+func _castle_wall(q: Dictionary, size: Vector2, solid: SurfaceTool, cut: SurfaceTool, extra: Dictionary) -> void:
 	var x0 := float(q.x0)
 	var x1 := float(q.x1)
 	var s := float(q.s)
@@ -914,33 +962,54 @@ func _castle_wall(q: Dictionary, size: Vector2, solid: SurfaceTool, cut: Surface
 	var hw := float(q.hw)
 	var tv := float(q.tv)
 	var yt := float(q.get("y_top", hw))
+	var pt := float(q.get("pt", 0.0))
+	var kind := str(q.parapet)
+	var depth := float(q.get("depth", tv))
 	var xm := (float(q.get("m0", x0)) + float(q.get("m1", x1)))/2.0 # the unclipped centre: the far face's mirror
-	var zc := s*xm + c - tv/2.0
 	var P := func(x: float, y: float, off: float) -> Vector3: return Vector3(x, y, s*x + c - off)
-	var mirrored := func(p: Vector3) -> Vector2: return _proj(Vector3(2.0*xm - p.x, p.y, 2.0*zc - p.z))
+	var has_far := q.has("far")
+	var fp := str(q.far.path) if has_far else ""
+	var fs := float(q.far.s) if has_far else 0.0
+	var fc := float(q.far.c) if has_far else 0.0
+	var fsize := Vector2.ZERO
+	if has_far:
+		var sf := castle_fit(fp)
+		fsize = Vector2(float(sf.size[0]), float(sf.size[1]))
 	# The front face, to the walkway.
 	var f: Array = [P.call(x0, 0.0, 0.0), P.call(x1, 0.0, 0.0), P.call(x1, hw, 0.0), P.call(x0, hw, 0.0)]
 	_castle_quad(solid, f, f.map(_proj), size)
-	# The far face: the front mirrored through the centre.
-	var b: Array = [P.call(x0, 0.0, tv), P.call(x1, 0.0, tv), P.call(x1, hw, tv), P.call(x0, hw, tv)]
-	_castle_quad(solid, b, b.map(mirrored), size)
-	# The walkway.
-	var w: Array = [P.call(x0, hw, 0.0), P.call(x1, hw, 0.0), P.call(x1, hw, tv), P.call(x0, hw, tv)]
+	# The far face.
+	var b: Array = [P.call(x0, 0.0, depth), P.call(x1, 0.0, depth), P.call(x1, hw, depth), P.call(x0, hw, depth)]
+	if has_far and not bool(q.get("mirror_far", false)): # (mirror_far: the test's control, the far side as in the ninth pass)
+		# The sibling's face: its brick, its own base line.
+		_castle_quad(_castle_extra(extra, fp), b, b.map(func(p: Vector3) -> Vector2: return Vector2(p.x, fs*p.x + fc - p.y)), fsize)
+	else:
+		var zc := s*xm + c - depth/2.0
+		_castle_quad(solid, b, b.map(func(p: Vector3) -> Vector2: return _proj(Vector3(2.0*xm - p.x, p.y, 2.0*zc - p.z))), size)
+	# The walkway: its own art on the inner sprites, the sibling's on the outer ones (the same wall seen from its other
+	# side: its offset from its own near edge is the distance from this wall's inner face, depth - off).
+	var wo := pt if kind == "front" else 0.0 # where the walkway starts behind the face
+	var w: Array = [P.call(x0, hw, wo), P.call(x1, hw, wo), P.call(x1, hw, depth), P.call(x0, hw, depth)]
 	if q.has("sibling"):
-		# Hidden behind the parapet in this sprite: the sibling's, whose base line lies dz above this one's.
-		var dz := float(q.dz)
-		_castle_quad(top, w, w.map(func(p: Vector3) -> Vector2: return Vector2(p.x, p.z + dz - hw)), top_size)
+		var walk_uv := func(p: Vector3) -> Vector2:
+			var off := s*p.x + c - p.z
+			return Vector2(p.x, fs*p.x + fc - (depth - off) - hw)
+		_castle_quad(_castle_extra(extra, fp), w, w.map(walk_uv), fsize)
 	else:
 		_castle_quad(solid, w, w.map(_proj), size)
 	# The ends, where the sprite is cut.
 	for x in [x0, x1]:
-		var e: Array = [P.call(x, 0.0, 0.0), P.call(x, 0.0, tv), P.call(x, hw, tv), P.call(x, hw, 0.0)]
+		var e: Array = [P.call(x, 0.0, 0.0), P.call(x, 0.0, depth), P.call(x, hw, depth), P.call(x, hw, 0.0)]
 		_castle_quad(solid, e, e.map(_proj), size)
-	# The parapet: a strip standing on the walkway's far or near edge, with the sprite's own alpha.
-	var off := tv if str(q.parapet) == "back" else 0.0
-	if str(q.parapet) != "none":
-		var pp: Array = [P.call(x0, hw, off), P.call(x1, hw, off), P.call(x1, yt, off), P.call(x0, yt, off)]
-		_castle_quad(cut, pp, pp.map(_proj), size)
+	if kind == "none": return
+	# The parapet strip on the outer edge: `o` is its front plane's offset, [o, o + pt] its thickness.
+	var o := tv if kind == "back" else 0.0
+	var pf: Array = [P.call(x0, hw, o), P.call(x1, hw, o), P.call(x1, yt, o), P.call(x0, yt, o)]
+	_castle_quad(cut, pf, pf.map(_proj), size)
+	var ptop: Array = [P.call(x0, yt, o), P.call(x1, yt, o), P.call(x1, yt, o + pt), P.call(x0, yt, o + pt)]
+	_castle_quad(cut, ptop, ptop.map(_proj), size)
+	var pb: Array = [P.call(x0, hw, o + pt), P.call(x1, hw, o + pt), P.call(x1, yt, o + pt), P.call(x0, yt, o + pt)]
+	_castle_quad(cut, pb, pb.map(_proj), size)
 
 func _castle_tower(q: Dictionary, size: Vector2, solid: SurfaceTool, cut: SurfaceTool) -> void:
 	var cx := float(q.cx)
@@ -953,6 +1022,7 @@ func _castle_tower(q: Dictionary, size: Vector2, solid: SurfaceTool, cut: Surfac
 	var h1 := float(q.h1)
 	var h3 := float(q.h3)
 	var m := float(q.m)
+	var pt := float(q.get("pt", 0.0))
 	var n := CASTLE_SEGMENTS
 	var ring := func(rx: float, rz: float, t: float, y: float) -> Vector3: return Vector3(cx + rx*cos(t), y, cz + rz*sin(t))
 	# The texture coordinate of a point of the tower's surface: projected if on the front half (z
@@ -982,26 +1052,129 @@ func _castle_tower(q: Dictionary, size: Vector2, solid: SurfaceTool, cut: Surfac
 		for k in 3:
 			solid.set_uv(_proj(disc[k] as Vector3)/size)
 			solid.add_vertex((disc[k] as Vector3)*S)
-		# The parapet: alpha-cut, projected as drawn on both halves.
+		# The parapet: alpha-cut, projected as drawn on both halves; a ring pt thick (M3): the outer face, the inner
+		# face one thickness in, and the top between them.
 		var par: Array = [ring.call(ar, br, t0, h3), ring.call(ar, br, t1, h3), ring.call(ar, br, t1, h3 + m), ring.call(ar, br, t0, h3 + m)]
 		_castle_quad(cut, par, par.map(_proj), size)
+		if pt > 0.0:
+			var ri := ar - pt
+			var bi := asp*ri
+			var inner: Array = [ring.call(ri, bi, t0, h3), ring.call(ri, bi, t1, h3), ring.call(ri, bi, t1, h3 + m), ring.call(ri, bi, t0, h3 + m)]
+			_castle_quad(cut, inner, inner.map(_proj), size)
+			var topf: Array = [ring.call(ri, bi, t0, h3 + m), ring.call(ri, bi, t1, h3 + m), ring.call(ar, br, t1, h3 + m), ring.call(ar, br, t0, h3 + m)]
+			_castle_quad(cut, topf, topf.map(_proj), size)
+
+# A block: a prism on a plan polygon (the gatehouse; the corner's wall cut by the perpendicular wall's plane). The
+# polygon's edges are the planes the art draws (tools/facade_fit.py gate_fit); a face the camera never saw (its plan
+# normal points away, nz < 0) takes its `far` sibling's art where one is named for its slope, else the point mirror
+# of the front through the plan's middle. `hb`: the wall's height, then (poly_ov) the cornice band that overhangs it,
+# to `hf`, and the deck. "caps" lists frusta standing on the deck (the gatehouse's vaulted tops): the build is here, but
+# nothing fits them yet (the fit leaves it empty), so the deck is a flat picture of them.
+func _castle_block(q: Dictionary, size: Vector2, solid: SurfaceTool, extra: Dictionary) -> void:
+	var poly: Array = q.poly
+	var n := poly.size()
+	var area := 0.0
+	for i in n:
+		var a: Array = poly[i]
+		var b: Array = poly[(i + 1) % n]
+		area += float(a[0])*float(b[1]) - float(b[0])*float(a[1])
+	var orient := 1.0 if area > 0.0 else -1.0
+	var hf := float(q.hf)
+	var hb: Variant = q.get("hb", null)
+	var mirror: Vector2 = Vector2(float(q.mirror[0]), float(q.mirror[1])) if q.has("mirror") else Vector2.ZERO
+	var far: Array = q.get("far", [])
+	var far_fit := {}
+	for f in far:
+		var sf := castle_fit(str(f.path))
+		far_fit[str(f.plane)] = [str(f.path), float(sf.parts[0].s), float(sf.parts[0].c), Vector2(float(sf.size[0]), float(sf.size[1]))]
+	var ov: Variant = q.get("poly_ov", null)
+	for i in n:
+		var a: Array = poly[i]
+		var b: Array = poly[(i + 1) % n]
+		var dx := float(b[0]) - float(a[0])
+		var dz := float(b[1]) - float(a[1])
+		# An edge-on face (x = const: the camera's own shear) is a stripe of the sprite's column, as a wall's end cut.
+		var edge_on := absf(dx) < 0.01
+		var nz := -dx*orient # the outward normal's z (toward the camera if > 0)
+		var slope := dz/dx if not edge_on else 0.0
+		var plane := "/" if slope < -0.25 else ("\\" if slope > 0.25 else "-")
+		var visible := nz > 0.0 or edge_on
+		var target := solid
+		var uvf: Callable
+		if visible:
+			uvf = _proj
+		elif far_fit.has(plane):
+			var ff: Array = far_fit[plane]
+			target = _castle_extra(extra, ff[0])
+			var fs: float = ff[1]
+			var fc: float = ff[2]
+			uvf = func(p: Vector3) -> Vector2: return Vector2(p.x, fs*p.x + fc - p.y)
+		else:
+			uvf = func(p: Vector3) -> Vector2: return _proj(Vector3(2.0*mirror.x - p.x, p.y, 2.0*mirror.y - p.z))
+		var tsize: Vector2 = size if (visible or not far_fit.has(plane)) else (far_fit[plane][3] as Vector2)
+		var top := float(hb) if hb != null else hf
+		var A := Vector3(float(a[0]), 0.0, float(a[1]))
+		var B := Vector3(float(b[0]), 0.0, float(b[1]))
+		var face: Array = [A, B, B + Vector3(0, top, 0), A + Vector3(0, top, 0)]
+		_castle_quad(target, face, face.map(uvf), tsize)
+		if hb != null and ov != null:
+			var oa: Array = (ov as Array)[i]
+			var ob: Array = (ov as Array)[(i + 1) % n]
+			var OA := Vector3(float(oa[0]), top, float(oa[1]))
+			var OB := Vector3(float(ob[0]), top, float(ob[1]))
+			# The cornice band, on the overhanging plane, from the wall's height to the deck.
+			var band: Array = [OA, OB, OB + Vector3(0, hf - top, 0), OA + Vector3(0, hf - top, 0)]
+			_castle_quad(target, band, band.map(uvf), tsize)
+			# Its underside (seen from the ground): the stone just below the cornice.
+			var under: Array = [A + Vector3(0, top, 0), B + Vector3(0, top, 0), OB, OA]
+			var below: Array = [A + Vector3(0, top - 3.0, 0), B + Vector3(0, top - 3.0, 0), B + Vector3(0, top - 3.0, 0), A + Vector3(0, top - 3.0, 0)]
+			_castle_quad(target, under, below.map(uvf), tsize)
+	# The deck (the walkway, on the corner): horizontal, so projected exactly.
+	var deck: Array = []
+	var src: Array = (ov as Array) if (hb != null and ov != null) else poly
+	for p in src: deck.append(Vector3(float(p[0]), hf, float(p[1])))
+	_castle_poly(solid, deck, _proj, size)
+	# The caps standing on the deck: frustums (a base polygon at y0, the top polygon inset toward its centre).
+	for cap in q.get("caps", []):
+		_castle_cap(cap, size, solid)
+
+func _castle_cap(cap: Dictionary, size: Vector2, solid: SurfaceTool) -> void:
+	var poly: Array = cap.poly
+	var y0 := float(cap.y0)
+	var y1 := float(cap.y1)
+	var inset := float(cap.inset)
+	var cx := 0.0
+	var cz := 0.0
+	for p in poly:
+		cx += float(p[0])/poly.size()
+		cz += float(p[1])/poly.size()
+	var n := poly.size()
+	var tops: Array = []
+	for p in poly:
+		var d := Vector2(float(p[0]) - cx, float(p[1]) - cz)
+		var dl := d.length()
+		var t := Vector2(cx, cz) + d*maxf(0.0, (dl - inset)/dl)
+		tops.append(Vector3(t.x, y1, t.y))
+	for i in n:
+		var a: Array = poly[i]
+		var b: Array = poly[(i + 1) % n]
+		var face: Array = [Vector3(float(a[0]), y0, float(a[1])), Vector3(float(b[0]), y0, float(b[1])), tops[(i + 1) % n], tops[i]]
+		_castle_quad(solid, face, face.map(_proj), size)
+	_castle_poly(solid, tops, _proj, size)
 
 # The surfaces of a fitted castle sprite ([[mesh, texture or material], ...]), cached by path.
 func castle_surfaces(path: String, clips: Dictionary = {}) -> Array:
 	var cache_key := path + str(clips)
 	if castle_cache.has(cache_key): return castle_cache[cache_key]
 	var fit := castle_fit(path)
-	var imgs := castle_images(path)
+	var is_block: bool = not fit.parts.is_empty() and str((fit.parts[0] as Dictionary).type) == "block"
+	var imgs: Array = [castle_edges(path), null] if is_block else castle_images(path) # a block has no alpha-cut strip
 	var size := Vector2(float(fit.size[0]), float(fit.size[1]))
 	var solid := SurfaceTool.new()
 	solid.begin(Mesh.PRIMITIVE_TRIANGLES)
 	var cut := SurfaceTool.new()
 	cut.begin(Mesh.PRIMITIVE_TRIANGLES)
-	var top := SurfaceTool.new()
-	top.begin(Mesh.PRIMITIVE_TRIANGLES)
-	var top_path := ""
-	var top_size := size
-	var has_cut := false
+	var extra := {} # a sibling's solid picture -> its surface (the far faces, the walkway of an outer face)
 	for i in fit.parts.size():
 		var q: Dictionary = fit.parts[i]
 		if clips.has(i):
@@ -1011,18 +1184,16 @@ func castle_surfaces(path: String, clips: Dictionary = {}) -> Array:
 			q.m1 = q.x1
 			q.x0 = float(clips[i][0])
 			q.x1 = float(clips[i][1])
-		if str(q.type) == "tower" or str(q.parapet) != "none": has_cut = true
 		if str(q.type) == "tower":
 			_castle_tower(q, size, solid, cut)
+		elif str(q.type) == "block":
+			_castle_block(q, size, solid, extra)
 		else:
-			if q.has("sibling"):
-				top_path = str(q.sibling)
-				var sf := castle_fit(top_path)
-				top_size = Vector2(float(sf.size[0]), float(sf.size[1]))
-			_castle_wall(q, size, solid, cut, top, top_size)
+			_castle_wall(q, size, solid, cut, extra)
 	var surfaces: Array = [[solid.commit(), imgs[0]]]
-	if has_cut: surfaces.append([cut.commit(), _castle_cut_material(imgs[1])])
-	if not top_path.is_empty(): surfaces.append([top.commit(), castle_images(top_path)[0]])
+	if int(cut.get_meta("n", 0)) > 0: surfaces.append([cut.commit(), _castle_cut_material(imgs[1])])
+	for p in extra:
+		if int((extra[p] as SurfaceTool).get_meta("n", 0)) > 0: surfaces.append([(extra[p] as SurfaceTool).commit(), castle_raw(p)])
 	castle_cache[cache_key] = surfaces
 	return surfaces
 
