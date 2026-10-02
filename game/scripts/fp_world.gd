@@ -1079,10 +1079,16 @@ func house_plan() -> void:
 			if str(q.type) == "wall":
 				var s := float(q.s)
 				var c := float(q.c)
-				var tv := float(q.tv)
+				var tv := float(q.get("depth",q.tv))
 				var x0 := float(q.x0)
 				var x1 := float(q.x1)
 				for p in [Vector2(x0,s*x0+c),Vector2(x1,s*x1+c),Vector2(x1,s*x1+c-tv),Vector2(x0,s*x0+c-tv)]: hull.append(at+p)
+			elif str(q.type) == "block":
+				# The gatehouse and the corner: the plan polygon's hull (the cornice's overhang included).
+				var flat := PackedVector2Array()
+				for p in (q.poly_ov if q.get("poly_ov") != null else q.poly): flat.append(at+Vector2(float(p[0]),float(p[1])))
+				hull = Geometry2D.convex_hull(flat)
+				if hull.size() > 1 and hull[0] == hull[hull.size()-1]: hull.remove_at(hull.size()-1)
 			else:
 				for i in 24:
 					var t := TAU*float(i)/24.0
