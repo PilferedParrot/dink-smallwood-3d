@@ -1695,6 +1695,11 @@ func place_on_surface(node: Node3D, sp: Sprite3D, e: Dictionary, d: Dictionary, 
 # north (pulled toward that camera it stood on the house's back wall). A sprite inside the footprint, or
 # one a que orders (an explicit draw order, comparable on one screen), keeps the original's order from
 # every side.
+# The side turns when the camera crosses the wall's plane. A turn in one step pops: a patch of canopy appears over the
+# wall in one frame when the two overlap on the screen (3,872 px at 251's cabin). So within `blend` (SIDE_BLEND reaches) of
+# the plane either side, each fragment takes the one side or the other by a fixed screen-space threshold against the
+# camera's place in the band (a screen-door cross-fade, as a LOD fade does): every fragment turns once, and the patch is
+# revealed in step with the camera. Beyond the band, and through the original camera, the picture is the old one.
 # Each fragment's push is capped at 0.9 of its clearance above the ground along the view ray, so a
 # trunk's foot is never pushed under the ground (which moving the sprite did), and a pull at 0.9 of
 # its distance from the camera. A fragment below the ground (the rows an art draws under its hotspot)
@@ -1711,6 +1716,7 @@ uniform float reach = 0.0; // metres: the sprite's half-width; 0 shifts nothing
 uniform float side0 = 1.0; // +1 over the house, -1 under it, as the original camera sees it
 uniform vec2 wall = vec2(0.0); // the nearest point of the house's walls, x z in metres
 uniform vec2 normal = vec2(0.0); // from there to the sprite's trunk, unit; 0: the same side from every camera
+uniform float blend = 0.0; // metres: the camera turns the side over this distance either side of the plane; 0 turns it at the plane
 uniform float flip = 1.0; // the tests' wrong-rule control: -1 swaps the sides
 uniform bool bill = true;
 void vertex() {
@@ -1727,7 +1733,20 @@ void fragment() {
 	// Which side of the wall's plane the camera is on, against the original camera's (it looks from +z).
 	vec2 toward = ortho ? INV_VIEW_MATRIX[2].xz : INV_VIEW_MATRIX[3].xz - wall;
 	float side = side0;
-	if (dot(normal, normal) > 0.5 && dot(toward, normal) * normal.y < 0.0) { side = -side0; }
+	if (dot(normal, normal) > 0.5) {
+		float e = dot(toward, normal) * sign(normal.y); // the camera's distance from the plane, + on the original camera's side
+		float turn = e < 0.0 ? -1.0 : 1.0;
+		if (blend > 0.0 && !ortho) {
+			// Within `blend` of the plane each pixel takes the one side or the other by a fixed screen-space threshold
+			// (interleaved gradient noise) against the camera's place in the band, as a LOD cross-fade does: every pixel turns
+			// once, so the picture changes in step with the camera instead of in one step. (Shifting the whole sprite by a
+			// fraction of the reach does not: a card and a wall are planes, and the pixels it wins reveal in a few big steps.)
+			float p = 0.5 + 0.5 * clamp(e / blend, -1.0, 1.0);
+			float h = fract(52.9829189 * fract(dot(FRAGCOORD.xy, vec2(0.06711056, 0.00583715))));
+			turn = h < p ? 1.0 : -1.0;
+		}
+		side = side0 * turn;
+	}
 	float off = -side * flip * reach; // > 0 pushes away from the camera, < 0 pulls toward it
 	vec3 wp = (INV_VIEW_MATRIX * vec4(VERTEX, 1.0)).xyz;
 	vec3 dw = ortho ? -INV_VIEW_MATRIX[2].xyz : normalize(wp - INV_VIEW_MATRIX[3].xyz);
@@ -1745,6 +1764,13 @@ void fragment() {
 }
 """
 var depth_shader: Shader
+# How wide the side's turn is, in the sprite's reach. The side a sprite is drawn on turns when the camera crosses the wall's
+# plane (the original draws it one way only); turned in one step while the canopy overlaps the house, a patch of canopy
+# appears over the wall in one frame (docs/DIRECTION.md, "The side flip, walked"). Within SIDE_BLEND reaches of the plane
+# either side the shader turns it pixel by pixel instead (a screen-door cross-fade, as a LOD fade does), so the patch is
+# revealed in step with the camera. Beyond the band every camera gets the old picture bit for bit: the narrow band keeps the
+# cut the trees pass removed away (its first sheet camera stands 0.43 reach from the plane, in the old picture).
+const SIDE_BLEND := 0.1
 
 # The depth rule's reading of a sprite of entity `e` on `screen` whose half-width is `half` px: {} if no
 # house's wall footprint lies within `half` of its hotspot, else {"side": +1 over the house, -1 under it,
@@ -1826,6 +1852,7 @@ func settle_depth(sp: Sprite3D, e: Dictionary) -> void:
 		shadow_twin(sp,true)
 	var m := sp.material_override as ShaderMaterial
 	m.set_shader_parameter("reach",half*SCALE)
+	m.set_shader_parameter("blend",SIDE_BLEND*half*SCALE)
 	m.set_shader_parameter("side0",float(rule.side))
 	m.set_shader_parameter("wall",world_to_scene(rule.wall))
 	m.set_shader_parameter("normal",rule.normal)
