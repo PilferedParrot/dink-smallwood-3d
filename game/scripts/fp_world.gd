@@ -261,17 +261,62 @@ func seam_parts(e: Dictionary, n: int) -> Array:
 	var y := float(e.get("y",0))
 	var out: Array = []
 	var still := static_scenery(e) and not interior
-	for r in rows:
+	for k in rows.size():
+		var r: Array = rows[k]
 		var shown := true
 		if still:
-			var foot := y if int(r[0]) < 0 else y-float(d.get("dy",0))+float(r[2])
-			if not drawn_inside(path,d,x,y,int(r[0]),int(r[1])): shown = false
-			else:
-				var sx := -1 if x < 20.0 else (1 if x >= 620.0 else 0)
-				var sy := -1 if foot < 0.0 else (1 if foot >= 400.0 else 0)
-				if (sx != 0 or sy != 0) and seam_partner(n,path,d,x,y,sx,sy,int(e.get("vision",0))): shown = false
+			shown = seam_shown(n,path,d,x,y,r,int(e.get("vision",0)))
+			if shown and coincident_first(n,path,int(e.get("index",-1)),k,world_foot(n,x,y,d,r),foot_outside(n,x,y,d,r),int(e.get("vision",0))): shown = false
 		out.append([int(r[0]),int(r[1]),int(r[2]),shown])
 	return out
+
+# Whether the seam rule shows part r ([row0 or -1, row1, foot row]) of an art placed at (x, y) on screen n.
+func seam_shown(n: int, path: String, d: Dictionary, x: float, y: float, r: Array, vision: int) -> bool:
+	if not drawn_inside(path,d,x,y,int(r[0]),int(r[1])): return false
+	var foot := y if int(r[0]) < 0 else y-float(d.get("dy",0))+float(r[2])
+	var sx := -1 if x < 20.0 else (1 if x >= 620.0 else 0)
+	var sy := -1 if foot < 0.0 else (1 if foot >= 400.0 else 0)
+	return not ((sx != 0 or sy != 0) and seam_partner(n,path,d,x,y,sx,sy,vision))
+
+# A part's foot in map pixels (tools/seam_objects.py's frame): x + 600 * column - 20, foot + 400 * row.
+func world_foot(n: int, x: float, y: float, d: Dictionary, r: Array) -> Vector2:
+	var foot := y if int(r[0]) < 0 else y-float(d.get("dy",0))+float(r[2])
+	return Vector2(x+float((n-1)%32*600-20),foot+float(int((n-1)/32)*400))
+
+# Whether the part's foot lies outside its own screen's playfield.
+func foot_outside(n: int, x: float, y: float, d: Dictionary, r: Array) -> bool:
+	var foot := y if int(r[0]) < 0 else y-float(d.get("dy",0))+float(r[2])
+	return x < 20.0 or x >= 620.0 or foot < 0.0 or foot >= 400.0
+
+# Whether a part of the same art and vision that the seam rule shows, on this screen or one round it, has its foot
+# within 3 px of this one's and ranks first: a copy whose foot lies in its own screen first (that screen owns the
+# object, as in the seam rule), then (screen, index, part). Two copies that close are one object, and as two nearly
+# coplanar billboards they z-fight, the winner following the draw order (M3, U7, amendment 2).
+func coincident_first(n: int, path: String, index: int, k: int, at: Vector2, outside: bool, vision: int) -> bool:
+	var column: int = (n-1)%32
+	for dz in range(-1,2):
+		for dx in range(-1,2):
+			if column+dx < 0 or column+dx >= 32: continue
+			var m: int = n+dx+32*dz
+			if not host.world.screens.has(str(m)) or is_inside(m): continue
+			if not scene_block.is_empty() and not scene_block.has(m): continue
+			for q in host.world.screens[str(m)].get("sprites",[]):
+				if not static_scenery(q) or int(q.get("vision",0)) != vision: continue
+				var qd: Dictionary = host._frame(int(q.get("seq",0)),int(q.get("frame",1)))
+				if str(qd.get("path","")) != path: continue
+				var qi := int(q.get("index",-1))
+				var parts := stack_rows(path)
+				if parts.size() <= 1: parts = [[-1,0,0]]
+				for qk in parts.size():
+					if m == n and qi == index and qk == k: continue
+					var other := world_foot(m,float(q.x),float(q.y),qd,parts[qk])
+					if absf(other.x-at.x) > 3.0 or absf(other.y-at.y) > 3.0: continue
+					var q_outside := foot_outside(m,float(q.x),float(q.y),qd,parts[qk])
+					if q_outside != outside:
+						if q_outside: continue
+					elif m > n or (m == n and (qi > index or (qi == index and qk > k))): continue
+					if seam_shown(m,path,qd,float(q.x),float(q.y),parts[qk],vision): return true
+	return false
 
 # Whether a drawn pixel of the art's rows [r0, r1) (all rows if r0 < 0) placed at (x, y) lies in the playfield.
 func drawn_inside(path: String, d: Dictionary, x: float, y: float, r0: int, r1: int) -> bool:

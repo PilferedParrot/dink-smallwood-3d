@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 """Original-camera renders of many screens, and the mean |RGB| table against the original's picture (Dink M3).
 
-    /usr/bin/python3 tools/original_batch.py render <tag> <screens: 1,2,3 | file.json> [--procs 3] [--out tmp/orig] [--shadows=0]
+    /usr/bin/python3 tools/original_batch.py render <tag> <screens: 1,2,3 | file.json> [--procs 3] [--out tmp/orig] [--shadows=0] [--game DIR]
     /usr/bin/python3 tools/original_batch.py table <before_tag> <now_tag> <screens> [--out tmp/orig] [--noise <tag>] [--json f]
 
 render: THIS worktree's game, through tools/original_batch.gd, into <out>/<tag>/<n>.png (existing files kept), split
@@ -25,7 +25,7 @@ def screens_of(arg: str) -> list[int]:
     return json.load(open(arg)) if arg.endswith('.json') else [int(s) for s in arg.split(',')]
 
 
-def render(tag, screens, procs, out_root: Path, extra):
+def render(tag, screens, procs, out_root: Path, extra, game: Path = ROOT / 'game'):
     out = out_root / tag
     out.mkdir(parents=True, exist_ok=True)
     todo = [n for n in screens if not (out / f'{n}.png').exists()]
@@ -38,7 +38,7 @@ def render(tag, screens, procs, out_root: Path, extra):
             env = {kk: v for kk, v in os.environ.items() if kk != 'WAYLAND_DISPLAY'}
             env.update(XDG_DATA_HOME=home + '/d', XDG_CONFIG_HOME=home + '/c', XDG_CACHE_HOME=home + '/k')
             cmd = ['xvfb-run', '-n', str(171 + k), '-s', '-screen 0 1280x720x24', GODOT, '--audio-driver', 'Dummy',
-                   '--resolution', '960x540', '--path', str(ROOT / 'game'), '--script', str(ROOT / 'tools/original_batch.gd'),
+                   '--resolution', '960x540', '--path', str(game), '--script', str(ROOT / 'tools/original_batch.gd'),
                    '--', '--screens=' + ','.join(map(str, part)), '--out-dir=' + str(out.resolve())] + extra
             t0 = time.time()
             p = subprocess.Popen(cmd, env=env, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, start_new_session=True)
@@ -99,12 +99,12 @@ def main():
     sub = ap.add_subparsers(dest='cmd', required=True)
     r = sub.add_parser('render'); r.add_argument('tag'); r.add_argument('screens')
     r.add_argument('--procs', type=int, default=3); r.add_argument('--out', default=str(ROOT / 'tmp/orig'))
-    r.add_argument('--shadows', default='1')
+    r.add_argument('--shadows', default='1'); r.add_argument('--game', default=str(ROOT / 'game'), help="another checkout's game dir (a 'before')")
     t = sub.add_parser('table'); t.add_argument('before'); t.add_argument('now'); t.add_argument('screens')
     t.add_argument('--out', default=str(ROOT / 'tmp/orig')); t.add_argument('--noise'); t.add_argument('--json')
     a = ap.parse_args()
     if a.cmd == 'render':
-        render(a.tag, screens_of(a.screens), a.procs, Path(a.out), ['--shadows=0'] if a.shadows == '0' else [])
+        render(a.tag, screens_of(a.screens), a.procs, Path(a.out), ['--shadows=0'] if a.shadows == '0' else [], Path(a.game))
     else:
         table(a.before, a.now, screens_of(a.screens), Path(a.out), a.noise, a.json)
 

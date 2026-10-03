@@ -9,6 +9,9 @@ rows: tree-09/10) draws two objects at two depths; each part stands at its own f
 (or part) is not built when no drawn pixel of it lies inside its own screen, or when its foot lies outside its own
 screen and the screen holding the foot (across one seam or diagonally) places the same art crossing the shared seams at
 the same coordinates along them (exactly) with a part whose foot lies inside its own screen (else both stay: a crossing pair). Only static scenery is considered, as copy and as partner: type 1, no script, brain 0, size 100.
+Then a shown part is not built when a shown part of the same art and vision has its foot within 3 px on both axes and
+ranks first: a copy whose foot lies in its own screen, then (screen, index, part). Two copies that close are one object
+(amendment 2, docs/DIRECTION.md M3).
 Verdict (2026-10-02, Opus 5.5): written for U7; prints the counts the pre-registration names.
 """
 from __future__ import annotations
@@ -117,9 +120,28 @@ def main():
                 sy = -1 if fz < 0 else 1 if fz >= 400 else 0
                 if (sx or sy) and partner(n, q, sx, sy):
                     hidden.append(rec + ('seam:%d,%d' % (sx, sy),)); count['hidden: seam copy'] += 1; continue
-                built.append(rec); count['built'] += 1
+                out = bool(sx or sy)
+                built.append(rec + (e.get('vision', 0), (out, n, int(e['index']), k))); count['built'] += 1
                 if len(parts(q['p'])) > 1:
                     count['built stacked parts'] += 1
+    # Coincident copies (amendment 2): a shown part is not built when a shown part of the same art and vision has its
+    # foot within 3 px on both axes and ranks first (foot in its own screen first, then screen, index, part).
+    near = collections.defaultdict(list)
+    for b in built:
+        near[(b[5], b[6], round(b[3] / 8), round(b[4] / 8))].append(b)
+    kept = []
+    for b in built:
+        first = False
+        for gx in (-1, 0, 1):
+            for gz in (-1, 0, 1):
+                for c in near[(b[5], b[6], round(b[3] / 8) + gx, round(b[4] / 8) + gz)]:
+                    if c[7] < b[7] and abs(c[3] - b[3]) <= 3 and abs(c[4] - b[4]) <= 3:
+                        first = True
+        if first:
+            hidden.append(b[:6] + ('coincident',)); count['hidden: coincident copy'] += 1; count['built'] -= 1
+        else:
+            kept.append(b[:6])
+    built = kept
     # Safety: every hidden seam copy must have a built object of the same art within 210 px of its foot.
     lost = []
     byart = collections.defaultdict(list)

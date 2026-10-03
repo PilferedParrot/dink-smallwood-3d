@@ -1425,8 +1425,7 @@ within 2 px of the copy kept). A copy whose partner screen is not in the scene's
 edge stands where it will stand when the next screen loads. Measuring it found an older bug the drop exposed: the
 neighbour loop of `build_ground` dedups by key and position, and 9 trees are placed twice on one screen, type 0 (painted
 into the ground) and type 1 (standing): the painted copy took the fingerprint, so seen from the next screen those trees
-never stood (319 lost its tree-02 once its own copy was dropped). A ground-painted copy no longer takes a standing one's
-fingerprint.
+never stood (319 lost its tree-02 once its own copy was dropped). A ground-painted copy no longer takes a standing one's fingerprint. And two copies of one art whose feet lie within 3 px of each other (18 after the seam rule, which needs exact alignment: 451's tree-04 and 419's stand 2 px apart) z-fought, the winner following what had been loaded before (451 rendered differently once 406 had been loaded; bisected over the batch); one is built, the one whose foot lies in its own screen, then the first by (screen, index, part).
 
 Through the original camera, mean |RGB| against the original's picture, all 217 screens holding a dropped or split part
 and 5 screens with none in their block (one Godot run renders many screens, `tmp/m3/orig_multi.gd`: pixel-identical to
@@ -1441,18 +1440,83 @@ the whole strip by its hotspot's order, e.g. over 270's cabin roof); 536's rocks
 px off 536's. These are the cost of one object per world point where the original's two screens disagree.
 `tests/test_fps_seams.py`: every billboard part of every outdoor screen (3,887) built exactly as `tools/seam_objects.py`
 reads the map (the same rule written again from the art and the map: it checks the implementation, not the rule; the
-pictures check the rule); on 376, 251 and 319 no tree-09/10 part off the ground by more than 2 px, no two trees of one art
-within 2 px, the block's edge (314's tree-09 seen from 251) and 320's standing tree-02 seen from 319. Red on: the
+pictures check the rule); on 376, 251, 319 and 451 no tree-09/10 part off the ground by more than 2 px, no two parts of one art within 3 px, the block's edge (314's tree-09 seen from 251) and 320's standing tree-02 seen from 319. Red on: the
 unmodified code (14 and 26 parts off the ground on 376 and 251), the parts anchored at the strip's hotspot (14 off the
-ground), dedup by world distance alone (19 of 3,887 parts disagree), no seam dedup (11 and 5 trees drawn twice), no block
-edge, and no ground-painted fingerprint. The trees test's 528 case ("tree-04 over home-07", 528 at x 752) is gone: no drawn
+ground), dedup by world distance alone (19 of 3,887 parts disagree), no seam dedup (11 and 5 trees drawn twice), no block edge, no ground-painted fingerprint, and no coincident dedup (16 parts disagree; 451's pair drawn). The trees test's 528 case ("tree-04 over home-07", 528 at x 752) is gone: no drawn
 pixel of it lies in 528 and 529 places no copy, so the original never draws it; 497's case now targets 496's copy, the
 same world point. The cards test counts a stacked art's parts. `load_map` on 376, six interleaved pairs on a machine
 shared with four other renders: median 227.9 ms before, 230.5 now (ranges 162-281, 188-319): no cost the probe can see.
 Evidence: `docs/images/trees-seams-m3.jpg` (376 north, east and west and 251 south at eye level, then 376, 251, 344 and
-283 through the original camera beside the original's picture). Limits: 19 pairs of one art still stand within 4 px of
-each other (stacked strips overlapping on one screen, and 1-3 px seam pairs; the original draws them so too); through the
-original camera 283 and 344 show horizontal cuts across rows of trees, before and now alike (not investigated).
+283 through the original camera beside the original's picture). Over the whole map after every M3 unit merged (570 outdoor screens, the tenth pass against M3, `tools/original_batch.py`): 100 nearer, 32 further, 438 unchanged, the sum -113.2; the largest gains are the castle and the huts (80 -10.4, 764 -6.5, 763 -5.7, 680 -4.7), the further ones are the causes above plus the castle's new shadows (81 +0.15) and the coincident copies kept from the other screen (419 +0.22). Limits: through the original camera 283 and 344 show horizontal cuts across rows of trees, before and now alike (not investigated).
 **Re-run:** from the worktree root, `/usr/bin/python3 tools/seam_objects.py` (the counts), and inside `env -u
 WAYLAND_DISPLAY bwrap --dev-bind / / --tmpfs /dev/input --unshare-net`: `../../../.venv/bin/python -m pytest -q
 tests/test_fps_seams.py tests/test_fps_trees.py tests/test_fps_cards.py` (with xvfb-run for the trees and cards renders).
+
+**Bridges: the railings stand, decks take rays** (U1, a Sonnet 5.5 unit, relaunched once; the tenth pass's bridge
+limits). `tools/bridge_split.py` splits each east-west deck's art (brdge-06, 08, 10) and the near railings (07, 09, 11)
+into planks and railing by their pixels (`game/prototype/bridges.json`; overlay `docs/images/bridge-split-m3.jpg`): the
+planks stay painted in the ground, the railing stands as a card on the line its posts' feet lie on (sloped with the
+deck, not facing south), its posts as thin prisms where the art draws them (`game/scripts/bridge_rails.gd`). Every deck
+gets a 5 cm body on the ray layer. Rail pixels left on the planks: 15,164 to 183 (1.2%; chance 110-237); planks kept
+75,020 of 75,020; seen along a near railing's own axis 0 px before, 186-541 px now; a downward ray hits the deck as the
+deck on 16 of 16 decks (0 before); 448 walked end to end with the real W key stops where it did; non-bridge screens
+pixel-identical. The north-south bridges (01-03: 416, 448, 480, 533, 544, 701) keep their side rails painted flat: the
+art draws the rope over the planks' own rows, and in the original's projection a rope 1 m high would land 41 px (1 m)
+down the screen from them, so it cannot both stand and stay over the deck (02 and 03 draw no posts). The first version
+stood them as rods and they floated over the water past the deck's ends; the lead sent it back. Through the original
+camera the east-west screens move by 0.53-0.86 mean |RGB| from the tenth pass (a standing card is unshaded and the ground
+lit and filtered; a "card facing south" control scores the same against the original, so this number cannot see the
+geometry: the sweep and the axis views can); the north-south screens and the stone bridge are 0.000. Frame time +1 ms on
+404 and 448 within a 12 ms spread (llvmpipe, shared). `tests/test_fps_bridge_rails.py` (12 tests) is red on the
+unmodified build, the card facing south, dark seams taken as rope, no post prisms, a plate off its deck, and the standing
+north-south ropes. Evidence: `docs/images/bridges-m3.jpg`. Limits: the north-south rails lie flat; the ropes' and posts'
+sun shadows are new; the east-west decks' rope tails below the foot line stay painted; brdge-05 has no railing entry.
+
+**The castle's gatehouse, its corner, a wall's far side and thick merlons** (U2a, Sonnet 5.5, relaunched once).
+`tools/facade_fit.py` fits castl-05 (the gatehouse on 80) as a block on its base polyline (0.53 px mean over 310
+columns), its back from the silhouette (one straight edge over 185 px, residual 0.3 px), and castl-12 (the corner on 16
+and 48) as one wall on its single base line (slope -0.4998) cut by the perpendicular wall's end plane; each wall is one
+solid whose far face carries its sibling sprite's picture (07/09 draw the outer face, 06/08 the inner) and whose parapet
+is a strip 4.4-6.6 px thick (measured from the merlons' end notches on 06 and 08; what the silhouette leaves on 07 and
+09). Silhouette through the original camera: castl-05 0.035, castl-12 0.043 (spoiled 8 px: +0.032 to +0.076); every other piece within 0.005 of M2's (09 moved most, +0.0011). Original camera on 80: 29.95 to 19.56 (over the changed pixels 97.4 to
+17.8), 48 19.13 to 17.29, 16 +0.03 (the corner's sun shadow; 0.00 with shadows off), 368-370, 401, 402 +0.01 each
+(hairlines where the merlon strip's two quads meet). From the east at eye level the gatehouse shows 0.506 of its front
+width (0 before, a sliver). Seen from above a merlon covers 4.1-5.9 px of depth (0 before). The pre-registered "merlons
+on the inner edge from behind" was wrong about M2: its strip already stood on the outer edge; what it lacked was
+thickness and a far face. load_map on 80 no slower (a first version cost +640 ms of GDScript per-pixel fill; fixed).
+Evidence: `docs/images/castle-m3.jpg`, `docs/images/castle-fit-m3.jpg`. Limits: the gatehouse's vaulted tops are a flat
+picture (not fitted); its unseen faces streak on thin edge-on faces; the corner's cut at the sprite's edge shows as a slab
+where nothing covers it; 07 and 09 draw no see-through crenels.
+
+**The island's round huts in 3D** (U2b, Sonnet 5.5, relaunched once). `tools/hut_fit.py` fits isle-01..06 as solids of
+revolution into facades.json `_huts`: the ground row and base radius from the base arc (the huts' arcs agree with the
+castle's ground-ellipse aspect 0.4878 to 0.36-1.03 px rms), the radius profile from the silhouette (edge residual median
+1.8-2.5 px); textured by the original camera's projection, the unseen far half by the front reflected back and forth
+round the hut (a door shows twice from behind; it reads as a rear door). `sprite_buildings.gd hut`, baked with the houses
+(37 now). Silhouette through the original camera 0.063-0.081 (hut 3 misses the 0.074 bound by 0.007; the axis 10 px
+aside, the profile 10% wide and a round ground each read +0.04 to +0.51 worse); original camera on 748 36.25 to 34.15,
+680 25.84 to 21.11, 764 44.55 to 38.10 (the huts' own pixels about 34-39 to 15-16). From the east and west a hut shows
+0.485-0.488 of its south width, not the pre-registered 70%: in this world the art's ground circle is an ellipse of aspect
+0.4878, so a round hut is as deep as the towers are, and a circle reads clearly wrong through the original camera.
+load_map on 764 no slower; frame time on llvmpipe +13 ms with three huts (about 3,300 triangles each, drawn twice for
+shadows; no GPU measured). Evidence: `docs/images/huts-m3.jpg`, `docs/images/huts-fit-m3.jpg`. Limits, which Chris will
+see: from the east and west a hut is a narrow egg with a stretched and partly doubled flank texture (hut 6 from the west
+reads like a nesting doll); a hard seam down the back; the bone arches are painted, not modelled.
+
+**The side flip turns over a band** (U5, Sonnet 5.5, relaunched once; the tenth pass's defect 3). Measured first: at
+251's 206 degree crossing the tree changes 3,872 px in one 0.25 degree step, and forcing the other side at the same
+camera changes about 3,800 px on both sides of it: canopy and house overlap through the crossing, so "shift only when
+they overlap" could not remove it. A depth ramp (attempt 1) failed: a card and a wall are planes, so the pixels the card
+wins come in a few large steps (largest 1,472-1,539 px at the widths that keep the trees pass's cameras whole). Attempt 2,
+`fp_world.DEPTH_SHADER` `blend`: within 0.1 of the sprite's reach of the wall's plane each fragment takes the over or the
+under shift by a fixed screen-space threshold against the camera's place in the band (the engine's dither-fade
+technique), so every pixel turns once; beyond the band and through the original camera, the old hard flip bit for bit.
+The 206 degree walk's largest step 3,872 to 369 (bound 432), 27 degrees 2,504 to 711; 111 of 112 survey cameras outside
+the band byte-identical (the 112th within its own noise), the trees pass's camera 43 px from the plane 0 px; a reach-wide
+blend (M2's rejected variant) brings the cut back (9,132 px on that camera). `tests/test_fps_sideflip.py`. Evidence:
+the unit's strips (tmp/u5ev in its worktree; not committed). Limit, visible: inside the band (20 px of walk for the
+cabin's tree, about 0.2 s at walking pace) the tree dithers in, a fine stipple that shimmers with camera motion; a player
+standing in the band sees a 50% stipple. Directions not tried: a coherent threshold along the wall's tangent (a moving
+edge, no stipple), a true alpha cross-fade (a second draw), a depth-profiled card (changes the trees pass's cameras).
+After U7 the 27 degree crossing's old pop is 931 px against an ordinary 715 (it came mostly from the whole tree-09/10
+strips beside the tree), so the test keeps its "old code pops" control at 206 degrees only.

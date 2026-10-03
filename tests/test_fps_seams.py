@@ -8,7 +8,7 @@ Two tests, through tests/fps_seams_test.gd, headless:
   - classification: every billboard part of every outdoor screen is built exactly when the independent reading
     (tools/seam_objects.py, written from the art's pixels and the map, not from the game) says it is.
   - scenes: on 376 and 251, loaded as the game loads them, no tree part floats or sinks (its lowest drawn pixel is on
-    the ground within 2 px), no two drawn trees of the same art stand at one world point (within 2 px), and a seam
+    the ground within 2 px), no two drawn parts of one art have their feet within 3 px, and a seam
     copy at the 5x5 block's edge whose partner screen is not built still stands (251: 314's tree-09).
 """
 import json
@@ -59,20 +59,17 @@ def test_every_billboard_part_is_built_as_the_independent_reading_says(tmp_path)
     assert parts[(251, 2, 0)][0] is False and parts[(283, 5, 1)][0] is True  # 251's strip over its edge: 283's tree
 
 
-@pytest.mark.parametrize("screen", [376, 251, 319])
+@pytest.mark.parametrize("screen", [376, 251, 319, 451])
 def test_trees_stand_on_the_ground_once(tmp_path, screen):
     drawn = [l.split() for l in _godot(["--scene=%d" % screen], tmp_path).splitlines() if l.startswith("DRAWN ")]
-    assert len(drawn) > 5, len(drawn)
+    assert len(drawn) >= (1 if screen == 451 else 6), len(drawn)  # 451 sees one tree: its tree-04 (419 places a copy 2 px off)
     floating = [d for d in drawn if abs(float(d[4])) > 2.0 and ("tree-09" in d[5] or "tree-10" in d[5])]
     assert not floating, "%d tree-09/10 parts off the ground: %s" % (len(floating), floating[:6])
-    seen = {}
-    doubled = []
-    for d in drawn:
-        key = (d[5], round(float(d[2]) / 2), round(float(d[3]) / 2))
-        if key in seen:
-            doubled.append(d)
-        seen[key] = d
-    assert not doubled, "%d trees drawn twice at one point: %s" % (len(doubled), doubled[:6])
+    # One object per world point: no two drawn parts of one art with their feet within 3 px on both axes (two such
+    # copies z-fight, the winner following the draw order: 451's tree-04 and 419's, 2 px apart; amendment 2).
+    doubled = [(a, b) for i, a in enumerate(drawn) for b in drawn[i + 1:]
+               if a[5] == b[5] and abs(float(a[2]) - float(b[2])) <= 3 and abs(float(a[3]) - float(b[3])) <= 3]
+    assert not doubled, "%d pairs of one art within 3 px: %s" % (len(doubled), doubled[:4])
     # At the block's edge a copy whose partner screen is not built stays: 314's lower tree-09 (its foot in 346, outside
     # 251's 5x5 block) stands where 346's copy will stand when the player walks south.
     # 319's tree-02 is placed on 319 (x 662) and on 320 (x 62), one world point; 320 places it twice, type 0 (painted
