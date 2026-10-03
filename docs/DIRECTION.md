@@ -1425,7 +1425,7 @@ within 2 px of the copy kept). A copy whose partner screen is not in the scene's
 edge stands where it will stand when the next screen loads. Measuring it found an older bug the drop exposed: the
 neighbour loop of `build_ground` dedups by key and position, and 9 trees are placed twice on one screen, type 0 (painted
 into the ground) and type 1 (standing): the painted copy took the fingerprint, so seen from the next screen those trees
-never stood (319 lost its tree-02 once its own copy was dropped). A ground-painted copy no longer takes a standing one's fingerprint. And two copies of one art whose feet lie within 3 px of each other (18 after the seam rule, which needs exact alignment: 451's tree-04 and 419's stand 2 px apart) z-fought, the winner following what had been loaded before (451 rendered differently once 406 had been loaded; bisected over the batch); one is built, the one whose foot lies in its own screen, then the first by (screen, index, part).
+never stood (319 lost its tree-02 once its own copy was dropped). A ground-painted copy no longer takes a standing one's fingerprint. And two billboards of one art whose feet lie within 3 px of each other (14 after the seam rule, which needs exact alignment: 451's tree-04 and 419's stand 2 px apart) z-fought, the winner following what had been loaded before (451 rendered differently once 406 had been loaded; bisected over the batch); one is built, the one whose foot lies in its own screen, then the first by (screen, index, part). Fixed cards (fences, structures, castle pieces) are left out: two a few px apart are parallel planes, and one copy for the 409/408 fence pair would kink it.
 
 Through the original camera, mean |RGB| against the original's picture, all 217 screens holding a dropped or split part
 and 5 screens with none in their block (one Godot run renders many screens, `tmp/m3/orig_multi.gd`: pixel-identical to
@@ -1447,7 +1447,7 @@ pixel of it lies in 528 and 529 places no copy, so the original never draws it; 
 same world point. The cards test counts a stacked art's parts. `load_map` on 376, six interleaved pairs on a machine
 shared with four other renders: median 227.9 ms before, 230.5 now (ranges 162-281, 188-319): no cost the probe can see.
 Evidence: `docs/images/trees-seams-m3.jpg` (376 north, east and west and 251 south at eye level, then 376, 251, 344 and
-283 through the original camera beside the original's picture). Over the whole map after every M3 unit merged (570 outdoor screens, the tenth pass against M3, `tools/original_batch.py`): 100 nearer, 32 further, 438 unchanged, the sum -113.2; the largest gains are the castle and the huts (80 -10.4, 764 -6.5, 763 -5.7, 680 -4.7), the further ones are the causes above plus the castle's new shadows (81 +0.15) and the coincident copies kept from the other screen (419 +0.22). Limits: through the original camera 283 and 344 show horizontal cuts across rows of trees, before and now alike (not investigated).
+283 through the original camera beside the original's picture). Over the whole map after every M3 unit merged, the doors included (570 outdoor screens, the tenth pass against M3, `tools/original_batch.py`): 100 nearer, 33 further, 437 unchanged, the sum -112.6; the largest gains are the castle and the huts (80 -10.0, 764 -6.5, 763 -5.7, 680 -4.7), the further ones are the causes above plus the castle's new shadows (81 +0.16), the drawbridge's chains (402 +0.07) and the coincident copies kept from the other screen (419 +0.22). A batch of many screens in one run can differ from a screen rendered alone where a neighbour's people stand (409: a villager placed by the neighbour-startup lane depends on what was loaded before), so the table's renders are frozen and ordered the same for both sides. Limits: through the original camera 283 and 344 show horizontal cuts across rows of trees, before and now alike (not investigated).
 **Re-run:** from the worktree root, `/usr/bin/python3 tools/seam_objects.py` (the counts), and inside `env -u
 WAYLAND_DISPLAY bwrap --dev-bind / / --tmpfs /dev/input --unshare-net`: `../../../.venv/bin/python -m pytest -q
 tests/test_fps_seams.py tests/test_fps_trees.py tests/test_fps_cards.py` (with xvfb-run for the trees and cards renders).
@@ -1520,3 +1520,19 @@ standing in the band sees a 50% stipple. Directions not tried: a coherent thresh
 edge, no stipple), a true alpha cross-fade (a second draw), a depth-profiled card (changes the trees pass's cameras).
 After U7 the 27 degree crossing's old pop is 931 px against an ordinary 715 (it came mostly from the whole tree-09/10
 strips beside the tree), so the test keeps its "old code pops" control at 206 degrees only.
+
+**The castle doors in their walls, the drawbridge down; the trees test reads the castle** (U3+U4, GPT-6 Sol, ultra
+reasoning, a Codex lane under the Dink lead). `game/scripts/castle_doors.gd` builds the two placed doors from the fitted
+castle instead of a card that the depth rule pulled in front of the wall: cdoor-01 (402) is one quad on the fitted face
+under its foot, 1.25 cm out (its width against the wall's is 0.18 front-on and at 75 degrees either side; the card kept
+its full width); cdoor-06 (80), the drawbridge down, is split by its pixels (5,275 arch, 5,647 leaf, 3,513 chain pixels;
+the chains' strip inpainted beneath them) into the arch on the gatehouse's face, the leaf lying 1 cm above the ground
+(height/length 0 from either side; it hung in the air as a card) and two straight runs of 3D links from leaf to arch.
+Ray bodies keep the old hardboxes. `tests/test_fps_doors.py` reads the meshes; a wrong face (+10 cm), a standing leaf and
+a chain gap go red, and so does the unmodified code. U4: `tests/test_fps_trees.py`'s independent reading now derives the
+castle's footprints (walls, towers, the gatehouse block, the corner) from the fit and covers 90 screens round them; with
+the footprints removed or shifted 10 px it goes red. The pre-registered original-camera rail **failed**: 402 21.21 to
+21.28 (+0.07; +0.01 with shadows off: the card's own shadow is gone), 80 19.56 to 19.95 (+0.39; over the door's own
+pixels 11.70 to 18.14): the 3D links read lighter than the drawn chains. Stopped after two attempts, as the rule says.
+Evidence: `docs/images/doors-m3.jpg`. Limits: the chains look like uniform blue-grey straps up close and through the
+original camera; the gatehouse's threshold hides part of the arch's lower opening.

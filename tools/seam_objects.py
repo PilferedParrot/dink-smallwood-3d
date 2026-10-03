@@ -11,7 +11,7 @@ screen and the screen holding the foot (across one seam or diagonally) places th
 the same coordinates along them (exactly) with a part whose foot lies inside its own screen (else both stay: a crossing pair). Only static scenery is considered, as copy and as partner: type 1, no script, brain 0, size 100.
 Then a shown part is not built when a shown part of the same art and vision has its foot within 3 px on both axes and
 ranks first: a copy whose foot lies in its own screen, then (screen, index, part). Two copies that close are one object
-(amendment 2, docs/DIRECTION.md M3).
+(amendment 2, docs/DIRECTION.md M3). Billboards only: fences, structures and castle pieces are fixed cards.
 Verdict (2026-10-02, Opus 5.5): written for U7; prints the counts the pre-registration names.
 """
 from __future__ import annotations
@@ -132,6 +132,9 @@ def main():
     kept = []
     for b in built:
         first = False
+        pl = b[5].lower()
+        if '/lands/fence/' in pl or '/struct/' in pl or 'stnwalls' in pl or 'innwalls' in pl:
+            kept.append(b[:6]); continue  # a fixed card, not a billboard: parallel planes, no z-fight
         for gx in (-1, 0, 1):
             for gz in (-1, 0, 1):
                 for c in near[(b[5], b[6], round(b[3] / 8) + gx, round(b[4] / 8) + gz)]:

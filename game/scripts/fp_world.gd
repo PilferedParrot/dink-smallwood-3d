@@ -269,7 +269,7 @@ func seam_parts(e: Dictionary, n: int) -> Array:
 		var shown := true
 		if still:
 			shown = seam_shown(n,path,d,x,y,r,int(e.get("vision",0)))
-			if shown and coincident_first(n,path,int(e.get("index",-1)),k,world_foot(n,x,y,d,r),foot_outside(n,x,y,d,r),int(e.get("vision",0))): shown = false
+			if shown and billboard_art(e,path) and coincident_first(n,path,int(e.get("index",-1)),k,world_foot(n,x,y,d,r),foot_outside(n,x,y,d,r),int(e.get("vision",0))): shown = false
 		out.append([int(r[0]),int(r[1]),int(r[2]),shown])
 	return out
 
@@ -285,6 +285,13 @@ func seam_shown(n: int, path: String, d: Dictionary, x: float, y: float, r: Arra
 func world_foot(n: int, x: float, y: float, d: Dictionary, r: Array) -> Vector2:
 	var foot := y if int(r[0]) < 0 else y-float(d.get("dy",0))+float(r[2])
 	return Vector2(x+float((n-1)%32*600-20),foot+float(int((n-1)/32)*400))
+
+# Whether the art stands as a billboard (add_billboard): not a fence, a structure or a castle piece. Two fixed cards a
+# few px apart are parallel planes, not a z-fight, and merging the 409/408 fence pair would kink the fence.
+func billboard_art(e: Dictionary, path: String) -> bool:
+	var key := model_key(e)
+	var lower := path.to_lower()
+	return not ("/fence/" in lower or key == "castle" or is_structure(key,lower))
 
 # Whether the part's foot lies outside its own screen's playfield.
 func foot_outside(n: int, x: float, y: float, d: Dictionary, r: Array) -> bool:
