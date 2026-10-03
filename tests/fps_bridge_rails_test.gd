@@ -5,15 +5,18 @@ extends SceneTree
 #   --sweep    (headless) every bridge sprite of the map built as a scene builds it, collision on: what each holds.
 #              "RAIL screen index vision file kind meshes=N posts=P min=x,y,z max=x,y,z body=layer/mask/shapes"
 #              (kind: deck or rail by the art's file; min/max the extent of its Rail / Posts meshes in the node's own
-#              metres; body: the HitBody's layer, mask and shape count, or none).
+#              metres; body: the HitBody's layer, mask and shape count, or none); "CARD ..." the foot line of a standing
+#              card; "PLATE ... x a to b z c to d top t" the extent of a deck's ray plate (node metres).
 #   --ground   (headless) the planks painted into each screen's ground, with --mask=<bridges.json> (the same count runs on
 #              any checkout, since it reads only the ground texture): "GROUND screen decks=D rail_pixels_in_ground=N
-#              planks=P planks_kept=K": N counts the ground pixels inside the deck sprites that still equal the art's
-#              rail pixels (the json's "card" runs), so a build without the split reads its whole rail; K of P counts the
-#              art's plank pixels (an independent rule from the json's kind, line, bands and first plank row only, never
-#              from the "card" runs: below the deck edge line by 2 px for an east-west deck, outside the rail bands
-#              +-3 px and below the first plank row for a north-south deck) that are still in the ground, so a split that
-#              eats the planks' dark seams loses them. --shift=dx,dy moves the mask off the sprites: the chance rate.
+#              planks=P planks_kept=K whole=W whole_kept=WK": for the split decks (east-west: those with an entry in the
+#              json), N counts the ground pixels inside the sprites that still equal the art's rail pixels (the json's
+#              "card" runs), so a build without the split reads its whole rail; K of P counts the art's plank pixels (an
+#              independent rule from the json's foot line only, never from the "card" runs: 2 px under the line) that are
+#              still in the ground, so a split that eats the planks' dark seams loses them. For the decks painted whole (no
+#              entry: the north-south decks, whose side ropes stay in the ground as at 46b68a0), WK of W
+#              counts their opaque art pixels that are in the ground as the art has them. --shift=dx,dy moves the mask off the
+#              sprites: the chance rate.
 #   --render   (rendered, under xvfb, Dummy audio) rays and pictures: a downward ray onto each deck of 404 and 448
 #              hits it, one beside it does not; from a camera exactly on 404's near railing's axis the railing's own
 #              pixels (the picture with it hidden against the picture with it shown) are counted.
@@ -108,6 +111,17 @@ func _sweep() -> void:
 				var body_text := "none"
 				if body is StaticBody3D:
 					body_text = "%d/%d/%d" % [(body as StaticBody3D).collision_layer, (body as StaticBody3D).collision_mask, body.get_child_count()]
+				# The deck's plate: the extent of its hull in the node's own metres (x, z; y is the plate's 5 cm).
+				if body is StaticBody3D:
+					for c in body.get_children():
+						if c is CollisionShape3D and (c as CollisionShape3D).shape is ConvexPolygonShape3D:
+							var points: PackedVector3Array = ((c as CollisionShape3D).shape as ConvexPolygonShape3D).points
+							var plo := Vector3(INF, INF, INF)
+							var phi := Vector3(-INF, -INF, -INF)
+							for pt in points:
+								plo = plo.min(pt)
+								phi = phi.max(pt)
+							print("PLATE %d %d %d %s x %.4f to %.4f z %.4f to %.4f top %.3f" % [n, int(e.get("index", -1)), vision, fw.frame_path(e), plo.x, phi.x, plo.z, phi.z, phi.y])
 				var lo: Vector3 = info[1]
 				var hi: Vector3 = info[2]
 				var posts := 0
@@ -140,6 +154,8 @@ func _ground() -> void:
 	var total := 0
 	var planks_total := 0
 	var kept_total := 0
+	var whole_total := 0
+	var whole_kept_total := 0
 	# 533's bridge is only in the story layers 1 and 2 (pieces 1 and 25 in 1, 2 and 3 in 2).
 	for pair in [[404, 0], [416, 0], [448, 0], [480, 0], [512, 0], [533, 1], [533, 2], [544, 0], [693, 0], [701, 0]]:
 		var n: int = pair[0]
@@ -150,31 +166,44 @@ func _ground() -> void:
 		await create_timer(0.3).timeout
 		var image: Image = fw.ground_texture(n).get_image()
 		var count := 0
-		var painted := 0
+		var split_decks := 0
 		var planks := 0
 		var kept := 0
 		var card_total := 0
+		var whole_decks := 0
+		var whole := 0
+		var whole_kept := 0
 		for e in fw.background_sprites(n, vision):
 			var path: String = fw.frame_path(e)
-			if not mask.has(path) or str(mask[path].kind) == "near": continue
-			var d: Dictionary = game._frame(int(e.get("pseq", e.get("seq", 0))), int(e.get("pframe", e.get("frame", 1))))
+			if str(path).find("/struct/Bridge/brdge-") < 0: continue
+			if mask.has(path) and str(mask[path].kind) == "near": continue
+			var d: Dictionary = game._frame(int(fw.display_frame(e).x), int(fw.display_frame(e).y))
 			var art: Image = fw.sprite_image(path)
 			var left := int(float(e.get("x", 0)) - 20.0 - float(d.get("dx", 0)))
 			var top := int(float(e.get("y", 0)) - float(d.get("dy", 0)))
-			painted += 1
+			if not (mask.has(path) and str(mask[path].kind) == "ew"): # an "ns" entry (the first version of this unit) is not a split the build may make
+				# A deck that is painted whole (the north-south decks): every opaque pixel of its art that
+				# nothing later paints over is in the ground as the art has it, its side ropes included, as at 46b68a0.
+				whole_decks += 1
+				for y in art.get_height():
+					for x in art.get_width():
+						var a := art.get_pixel(x, y)
+						if a.a < 0.99: continue
+						var gx := left + x
+						var gy := top + y
+						if gx < 0 or gy < 0 or gx >= image.get_width() or gy >= image.get_height(): continue
+						whole += 1
+						var g := image.get_pixel(gx, gy)
+						if absf(a.r - g.r) < 0.002 and absf(a.g - g.g) < 0.002 and absf(a.b - g.b) < 0.002: whole_kept += 1
+				continue
+			split_decks += 1
 			var info: Dictionary = mask[path]
 			for y in art.get_height():
 				for x in art.get_width():
 					var a := art.get_pixel(x, y)
 					if a.a < 0.5: continue
-					var plank := false
-					if str(info.kind) == "ew":
-						plank = float(y) >= ceilf(float(info.line[0]) + float(info.line[1]) * (float(x) + 0.5)) + 2.0
-					else:
-						plank = y >= int(info.first)
-						for band in info.bands:
-							if x >= int(band[0]) - 3 and x <= int(band[1]) + 3: plank = false
-					if not plank: continue
+					# The planks by an independent rule from the json's foot line only, never from its "card" runs: 2 px under it.
+					if float(y) < ceilf(float(info.line[0]) + float(info.line[1]) * (float(x) + 0.5)) + 2.0: continue
 					var gx := left + x
 					var gy := top + y
 					if gx < 0 or gy < 0 or gx >= image.get_width() or gy >= image.get_height(): continue
@@ -192,12 +221,13 @@ func _ground() -> void:
 					card_total += 1
 					if absf(a.r - g.r) < 0.002 and absf(a.g - g.g) < 0.002 and absf(a.b - g.b) < 0.002:
 						count += 1
-						if OS.get_cmdline_user_args().has("--why") and n == 404: print("MATCH ", path.get_file(), " px ", x, ",", y, " art ", a.to_html(false), " ground ", g.to_html(false))
-		print("GROUND %d v%d decks=%d rail_pixels_in_ground=%d rail_total=%d planks=%d planks_kept=%d" % [n, vision, painted, count, card_total, planks, kept])
+		print("GROUND %d v%d split=%d rail_pixels_in_ground=%d rail_total=%d planks=%d planks_kept=%d whole_decks=%d whole=%d whole_kept=%d" % [n, vision, split_decks, count, card_total, planks, kept, whole_decks, whole, whole_kept])
 		total += count
 		planks_total += planks
 		kept_total += kept
-	print("GROUND TOTAL %d planks=%d planks_kept=%d" % [total, planks_total, kept_total])
+		whole_total += whole
+		whole_kept_total += whole_kept
+	print("GROUND TOTAL %d planks=%d planks_kept=%d whole=%d whole_kept=%d" % [total, planks_total, kept_total, whole_total, whole_kept_total])
 
 # --- rays and pictures ------------------------------------------------------------------------------------------
 func _ray(from: Vector3, to: Vector3) -> Dictionary:

@@ -1,29 +1,33 @@
 """Bridge railings stand and decks take rays (docs/DIRECTION.md, October 2, Dink M3 unit U1).
 
 M2 painted every bridge deck into its screen's ground and stood the near railings (brdge-04, 07, 09, 11) as fixed
-cards. Three defects were left: the railing drawn INSIDE a deck's own sprite (the far railing of the east-west decks
-brdge-06, 08, 10; the side ropes of the north-south decks brdge-01..03) lay flat in the ground with the planks; a near
-railing seen along its length was a zero-width sliver; and a deck had no body for rays. tools/bridge_split.py splits the
-railing from the planks in the art (game/prototype/bridges.json); game/scripts/bridge_rails.gd stands it.
+cards. Three defects were left: the far railing drawn INSIDE an east-west deck's own sprite (brdge-06, 08, 10) lay flat in
+the ground with the planks; a near railing seen along its length was a zero-width sliver; and a deck had no body for rays.
+tools/bridge_split.py splits the railing from the planks in the art (game/prototype/bridges.json); game/scripts/bridge_rails.gd
+stands it. The north-south decks (brdge-01..03) are NOT split: their side ropes stay painted in the ground as at 46b68a0. The art
+draws the rope over the planks' own rows, so a rope that stands at the end posts' height cannot also stay over the deck, and
+02 and 03 draw no posts; the first version of this unit stood them (99af3dc) and they hung in the air along the deck, a
+metre past its ends. A deck of any kind still takes its ray plate.
 
 Tests (the three Godot parts through tests/fps_bridge_rails_test.gd, as the game builds a scene):
   - the split is reproducible and agrees with an independent reading of the art (PIL only, no tool code): the foot line of
-    an east-west deck's far railing is where the planks' top edge is; no railing pixel lies under it; a north-south deck's
-    rope is at its edges; a near railing's posts stand on its line.
+    an east-west deck's far railing is where the planks' top edge is; no railing pixel lies under it; a near railing's posts
+    stand on its line; the json holds no entry for a north-south deck.
   - sweep (headless): every bridge sprite of the map, in every story layer, built as a scene builds it. Every deck has a
     body for rays on the ray layer (collision layer 1, no mask); an east-west deck's and a near railing's card stands on
     its foot line (corners read back from the geometry against the art's line and the frame's hotspot), is as tall as the
-    rope stands, with its posts as prisms; a north-south deck holds its two ropes at the posts' height; the stone bridge has
-    a body and no railing.
-  - ground (headless): the railing's pixels are gone from the painted ground, the planks are not (an independent plank
-    rule from the json's line/bands, not from its card).
+    rope stands, with its posts as prisms; a north-south deck and the stone bridge hold NO railing (no meshes) and a plate
+    that lies where the planks are (the north-south deck's, not over its end posts or the rope's tail).
+  - ground (headless): the east-west decks' railing pixels are gone from the painted ground, the planks are not (an
+    independent plank rule from the json's line, not from its card); the north-south decks are in the ground exactly as the
+    art has them, their side ropes included.
   - render (xvfb, Dummy audio, no Wayland: never the desktop): a downward ray 0.3 m over every deck of 404, 448, 512 and
     693 hits the deck's own body and one 4 m beside it does not; from a camera exactly on a railing's axis the railing's
     own pixels (entity hidden against shown, shadows off) are counted: a zero-width card gives 0, posts that are prisms
     give hundreds, and the same railing seen from 1.5 m to the side is the control that the count counts.
 Environment: BRIDGE_RAILS_GAME=<a game dir> runs the Godot parts and reads bridges.json against another build (the
-controls in the report: the unmodified build, a card facing south, dark seams taken as rope, no post prisms, the plate on
-another layer; each one makes a test below fail).
+controls in the report: the unmodified build, the first version that stood the north-south ropes (99af3dc), a card facing
+south, dark seams taken as rope, no post prisms, the plate on another layer; each one makes a test below fail).
 Verdict: written 2026-10-02 (Sonnet 5.5, unit U1 of Dink M3). The whole file takes about a minute.
 """
 import json
@@ -142,21 +146,12 @@ def test_an_east_west_decks_foot_line_is_its_planks_top_edge_and_no_railing_pixe
     assert len(e["posts"]) >= 2 and all(p[3] - p[2] >= 30 for p in e["posts"])
 
 
-@pytest.mark.parametrize("name", sorted(NS))
-def test_a_north_south_decks_rope_is_at_its_two_edges_and_nowhere_in_the_planks(name):
-    e = entry_of(name)
-    w, h = art(name).size
-    assert len(e["bands"]) == 2 and e["bands"][0][1] < w / 3 and e["bands"][1][0] > 2 * w / 3, e["bands"]
-    for y, x0, x1 in e["card"]:
-        # the card runs lie in the outer thirds, but for the end posts above the first plank row, which are wider
-        assert x1 < w * 0.45 or x0 > w * 0.55, ("a rope pixel in the middle of the planks", name, y, x0, x1)
-    # The rope ties on at the top of the end posts brdge-01 draws above its planks: their height is the rows over the first
-    # plank row (a row warm-brown over 40 percent of the middle half), read here from the art.
-    im = art("brdge-01.png")
-    px = im.load()
-    iw, ih = im.size
-    first = next(y for y in range(ih) if sum(warm(px[x, y]) for x in range(iw // 4, 3 * iw // 4)) > 0.4 * (iw // 2))
-    assert abs(e["height"] - first) <= 1.0, (e["height"], first)
+def test_the_north_south_decks_are_not_split_and_every_other_bridge_art_is():
+    data = rails_json()
+    for name in sorted(NS):
+        assert "assets/graphics/struct/Bridge/" + name not in data, ("a north-south deck's rope must stay in the ground", name)
+    got = {k.rsplit("/", 1)[-1] for k in data if k != "_meta"}
+    assert got == EW | NEAR | {"brdge-04.png"}, got
 
 
 @pytest.mark.parametrize("name", sorted(NEAR))
@@ -209,7 +204,11 @@ def _floats(text):
 def parse_sweep(stdout):
     rails = {}
     cards = {}
+    plates = {}
     for line in stdout.splitlines():
+        m = re.match(r"PLATE (\d+) (\d+) (\d+) (\S+) x (\S+) to (\S+) z (\S+) to (\S+) top (\S+)", line)
+        if m:
+            plates[(int(m.group(1)), int(m.group(2)), int(m.group(3)))] = [float(m.group(i)) for i in range(5, 10)]
         m = re.match(r"RAIL (\d+) (\d+) (\d+) (\S+) (deck|rail) meshes=(\d+) posts=(\d+) min=(\S+) max=(\S+) body=(\S+)", line)
         if m:
             rails[(int(m.group(1)), int(m.group(2)), int(m.group(3)))] = {
@@ -218,7 +217,7 @@ def parse_sweep(stdout):
         m = re.match(r"CARD (\d+) (\d+) (\d+) (\S+) foot x (\S+) z (\S+) to x (\S+) z (\S+) top (\S+)", line)
         if m:
             cards[(int(m.group(1)), int(m.group(2)), int(m.group(3)))] = [float(m.group(i)) for i in range(5, 10)]
-    return rails, cards
+    return rails, cards, plates
 
 
 @pytest.fixture(scope="module")
@@ -230,7 +229,7 @@ def swept(tmp_path_factory):
 
 @godot_needed
 def test_every_bridge_sprite_of_the_map_is_built_with_its_railing_and_its_ray_body(swept):
-    rails, cards = swept
+    rails, cards, plates = swept
     expected = map_bridges()
     seen = {(s, i) for (s, i, _v) in rails}
     assert seen == set(expected), (sorted(set(expected) - seen)[:8], sorted(seen - set(expected))[:8])
@@ -250,9 +249,9 @@ def test_every_bridge_sprite_of_the_map_is_built_with_its_railing_and_its_ray_bo
             if r["meshes"] != 0:
                 problems.append((who, "the stone bridge has no railing", r["meshes"]))
             continue
-        e = entry_of(name)
-        w = art(name).size[0]
         dx, dy = fr[r["path"]]
+        e = entry_of(name) if name not in NS else None
+        w = art(name).size[0]
         if name in EW or name in NEAR:
             card = cards.get((screen, index, vision))
             if card is None or r["meshes"] < 2 or r["posts"] != 1:
@@ -265,13 +264,30 @@ def test_every_bridge_sprite_of_the_map_is_built_with_its_railing_and_its_ray_bo
             if abs(r["min"][1]) > 0.001 or not 0.85 <= r["max"][1] <= 1.35:
                 problems.append((who, "the railing stands from the deck to the rope's height", r["min"][1], r["max"][1]))
         elif name in NS:
-            ropes = 2 + (1 if e["posts"] else 0)
-            if r["meshes"] != ropes or r["posts"] != (1 if e["posts"] else 0):
-                problems.append((who, "two ropes (and the end posts)", r["meshes"], r["posts"]))
-            if not (0.90 <= r["min"][1] and r["max"][1] <= 1.065) and not e["posts"]:
-                problems.append((who, "the ropes lie at the posts' height", r["min"][1], r["max"][1]))
-            if e["posts"] and not (r["min"][1] <= 0.001 and 0.95 <= r["max"][1] <= 1.065):
-                problems.append((who, "the end posts and ropes", r["min"][1], r["max"][1]))
+            if r["meshes"] != 0 or r["posts"] != 0:
+                problems.append((who, "a north-south deck stands nothing: its rope stays in the ground", r["meshes"], r["posts"]))
+            # Its plate is where its planks are: the wood of the plank rows of the art (the end posts above 01's planks and the
+            # rope's tail past 02's are not deck), to within the dark rim and the dither (0.08 m).
+            im = art(name)
+            px = im.load()
+            # plank rows: at least 40 percent of the sprite's width is warm brown (01's end posts are brown too, but narrow)
+            rows = [y for y in range(im.size[1]) if sum(warm(px[x, y]) for x in range(im.size[0])) >= 0.4 * im.size[0]]
+            wood = [(x, y) for y in rows for x in range(im.size[0]) if warm(px[x, y])]
+            plate = plates.get((screen, index, vision))
+            if plate is None or not wood:
+                problems.append((who, "no plate", plate))
+                continue
+            want = [(min(x for x, _ in wood) - dx) * SCALE, (max(x for x, _ in wood) + 1 - dx) * SCALE,
+                    (min(y for _, y in wood) - dy) * SCALE, (max(y for _, y in wood) + 1 - dy) * SCALE]
+            have = [plate[0], plate[1], plate[2], plate[3]]
+            if any(abs(a - b) > 0.08 for a, b in zip(have, want)) or abs(plate[4] - 0.05) > 0.001:
+                problems.append((who, "the plate is not where the planks are", have, want))
+        if name in EW:
+            plate = plates.get((screen, index, vision))
+            a, s_ = e["line"]
+            top_z = (min(a, a + s_ * w) - dy) * SCALE
+            if plate is None or plate[2] < top_z - 0.03:
+                problems.append((who, "the plate reaches over the railing", plate, top_z))
     assert not problems, "%d of %d: %s" % (len(problems), len(rails), problems[:6])
     kinds = {r["path"].rsplit("/", 1)[-1] for r in rails.values()}
     assert kinds >= (EW | NS | NEAR | {"landm-04.png", "landm-05.png"}), kinds
@@ -284,24 +300,32 @@ def grounded(tmp_path_factory):
     assert "SCRIPT ERROR" not in result.stderr and "Parse Error" not in result.stdout, (result.stderr + result.stdout)[-2500:]
     rows = []
     for line in result.stdout.splitlines():
-        m = re.match(r"GROUND (\d+) v(\d) decks=(\d+) rail_pixels_in_ground=(\d+) rail_total=(\d+) planks=(\d+) planks_kept=(\d+)", line)
+        m = re.match(r"GROUND (\d+) v(\d) split=(\d+) rail_pixels_in_ground=(\d+) rail_total=(\d+) planks=(\d+) planks_kept=(\d+) "
+                     r"whole_decks=(\d+) whole=(\d+) whole_kept=(\d+)", line)
         if m:
-            rows.append(tuple(int(m.group(i)) for i in range(1, 8)))
+            rows.append(tuple(int(m.group(i)) for i in range(1, 11)))
     return rows
 
 
 @godot_needed
-def test_the_railing_is_gone_from_the_painted_ground_and_the_planks_are_not(grounded):
-    # Measured: the unmodified build holds 100 percent of the railing's pixels in the ground (15164 of 15164); the split
-    # build 1.2 percent (183: planks of the same colours as a rope pixel, the rate a mask moved off the sprites gives
-    # is 0.7 to 4 percent); every plank pixel is kept (75020 of 75020).
+def test_the_east_west_railing_is_gone_from_the_painted_ground_and_the_planks_and_north_south_ropes_are_not(grounded):
+    # Measured: the unmodified build holds 100 percent of the east-west decks' railing pixels in the ground (5186 of 5186);
+    # the split build 0.3 percent (14: planks of the same colours as a rope pixel); every plank pixel is kept (26930 of 26930)
+    # and every north-south deck's opaque pixels are in the ground as the art has them (101609 of 101609 less the stone
+    # bridge's, which is not counted here).
     assert len(grounded) == 10 and {r[0] for r in grounded} == {404, 416, 448, 480, 512, 533, 544, 693, 701}, grounded
     left = sum(r[3] for r in grounded)
     total = sum(r[4] for r in grounded)
-    assert total > 14000 and left <= 0.05 * total, (left, total)
-    for screen, vision, decks, in_ground, rail_total, planks, kept in grounded:
-        assert decks >= 2 and rail_total > 500 and in_ground <= 0.15 * rail_total, (screen, vision, in_ground, rail_total)
-        assert planks > 3000 and kept >= 0.99 * planks, ("the planks were eaten", screen, vision, kept, planks)
+    assert total > 5000 and left <= 0.05 * total, (left, total)
+    split = [r for r in grounded if r[2] > 0]
+    assert {r[0] for r in split} == {404, 512, 693}, split
+    for screen, vision, n_split, in_ground, rail_total, planks, kept, whole_decks, whole, whole_kept in split:
+        assert rail_total > 1500 and in_ground <= 0.15 * rail_total, (screen, vision, in_ground, rail_total)
+        assert planks > 7000 and kept >= 0.99 * planks, ("the planks were eaten", screen, vision, kept, planks)
+    whole_rows = [r for r in grounded if r[7] > 0]
+    assert {r[0] for r in whole_rows} == {416, 448, 480, 512, 533, 544, 701}, whole_rows
+    for screen, vision, _s, _g, _t, _p, _k, whole_decks, whole, whole_kept in whole_rows:
+        assert whole > 3000 and whole_kept >= 0.99 * whole, ("a north-south rope left the ground", screen, vision, whole_kept, whole)
 
 
 @pytest.fixture(scope="module")

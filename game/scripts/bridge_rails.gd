@@ -9,9 +9,6 @@ extends RefCounted
 #   "ew"   the far railing: a card standing on the line the posts' feet lie on (the deck is drawn a little turned, so
 #          the line is not level: each column's pixels are taken from its own base, so the card is a vertical plane
 #          along the line and its picture is the art's above it), its posts as prisms. The planks stay in the ground.
-#   "ns"   the two side rails: a rope along each deck edge at the posts' height (flat ribbons: the art draws a rope
-#          at a height as a vertical line, and a point at height H and depth z is drawn at z - H), the end posts as
-#          prisms. The planks the rope was drawn over are filled from their neighbours.
 #   "near" the near railing, as the far one: a card standing on the line its posts' feet lie on (not at its hotspot,
 #          which the artist put anywhere: 11's is 23 px above its feet), its posts as prisms (a card is a sliver from
 #          its own axis).
@@ -21,6 +18,10 @@ extends RefCounted
 # own pixels. Its other faces sample the post's own edge columns.
 # The railing is cut from the art as it is (world.sprite_image), not from the card texture that drops isolated black pixels
 # as shadow dither: a rope's outline has such pixels.
+# The north-south decks (brdge-01..03) have no entry: their side ropes stay painted in the ground with the planks, as in
+# M2. The art draws the rope over the planks' own rows (a rope at height H is drawn H rows above where it lies), so a rope
+# that stands at the end posts' height cannot also stay over the deck, and 02 and 03 draw no posts: a first version that stood
+# them (commit 99af3dc) hung rods in the air along the deck, a metre past its ends.
 # Every deck also takes a thin body on the ray layer (the layer arrows and rays use; as the houses' ray_body), where
 # its planks are: walking is unchanged (it is the source's hardness, game.gd).
 const SCALE := 0.025
@@ -59,9 +60,8 @@ func _grid(runs: Array, w: int, h: int) -> PackedByteArray:
 	return grid
 
 # --- the planks ---------------------------------------------------------------------------------------------
-# A deck's sprite as painted into the ground: without the railing that stands now. A rope that was drawn over the
-# planks (a north-south deck's side rails) leaves a hole in them, filled from the nearest plank pixel in its row
-# (the planks run across); above the deck there is nothing to fill.
+# A deck's sprite as painted into the ground: without the railing that stands now (the railing's pixels are above the
+# planks, so nothing is left to fill). A deck with no entry (the north-south decks, the stone bridge) is painted whole.
 func plank_image(path: String, source: Image) -> Image:
 	return _planks(path,source,"ground")
 
@@ -74,23 +74,9 @@ func _planks(path: String, source: Image, tag: String) -> Image:
 	var h := source.get_height()
 	var image: Image = source.duplicate()
 	var grid := _grid(e.card,w,h)
-	var first := int(e.get("first",0)) if str(e.kind) == "ns" else h
 	for y in h:
 		for x in w:
-			if grid[y*w+x] == 0: continue
-			var fill := Color(0,0,0,0)
-			if y >= first:
-				for d in range(1,9):
-					var found := false
-					for sx in [x-d,x+d]:
-						if sx < 0 or sx >= w or grid[y*w+sx] == 1: continue
-						var c := source.get_pixel(sx,y)
-						if c.a > 0.5:
-							fill = c
-							found = true
-							break
-					if found: break
-			image.set_pixel(x,y,fill)
+			if grid[y*w+x] == 1: image.set_pixel(x,y,Color(0,0,0,0))
 	plank_cache[key] = image
 	return image
 
@@ -147,8 +133,6 @@ func _deck_meshes(path: String, info: Dictionary, d: Dictionary) -> Array:
 	if kind == "ew" or kind == "near":
 		var card = _ew_card(info,image,dx,dy)
 		if card != null: out.append(card)
-	elif kind == "ns":
-		out.append_array(_ns_ribbons(info,image,dx,dy))
 	var posts = _posts_mesh(info,sprite,dx,dy,kind)
 	if posts != null: out.append([posts,sprite,"Posts"])
 	return out
@@ -199,61 +183,13 @@ func _post_grid(posts: Array, w: int, h: int) -> PackedByteArray:
 			for x in range(maxi(int(p[0]),0),mini(int(p[1]),w-1)+1): grid[y*w+x] = 1
 	return grid
 
-# The north-south deck's side rails: the rope as a square rod of the rope's own width along the deck, its top face the
-# rope's pixels at the posts' height. A rope pixel at sprite row y is at depth z = y + H, since the original draws a
-# point at height H at z - H. (A flat ribbon, which is what the art projects to, is a dashed line at a grazing angle.)
-func _ns_ribbons(info: Dictionary, image: Image, dx: float, dy: float) -> Array:
-	var out: Array = []
-	var w := image.get_width()
-	var h := image.get_height()
-	var rope := _grid(info.rope,w,h)
-	var height := float(info.height)
-	for band in info.rope_cols:
-		var x0 := int(band[0])
-		var x1 := int(band[1])
-		# The picture is the rope's columns and, beside them, one more: the row's first rope pixel (the sides' strip).
-		var count := x1-x0+1
-		var picture := Image.create(count+1,h,false,Image.FORMAT_RGBA8)
-		for y in h:
-			for x in range(x0,x1+1):
-				if rope[y*w+x] == 1:
-					picture.set_pixel(x-x0,y,image.get_pixel(x,y))
-					if picture.get_pixel(count,y).a < 0.5: picture.set_pixel(count,y,image.get_pixel(x,y))
-		picture.generate_mipmaps()
-		var mesh := ArrayMesh.new()
-		var tool := SurfaceTool.new()
-		tool.begin(Mesh.PRIMITIVE_TRIANGLES)
-		var wide := float(count)*SCALE
-		var top := height*SCALE
-		var bottom := top-wide
-		var left := (float(x0)-dx)*SCALE
-		var right := (float(x1+1)-dx)*SCALE
-		var north := (height-dy)*SCALE
-		var south := (float(h)+height-dy)*SCALE
-		var edge := float(count)/float(count+1)
-		var u0 := Vector2(0,1)
-		var u1 := Vector2(edge,1)
-		var u2 := Vector2(edge,0)
-		var u3 := Vector2(0,0)
-		_quad(tool,Vector3(left,top,south),Vector3(right,top,south),Vector3(right,top,north),Vector3(left,top,north),u0,u1,u2,u3)
-		_quad(tool,Vector3(left,bottom,north),Vector3(right,bottom,north),Vector3(right,bottom,south),Vector3(left,bottom,south),u3,u2,u1,u0)
-		# The sides show that extra column, stretched along the rod.
-		var mid := (float(count)+0.5)/float(count+1)
-		var sa := Vector2(mid,1)
-		var sb := Vector2(mid,0)
-		_quad(tool,Vector3(left,bottom,south),Vector3(left,top,south),Vector3(left,top,north),Vector3(left,bottom,north),sa,sa,sb,sb)
-		_quad(tool,Vector3(right,bottom,north),Vector3(right,top,north),Vector3(right,top,south),Vector3(right,bottom,south),sb,sb,sa,sa)
-		tool.commit(mesh)
-		out.append([mesh,ImageTexture.create_from_image(picture),"Rope"])
-	return out
-
 func _quad(tool: SurfaceTool, a: Vector3, b: Vector3, c: Vector3, d: Vector3, ua: Vector2, ub: Vector2, uc: Vector2, ud: Vector2) -> void:
 	for pair in [[a,ua],[b,ub],[c,uc],[a,ua],[c,uc],[d,ud]]:
 		tool.set_uv(pair[1])
 		tool.add_vertex(pair[0])
 
 # The posts as prisms standing where the art draws them: as wide as they are drawn and as deep. `kind` says where the
-# post's foot is: an "ew" or "near" post on the railing's line, an "ns" post at its first plank row.
+# post's foot is: on the railing's line.
 func _posts_mesh(info: Dictionary, sprite: Texture2D, dx: float, dy: float, kind: String) -> Variant:
 	var posts: Array = info.get("posts",[])
 	if posts.is_empty(): return null
@@ -279,9 +215,6 @@ func _posts_mesh(info: Dictionary, sprite: Texture2D, dx: float, dy: float, kind
 		if kind == "ew" or kind == "near":
 			foot_z = (a+s*xc-dy)*SCALE
 			y_top = (a+s*xc-y0-wide)*SCALE # the line's row less the post's top row, less the top face's rows (below)
-		elif kind == "ns":
-			foot_z = (float(info.first)-dy)*SCALE
-			y_top = (float(info.first)-y0-wide)*SCALE
 		var along := Vector3(1,0,s).normalized()
 		var toward := Vector3(-s,0,1).normalized()
 		var centre := Vector3((xc-dx)*SCALE,0,foot_z)
@@ -357,23 +290,43 @@ func _plate(path: String, d: Dictionary, id: int) -> StaticBody3D:
 	body.add_child(shape)
 	return body
 
-# The hull's points: the rows' ends of the planks the shadow dither is cleaned from (clean_texture), once per art.
+# A pixel of wooden planks: warm brown (the rule bridge_split.py reads the planks by).
+func _warm(c: Color) -> bool:
+	return c.a >= 0.5 and (c.r-c.g)*255.0 >= 24.0 and (c.g-c.b)*255.0 >= 10.0
+
+# The hull's points: the rows' ends of the planks the shadow dither is cleaned from (clean_texture), once per art. A deck
+# with no entry that is mostly wood (the north-south decks, painted whole) takes only its plank rows (rows that are at least
+# 40 percent warm brown across the sprite) and their wooden pixels: its end posts above the planks (brdge-01's are brown
+# too) and the rope's tail past them are not deck. The stone bridge is not wood, so all its opaque pixels count.
 func _plate_points(path: String, d: Dictionary) -> PackedVector3Array:
 	if plate_cache.has(path): return plate_cache[path]
 	var points := PackedVector3Array()
 	var texture: Texture2D = world.clean_texture(path)
 	if texture == null: return points
 	var image := _planks(path,texture.get_image(),"plate")
+	var wood_only := false
+	if not has(path):
+		var wood := 0
+		var opaque := 0
+		for y in image.get_height():
+			for x in image.get_width():
+				var c := image.get_pixel(x,y)
+				if c.a >= 0.5: opaque += 1
+				if _warm(c): wood += 1
+		wood_only = opaque > 0 and float(wood) >= 0.4*float(opaque)
 	var dx := float(d.get("dx",0))
 	var dy := float(d.get("dy",0))
 	for y in image.get_height():
 		var lo := -1
 		var hi := -1
+		var warm_count := 0
 		for x in image.get_width():
-			if image.get_pixel(x,y).a > 0.5:
+			var c := image.get_pixel(x,y)
+			if _warm(c): warm_count += 1
+			if (_warm(c) if wood_only else c.a > 0.5):
 				if lo < 0: lo = x
 				hi = x
-		if lo < 0: continue
+		if lo < 0 or (wood_only and float(warm_count) < 0.4*float(image.get_width())): continue
 		for yy in [float(y),float(y)+1.0]:
 			for xx in [float(lo),float(hi)+1.0]:
 				points.append(Vector3((xx-dx)*SCALE,0,(yy-dy)*SCALE))
