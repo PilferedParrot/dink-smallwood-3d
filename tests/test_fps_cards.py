@@ -1,7 +1,8 @@
 """Upright sprites are billboards, structures are fixed cards (docs/DIRECTION.md, tenth pass).
 
-A card keeps the orientation it was drawn in only if it is a structure: a fence, a wall, a castle wall, a sign, an
-island hut. A tree, bush, rock, well, statue, prop or actor is a Y-axis billboard whatever its width: the art's
+A card keeps the orientation it was drawn in only if it is a structure: a fence, a wall or a sign. Fitted castle
+pieces, the two castle doors and island huts have 3D models and are outside the card sweep. A tree, bush, rock,
+well, statue, prop or actor is a Y-axis billboard whatever its width: the art's
 width includes its shadow dither, so every tree is over 100 px, and every tree was an edge-on sliver from the side.
 A billboard casts its silhouette from a shadow-only twin turned to the sun.
 
@@ -106,14 +107,15 @@ def test_every_card_of_the_map_is_a_billboard_unless_its_art_is_a_structure(swep
     keys = {(c["key"], c["mode"]) for c in swept}
     for kind in [("oak_tree", "billboard"), ("pine_tree", "billboard"), ("dead_tree", "billboard"), ("bush", "billboard"),
                  ("rock", "billboard"), ("well", "billboard"), ("save", "billboard"), ("knight", "billboard"), ("dragon", "billboard"),
-                 ("fence", "fixed"), ("wall", "fixed"), ("tower", "fixed"), ("sign", "fixed")]:
+                 ("fence", "fixed"), ("wall", "fixed"), ("sign", "fixed")]:
         assert kind in keys, kind
     # The island's huts are no cards any more: all 16 stand in 3D (tests/test_fps_huts.py), so no ("hut", "fixed") is swept.
     assert ("hut", "fixed") not in keys
     assert sum(1 for c in swept if c["key"] == "oak_tree") > 500
-    # The statues (struct/Stone/mdink: key "tower") stand upright; the castle's walls are fixed.
+    # The statues (struct/Stone/mdink: key "tower") stand upright; the fitted castle walls are no cards.
     assert any("/stone/mdink/" in c["path"].lower() and c["mode"] == "billboard" for c in swept)
-    assert any("/castle/" in c["path"].lower() and c["mode"] == "fixed" for c in swept)
+    # Both placed castle doors are fitted surfaces now (tests/test_fps_doors.py), so neither is a card.
+    assert not any(c["path"].lower().endswith(("cdoor-01.png", "cdoor-06.png")) for c in swept)
     # The island: rail fences fixed, spears and torches standing up (the huts, isle-01..06, are 3D pieces: no cards at all).
     island = {(c["path"].rsplit("/", 1)[-1].lower(), c["mode"]) for c in swept if "/island/" in c["path"].lower()}
     assert ("isle-07.png", "fixed") in island and ("isle-18.png", "billboard") in island

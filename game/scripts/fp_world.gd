@@ -9,6 +9,7 @@ const WIDTH := 600.0*SCALE # one screen
 const DEPTH := 400.0*SCALE
 const BUILDINGS := preload("res://scripts/sprite_buildings.gd")
 const RAILS := preload("res://scripts/bridge_rails.gd")
+const CASTLE_DOORS := preload("res://scripts/castle_doors.gd")
 # Models that stand in for a sprite, sized to it; the rest keep their own sizes (or their hardbox).
 # Not "crate": it stands in for anything scripted or unknown (tools leaning on walls, sacks), and a
 # cube as tall as a leaning rake is a wall.
@@ -32,6 +33,7 @@ var structural_seen: Dictionary = {}
 var facades: Dictionary = {}
 var buildings # sprite_buildings.gd
 var rails # bridge_rails.gd: the bridges' railings and decks' ray plates
+var castle_doors # castle_doors.gd: the wall panel and lowered drawbridge built on fitted castle faces
 var fitted_built: Dictionary = {} # world position key -> the node holding it (null: reserved), this scene
 var plan_key := "" # scene, screen and story layer the plan below was gathered for
 var plan_claimed: Dictionary = {} # "screen:index" -> true: sprites a fitted house draws (itself, its parts)
@@ -73,6 +75,7 @@ func setup(game) -> void:
 	buildings = BUILDINGS.new(host.sequences,host.world,facades,SCALE)
 	rails = RAILS.new()
 	rails.setup(self)
+	castle_doors = CASTLE_DOORS.new(self)
 
 func point(x: float, y: float) -> Vector3:
 	return Vector3((x-320.0)*SCALE,0,(y-200.0)*SCALE)
@@ -1728,6 +1731,7 @@ func is_structure(key: String, path: String) -> bool:
 # (shadow_twin).
 func add_billboard(node: Node3D, e: Dictionary, id: int, key: String, collision: bool, screen: int) -> void:
 	var path := frame_path(e)
+	if castle_doors.has(path) and castle_doors.add(node,e,id,path,collision,screen): return
 	var texture := clean_texture(path)
 	if texture == null: return
 	var d: Dictionary = host._frame(int(e.get("pseq",e.get("seq",0))),int(e.get("pframe",e.get("frame",1))))

@@ -90,11 +90,10 @@ def _distance(p, h):
     return min(_segment_distance(p, h[i], h[(i + 1) % len(h)]) for i in range(len(h)))
 
 
-@pytest.fixture(scope="module")
-def expected():
+def _expected_reading(include_castle=True, castle_shift=(0, 0)):
     """{(screen, x, y): shift in px (> 0 pushed away, < 0 pulled toward)} for every upright, non-struct,
-    non-fence sprite of the map's default layer within its half-width of a fitted house, as the
-    prototype's rule says. Actors too (the tenth pass settles them like any sprite): the map has none
+    non-fence sprite of the map's default layer within its half-width of a fitted house or castle, as the
+    game's rule says. Actors too (the tenth pass settles them like any sprite): the map has none
     within its half-width of a wall (see the actor case of tests/fps_trees_test.gd)."""
     seqs = json.loads((ROOT / "game/data/sequences.json").read_text())["sequences"]
     fits = json.loads((ROOT / "game/prototype/facades.json").read_text())
@@ -152,6 +151,50 @@ def expected():
             hull = _hull(pts)
             if hull:
                 houses.append({"hull": hull, "kit": members})
+    # Castle pieces take the same depth rule as fitted houses. Rebuild their plan footprints
+    # from the map placements and _walls fit, independently of the game's house_plan().
+    if include_castle:
+        castle_seen = set()
+        for number, screen in screens.items():
+            n = int(number)
+            if screen.get("indoor"):
+                continue
+            ox, oy = _origin(n)
+            for s in screen["sprites"]:
+                d = frame(s)
+                if s.get("vision", 0) != 0 or s.get("type", 1) == 2 or not d:
+                    continue
+                path = d["path"]
+                fit = fits.get("_walls", {}).get(path)
+                if not isinstance(fit, dict) or not fit.get("parts"):
+                    continue
+                at = (ox + s["x"] - d["dx"] + castle_shift[0], oy + s["y"] - d["dy"] + castle_shift[1])
+                key = (path, int(at[0]), int(at[1]))
+                if key in castle_seen:
+                    continue
+                castle_seen.add(key)
+                for part in fit["parts"]:
+                    hull = []
+                    if part["type"] == "wall":
+                        slope, intercept = float(part["s"]), float(part["c"])
+                        depth = float(part.get("depth", part["tv"]))
+                        x0, x1 = float(part["x0"]), float(part["x1"])
+                        hull = [(at[0] + x0, at[1] + slope*x0 + intercept),
+                                (at[0] + x1, at[1] + slope*x1 + intercept),
+                                (at[0] + x1, at[1] + slope*x1 + intercept - depth),
+                                (at[0] + x0, at[1] + slope*x0 + intercept - depth)]
+                    elif part["type"] == "block":
+                        polygon = part.get("poly_ov") or part["poly"]
+                        hull = [(at[0] + p[0], at[1] + p[1]) for p in polygon]
+                    else:
+                        for i in range(24):
+                            angle = math.tau * i / 24.0
+                            hull.append((at[0] + float(part["cx"]) + float(part["ar"]) * math.cos(angle),
+                                         at[1] + float(part["cz"]) + float(part["k"]) * float(part["ar"]) * math.sin(angle)))
+                    hull = _hull(hull)
+                    if hull:
+                        draw_y = oy + s["y"] - (100000 if s.get("type", 1) == 0 else 0)
+                        houses.append({"hull": hull, "y": draw_y, "que": 0, "screen": n, "castle": True})
     out = {}
     for number, screen in screens.items():
         n = int(number)
@@ -170,7 +213,10 @@ def expected():
             half = _png_width(file) / 2 * max(0.01, s["size"] / 100)
             at = (ox + s["x"] - 20, oy + s["y"])
             for h in houses:
-                if _distance(at, h["hull"]) >= half:
+                # Castle depth_rule uses the entity hotspot as-is; the older house reading
+                # retains the prototype's 20 px sprite-origin correction above.
+                point = (ox + s["x"], oy + s["y"]) if h.get("castle") else at
+                if _distance(point, h["hull"]) >= half:
                     continue
                 if "kit" in h:
                     f = max(0.01, s["size"] / 100)
@@ -179,12 +225,39 @@ def expected():
                     under = any(r[0] < x0 + w * f and r[2] > x0 and r[1] < y0 + hh * f and r[3] > y0 and my >= at[1] for r, my in h["kit"])
                     out[(n, s["x"], s["y"])] = half if under else -half
                     break
-                order, house_order = at[1], h["y"]
-                if h["screen"] == n and (s["que"] != 0 or h["que"] != 0):
+                order, house_order = point[1], h["y"]
+                if not h.get("castle") and h["screen"] == n and (s["que"] != 0 or h["que"] != 0):
                     order = s["que"] if s["que"] != 0 else s["y"]
                     house_order = h["que"] if h["que"] != 0 else h["y"] - oy
                 out[(n, s["x"], s["y"])] = -half if order > house_order else half
                 break
+    return out
+
+
+@pytest.fixture(scope="module")
+def expected():
+    return _expected_reading()
+
+
+def _castle_affected_screens():
+    seqs = json.loads((ROOT / "game/data/sequences.json").read_text())["sequences"]
+    fits = json.loads((ROOT / "game/prototype/facades.json").read_text())
+    screens = json.loads((ROOT / "game/data/world.json").read_text())["screens"]
+    out = set()
+    for number, screen in screens.items():
+        n = int(number)
+        if screen.get("indoor"):
+            continue
+        for s in screen["sprites"]:
+            frames = seqs.get(str(s["seq"]), {}).get("frames", [])
+            d = frames[max(0, min(len(frames) - 1, int(s["frame"]) - 1))] if frames else None
+            if (s.get("vision", 0) == 0 and s.get("type", 1) != 2 and d
+                    and d["path"] in fits.get("_walls", {})):
+                # fp_world.castle_pieces() reads this complete 5x5 neighborhood.
+                col = (n - 1) % 32
+                out.update(n + dx + dz * 32 for dz in range(-2, 3) for dx in range(-2, 3)
+                           if 0 <= col + dx < 32 and str(n + dx + dz * 32) in screens
+                           and not screens[str(n + dx + dz * 32)].get("indoor"))
     return out
 
 
@@ -203,7 +276,7 @@ def _run_godot(args, rendered, tmp_path, timeout):
 
 
 def test_the_games_flags_equal_an_independent_reading_of_the_map(expected, tmp_path):
-    screens = sorted({n for n, _, _ in expected} | set(QUIET))
+    screens = sorted({n for n, _, _ in expected} | set(QUIET) | _castle_affected_screens())
     result = _run_godot(["--dump=" + ",".join(str(n) for n in screens)], False, tmp_path, 600)
     assert "SCRIPT ERROR" not in result.stderr, result.stderr[-2000:]
     nodes = []
@@ -236,6 +309,21 @@ def test_the_games_flags_equal_an_independent_reading_of_the_map(expected, tmp_p
     # Both signs, and screens where nothing is flagged, are in the sample.
     assert any(v > 0 for v in flagged.values()) and any(v < 0 for v in flagged.values())
     assert not any(s in QUIET for s, _, _ in flagged)
+    # Negative controls: deleting the fitted castle reading or shifting it 10 px must disagree
+    # with the game's actual dump, proving this test can detect missing/misplaced castle geometry.
+    def mismatches(wrong):
+        problems = []
+        for place, shift in wrong.items():
+            if place not in by_place:
+                continue
+            if place not in flagged or abs(flagged[place] - shift) > 0.01:
+                problems.append(place)
+        problems.extend(place for place in flagged if place not in wrong)
+        return problems
+
+    for wrong in (_expected_reading(include_castle=False), _expected_reading(castle_shift=(0, -10))):
+        assert wrong != expected
+        assert mismatches(wrong), "castle control did not go red"
 
 
 def test_the_draw_order_holds_in_rendered_scenes_and_the_controls_go_red(tmp_path):

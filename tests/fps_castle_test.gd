@@ -121,6 +121,7 @@ func _classify() -> void:
 			var model := node.get_node_or_null("Model")
 			var kind := "dup"
 			if model is Sprite3D: kind = "card"
+			elif node.has_meta("castle_door"): kind = "door"
 			elif model is Node3D: kind = "fitted"
 			print("CASTLE %d %s %s %d %d" % [n, game.fp_world.frame_path(e), kind, int(e.get("x", 0)), int(e.get("y", 0))])
 
