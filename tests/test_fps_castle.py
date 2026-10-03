@@ -60,6 +60,8 @@ def test_every_fitted_castle_frame_is_a_3d_piece_and_nothing_else_is(tmp_path):
     for screen, path, kind, x, y in rows:
         if _frame(path) in FITTED:
             assert kind in ("fitted", "dup"), (screen, path, kind)
+        elif path.endswith(("cdoor-01.png", "cdoor-06.png")):
+            assert kind == "door", (screen, path, kind)
         else:
             assert kind == "card", (screen, path, kind)
     # A piece placed twice at one spot (402 has castl-07 at (-127, 218) twice) is built once; and never zero times.
@@ -70,8 +72,10 @@ def test_every_fitted_castle_frame_is_a_3d_piece_and_nothing_else_is(tmp_path):
     assert all(kinds.count("fitted") == 1 for kinds in spots.values()), {k: v for k, v in spots.items() if v.count("fitted") != 1}
     assert any(len(kinds) > 1 for kinds in spots.values()), "no double placement in the sweep: the check could not fail"
     assert sum(1 for r in rows if r[2] == "fitted") > 40
-    # The instrument saw both kinds: the gatehouse (05) and the corner (12) are 3D pieces now; the doors stay cards.
-    assert any(r[2] == "card" for r in rows)
+    # The gatehouse (05) and corner (12) are 3D pieces; two door frames are surfaces of their fitted walls.
+    assert {(r[0], r[1].rsplit("/", 1)[-1]) for r in rows if r[2] == "door"} == {
+        (402, "cdoor-01.png"), (80, "cdoor-06.png")
+    }
     for frame in (5, 12):
         assert any(r[2] in ("fitted", "dup") and _frame(r[1]) == frame for r in rows), frame
 
