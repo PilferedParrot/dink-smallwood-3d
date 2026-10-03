@@ -62,9 +62,12 @@ def _walk(tmp_path, first, last, k=None):
     return rows[1:]  # the first has no previous step
 
 
-# The rule's wall point and normal put 251's cabin tree on the plane at 27.2 and 206.0 degrees.
-@pytest.mark.parametrize("first,last", [(198, 214), (19, 35)])
-def test_the_flip_is_spread_over_the_band_and_the_old_code_pops(tmp_path, first, last):
+# The rule's wall point and normal put 251's cabin tree on the plane at 27.2 and 206.0 degrees. At 27 degrees the old
+# code's pop (2,504 px) came mostly from the strips of tree-09/10 standing whole beside the tree; since they stand as
+# separate trees at their own feet (M3, U7: fp_world.seam_parts) the old code's step there is 931 px against an
+# ordinary 715, so only the 206 degree crossing still carries the "old code pops" control.
+@pytest.mark.parametrize("first,last,pops", [(198, 214, True), (19, 35, False)])
+def test_the_flip_is_spread_over_the_band_and_the_old_code_pops(tmp_path, first, last, pops):
     band = _band()
     built = _walk(tmp_path / "built", first, last)
     old = _walk(tmp_path / "old", first, last, k=0)
@@ -74,7 +77,8 @@ def test_the_flip_is_spread_over_the_band_and_the_old_code_pops(tmp_path, first,
     flip, ordinary = steps[0], steps[1]
     bound = 1.5 * ordinary
     # The control goes red: the old code's step at the plane is far over the walk's ordinary steps ...
-    assert flip > 2.0 * ordinary, (flip, ordinary)
+    if pops:
+        assert flip > 2.0 * ordinary, (flip, ordinary)
     # ... and the picture's change in one step, the crossing included, stays within 1.5 x the ordinary step.
     assert max(r[2] for r in built) <= bound, (max(r[2] for r in built), bound)
     # Outside the band the built code's steps are the old code's, pixel for pixel.
