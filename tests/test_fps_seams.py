@@ -38,10 +38,20 @@ def _godot(args, tmp_path, timeout=900):
     return r.stdout
 
 
+def _reader_python():
+    """An interpreter with numpy and PIL for the reader: the one running pytest (CI installs requirements-dev.txt
+    into it; its /usr/bin/python3 has neither), else the system one (this machine's numpy and PIL are apt packages)."""
+    for py in (sys.executable, SYSTEM_PYTHON):
+        if Path(py).is_file() and subprocess.run([py, "-c", "import numpy, PIL"], capture_output=True).returncode == 0:
+            return py
+    raise AssertionError("no python with numpy and PIL for tools/seam_objects.py: pip install -r requirements-dev.txt")
+
+
 def _reader(tmp_path):
     out = tmp_path / "seams.json"
-    py = SYSTEM_PYTHON if Path(SYSTEM_PYTHON).is_file() else sys.executable
-    subprocess.run([py, str(ROOT / "tools/seam_objects.py"), "--json", str(out)], check=True, capture_output=True, text=True, timeout=600)
+    r = subprocess.run([_reader_python(), str(ROOT / "tools/seam_objects.py"), "--json", str(out)],
+                       capture_output=True, text=True, timeout=600, check=False)
+    assert r.returncode == 0, r.stderr[-3000:]
     return {(h[0], h[1], h[2]) for h in json.loads(out.read_text())["hidden"]}
 
 
