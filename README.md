@@ -9,9 +9,9 @@ combat.
 This is version 0.3.0. It is a development release, not a finished remake. The
 opening through Aunt Maria's letter and world map has been exercised in a
 continuous automated route. All 644 map areas are imported, but a complete
-start-to-finish playthrough has not been certified. See
-[what changed in 0.3.0](docs/M3.md), the
-[0.2.0 release notes](docs/RELEASE_NOTES_0.2.0.md) and the
+start-to-finish playthrough has not been certified. See the
+[0.3.0 release notes](docs/RELEASE_NOTES_0.3.0.md), [what changed in M3](docs/M3.md),
+the [0.2.0 release notes](docs/RELEASE_NOTES_0.2.0.md) and the
 [first-person implementation notes](docs/FIRST_PERSON.md).
 
 ![Stonebrook in first person](docs/images/first-person-stonebrook.png)
