@@ -2,6 +2,7 @@
 """Package executables with their notices and corresponding audio source."""
 from pathlib import Path
 import hashlib
+import re
 import shutil
 import zipfile
 
@@ -11,6 +12,12 @@ except ImportError:  # imported as tools.package_release
     from tools.audio_provenance import verify as verify_audio
 
 ROOT = Path(__file__).resolve().parents[1]
+
+
+def version():
+    """The release version, parsed from the project's own config/version."""
+    text = (ROOT / 'game' / 'project.godot').read_text()
+    return re.search(r'^config/version="([0-9]+\.[0-9]+\.[0-9]+)"', text, re.M).group(1)
 
 
 def main():
@@ -32,7 +39,7 @@ def main():
         # A prior package may have copied this internal handoff note. Keep it
         # out of regenerated archives even when packaging into an existing folder.
         (folder / 'docs' / 'NEXT_SESSION.md').unlink(missing_ok=True)
-        archive = output / f'dink-smallwood-3d-0.2.0-{platform}-x86_64.zip'
+        archive = output / f'dink-smallwood-3d-{version()}-{platform}-x86_64.zip'
         with zipfile.ZipFile(archive, 'w', zipfile.ZIP_DEFLATED, compresslevel=6) as z:
             for path in sorted(folder.rglob('*')):
                 if path.is_file(): z.write(path, Path('DinkSmallwood3D') / path.relative_to(folder))

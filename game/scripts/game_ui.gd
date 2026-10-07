@@ -264,7 +264,8 @@ func set_text_scale(value: float) -> void:
 
 func show_title(has_save: bool) -> void:
 	_clear("DINK SMALLWOOD", "title")
-	_label("FIRST-PERSON ADVENTURE · VERSION 0.2", 16, GOLD)
+	var version := str(ProjectSettings.get_setting("application/config/version", ""))
+	_label("FIRST-PERSON ADVENTURE · VERSION %s" % version, 16, GOLD)
 	_label("A familiar world. A different perspective.\nA 3D adaptation by PilferedParrot.", 20)
 	if has_save:
 		_button("Continue adventure", "continue")
@@ -272,7 +273,7 @@ func show_title(has_save: bool) -> void:
 	_button("Settings & controls", "settings")
 	_button("Credits & support", "credits")
 	_button("Quit", "quit")
-	_label("Unofficial adaptation · Development release 0.2\nBlender-built world and FreeDink sound", 16, Color("9dad95"))
+	_label("Unofficial adaptation · Development release %s\nBlender-built world and FreeDink sound" % version, 16, Color("9dad95"))
 	_focus()
 
 func show_pause() -> void:

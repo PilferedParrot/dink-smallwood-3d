@@ -6,23 +6,24 @@ campaign data, ground art, dialogue, and FreeDink replacement audio alongside a
 new 3D renderer, modeled scenery, mouse and controller controls, and first-person
 combat.
 
-This is version 0.2.0. It is a development release, not a finished remake. The
+This is version 0.3.0. It is a development release, not a finished remake. The
 opening through Aunt Maria's letter and world map has been exercised in a
 continuous automated route. All 644 map areas are imported, but a complete
-start-to-finish playthrough has not been certified. See the
-[0.2.0 release notes](docs/RELEASE_NOTES_0.2.0.md) and
+start-to-finish playthrough has not been certified. See
+[what changed in 0.3.0](docs/M3.md), the
+[0.2.0 release notes](docs/RELEASE_NOTES_0.2.0.md) and the
 [first-person implementation notes](docs/FIRST_PERSON.md).
 
 ![Stonebrook in first person](docs/images/first-person-stonebrook.png)
 
 ## Play on Linux or Windows
 
-Download the version 0.2.0 archive for your platform, extract it, and run:
+Download the version 0.3.0 archive for your platform, extract it, and run:
 
 | Platform | File |
 | --- | --- |
-| Linux x86-64 | [dink-smallwood-3d-0.2.0-linux-x86_64.zip](https://github.com/PilferedParrot/dink-smallwood-3d/releases/download/v0.2.0/dink-smallwood-3d-0.2.0-linux-x86_64.zip) → `DinkSmallwood3D.x86_64` |
-| Windows x86-64 | [dink-smallwood-3d-0.2.0-windows-x86_64.zip](https://github.com/PilferedParrot/dink-smallwood-3d/releases/download/v0.2.0/dink-smallwood-3d-0.2.0-windows-x86_64.zip) → `DinkSmallwood3D.exe` |
+| Linux x86-64 | [dink-smallwood-3d-0.3.0-linux-x86_64.zip](https://github.com/PilferedParrot/dink-smallwood-3d/releases/download/v0.3.0/dink-smallwood-3d-0.3.0-linux-x86_64.zip) → `DinkSmallwood3D.x86_64` |
+| Windows x86-64 | [dink-smallwood-3d-0.3.0-windows-x86_64.zip](https://github.com/PilferedParrot/dink-smallwood-3d/releases/download/v0.3.0/dink-smallwood-3d-0.3.0-windows-x86_64.zip) → `DinkSmallwood3D.exe` |
 
 The game runs offline and does not need an account. Saves and settings are kept
 in Godot's application-data directory, separate from the extracted game folder.

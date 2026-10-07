@@ -1408,7 +1408,7 @@ the canopy and the house overlap on the screen at the crossing.
 ## Stacked trees and seam copies, and the rest of the "still wrong" list — October 2, M3 (Opus 5.5 leads, Sonnet 5.5 units)
 
 **Floating two-piece trees and the tree over 251** (the tenth pass's defect 6; root cause by the second M3 lead,
-claude:7346da90, finished and measured by the third). Two causes, both in the map's data. (1) *Stacked art:* tree-09 and
+finished and measured by the third). Two causes, both in the map's data. (1) *Stacked art:* tree-09 and
 tree-10 (123 placements) each draw two half-trees one above the other, a fully transparent band between them (rows
 177-199). In the original's projection (screen = X, Z - Y) the upper one is a tree standing about 200 px further north.
 The game stood the strip as one card at its hotspot: the far tree floated, the near one sank 100 px. No other placed art
