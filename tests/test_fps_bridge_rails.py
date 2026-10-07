@@ -40,6 +40,7 @@ from pathlib import Path
 
 import pytest
 from PIL import Image
+from tool_python import python_with
 
 ROOT = Path(__file__).resolve().parents[1]
 GAME = Path(os.environ.get("BRIDGE_RAILS_GAME") or ROOT / "game")
@@ -171,10 +172,7 @@ def test_a_near_railings_posts_stand_on_its_line_and_everything_in_its_card_is_a
 
 
 def test_the_committed_split_is_what_the_tool_makes_from_the_art(tmp_path):
-    python = "/usr/bin/python3"
-    probe = subprocess.run([python, "-c", "import numpy, scipy, PIL"], capture_output=True)
-    if probe.returncode != 0:
-        pytest.skip("numpy/scipy unavailable to /usr/bin/python3")
+    python = python_with("numpy, scipy, PIL", "tools/bridge_split.py")
     out = tmp_path / "bridges.json"
     result = subprocess.run([python, str(ROOT / "tools/bridge_split.py"), "--out", str(out)], capture_output=True, text=True,
                             cwd=ROOT, timeout=120)
