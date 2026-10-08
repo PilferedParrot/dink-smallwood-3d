@@ -1222,16 +1222,17 @@ func hut_fit(path: String) -> Dictionary:
 
 # The ring's columns run from the north (the far side from the original camera) round to the north again, the first and
 # last the same point of the surface: the texture may be discontinuous there, and nowhere else.
-func _hut_theta(c: int) -> float:
-	return -PI/2.0 + TAU*float(c)/HUT_SEGMENTS
+func _hut_theta(c: int, n: int = HUT_SEGMENTS) -> float:
+	return -PI/2.0 + TAU*float(c)/n
 
-# The texture coordinate (sprite px) of each ring column: [node][column 0..HUT_SEGMENTS] -> Vector2.
+# The texture coordinate (sprite px) of each ring column: [node][column 0..HUT_SEGMENTS] -> Vector2. A prop's fit
+# (scripts/prop_solids.gd) carries its own ring size, "ring".
 func _hut_uvs(fit: Dictionary) -> Array:
 	var nodes: Array = fit.nodes
 	var cx := float(fit.cx)
 	var cz := float(fit.cz)
 	var k := float(fit.k)
-	var n := HUT_SEGMENTS
+	var n := int(fit.get("ring", HUT_SEGMENTS))
 	var proj := func(i: int, j: int) -> Vector2:
 		var t := TAU*float(j)/n
 		var r := float(nodes[i][1])
@@ -1267,8 +1268,7 @@ func _hut_uvs(fit: Dictionary) -> Array:
 # Projecting the far-side points the camera does see, the back of the dome, lowered the original-camera colour error by
 # about 1.2 but left patch seams on the oblique views, so they take the wave too.)
 const HUT_GRAZE := 70.0
-func _hut_source(theta: float) -> int:
-	var n := HUT_SEGMENTS
+func _hut_source(theta: float, n: int = HUT_SEGMENTS) -> int:
 	var alpha := rad_to_deg(theta - PI/2.0) # -180 at the first column to 180 at the last: not wrapped, so each of
 	var u := fposmod(alpha + HUT_GRAZE, 4.0*HUT_GRAZE) # the seam's two points takes its own side's picture
 	if u > 2.0*HUT_GRAZE: u = 4.0*HUT_GRAZE - u

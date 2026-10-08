@@ -178,13 +178,14 @@ func _billboard_count(node: Node) -> int:
 		count += _billboard_count(child)
 	return count
 
-# Visuals of things that are not buildings whose model is not their sprite (a Blender stand-in).
+# Visuals of things that are not buildings whose model is not their sprite (a Blender stand-in). A prop built from its own
+# sprite's pixels (fp_world add_prop: a solid, "prop_path") is its sprite, not a stand-in.
 func _stand_ins(node: Node) -> Array:
 	var out: Array = []
 	for child in node.get_children():
 		var key := str(child.get_meta("model_key", ""))
 		var model: Node = child.get_node_or_null("Model")
-		if model != null and game.fp_world.sprite_drawn(key) and not model is Sprite3D: out.append("%s:%s" % [child.name, key])
+		if model != null and game.fp_world.sprite_drawn(key) and not model is Sprite3D and not child.has_meta("prop_path"): out.append("%s:%s" % [child.name, key])
 		out.append_array(_stand_ins(child))
 	return out
 

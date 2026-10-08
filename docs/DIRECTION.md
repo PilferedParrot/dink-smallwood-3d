@@ -1536,3 +1536,90 @@ the footprints removed or shifted 10 px it goes red. The pre-registered original
 pixels 11.70 to 18.14): the 3D links read lighter than the drawn chains. Stopped after two attempts, as the rule says.
 Evidence: `docs/images/doors-m3.jpg`. Limits: the chains look like uniform blue-grey straps up close and through the
 original camera; the gatehouse's threshold hides part of the arch's lower opening.
+
+## The small props are solid — October 7 (Sonnet 5.5 unit of the lead's solid pass)
+
+Chris, playing 0.3.0: "the pig feed and apple pie are 2d, when i walk around them, they're flat." The sack's art is
+Items/Paper/paper-12, which `_model_key` called a sign, so `is_structure` made it a fixed card (a sliver from the side); the
+pie is Items/Food, a camera-facing billboard. The rest of the prop folders were billboards too. Now every prop sprite of
+`Bonuses/Barrels, bottles, Chest, Coins`, `Items/Boxes, Cup, Food, grain, Paper, Tomb` and `inter/save` that the map can show
+(every frame of those sequences: barrels break, chests open) stands as a solid built from its own pixels. Not changed, on
+purpose: actors, trees, the tools (poles and blades a few pixels thick), the hearts (a pickup hovering over its own shadow), the
+status bars, `struct/Teleport` (a gold lattice cage: its silhouette is mostly holes, a solid of it read as a smear) and
+`struct/inner` (the furniture and wall posters: the interior unit's).
+
+**Mechanism: one rule per shape class, the class the art's.** `tools/prop_fit.py` writes `game/prototype/props.json` (by sprite
+path; `facades.json` is untouched, so the bakes stay current) and `scripts/prop_solids.gd` builds the meshes. All of them are
+the huts' picture-projection: the sprite is a picture from the camera of every fitted sprite (screen = (x, z - Y), a ground
+circle drawn as an ellipse of aspect k = 0.4878, `facade_fit.plain_arc`), the solid is built in true ground units and textured
+by projecting the sprite back through that camera, UV = (cx + X, cz + k Z - Y), exact for what the camera saw.
+- round (101 frames: barrel, sack, bottle, vase, bowl, fruit, gravestone): a solid of revolution. The profile r(h) is
+  `hut_fit.profile_fit`, now with the node spacing, the ring size and the hut-only thatch priors as parameters (the hut fit's
+  output is byte-identical, checked: `hut_fit.py` rewrites facades.json to the same bytes). The base circle's centre row is not
+  read from an arc (a barrel's belly is wider than its base): the lowest drawn row is the front of the base circle, B = cz + k a,
+  so one scalar a is swept (up and down, each fit started from its neighbour's) and the best robust cost taken. The outline
+  alone cannot tell a dome from a flat lid (the same union of ellipses), so barrels and vases (`lid`) take the flattest top the
+  outline tolerates (the fewest nodes within FLAT_TOL = 1.5 of the best cost); a pie and a plate (`drum`) are analytic: r is the
+  widest row's half-width, H = height - 2 k r. A sack, a bottle and fruit keep the fitted dome. The top is its own ring of
+  vertices with the exact projection of the whole top (it is all in the picture); the wall is the huts' (the half the camera did
+  not see takes the picture of the half it did, back and forth); where the camera sees a wall point well (within 70 degrees of
+  head-on and unhidden: the fit's `vis`) the picture is exact, so a dome's far side is not a smear.
+- box (crates, chests: 26 frames): a box yawed about the vertical, fitted by differential evolution on the overlap of its
+  projected hexagon with the silhouette (IoU 0.92-0.98; the two single crates and four of the chests; the open-lid frames of the
+  chests 0.81-0.84). The yaw comes out at 41-45 degrees for every crate and chest (0.7216, -0.7243, -0.69, 0.72): the art was
+  drawn with the crate turned 45 degrees to the camera, a result, not an input. Depth and height are separately identifiable
+  because the left and right vertical edges of the hexagon are H long. The top and the two faces the camera sees are
+  projected; an unseen face takes the picture of its opposite face (a box's back is its front turned half a round), or of the
+  front where that is unseen too. A stack of crates (box-01..06) is the unit crate (mean of boxb1-01 and boxb3-01's fits: the
+  same crates, same folder: 23.35 x 37.0 x 17.2) on its own lattice, boxes added greedily while the silhouette overlap
+  improves, each resting on the one below and each on the floor sharing a face with one already there (a pile is in one piece);
+  IoU 0.86-0.92. Chests are boxes: the barrel-vault lid is a flat top with the lid's picture on it (limit below).
+- pillow (grain bags, ham, steak, loaf: 16 frames): an ellipsoid lying on a yawed elliptic footprint. An orthographic view of an
+  ellipsoid is an ellipse, so (cx, cz, A, B, yaw) are fitted to the silhouette's ellipse (IoU 0.86-0.96), with its height
+  C = PILLOW_C min(A, B) = half its narrower half-width, the one thing the outline cannot say. Textured by projection where
+  seen well, else by the point half a turn round the vertical axis.
+- flat (scrolls, coin piles, splinters, the broken-crate frames: 29): a quad on the ground, its picture 1:1 in the plan as the
+  game paints every ground sprite (the ground is the original's screen, 1:1), alpha-cut, dither removed.
+The shadow dither is removed before texturing (`sprite_buildings.filled`), and a solid casts a real shadow (a mesh instance).
+Tuned parameters: FLAT_TOL 1.5, STAND 4.0 (a prop stands on its base: the wall leaves the ground straight), SLOPE (1.5, 8.0) (no
+pedestal neck: a profile steeper than 1.5 px of radius per px of height is penalised), PILLOW_C 0.5, NODES 14, the 70 degree
+"seen well" the huts use. k is the castle's; yaw, depth, height, radius, the base are fitted.
+
+**Depth: a round prop is round; the hardbox decides how deep a flat-footed one may be.** A barrel is as deep as it is wide
+(the huts' depth of k times the width, "narrow eggs", is not repeated). The source hardboxes the player is stopped by are the
+original's flattened footprints, though: measured depth over fitted depth: crates 22/43.5 and 23/42.8 (0.51, 0.54: k), a chest
+19/40, a bag 32/75, the sack 18/32.5 (0.55), a barrel 21/27.4, the pie 25/24. `collision` is kept as it is (game.gd reads the
+source data); the game keeps the camera outside a solid prop: its middle stands on the hardbox's middle, and its depth is
+capped at the hardbox's depth plus 6 px (game.gd grows every hardbox by 4: the camera is at best 4 px from it, less a margin for
+the near plane), scale z = min(1, (hb + 6) / fitted depth). Squash found: barrel 0.99, pie 1.00, bottle 1.00, gravestone 0.94,
+sack 0.74, a chest 0.62-0.71, a crate 0.64-0.68, a bag 0.50, a stack 0.5-0.54. That is a deliberate half-measure: it keeps the
+round things round and the boxes box-like while the camera never stands inside one; the two ends (everything true depth, every
+collision body redrawn from the solids) are the lead's and Chris's to choose. `tests/test_fps_props.py` checks the camera
+never ends up inside a prop (not for a prop moved out of a wall: its hardbox is in the wall).
+
+**Hooks (fp_world.gd):** `setup` (builds `props`), `make_entity` (a fitted prop goes to `add_prop` before the billboard path;
+seam copies obey `seam_parts` as billboards do), `update_visual` (a prop swaps to the current frame's solid: a barrel breaking, a
+chest opening), `billboard_art` (a prop takes the coincident-copy rule); new functions `prop_fitted`, `add_prop`, `build_prop`,
+`update_prop`, `push_out_of_houses`, `rect_polygon`. A prop whose hotspot the map places inside a house's footprint (the stack of
+crates at 734 stood in the wall: its picture is drawn over the house) is moved clear to the side the original draws it on, at most 80 px; a
+prop standing against a wall keeps its place and the wall hides what reaches into it. The ray body is the faces' (`ray_body`, as the huts'), its layer 2 when scripted, so aim, projectiles and the
+talk/touch scripts work as for a billboard. `sprite_buildings.gd`: `_hut_theta`, `_hut_source`, `_hut_uvs` take the ring size from
+the fit (default 48: the huts unchanged). `tools/hut_fit.py`: `radius_at`, `predict`, `profile_fit`, `ring_visibility` take
+spacing/ring/prior parameters.
+
+**Evidence and limits.** `docs/images/props-solid.jpg`: 0.3.0 above, now below, a walk-around of each. Seen: the sack and the pie
+are solids from every side; a barrel has a flat lid and straight staves; crates, stacks and bags stand as crates, stacks and
+bags. What is still wrong: a chest's vaulted lid is flat with its picture on it; the save machine is a low drum (26 px) with the
+picture of its hollow and its arches painted on the lid (a hollow ring is not a solid of revolution, and the outline cannot say
+how high its rim is): from the front it reads worse than the billboard did; the back of a round prop is the front's picture
+turned (a barrel's hoop bends where the halves meet); the pie's and the sack's textures are 24-34 px of art stretched over
+0.6-0.9 m (their own pixels). The tests are blind to what a render shows: `test_fps_props.py` checks that every fitted sprite
+stands solid, the sack and the pie are 0.7 or more as deep as wide, a barrel is round, and no solid pokes behind the camera's
+nearest approach; it cannot say a texture is right. The silhouette-through-the-original-camera measure of the huts is not
+used: a prop built in true depth reads larger through that camera by design.
+
+Existing tests changed, with reasons: `tests/fps_test.gd` `_stand_ins` (a prop built from its sprite's pixels is its sprite, not
+a Blender stand-in); `tests/test_fps_cards.py` (the scene has fewer cards: the props are solids; 52 against a bound of 60,
+now 40); `tests/test_fps_trees.py` (the instrument's two cases of props, a stack at 734 and a barrel at 504, are solids and
+no longer flagged billboards). The hut fit is unchanged: `hut_fit.py` rewrites `facades.json` to the same bytes after the
+refactor (checked twice).

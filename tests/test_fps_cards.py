@@ -132,7 +132,7 @@ def test_loaded_scenes_agree_and_every_billboard_has_a_twin_on_the_sun(tmp_path)
     result = _run_godot(["--dump=" + ",".join(str(n) for n in SCENES)], False, tmp_path, 600)
     assert "SCRIPT ERROR" not in result.stderr, result.stderr[-2000:]
     cards = _cards(result.stdout)
-    assert len(cards) > 60, result.stdout[-2000:]
+    assert len(cards) > 40, result.stdout[-2000:]  # was 60: the small props (barrels, crates, food, sacks) are solids now, no longer cards
     wrong = _wrong(cards)
     assert not wrong, wrong[:10]
     billboards = [c for c in cards if c["mode"] == "billboard"]

@@ -10,6 +10,7 @@ const DEPTH := 400.0*SCALE
 const BUILDINGS := preload("res://scripts/sprite_buildings.gd")
 const RAILS := preload("res://scripts/bridge_rails.gd")
 const CASTLE_DOORS := preload("res://scripts/castle_doors.gd")
+const PROPS := preload("res://scripts/prop_solids.gd")
 # Models that stand in for a sprite, sized to it; the rest keep their own sizes (or their hardbox).
 # Not "crate": it stands in for anything scripted or unknown (tools leaning on walls, sacks), and a
 # cube as tall as a leaning rake is a wall.
@@ -34,6 +35,7 @@ var facades: Dictionary = {}
 var buildings # sprite_buildings.gd
 var rails # bridge_rails.gd: the bridges' railings and decks' ray plates
 var castle_doors # castle_doors.gd: the wall panel and lowered drawbridge built on fitted castle faces
+var props # prop_solids.gd: the small props (barrels, sacks, pies, crates ...) as solids from their own sprites
 var fitted_built: Dictionary = {} # world position key -> the node holding it (null: reserved), this scene
 var plan_key := "" # scene, screen and story layer the plan below was gathered for
 var plan_claimed: Dictionary = {} # "screen:index" -> true: sprites a fitted house draws (itself, its parts)
@@ -76,6 +78,7 @@ func setup(game) -> void:
 	rails = RAILS.new()
 	rails.setup(self)
 	castle_doors = CASTLE_DOORS.new(self)
+	props = PROPS.new(buildings,SCALE)
 
 func point(x: float, y: float) -> Vector3:
 	return Vector3((x-320.0)*SCALE,0,(y-200.0)*SCALE)
@@ -289,6 +292,7 @@ func world_foot(n: int, x: float, y: float, d: Dictionary, r: Array) -> Vector2:
 # Whether the art stands as a billboard (add_billboard): not a fence, a structure or a castle piece. Two fixed cards a
 # few px apart are parallel planes, not a z-fight, and merging the 409/408 fence pair would kink the fence.
 func billboard_art(e: Dictionary, path: String) -> bool:
+	if prop_fitted(e): return true # a prop stands where its sprite does, once: the coincident copy rule holds for it too
 	var key := model_key(e)
 	var lower := path.to_lower()
 	return not ("/fence/" in lower or key == "castle" or is_structure(key,lower))
@@ -944,6 +948,9 @@ func make_entity(e: Dictionary, id: int, parent: Node3D, collision: bool = true,
 	if key == "hut" and hut_fitted(e):
 		add_hut(node,e,id,collision)
 		return node
+	if prop_fitted(e):
+		add_prop(node,e,id,collision,screen)
+		return node
 	if key == "bridge_rail" and rails.has(frame_path(e)):
 		rails.add_near(node,e,id,collision) # stands on the line its posts' feet lie on, its posts as prisms
 		return node
@@ -1091,6 +1098,9 @@ func update_visual(id: int) -> void:
 		node.position = node.get_meta("surface_position")
 	elif key not in ["wall","cottage","inn","tower","fence"]:
 		node.position = point(float(e.get("x",320)),float(e.get("y",200)))
+	if node.has_meta("prop_path"):
+		update_prop(node,e,id)
+		return
 	var model: Node3D = node.get_node_or_null("Model")
 	if model == null: return
 	if model is Sprite3D:
@@ -1483,6 +1493,112 @@ func add_hut(node: Node3D, e: Dictionary, id: int, collision: bool) -> void:
 	if collision and e.get("warp") == null: node.add_child(ray_body(model,id))
 	node.set_meta("height",model_height(model))
 	node.set_meta("hut",true)
+
+# A small prop (scripts/prop_solids.gd, fitted by tools/prop_fit.py) stands in 3D where a billboard or a fixed card stood:
+# a solid from its own sprite, seen whole from every side. The ray body is its faces' (aim, projectiles, talk and touch
+# scripts keep working); movement still reads the source hardbox (game.gd). Drawn at its sprite's hotspot, scaled by its size.
+func prop_fitted(e: Dictionary) -> bool:
+	var path := frame_path(e)
+	return not path.is_empty() and props.has(path)
+
+func add_prop(node: Node3D, e: Dictionary, id: int, collision: bool, screen: int) -> void:
+	for part in seam_parts(e,screen):
+		if bool(part[3]):
+			build_prop(node,e,id,collision,frame_path(e),screen)
+			return
+	node.set_meta("seam_hidden",true)
+
+func build_prop(node: Node3D, e: Dictionary, id: int, collision: bool, path: String, screen: int = -1) -> void:
+	if screen < 0: screen = host.current_screen
+	var d: Dictionary = host._frame(int(e.get("pseq",e.get("seq",0))),int(e.get("pframe",e.get("frame",1))))
+	var factor := maxf(0.01,float(e.get("size",100))/100.0)
+	var model: Node3D = props.node(path)
+	model.name = "Model"
+	model.position = Vector3(-float(d.get("dx",0))*SCALE,0,-float(d.get("dy",0))*SCALE)*factor
+	var span: Vector2 = props.footprint(path)
+	if span != Vector2.ZERO and int(e.get("hard",0)) == 0:
+		# A solid prop is as deep as it is wide, deeper than the source hardbox the player is stopped by (a hardbox is the
+		# original's flattened footprint). It stands on the hardbox's middle, and is no deeper than the hardbox with the
+		# distance the player keeps from it (game.gd: grown by 4), less a margin for the camera's near plane: the camera never
+		# stands inside it. A barrel or a sack, whose hardbox is as deep as it is wide, is not squashed at all.
+		var rect: Rect2 = hard_rect(e)
+		var squash := clampf((rect.size.y+6.0*factor)/maxf(1.0,(span.y-span.x)*factor),0.2,1.0)
+		model.scale = Vector3(factor,factor,factor*squash)
+		model.position.z = (rect.get_center().y-float(e.get("y",0))-0.5*(span.x+span.y)*factor*squash)*SCALE
+		node.set_meta("prop_squash",squash)
+	else:
+		model.scale = Vector3.ONE*factor
+	if push_out_of_houses(model,e,screen): node.set_meta("prop_pushed",true)
+	node.add_child(model)
+	node.set_meta("prop_path",path)
+	node.set_meta("prop_screen",screen)
+	node.set_meta("prop_collision",collision)
+	node.set_meta("height",maxf(0.2,sprite_height(e)*SCALE*factor))
+	node.set_meta("actor",false)
+	if props.class_of(path) != "flat": model.set_meta("solid",true)
+	if collision and e.get("warp") == null and props.class_of(path) != "flat":
+		var body := ray_body(model,id)
+		body.collision_layer = 2 if not str(e.get("script","")).is_empty() else 1
+		node.add_child(body)
+
+# A solid prop stands in the world, not in a wall. One standing against a house (its hotspot outside the footprint) keeps its
+# place: its back, where it reaches into the wall, is hidden by the wall. A sprite the map places with its hotspot inside a
+# house's footprint (a stack of crates the original draws over the house's front) would be buried: it is moved to the side the
+# original draws it on, over the house (in front, south) or under it (behind, north), clear of the footprint, at most 80 px.
+# Returns whether it moved (its hardbox is the source's, so the camera can then be nearer than the hardbox keeps it).
+func push_out_of_houses(model: Node3D, e: Dictionary, screen: int) -> bool:
+	if interior: return false
+	house_plan()
+	if plan_hulls.is_empty(): return false
+	var box := AABB()
+	var first := true
+	for c in model.get_children():
+		if not c is MeshInstance3D: continue
+		var b: AABB = model.transform*(c as MeshInstance3D).get_aabb()
+		box = b if first else box.merge(b)
+		first = false
+	if first: return false
+	var at := screen_origin(screen)+Vector2(float(e.get("x",0)),float(e.get("y",0)))
+	var rect := Rect2(at+Vector2(box.position.x,box.position.z)/SCALE,Vector2(box.size.x,box.size.z)/SCALE)
+	for h in plan_hulls:
+		if not (h[4] as Rect2).has_point(at): continue
+		var hull: PackedVector2Array = h[0]
+		if not Geometry2D.is_point_in_polygon(at,hull): continue # standing against a wall, not in it: the wall hides what is behind it
+		var order := float(e.get("que",0)) if int(e.get("que",0)) != 0 else float(e.get("y",0))
+		var home: Vector2 = h[1]
+		var house_order := float(h[2]) if int(h[2]) != 0 and int(h[3]) == screen else home.y-screen_origin(screen).y
+		var dir := Vector2(0,1) if order > house_order else Vector2(0,-1)
+		var moved := 0.0
+		while moved < 80.0 and not Geometry2D.intersect_polygons(rect_polygon(Rect2(rect.position+dir*moved,rect.size)),hull).is_empty(): moved += 1.0
+		model.position += Vector3(dir.x,0,dir.y)*moved*SCALE
+		return true
+	return false
+
+func rect_polygon(r: Rect2) -> PackedVector2Array:
+	return PackedVector2Array([r.position,Vector2(r.end.x,r.position.y),r.end,Vector2(r.position.x,r.end.y)])
+
+# The frame the original shows now (a barrel breaking, a chest opening): the solid of that frame's picture.
+func update_prop(node: Node3D, e: Dictionary, id: int) -> void:
+	var seq := int(e.get("seq",0))
+	var frame := int(e.get("frame",1))
+	if seq == 0:
+		seq = int(e.get("pseq",0))
+		frame = int(e.get("pframe",1))
+	var path := str(host._frame(seq,frame).get("path",""))
+	if path.is_empty() or path == str(node.get_meta("prop_path","")) or not props.has(path): return
+	var old := node.get_node_or_null("Model")
+	if old != null:
+		node.remove_child(old)
+		old.queue_free()
+	var body := node.get_node_or_null("HitBody")
+	var had_body := bool(node.get_meta("prop_collision",false)) # a flat frame has no body: the next frame may
+	if body != null:
+		node.remove_child(body)
+		body.queue_free()
+	var shown := e.duplicate()
+	shown["pseq"] = seq
+	shown["pframe"] = frame
+	build_prop(node,shown,id,had_body,path,int(node.get_meta("prop_screen",-1)))
 
 # What a house draws, for its cache key: the same parts give the same textures.
 func parts_signature(parts: Dictionary) -> String:
