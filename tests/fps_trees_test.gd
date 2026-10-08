@@ -97,6 +97,9 @@ func _load(screen: int) -> void:
 	game.playing = false
 	game.ui.close_menu()
 	game.ui.toast.text = ""
+	# These views measure the world through the original camera: the interface (since 0.3.1 a stone status bar along the
+	# bottom, over the scene) is not part of it.
+	game.ui.visible = false
 
 func _sprites(node: Node, out: Array) -> void:
 	if node is Sprite3D and node.get_parent() != null and node.get_parent().has_meta("billboard"): out.append(node)
