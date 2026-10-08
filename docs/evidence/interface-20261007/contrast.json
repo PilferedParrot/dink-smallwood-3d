@@ -1,0 +1,92 @@
+[
+  {
+    "frame": "builds/interface-evidence/release-text-85/settings.png",
+    "frame_size": [
+      1280,
+      800
+    ],
+    "box": "355x20+209+128",
+    "label": "85% controls",
+    "contrast": 17.66,
+    "contrast_needed": 4.5,
+    "height_px_1080p": 18.9,
+    "verdict": "pass",
+    "problems": [],
+    "notes": [
+      "frame is 1280x800: below 1080p both numbers are biased (downscaled frames hide thin text)"
+    ],
+    "polarity": "light-on-dark"
+  },
+  {
+    "frame": "builds/interface-evidence/release-text-130/settings.png",
+    "frame_size": [
+      1280,
+      800
+    ],
+    "box": "595x31+209+149",
+    "label": "130% controls",
+    "contrast": 17.66,
+    "contrast_needed": 4.5,
+    "height_px_1080p": 25.6,
+    "verdict": "pass",
+    "problems": [],
+    "notes": [
+      "frame is 1280x800: below 1080p both numbers are biased (downscaled frames hide thin text)"
+    ],
+    "polarity": "light-on-dark"
+  },
+  {
+    "frame": "builds/interface-evidence/release-ui-1280/adventure.png",
+    "frame_size": [
+      1280,
+      800
+    ],
+    "box": "110x23+941+620",
+    "label": "Esc Pause",
+    "contrast": 15.54,
+    "contrast_needed": 4.5,
+    "height_px_1080p": 18.9,
+    "verdict": "pass",
+    "problems": [],
+    "notes": [
+      "frame is 1280x800: below 1080p both numbers are biased (downscaled frames hide thin text)"
+    ],
+    "polarity": "light-on-dark"
+  },
+  {
+    "frame": "builds/interface-evidence/release-ui-1280/adventure.png",
+    "frame_size": [
+      1280,
+      800
+    ],
+    "box": "79x23+200+731",
+    "label": "Defense",
+    "contrast": 14.39,
+    "contrast_needed": 4.5,
+    "height_px_1080p": 20.2,
+    "verdict": "pass",
+    "problems": [],
+    "notes": [
+      "frame is 1280x800: below 1080p both numbers are biased (downscaled frames hide thin text)"
+    ],
+    "polarity": "light-on-dark"
+  },
+  {
+    "frame": "builds/interface-evidence/release-ui-1280/adventure.png",
+    "frame_size": [
+      1280,
+      800
+    ],
+    "box": "71x23+638+700",
+    "label": "10/10",
+    "contrast": 14.39,
+    "contrast_needed": 4.5,
+    "height_px_1080p": 18.9,
+    "verdict": "pass",
+    "problems": [],
+    "notes": [
+      "frame is 1280x800: below 1080p both numbers are biased (downscaled frames hide thin text)"
+    ],
+    "polarity": "light-on-dark"
+  }
+]

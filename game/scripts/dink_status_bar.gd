@@ -16,7 +16,7 @@ const COLOR_TEXT := Color("f1d99a")
 const COLOR_SHADOW := Color(0.025, 0.025, 0.025, 0.94)
 const COLOR_HEALTH_BG := Color(0.08, 0.055, 0.045, 0.92)
 const COLOR_HEALTH := Color("a94f42")
-const COLOR_TAG_BG := Color(0.025, 0.035, 0.04, 0.9)
+const COLOR_TAG_BG := Color(0.025, 0.035, 0.04, 1.0)
 
 var _text_scale := 1.0
 var _stats: Dictionary = {}
@@ -133,14 +133,19 @@ func _draw() -> void:
 	if font == null:
 		return
 	var font_scale := scale_factor * _text_scale
-	var fs := maxi(10, roundi(12.0 * font_scale))
-	var number_fs := maxi(10, roundi(13.0 * font_scale))
+	var fs := maxi(10, roundi(14.0 * font_scale))
+	var number_fs := maxi(10, roundi(15.0 * font_scale))
 	var shadow_offset := Vector2(1.0, 1.0) * maxf(1.0, font_scale)
 
-	# The original labels are part of stat-03. Only the changing values are drawn.
-	_draw_text(font, str(int(_stats.get("strength", 0))), x + 79 * scale_factor, _dock_y + 18 * scale_factor, number_fs, COLOR_TEXT, shadow_offset)
-	_draw_text(font, str(int(_stats.get("defense", 0))), x + 79 * scale_factor, _dock_y + 40 * scale_factor, number_fs, COLOR_TEXT, shadow_offset)
-	_draw_text(font, str(int(_stats.get("magic", 0))), x + 79 * scale_factor, _dock_y + 62 * scale_factor, number_fs, COLOR_TEXT, shadow_offset)
+	# Cover only the baked label glyphs, leaving their stonework, frames and values intact.
+	_draw_art_label(font, "Attack", Rect2(8, 5, 65, 21), 23, scale_factor, font_scale, fs, shadow_offset)
+	_draw_art_label(font, "Defense", Rect2(5, 28, 68, 21), 45, scale_factor, font_scale, fs, shadow_offset)
+	_draw_art_label(font, "Magic", Rect2(12, 51, 60, 22), 68, scale_factor, font_scale, fs, shadow_offset)
+	_draw_art_label(font, "Life", Rect2(230, 2, 44, 20), 20, scale_factor, font_scale, fs, shadow_offset)
+
+	_draw_value(font, str(int(_stats.get("strength", 0))), x + 79 * scale_factor, _dock_y + 18 * scale_factor, number_fs, COLOR_TEXT, shadow_offset)
+	_draw_value(font, str(int(_stats.get("defense", 0))), x + 79 * scale_factor, _dock_y + 40 * scale_factor, number_fs, COLOR_TEXT, shadow_offset)
+	_draw_value(font, str(int(_stats.get("magic", 0))), x + 79 * scale_factor, _dock_y + 62 * scale_factor, number_fs, COLOR_TEXT, shadow_offset)
 
 	var life_max := maxi(1, int(_stats.get("lifemax", 10)))
 	var life := clampi(int(_stats.get("life", 10)), 0, life_max)
@@ -149,13 +154,13 @@ func _draw() -> void:
 	var health_fill := Rect2(health_rect.position, Vector2(health_rect.size.x * float(life) / float(life_max), health_rect.size.y))
 	if health_fill.size.x > 0:
 		draw_rect(health_fill, COLOR_HEALTH)
-	_draw_text(font, "%d / %d" % [life, life_max], x + 320 * scale_factor, _dock_y + 22 * scale_factor, fs, COLOR_TEXT, shadow_offset)
-	_draw_text(font, str(int(_stats.get("gold", 0))), x + 320 * scale_factor, _dock_y + 67 * scale_factor, fs, COLOR_TEXT, shadow_offset)
+	_draw_value(font, "%d / %d" % [life, life_max], x + 320 * scale_factor, _dock_y + 22 * scale_factor, fs, COLOR_TEXT, shadow_offset)
+	_draw_value(font, str(int(_stats.get("gold", 0))), x + 320 * scale_factor, _dock_y + 67 * scale_factor, fs, COLOR_TEXT, shadow_offset)
 
 	var level := maxi(1, int(_stats.get("level", 1)))
 	var exp_value := maxi(0, int(_stats.get("exp", 0)))
 	var exp_target := mini(99999, 100 * level * level)
-	_draw_tag(font, "Level %d  ·  EXP %d / %d" % [level, exp_value, exp_target], x + 365 * scale_factor, _dock_y - 8 * scale_factor, fs, scale_factor)
+	_draw_tag(font, "Lv %d · EXP %d/%d" % [level, exp_value, exp_target], x + 365 * scale_factor, _dock_y - 8 * scale_factor, fs, scale_factor)
 
 	_draw_item_icon(_weapon_texture, x, ICON_WEAPON_RECT, scale_factor)
 	_draw_item_icon(_spell_texture, x, ICON_SPELL_RECT, scale_factor)
@@ -167,6 +172,19 @@ func _draw_item_icon(texture: Texture2D, origin_x: float, source_rect: Rect2, sc
 		return
 	var target := Rect2(Vector2(origin_x, _dock_y) + source_rect.position * scale_factor, source_rect.size * scale_factor)
 	draw_texture_rect(texture, target, false)
+
+func _draw_art_label(font: Font, label: String, source_rect: Rect2, baseline: float, origin_scale: float, font_scale: float, font_size: int, shadow_offset: Vector2) -> void:
+	# Expand the plaque with user text scaling so larger settings keep every glyph on backing.
+	var plaque_position := Vector2((size.x - _dock_width) * 0.5, _dock_y) + source_rect.position * origin_scale
+	var plaque_size := Vector2(source_rect.size.x * origin_scale, source_rect.size.y * font_scale)
+	draw_rect(Rect2(plaque_position, plaque_size), COLOR_TAG_BG)
+	var text_x := (size.x - _dock_width) * 0.5 + (source_rect.position.x + 2.0) * origin_scale
+	var text_baseline := _dock_y + baseline * origin_scale
+	# Keep labels clear of their neighbouring value columns at130% text.
+	var label_size := font_size
+	while font.get_string_size(label, HORIZONTAL_ALIGNMENT_LEFT, -1, label_size).x > source_rect.size.x * origin_scale - 4 * origin_scale and label_size > 14:
+		label_size -= 1
+	_draw_text(font, label, text_x, text_baseline, label_size, COLOR_TEXT, shadow_offset)
 
 func _item_label(value: Variant, default_kind: String) -> String:
 	if value is Dictionary and not str(value.get("name", "")).strip_edges().is_empty():
@@ -191,7 +209,7 @@ func _draw_tag(font: Font, label: String, center_x: float, baseline_y: float, fo
 	var text_width := font.get_string_size(label, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size).x
 	var pad := 7.0 * scale_factor
 	var width := minf(text_width + pad * 2.0, 174.0 * scale_factor)
-	var height := 20.0 * scale_factor
+	var height := maxf(20.0 * scale_factor, font.get_height(font_size) + 10.0 * scale_factor)
 	var tag_rect := Rect2(center_x - width * 0.5, baseline_y - height, width, height)
 	draw_rect(tag_rect, COLOR_TAG_BG)
 	var shown := label
@@ -199,6 +217,12 @@ func _draw_tag(font: Font, label: String, center_x: float, baseline_y: float, fo
 		shown = shown.left(shown.length() - 2) + "…"
 	var text_x := center_x - font.get_string_size(shown, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size).x * 0.5
 	_draw_text(font, shown, text_x, baseline_y - 5.0 * scale_factor, font_size, COLOR_TEXT, Vector2.ONE * maxf(1.0, scale_factor))
+
+func _draw_value(font: Font, text: String, x: float, baseline: float, font_size: int, color: Color, shadow_offset: Vector2) -> void:
+	var width := font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size).x
+	var top := baseline - font.get_ascent(font_size)
+	draw_rect(Rect2(x - 2, top - 1, width + 4, font.get_height(font_size) + 2), COLOR_TAG_BG)
+	_draw_text(font, text, x, baseline, font_size, color, shadow_offset)
 
 func _draw_text(font: Font, text: String, x: float, baseline: float, font_size: int, color: Color, shadow_offset: Vector2) -> void:
 	draw_string(font, Vector2(x + shadow_offset.x, baseline + shadow_offset.y), text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size, COLOR_SHADOW)

@@ -105,7 +105,7 @@ func _add_slot(item: Dictionary, action: String, index: int, col: int, row: int,
 
 	var icon := TextureRect.new()
 	icon.position = Vector2(5, 3)
-	icon.size = Vector2(56, 34)
+	icon.size = Vector2(56, 49)
 	icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -115,28 +115,15 @@ func _add_slot(item: Dictionary, action: String, index: int, col: int, row: int,
 			icon.texture = result
 	button.add_child(icon)
 
-	var caption := Label.new()
-	caption.position = Vector2(3, 37)
-	caption.size = Vector2(60, 22)
-	caption.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	caption.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	caption.clip_text = true
-	var caption_size := roundi(16.0 * _text_scale)
-	caption.text = _slot_caption(name, caption_size)
-	caption.add_theme_font_size_override("font_size", caption_size)
-	caption.add_theme_color_override("font_color", CREAM)
-	caption.add_theme_color_override("font_shadow_color", Color.BLACK)
-	caption.add_theme_constant_override("shadow_offset_x", 1)
-	caption.add_theme_constant_override("shadow_offset_y", 1)
-	caption.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	button.add_child(caption)
+	# Original chest cells contain pictures. The full selected name is shown
+	# at readable size above the chest instead of cramped, ellipsized captions.
 	if equipped:
 		var marker := Label.new()
 		marker.text = "E"
-		marker.position = Vector2(51, 0)
-		marker.size = Vector2(13, 15)
+		marker.position = Vector2(48, 0)
+		marker.size = Vector2(18, 20)
 		marker.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		marker.add_theme_font_size_override("font_size", 16)
+		marker.add_theme_font_size_override("font_size", 18)
 		marker.add_theme_color_override("font_color", GOLD)
 		marker.add_theme_color_override("font_shadow_color", Color.BLACK)
 		marker.add_theme_constant_override("shadow_offset_x", 1)
@@ -229,19 +216,6 @@ func _item_name(item: Dictionary) -> String:
 	if not name.is_empty():
 		return name
 	return str(item.get("script", "Item")).trim_prefix("item-").replace("-", " ").capitalize()
-
-func _slot_caption(name: String, font_size: int) -> String:
-	var font := ThemeDB.fallback_font
-	if font == null:
-		return name
-	var shown := name
-	while shown.length() > 1 and font.get_string_size(shown, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size).x > 58.0:
-		shown = shown.left(shown.length() - 1)
-	if shown != name:
-		while shown.length() > 1 and font.get_string_size(shown + "…", HORIZONTAL_ALIGNMENT_LEFT, -1, font_size).x > 58.0:
-			shown = shown.left(shown.length() - 1)
-		shown += "…"
-	return shown
 
 func _has_item(value: Variant) -> bool:
 	if not value is Dictionary:
