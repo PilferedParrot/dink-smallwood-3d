@@ -111,14 +111,14 @@ def arc_fit(bot_by_col, w, cx, side, k, a_fixed=None, dmin=15, trim=(-3.0, 1.5))
     return cz, a, int(keep.sum()), len(xs), float(np.sqrt(np.mean(rr[keep] ** 2)))
 
 
-def radius_at(R, hs):
-    return np.maximum(np.interp(hs, np.arange(len(R)) * D, R), 1e-6)
+def radius_at(R, hs, d=D):
+    return np.maximum(np.interp(hs, np.arange(len(R)) * d, R, right=1e-6), 1e-6)
 
 
-def predict(R, cx, cz, k, rows, cols):
+def predict(R, cx, cz, k, rows, cols, d=D):
     """The silhouette's edges a profile predicts: half-width per row, top and bottom per column (+-1e9: not covered)."""
     hs = np.arange(0.0, cz + 1e-9, 1.0)
-    r = radius_at(R, hs)
+    r = radius_at(R, hs, d)
     t = 1 - ((rows[:, None] - (cz - hs)[None, :]) / (k * r[None, :])) ** 2
     half = (r[None, :] * np.sqrt(np.clip(t, 0, None))).max(1)
     u = 1 - ((cols[:, None] - cx) / r[None, :]) ** 2
@@ -128,20 +128,27 @@ def predict(R, cx, cz, k, rows, cols):
     return half, top, bot
 
 
-def profile_fit(sil, cx, cz, k, a, reg=0.3):
+def profile_fit(sil, cx, cz, k, a, reg=0.3, d=D, apex=True, full=False, stand=0.0, slope=None, init=None, nodes=None):
+    """The radius profile at nodes every `d` px of height. apex=False drops the thatch priors (a cone above the eave and the
+    pole's stub: a hut's, tools/prop_fit.py's round props have none); full=True returns the optimiser's result, not just x;
+    stand weights a prior that a thing stands on its base, the wall leaving the ground straight (R[1] = R[0]); slope=(limit,
+    weight) penalises a profile steeper than limit px of radius per px of height (a pedestal neck under a belly); init is a starting profile; nodes is the number of nodes (a flat cap closes the profile at its last: nothing stands above)."""
     rows, left, right, cols, top, bot = edges(sil)
-    nn = int(np.ceil(cz / D)) + 1
+    nn = int(np.ceil(cz / d)) + 1 if nodes is None else nodes
     hw = (right - left) / 2
-    R0 = np.interp(cz - np.arange(nn) * D, rows, hw)
+    R0 = np.interp(cz - np.arange(nn) * d, rows, hw) if init is None else np.resize(init, nn)
 
     def resid(R):
-        half, tp, bt = predict(R, cx, cz, k, rows, cols)
+        half, tp, bt = predict(R, cx, cz, k, rows, cols, d)
         q = [(cx - half) - left, (cx + half) - right, np.where(np.abs(tp) < 1e8, tp - top, 0), np.where(np.abs(bt) < 1e8, bt - bot, 0)]
         # Above the eave (the widest node) a thatch dome only narrows, in a straight cone to the pole's base, and the pole
         # (a stub POLE_R wide) stands on it. Without this the fit puts a neck of 30 px radius under the pole: the top of
         # the silhouette is the BACK of the eave's rim (the cone's apex lies inside the outline, below the rim's back arc),
         # so the outline cannot place the cone's height; the art does, where the pole's stub ends (APEX_ROW).
-        hs = np.arange(len(R)) * D
+        hs = np.arange(len(R)) * d
+        if not apex:
+            extra = [slope[1] * np.maximum(np.abs(np.diff(R)) / d - slope[0], 0.0)] if slope else []
+            return np.concatenate(q + [reg * np.diff(R, 2), [30.0 * (R[0] - a)], [stand * (R[1] - R[0])]] + extra)
         peak = int(np.argmax(R))
         up = np.maximum(np.diff(R), 0.0) * (np.arange(len(R) - 1) >= peak)
         cone = np.diff(R, 2) * (np.arange(len(R) - 2) >= peak)
@@ -150,25 +157,25 @@ def profile_fit(sil, cx, cz, k, a, reg=0.3):
         # lost its cone's cap (proxy xor 0.054 to 0.075, 2026-10-02); the silhouette pulls the lowest ring 1-2 px wider.
         return np.concatenate(q + [reg * np.diff(R, 2), [30.0 * (R[0] - a)], 6.0 * up, 2.0 * cone, 3.0 * np.array(pole)])
     r = least_squares(resid, R0, loss='soft_l1', f_scale=2.0, bounds=(np.zeros(nn), np.full(nn, 140.0)), x_scale=10.0, max_nfev=300)
-    return r.x
+    return r if full else r.x
 
 
-def ring_visibility(R, cx, cz, k, nodes_h):
+def ring_visibility(R, cx, cz, k, nodes_h, d=D, ring=RING):
     """Per node a string of RING 0/1: whether the original camera (looking along (0,-1,-1), a ray from the point
     toward it is (0,1,1)) sees the ring point at angle 2 pi j / RING (x = cx + r cos, z = cz + k r sin: sin > 0 faces it)."""
     out = []
     ts = np.arange(0.25, cz + 40.0, 0.5)
-    th = 2 * np.pi * np.arange(RING) / RING
+    th = 2 * np.pi * np.arange(ring) / ring
     for h in nodes_h:
-        r = float(radius_at(R, np.array([h]))[0])
+        r = float(radius_at(R, np.array([h]), d)[0])
         x = cx + r * np.cos(th)
         z = cz + k * r * np.sin(th)
-        seen = np.ones(RING, bool)
+        seen = np.ones(ring, bool)
         for t in ts:
             hh = h + t
             if hh > cz + 2.0:
                 break
-            rr = float(radius_at(R, np.array([hh]))[0]) if hh <= (len(R) - 1) * D else 0.0
+            rr = float(radius_at(R, np.array([hh]), d)[0]) if hh <= (len(R) - 1) * d else 0.0
             if rr <= 0.01:
                 continue
             inside = ((x - cx) / rr) ** 2 + ((z + t - cz) / (k * rr)) ** 2 < 0.999
