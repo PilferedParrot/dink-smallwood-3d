@@ -201,6 +201,7 @@ func _physics_process(delta: float) -> void:
 		var stats: Dictionary = vm.globals.duplicate()
 		stats["location"] = _location()
 		stats["weapon"] = _fps_weapon_name()
+		_add_equipment_stats(stats)
 		ui.show_hud(stats)
 
 func _fps_move_player(delta: float) -> void:
@@ -241,9 +242,9 @@ func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("pause") or (event.is_action_pressed("ui_cancel") and ui.modal):
 		if ui.dialogue_mode: return
 		if playing:
-			if ui.modal: ui.close_menu()
+			if ui.modal: ui.request_back()
 			else: ui.show_pause()
-		elif ui.page != "title": ui.show_title(FileAccess.file_exists("user://adventure.json"))
+		elif ui.page != "title": ui.request_back()
 		_fps_update_mouse_mode()
 		get_viewport().set_input_as_handled()
 		return

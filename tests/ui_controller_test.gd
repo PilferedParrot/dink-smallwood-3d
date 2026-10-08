@@ -18,6 +18,10 @@ func _init() -> void:
 	await process_frame
 	ui.show_title(false)
 	await process_frame
+	ui.show_hud({"life": 4, "lifemax": 10, "weapon_item": {"script": "item-b1", "name": "Bow", "seq": 0}})
+	check(not ui.status_dock.visible, "HUD refresh cannot expose the dock over the title")
+	check(ui.status_dock.item_texture({"script": "item-b1", "seq": 0}) != null, "Starter bow has an icon before inventory opens")
+	check(ui.status_dock.item_texture({"script": "item-b1", "seq": 0}).resource_path.ends_with("item-w08.png"), "Starter bow uses the original campaign bow icon, not clothing")
 	ui.set_text_scale(1.3)
 	check(ui.root.scale == Vector2.ONE, "Text scaling leaves root geometry unchanged")
 	check(ui.root.get_viewport().gui_get_focus_owner() != null, "Title has controller focus")
@@ -46,6 +50,8 @@ func _init() -> void:
 	ui.show_settings({})
 	await process_frame
 	await process_frame
+	var music_slider: HSlider = ui.column.get_child(5)
+	check(is_equal_approx(music_slider.value, 0.55) and ui.column.get_child(4).text.contains("55%"), "Music readout preserves the actual 55% default instead of rounding to 60%")
 	var first_slider: HSlider = root.gui_get_focus_owner() as HSlider
 	check(first_slider != null, "Settings focuses its first slider")
 	if first_slider != null:
@@ -79,12 +85,20 @@ func _init() -> void:
 	await _button(JOY_BUTTON_DPAD_DOWN)
 	await _button(JOY_BUTTON_A)
 	check(choice == 2 and not ui.modal, "D-pad and A select the correct dialogue choice")
+	ui.show_dialogue("A long line. ".repeat(80), "Mother")
+	await process_frame
+	check(ui.dialogue_continue.visible and ui.dialogue_continue.get_parent() != ui.column, "Continue remains outside scrolling dialogue text")
+	check(not ui.status_dock.visible, "Dialogue hides the dock")
+	await _button(JOY_BUTTON_A)
+	check(not ui.modal, "A continues long dialogue")
 	ui.show_inventory([{"name":"Fists"}, {"name":"Bow"}], [])
 	await process_frame
-	await _button(JOY_BUTTON_DPAD_DOWN)
+	await _button(JOY_BUTTON_DPAD_RIGHT)
 	await _button(JOY_BUTTON_A)
 	check(received == "equip" and payload == 1, "Controller equips the selected inventory item")
-	check(ui.hint.text.contains("RT / X"), "Controller input shows controller hints")
+	check(ui.hint.text.contains("D-pad") and ui.hint.text.contains("A"), "Controller input shows contextual menu hints")
+	ui.close_menu()
+	check(ui.hint.text.contains("RT / X"), "Closing a menu restores controller gameplay hints")
 	var key := InputEventKey.new()
 	key.physical_keycode = KEY_W
 	key.pressed = true
@@ -93,6 +107,47 @@ func _init() -> void:
 	key.pressed = false
 	Input.parse_input_event(key)
 	check(ui.hint.text.contains("WASD"), "Keyboard input restores keyboard hints")
+	var spells: Array = []
+	for i in range(16): spells.append({"name": "Fireball %d" % i, "script": "item-fb", "seq": 437, "frame": 1})
+	ui.show_inventory([], spells)
+	await process_frame
+	var chest = ui.column.get_child(3)
+	check(chest._slot_buttons.size() == 8, "Magic chest presents eight selectable slots per page")
+	chest._page_next.grab_focus()
+	await _button(JOY_BUTTON_A)
+	check(chest._spell_page == 1, "Controller can reach the second magic page")
+	await _button(JOY_BUTTON_A)
+	check(received == "equip_magic" and payload == 8, "Second magic page preserves the inventory index")
+	ui.close_menu()
+	ui.show_pause()
+	await process_frame
+	await process_frame
+	await process_frame
+	check(ui.menu_scroll.scroll_vertical == 0, "Pause resets scrolling after equipment")
+	check(ui.column.get_child(0).get_global_rect().position.y >= ui.menu_scroll.get_global_rect().position.y, "Pause heading remains visible above Return")
+	ui.show_settings({})
+	await process_frame
+	await process_frame
+	await process_frame
+	check(ui.menu_scroll.scroll_vertical == 0, "Settings starts at its heading and instructions")
+	ui.request_back()
+	check(received == "pause", "Back from settings opened in pause requests its parent menu")
+	ui.show_pause()
+	ui.show_journal("A journal entry")
+	ui.request_back()
+	check(received == "pause", "Back from journal requests pause rather than resuming")
+	ui.show_title(false)
+	ui.show_settings({})
+	ui.request_back()
+	check(received == "title", "Back from title settings returns to title")
+	ui.close_menu()
+	ui.show_inventory([], [])
+	ui.request_back()
+	check(received == "resume", "Standalone equipment Back resumes gameplay")
+	ui.notify("Equipped Fists")
+	check(ui.toast_backing.visible, "Notifications have a visible solid contrast backing")
+	ui._clear_toast()
+	check(not ui.toast_backing.visible, "Expired notifications remove their backing")
 	ui.queue_free()
 	await process_frame
 	if failures.is_empty(): print("UI CONTROLLER PASS: menus, sliders, scrolling, dialogue, inventory, hints")
