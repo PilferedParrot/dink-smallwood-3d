@@ -73,6 +73,9 @@ func _load(screen: int, vision: int = 0) -> void:
 	game.playing = false
 	game.ui.close_menu()
 	game.ui.toast.text = ""
+	# These views measure the world through the original camera: the interface (the stone status bar along the bottom)
+	# is not part of it.
+	game.ui.visible = false
 
 func _island_entities() -> Array:
 	var out: Array = []
