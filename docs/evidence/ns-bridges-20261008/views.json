@@ -1,0 +1,80 @@
+[
+  {
+    "name": "original-416",
+    "screen": 416,
+    "original": true
+  },
+  {
+    "name": "original-448",
+    "screen": 448,
+    "original": true
+  },
+  {
+    "name": "original-480",
+    "screen": 480,
+    "original": true
+  },
+  {
+    "name": "original-512",
+    "screen": 512,
+    "original": true
+  },
+  {
+    "name": "original-544",
+    "screen": 544,
+    "original": true
+  },
+  {
+    "name": "original-701",
+    "screen": 701,
+    "original": true
+  },
+  {
+    "name": "axis-north",
+    "screen": 448,
+    "x": 217,
+    "y": 85,
+    "yaw": 0,
+    "pitch": -0.12
+  },
+  {
+    "name": "axis-south",
+    "screen": 448,
+    "x": 218,
+    "y": 310,
+    "yaw": 3.141592653589793,
+    "pitch": -0.12
+  },
+  {
+    "name": "west-side",
+    "screen": 448,
+    "x": 135,
+    "y": 326,
+    "yaw": -1.5707963267948966,
+    "pitch": -0.2
+  },
+  {
+    "name": "east-side",
+    "screen": 448,
+    "x": 310,
+    "y": 328,
+    "yaw": 1.5707963267948966,
+    "pitch": -0.2
+  },
+  {
+    "name": "short-544",
+    "screen": 544,
+    "x": 315,
+    "y": 142,
+    "yaw": 0,
+    "pitch": -0.18
+  },
+  {
+    "name": "offset-701",
+    "screen": 701,
+    "x": 522,
+    "y": 250,
+    "yaw": 0,
+    "pitch": -0.2
+  }
+]

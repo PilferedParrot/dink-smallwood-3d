@@ -1,0 +1,15 @@
+[
+  {
+    "name": "original-533",
+    "screen": 533,
+    "original": true
+  },
+  {
+    "name": "story-533-axis",
+    "screen": 533,
+    "x": 264,
+    "y": 256,
+    "yaw": 0,
+    "pitch": -0.16
+  }
+]
