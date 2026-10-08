@@ -27,6 +27,12 @@ func _init() -> void:
 	check(not ui.status_dock.visible, "HUD refresh cannot expose the dock over the title")
 	check(ui.status_dock.item_texture({"script": "item-b1", "seq": 0}) != null, "Starter bow has an icon before inventory opens")
 	check(ui.status_dock.item_texture({"script": "item-b1", "seq": 0}).resource_path.ends_with("item-w08.png"), "Starter bow uses the original campaign bow icon, not clothing")
+	ui.show_title(true)
+	await process_frame
+	await process_frame
+	check(not ui.menu_scroll.get_v_scroll_bar().is_visible_in_tree(), "Default title fits with a saved-adventure Continue button")
+	ui.show_title(false)
+	await process_frame
 	ui.set_text_scale(1.3)
 	check(ui.root.scale == Vector2.ONE, "Text scaling leaves root geometry unchanged")
 	check(ui.root.get_viewport().gui_get_focus_owner() != null, "Title has controller focus")
@@ -71,10 +77,10 @@ func _init() -> void:
 		await _button(JOY_BUTTON_DPAD_RIGHT)
 		check(is_equal_approx(first_slider.value, before), "D-pad adjusts a settings slider")
 	var controller_slider: HSlider
-	var invert: CheckButton
+	var invert: Button
 	for node in ui.column.get_children():
 		if node is HSlider and is_equal_approx(node.max_value, 4.0): controller_slider = node
-		if node is CheckButton and node.text == "Invert controller vertical look": invert = node
+		if node is Button and node.get_meta("setting_key", "") == "controller_invert_y": invert = node
 	check(controller_slider != null and invert != null, "Controller settings are available")
 	if controller_slider != null:
 		controller_slider.grab_focus()
@@ -88,6 +94,9 @@ func _init() -> void:
 		invert.grab_focus()
 		await _button(JOY_BUTTON_A)
 		check(received == "setting" and payload.key == "controller_invert_y" and payload.value == true, "A toggles controller look inversion")
+		check(invert.text.ends_with("On"), "Enabled toggle gives an explicit On state")
+		await _button(JOY_BUTTON_A)
+		check(invert.text.ends_with("Off") and not invert.button_pressed, "Disabled toggle gives an explicit Off state")
 	ui.dialogue_finished.connect(_on_choice)
 	ui.show_choices("Choose", ["First", "Second"])
 	await process_frame
@@ -172,6 +181,29 @@ func _init() -> void:
 	check(ui.toast_backing.visible, "Gameplay notifications have solid contrast backing")
 	ui._clear_toast()
 	check(not ui.toast_backing.visible, "Expired notifications remove their backing")
+	ui.close_menu()
+	ui.gameplay_hint_used = false
+	ui._process(0.0)
+	check(ui.hint_backing.visible, "New player receives gameplay control hints")
+	var movement := InputEventKey.new()
+	movement.physical_keycode = KEY_W
+	movement.pressed = true
+	ui._input(movement)
+	ui.gameplay_hint_deadline_msec = Time.get_ticks_msec() - 1
+	ui._process(0.0)
+	check(not ui.hint_backing.visible, "Gameplay hints fade after first use")
+	var help := InputEventKey.new()
+	help.physical_keycode = KEY_F1
+	help.pressed = true
+	Input.parse_input_event(help)
+	await process_frame
+	await process_frame
+	check(ui.hint_backing.visible, "F1 recalls gameplay controls through the actual input path")
+	help.pressed = false
+	Input.parse_input_event(help)
+	ui.show_pause()
+	ui._process(0.0)
+	check(ui.hint_backing.visible and is_equal_approx(ui.hint_backing.modulate.a, 1.0), "Menu instructions stay visible after gameplay help fades")
 	ui.queue_free()
 	await process_frame
 	if failures.is_empty(): print("UI CONTROLLER PASS: menus, sliders, scrolling, dialogue, inventory, hints")

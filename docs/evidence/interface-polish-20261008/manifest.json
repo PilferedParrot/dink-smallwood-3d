@@ -1,0 +1,60 @@
+{
+  "as_of": "2026-10-08",
+  "base_commit": "cc381df",
+  "branch": "codex/dink-ui-polish-20261008",
+  "final_export_sha256": "9870a5304bcd19f0b8ddebc05617edadcdb069ad2d7a15e54ae408e2ed7466b3",
+  "actual_input_frames": [
+    "final-1280",
+    "final-1920",
+    "final-130"
+  ],
+  "raw_artifact_root": "builds/interface-polish-20261008",
+  "checks": "11 focused passed40.01s; final UI-only deadline revision5 passed0.99s; Linux export/logs/diff checked.",
+  "models_selected": {
+    "lead": "gpt-6.1-sol high",
+    "journal": "gpt-6-luna medium (1 turn)",
+    "original_hud_direction_implementation_and_integration": "gpt-6-astra high (2 turns)"
+  },
+  "token_usage": "Provider token totals unavailable; not estimated.",
+  "setup": "Normal captures execute opening scripts/input then save. 130% capture loads prior staged pig-farm fixture, skips normal progression/map startup. All profiles isolated, software rendering.",
+  "comparisons": [
+    {
+      "finding": "HUD labels/values",
+      "before": "/home/chris/dink-review-rc1/named/005-05-first-view-hud.png",
+      "after": "builds/interface-polish-20261008/final-1280/adventure.png"
+    },
+    {
+      "finding": "Lower view after first use",
+      "before": "/home/chris/dink-review-rc1/named/005-05-first-view-hud.png",
+      "after": "builds/interface-polish-20261008/final-1280/hints-faded.png"
+    },
+    {
+      "finding": "Toggle state",
+      "before": "/home/chris/dink-review-rc1/named/011-11-settings-bottom.png",
+      "after": "builds/interface-polish-20261008/final-1280/motion-on.png"
+    },
+    {
+      "finding": "Saved title fit",
+      "before": "builds/interface-evidence/release-boundary-1280/title.png",
+      "after": "builds/interface-polish-20261008/final-1280/saved-title.png"
+    },
+    {
+      "finding": "Slider focus",
+      "before": "/home/chris/dink-review-rc1/named/009-09-settings-top.png",
+      "after": "builds/interface-polish-20261008/final-1280/settings.png"
+    },
+    {
+      "finding": "Journal speakers",
+      "before": "/home/chris/dink-review-rc1/named/013-13-journal.png",
+      "after": "builds/interface-polish-20261008/final-1280/journal.png"
+    }
+  ],
+  "review_revision_note": "Astra inspects export-1280/130 presentation before real-time deadline correction. Final capture presentation unchanged; root verifies actual fade/recall after corrected timer at both resolutions/outdoor fixture.",
+  "limits": [
+    "Original engraved-label contrast is not certified.",
+    "Reticle contrast samples are non-text; text-height warnings do not apply.",
+    "EXP ink-height17.6px normalized1080p is a borderline tool flag retained; fixed art slots constrain enlargement.",
+    "No whole-game, target-GPU performance, audio or hardware-controller certification.",
+    "No observed residual default-size clipping; enlarged scroll intentional."
+  ]
+}

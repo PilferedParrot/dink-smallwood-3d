@@ -61,6 +61,7 @@ func _run() -> void:
 	game.visuals.erase(target_id)
 	check(int(game.vm.globals.get("story", 0)) == 1, "Original opening quest advances story")
 	check(not game.dialogue_log.is_empty(), "Original opening mother conversation is retained")
+	check(game.journal_log.any(func(line): return str(line).begins_with("Mother: ")) and game.journal_log.any(func(line): return str(line).begins_with("Dink: ")), "Journal identifies the actual opening speakers")
 
 	# Menus release the captured mouse and gameplay recaptures it on the next update.
 	game.ui.close_menu()
@@ -152,12 +153,19 @@ func _run() -> void:
 	game.fps_yaw = 0.47
 	game.fps_pitch = -0.31
 	var save_path := "user://fps-integration-save.json"
+	var saved_journal: Array = game.journal_log.duplicate()
 	check(game._save_game(save_path), "FPS campaign save succeeds")
 	game.entities[1].x = 400.0
 	game.entities[1].y = 300.0
 	game.fps_yaw = 0.0
 	game.fps_pitch = 0.0
 	check(game._load_game(save_path), "FPS campaign load succeeds")
+	check(game.journal_log == saved_journal, "Named journal history survives save/load")
+	var legacy: Dictionary = game._read_json(save_path)
+	legacy.erase("journal_log")
+	legacy.dialogue_log = ["A legacy conversation."]
+	game._write_json(save_path, legacy)
+	check(game._load_game(save_path) and game.journal_log == ["A legacy conversation."], "Legacy saves retain their unattributed history without invented speakers")
 	check(is_equal_approx(float(game.entities[1].x), 271.0) and is_equal_approx(float(game.entities[1].y), 219.0), "Load restores source position")
 	check(is_equal_approx(game.fps_yaw, 0.47) and is_equal_approx(game.fps_pitch, -0.31), "Load restores FPS camera orientation")
 	DirAccess.remove_absolute(save_path)
