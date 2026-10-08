@@ -10,6 +10,7 @@ const DEPTH := 400.0*SCALE
 const BUILDINGS := preload("res://scripts/sprite_buildings.gd")
 const RAILS := preload("res://scripts/bridge_rails.gd")
 const CASTLE_DOORS := preload("res://scripts/castle_doors.gd")
+const INTERIOR_SOLIDS := preload("res://scripts/interior_solids.gd")
 # Models that stand in for a sprite, sized to it; the rest keep their own sizes (or their hardbox).
 # Not "crate": it stands in for anything scripted or unknown (tools leaning on walls, sacks), and a
 # cube as tall as a leaning rake is a wall.
@@ -33,6 +34,7 @@ var structural_seen: Dictionary = {}
 var facades: Dictionary = {}
 var buildings # sprite_buildings.gd
 var rails # bridge_rails.gd: the bridges' railings and decks' ray plates
+var solids # interior_solids.gd: the house interior's walls, door, table, beds and hearth built from their sprites
 var castle_doors # castle_doors.gd: the wall panel and lowered drawbridge built on fitted castle faces
 var fitted_built: Dictionary = {} # world position key -> the node holding it (null: reserved), this scene
 var plan_key := "" # scene, screen and story layer the plan below was gathered for
@@ -76,6 +78,7 @@ func setup(game) -> void:
 	rails = RAILS.new()
 	rails.setup(self)
 	castle_doors = CASTLE_DOORS.new(self)
+	solids = INTERIOR_SOLIDS.new(self)
 
 func point(x: float, y: float) -> Vector3:
 	return Vector3((x-320.0)*SCALE,0,(y-200.0)*SCALE)
@@ -439,6 +442,7 @@ func build_ground(screen: Dictionary) -> void:
 	add_terrain_walls(screen)
 	if interior:
 		add_ceiling(screen)
+		solids.add_doors(host.current_screen,host.scene_root)
 	else:
 		# Only outdoor neighbors are connected. Interior maps live in their own spaces. The block is
 		# 5x5 screens, as the prototype builds it and as house_plan gathers: at 0.025 m/px a 3x3
@@ -498,7 +502,9 @@ func configure_environment() -> void:
 		sky_mat.ground_horizon_color = Color("b8bea0")
 		sky_mat.sun_angle_max = 2.5
 		sky.sky_material = sky_mat
-		environment.sky = sky
+		# The environment outlives the scene: an interior must not keep the outdoor sky (Godot draws it past a doorway even with
+		# a flat background colour set: the "empty sky and plain" seen from Dink's corridor in 0.3.0).
+		environment.sky = null if interior else sky
 		environment.background_mode = Environment.BG_COLOR if interior else Environment.BG_SKY
 		environment.background_color = Color("181916")
 		environment.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
@@ -701,12 +707,13 @@ func add_ceiling(screen: Dictionary) -> void:
 			limits = limits.merge(r) if found else r
 			found = true
 	var center := point(limits.get_center().x,limits.get_center().y)
-	box_mesh(host.scene_root,Vector3(limits.size.x*SCALE,0.18,limits.size.y*SCALE),center+Vector3(0,3.65,0),mat("ceiling",Color("665036")))
+	var ceiling: float = solids.room_height(host.current_screen)*SCALE # the walls' own height: their sprites' faces are that many rows
+	box_mesh(host.scene_root,Vector3(limits.size.x*SCALE,0.18,limits.size.y*SCALE),center+Vector3(0,ceiling+0.09,0),mat("ceiling",Color("665036")))
 	var beam_mat := mat("beam",Color("37291c"))
 	for x in range(int(limits.position.x),int(limits.end.x)+1,75):
-		box_mesh(host.scene_root,Vector3(0.18,0.26,limits.size.y*SCALE),point(x,limits.get_center().y)+Vector3(0,3.45,0),beam_mat)
+		box_mesh(host.scene_root,Vector3(0.18,0.26,limits.size.y*SCALE),point(x,limits.get_center().y)+Vector3(0,ceiling-0.13,0),beam_mat)
 	var glow := OmniLight3D.new()
-	glow.position = center+Vector3(0,2.8,0)
+	glow.position = center+Vector3(0,ceiling*0.77,0)
 	glow.light_color = Color("ffd395")
 	glow.light_energy = 1.8
 	glow.omni_range = 22
@@ -907,6 +914,9 @@ func make_entity(e: Dictionary, id: int, parent: Node3D, collision: bool = true,
 	node.position = point(float(e.get("x",320)),float(e.get("y",200)))
 	if key.is_empty(): return node
 	if screen < 0: screen = host.current_screen
+	if interior and solids.handles(e):
+		solids.add_entity(node,e,id,collision,screen)
+		return node
 	if key == "cottage" and not fitted_key(e,screen).is_empty():
 		add_fitted_building(node,e,id,screen,collision)
 		return node
@@ -1081,7 +1091,7 @@ func update_visual(id: int) -> void:
 	if id == 1:
 		node.position = point(float(e.x),float(e.y))
 		return
-	var visible := int(e.get("active",1)) != 0 and int(e.get("nodraw",0)) == 0 and int(e.get("disabled",0)) == 0 and int(e.get("type",1)) != 2
+	var visible: bool = int(e.get("active",1)) != 0 and int(e.get("nodraw",0)) == 0 and int(e.get("disabled",0)) == 0 and (int(e.get("type",1)) != 2 or node.get_meta("hard_wall",false))
 	node.visible = visible
 	var body: StaticBody3D = node.get_node_or_null("HitBody")
 	if body: body.collision_layer = (2 if node.get_meta("actor",false) or not str(e.get("script","")).is_empty() else 1) if visible and not e.get("dead",false) else 0
@@ -1129,8 +1139,11 @@ func add_terrain_walls(_screen: Dictionary) -> void:
 	var terrain: Image = ground_texture(host.current_screen).get_image()
 	var mesh := BoxMesh.new()
 	var cell := 10.0*SCALE # one 10 px cell of the mask
-	mesh.size = Vector3(cell,3.7 if interior else 2.8,cell)
-	var material := mat("dungeon_rock" if interior else "cliff_rock",Color("5c5a4d") if interior else Color("82775c"))
+	mesh.size = Vector3(cell,(solids.room_height(host.current_screen)*SCALE+(0.0 if solids.walls_fitted(host.current_screen) else 0.14)) if interior else 2.8,cell)
+	var material: Material = mat("dungeon_rock" if interior else "cliff_rock",Color("5c5a4d") if interior else Color("82775c"))
+	if interior:
+		var rock: Material = solids.terrain_material(host.current_screen) if solids.walls_fitted(host.current_screen) else null # the room's own stone, as the walls are
+		if rock != null: material = rock
 	mesh.material = material
 	var transforms: Array[Transform3D] = []
 	for y in range(5,400,10):
@@ -1902,10 +1915,20 @@ func clean_texture(path: String) -> Texture2D:
 # ground; they now stand on the roof. A sprite whose foot misses every house, or lies in front of
 # its walls, keeps its hotspot.
 func place_on_surface(node: Node3D, sp: Sprite3D, e: Dictionary, d: Dictionary, screen: int) -> void:
-	if interior or node.get_meta("model_key","") in ACTORS: return
+	if node.get_meta("model_key","") in ACTORS: return
 	var foot := sprite_foot(frame_path(e))
 	if foot.y <= 0.0: return
 	var o := screen_origin(screen)
+	if interior:
+		# What stands on furniture: the view ray of the foot meets the furniture's top (interior_solids.gd surface_height).
+		var ground := Vector2(float(e.get("x",0)),float(e.get("y",0)))+(foot-Vector2(float(d.get("dx",0)),float(d.get("dy",0))))*maxf(0.01,float(e.get("size",100))/100.0)
+		var order_i := float(e.get("que",0)) if int(e.get("que",0)) != 0 else float(e.get("y",0))
+		var top: float = solids.surface_height(ground,order_i,screen,int(host.vm.globals.get("vision",0)))
+		if top > 0.0:
+			node.position = point(ground.x,ground.y+top)+Vector3(0,top*SCALE,0)
+			node.set_meta("surface_position",node.position)
+			sp.set_meta("on_surface",true)
+		return
 	var factor := maxf(0.01,float(e.get("size",100))/100.0)
 	var world_foot := o+Vector2(float(e.get("x",0)),float(e.get("y",0)))+(foot-Vector2(float(d.get("dx",0)),float(d.get("dy",0))))*factor
 	var order := float(e.get("que",0)) if int(e.get("que",0)) != 0 else float(e.get("y",0))

@@ -1,0 +1,693 @@
+{
+ "assets/graphics/inside/details/inacc-01.png": {
+  "above": [],
+  "base": 116,
+  "body": {
+   "cols": [
+    0,
+    154
+   ],
+   "rows": [
+    0,
+    116
+   ],
+   "split": 0
+  },
+  "kind": "frontal",
+  "legs": [],
+  "size": [
+   154,
+   116
+  ]
+ },
+ "assets/graphics/inside/details/inacc-03.png": {
+  "base": [
+   [
+    44.0,
+    31.0
+   ],
+   [
+    121.0,
+    71.0
+   ],
+   [
+    77.0,
+    93.0
+   ],
+   [
+    0.0,
+    53.0
+   ]
+  ],
+  "consistency": 0.0,
+  "height": 31.0,
+  "kind": "bed",
+  "size": [
+   121,
+   93
+  ],
+  "top_back_error": 0.0
+ },
+ "assets/graphics/inside/details/inacc-05.png": {
+  "above": [
+   {
+    "cols": [
+     24,
+     73
+    ],
+    "rows": [
+     0,
+     26
+    ]
+   }
+  ],
+  "base": 114,
+  "body": {
+   "cols": [
+    0,
+    97
+   ],
+   "ratio": 5.11,
+   "rows": [
+    26,
+    114
+   ],
+   "split": 58
+  },
+  "kind": "frontal",
+  "legs": [],
+  "opening": {
+   "cols": [
+    25,
+    74
+   ],
+   "rows": [
+    58,
+    113
+   ]
+  },
+  "size": [
+   97,
+   114
+  ]
+ },
+ "assets/graphics/inside/details/table-01.png": {
+  "above": [],
+  "base": 58,
+  "body": {
+   "cols": [
+    0,
+    94
+   ],
+   "ratio": 1.45,
+   "rows": [
+    0,
+    34
+   ],
+   "split": 32
+  },
+  "kind": "frontal",
+  "legs": [
+   {
+    "cols": [
+     3,
+     10
+    ],
+    "rows": [
+     41,
+     58
+    ]
+   },
+   {
+    "cols": [
+     83,
+     89
+    ],
+    "rows": [
+     41,
+     58
+    ]
+   }
+  ],
+  "size": [
+   94,
+   58
+  ]
+ },
+ "assets/graphics/inside/details/table-07.png": {
+  "above": [],
+  "base": 79,
+  "body": {
+   "cols": [
+    0,
+    57
+   ],
+   "ratio": 2.35,
+   "rows": [
+    0,
+    56
+   ],
+   "split": 54
+  },
+  "kind": "frontal",
+  "legs": [
+   {
+    "cols": [
+     4,
+     19
+    ],
+    "rows": [
+     56,
+     79
+    ]
+   },
+   {
+    "cols": [
+     38,
+     53
+    ],
+    "rows": [
+     56,
+     79
+    ]
+   }
+  ],
+  "size": [
+   57,
+   79
+  ]
+ },
+ "assets/graphics/inside/details/table-09.png": {
+  "cx": 32.49,
+  "cz": 50.57,
+  "k": 0.5689,
+  "kind": "round",
+  "legs": [
+   {
+    "angle": 3.1054,
+    "half": 3.0,
+    "seen": true,
+    "source": 0
+   },
+   {
+    "angle": 1.6695,
+    "half": 3.5,
+    "seen": true,
+    "source": 1
+   },
+   {
+    "angle": 6.2322,
+    "half": 2.5,
+    "seen": true,
+    "source": 2
+   },
+   {
+    "angle": 4.8111,
+    "half": 3.0,
+    "seen": false,
+    "source": 1
+   }
+  ],
+  "rho": 20.26,
+  "rms_top": 0.306,
+  "rms_under": 0.519,
+  "size": [
+   65,
+   62
+  ],
+  "top": {
+   "height": 31.83,
+   "r": 32.14
+  },
+  "under": {
+   "height": 27.85,
+   "r": 31.67
+  }
+ },
+ "assets/graphics/inside/details/table-10.png": {
+  "footing": 17.0,
+  "kind": "post",
+  "runs": [
+   [
+    0,
+    1,
+    22,
+    26
+   ],
+   [
+    1,
+    10,
+    21,
+    27
+   ],
+   [
+    10,
+    11,
+    1,
+    46
+   ],
+   [
+    11,
+    15,
+    0,
+    47
+   ],
+   [
+    15,
+    16,
+    1,
+    46
+   ],
+   [
+    16,
+    17,
+    8,
+    39
+   ],
+   [
+    17,
+    18,
+    10,
+    38
+   ],
+   [
+    18,
+    19,
+    11,
+    37
+   ],
+   [
+    19,
+    20,
+    12,
+    36
+   ],
+   [
+    20,
+    21,
+    13,
+    35
+   ],
+   [
+    21,
+    22,
+    14,
+    34
+   ],
+   [
+    22,
+    23,
+    15,
+    33
+   ],
+   [
+    23,
+    24,
+    15,
+    32
+   ],
+   [
+    24,
+    25,
+    16,
+    32
+   ],
+   [
+    25,
+    27,
+    17,
+    31
+   ],
+   [
+    27,
+    29,
+    18,
+    30
+   ],
+   [
+    29,
+    30,
+    18,
+    29
+   ],
+   [
+    30,
+    50,
+    19,
+    29
+   ],
+   [
+    50,
+    73,
+    20,
+    28
+   ],
+   [
+    73,
+    74,
+    18,
+    29
+   ],
+   [
+    74,
+    75,
+    17,
+    30
+   ],
+   [
+    75,
+    76,
+    17,
+    31
+   ],
+   [
+    76,
+    106,
+    15,
+    32
+   ]
+  ],
+  "shaft": 8.0,
+  "size": [
+   47,
+   106
+  ],
+  "z_axis": 97.5
+ },
+ "assets/graphics/inside/innwalls/Walls/inn-19.png": {
+  "base": 100,
+  "cap": 6,
+  "cols": [
+   0,
+   100
+  ],
+  "height": 94,
+  "kind": "wall",
+  "ratio": 1.28,
+  "size": [
+   100,
+   100
+  ],
+  "stone": [
+   7,
+   87
+  ]
+ },
+ "assets/graphics/inside/innwalls/Walls/inn-20.png": {
+  "base": 100,
+  "cap": 6,
+  "cols": [
+   0,
+   100
+  ],
+  "height": 94,
+  "kind": "wall",
+  "ratio": 1.36,
+  "size": [
+   100,
+   100
+  ],
+  "stone": [
+   7,
+   88
+  ]
+ },
+ "assets/graphics/inside/innwalls/Walls/inn-21.png": {
+  "base": 100,
+  "cap": 6,
+  "cols": [
+   0,
+   100
+  ],
+  "height": 94,
+  "kind": "wall",
+  "ratio": 1.54,
+  "size": [
+   100,
+   100
+  ],
+  "stone": [
+   7,
+   87
+  ]
+ },
+ "assets/graphics/inside/innwalls/Walls/inn-22.png": {
+  "base": 100,
+  "cap": 6,
+  "cols": [
+   0,
+   100
+  ],
+  "height": 94,
+  "kind": "wall",
+  "ratio": 1.32,
+  "size": [
+   100,
+   100
+  ],
+  "stone": [
+   7,
+   87
+  ]
+ },
+ "assets/graphics/inside/innwalls/Walls/inn-23.png": {
+  "base": 100,
+  "cap": 0,
+  "cols": [
+   0,
+   18
+  ],
+  "height": 0,
+  "kind": "wall",
+  "ratio": 1.04,
+  "size": [
+   18,
+   100
+  ]
+ },
+ "assets/graphics/inside/innwalls/Walls/inn-24.png": {
+  "base": 100,
+  "cap": 6,
+  "cols": [
+   0,
+   200
+  ],
+  "height": 94,
+  "kind": "wall",
+  "ratio": 1.46,
+  "size": [
+   200,
+   100
+  ],
+  "stone": [
+   7,
+   88
+  ]
+ },
+ "assets/graphics/inside/innwalls/Walls/inn-25.png": {
+  "base": 100,
+  "cap": 6,
+  "cols": [
+   0,
+   100
+  ],
+  "height": 94,
+  "kind": "wall",
+  "ratio": 1.34,
+  "size": [
+   100,
+   100
+  ],
+  "stone": [
+   7,
+   87
+  ]
+ },
+ "assets/graphics/inside/innwalls/Walls/inn-26.png": {
+  "base": 100,
+  "cap": 6,
+  "cols": [
+   0,
+   100
+  ],
+  "height": 94,
+  "kind": "wall",
+  "ratio": 1.32,
+  "size": [
+   100,
+   100
+  ],
+  "stone": [
+   7,
+   88
+  ]
+ },
+ "assets/graphics/inside/innwalls/Walls/inn-27.png": {
+  "base": 100,
+  "cap": 6,
+  "cols": [
+   0,
+   100
+  ],
+  "height": 94,
+  "kind": "wall",
+  "ratio": 1.52,
+  "size": [
+   100,
+   100
+  ],
+  "stone": [
+   7,
+   88
+  ]
+ },
+ "assets/graphics/inside/innwalls/Walls/inn-28.png": {
+  "base": 100,
+  "cap": 6,
+  "cols": [
+   0,
+   100
+  ],
+  "height": 94,
+  "kind": "wall",
+  "ratio": 1.3,
+  "size": [
+   100,
+   100
+  ],
+  "stone": [
+   7,
+   87
+  ]
+ },
+ "assets/graphics/inside/innwalls/Walls/inn-29.png": {
+  "base": 100,
+  "cap": 6,
+  "cols": [
+   0,
+   100
+  ],
+  "height": 94,
+  "kind": "wall",
+  "ratio": 1.36,
+  "size": [
+   100,
+   100
+  ],
+  "stone": [
+   7,
+   88
+  ]
+ },
+ "assets/graphics/inside/innwalls/Walls/inn-30.png": {
+  "base": 100,
+  "cap": 6,
+  "cols": [
+   0,
+   100
+  ],
+  "height": 94,
+  "kind": "wall",
+  "ratio": 1.58,
+  "size": [
+   100,
+   100
+  ],
+  "stone": [
+   7,
+   88
+  ]
+ },
+ "assets/graphics/inside/innwalls/Walls/inn-33.png": {
+  "base": 100,
+  "cap": 6,
+  "cols": [
+   0,
+   109
+  ],
+  "height": 94,
+  "kind": "wall",
+  "ratio": 1.36,
+  "size": [
+   109,
+   100
+  ],
+  "stone": [
+   7,
+   88
+  ]
+ },
+ "assets/graphics/inside/innwalls/Walls/inn-34.png": {
+  "base": 100,
+  "cap": 6,
+  "cols": [
+   0,
+   108
+  ],
+  "height": 94,
+  "kind": "wall",
+  "ratio": 1.26,
+  "size": [
+   108,
+   100
+  ],
+  "stone": [
+   7,
+   87
+  ]
+ },
+ "assets/graphics/inside/innwalls/Walls/inn-35.png": {
+  "base": 100,
+  "cap": 6,
+  "cols": [
+   0,
+   18
+  ],
+  "height": 94,
+  "kind": "wall",
+  "ratio": 1.33,
+  "size": [
+   18,
+   100
+  ],
+  "stone": [
+   7,
+   87
+  ]
+ },
+ "assets/graphics/inside/innwalls/Walls/inn-36.png": {
+  "base": 100,
+  "cap": 6,
+  "cols": [
+   0,
+   18
+  ],
+  "height": 94,
+  "kind": "wall",
+  "ratio": 1.26,
+  "size": [
+   18,
+   100
+  ],
+  "stone": [
+   7,
+   88
+  ]
+ },
+ "assets/graphics/struct/Details/Door/odor1-01.png": {
+  "base": 63.84,
+  "cols": [
+   0,
+   24
+  ],
+  "height": 52.79,
+  "kind": "door",
+  "rms": 0.29,
+  "size": [
+   24,
+   64
+  ],
+  "slope": -0.4863,
+  "top": 11.04
+ }
+}
