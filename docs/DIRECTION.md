@@ -1536,3 +1536,88 @@ the footprints removed or shifted 10 px it goes red. The pre-registered original
 pixels 11.70 to 18.14): the 3D links read lighter than the drawn chains. Stopped after two attempts, as the rule says.
 Evidence: `docs/images/doors-m3.jpg`. Limits: the chains look like uniform blue-grey straps up close and through the
 original camera; the gatehouse's threshold hides part of the arch's lower opening.
+
+## The interior stands solid, and the corridor ends in a door — October 7, 0.3.0 follow-up (Sonnet 5.5 unit, lead Opus 5.5)
+
+Chris, playing 0.3.0: "the doorway out from inside the house looks odd". Dink's house (screen 1, where the game starts) was
+plaster boxes and Blender furniture, and its corridor, which runs off the screen's south edge, opened onto an empty sky and
+plain. `game/scripts/interior_solids.gd` (built from `game/data/interior.json`, which `tools/interior_fit.py` writes) builds the
+interior from its own sprites, as the houses and huts are. Tests: `tests/test_fps_interior.py` (the fits' own numbers; Dink's
+house as the game loads it, headless, which fails on 0.3.0).
+
+**The sky past the doorway.** Cause, found by taking it away: `fp_world.configure_environment` sets `background_mode = BG_COLOR`
+for an interior but the one shared `Environment` keeps the `Sky` the outdoor screen before it set, and Godot draws a sky that is
+set past an opening even with a flat background colour (the sky's own `ground_bottom_color` is the "green plain"). With the
+`sky` set to null on `interior` the corridor shows the flat dark background. Not the horizon hills, the wilderness slabs or the
+ground (none is built for an interior). The exit is now a door: Dink's own door (`struct/Details/Door/odor1-01`, the door of the
+house on screen 439), its picture a parallelogram (columns, one slope for its top and base lines, fitted: slope -0.486, the
+art's camera aspect, 0.3 px rms) mapped onto an upright rectangle the width of the corridor between the walls' footprints
+(308 to 339, 31 px: the art's door is 32 px wide, a coincidence the corridor's footprint did not need), the stone of the walls above
+it up to the ceiling. The door stands at the base row the jambs' art ends on (400, the floor's edge). Walking into it warps through the
+warp sprite (index 24, type 2, never drawn) as before. Two caveats, both the art's: the door is 53 px high (1.32 m) and Dink's eye
+is at 1.65 m, so seen from the doorway the lintel is at eye level; and only exits that run off the screen's bottom are handled (screen
+3's exit is in its west wall: no door there, the wall is closed).
+
+**Walls.** The footprint is the sprite's hard rectangle (collision unchanged). A wall frame is its cap over its face: the cap is
+the rows above the first big luminance step (the mean of 3 rows over the mean of the 4 below it, >= 1.2: the span frames measure
+1.26 to 1.58, the piers, inn-23, 1.04, which have no step and are top faces seen end-on). It is the LIGHT strip at the top of the
+frame (luminance 175 over the stone's 105), not a dark one: the brief's "dark top" is not what the pixels show. The face is the
+rows below: 94 of them (the stone, rows 7 to 87, then 12 rows of baseboard), so a wall is 94 px = 2.35 m high and the room's
+ceiling (`add_ceiling`, the beams, the light, the solid terrain blocks) stands at that, not at the 3.6 m the plaster boxes had.
+The seen (south) face is the frame at 1 px a source px, in its own place where it lies in the footprint (a jamb's frame is 18 px,
+its rectangle 32 to 47) and the room's stone on the rest; the far face the same turned through the box's centre; the ends the
+room's stone running on from the corner; the top the cap. Type 2 wall sprites (hardness the drawn pieces leave open: the corners)
+are drawn too (a hard region must show something; `update_visual` keeps them visible). The blocks the tile hardness leaves are the
+room's stone too (the crop between cap and baseboard, a triplanar texture at the stone's own scale).
+
+**The face rules.** Everything is built in the sprite's own frame: a point at ground (X, Z) and height Y is drawn at the pixel (X,
+Z - Y) (the facades' projection); a seen face takes its texture by that projection (exact on a plane); an unseen face by one of
+three rules: opposite a seen face, that face through the box's centre; edge-on (a box square to the camera has two), the adjacent
+seen face continued round the shared corner; a hidden twin (a back leg), its source's picture. One routine (`prism`) builds every
+box; there is no per-sprite number in it.
+
+**The round table (table-09): a top of revolution on legs.** The plate's top edge is an ellipse fitted to the silhouette's top edge
+(cx 32.5, aspect k 0.569, radius 32.1, 0.3 px rms), its underside a second one of the same aspect fitted to the columns it explains to
+2 px (radius 31.7, 4 px lower: the plate is 4.2 px thick, 0.5 px rms); the legs are the columns that hang below it; their feet
+lie on a ground ring (radius 20.3) whose angles are fitted from the three seen feet, and the unseen leg is the point reflection
+of a seen one. Top 31.8 px (0.80 m) high. NOTE the interior's camera is steeper than the outdoors': this table's aspect is
+0.569 against the castle's 0.4878 (the door's slope is the outdoor one; the beds' is 0.52). The aspect is therefore fitted per
+round thing, never assumed. The rim's back half is the front half across the view (the huts' rule).
+
+**The bed (inacc-03): a box turned on its axis.** The silhouette's convex hull is a box's six corners: the two vertical edges
+at its ends are its height (31 px, 0.78 m), the top and bottom corners the footprint's; the fit's two cross-checks (the back
+top corner is where the other corners put it, the front corner's x is where the left and right put it) are exact (0.0 px). The mattress is at
+the posts' height (a single box: the quilt is on the top plane, the posts' tops its corners). It does not show the mattress
+sunk between the posts.
+
+**The hearth (inacc-05): a body square to the camera, a stack on its back edge, a recess.** The silhouette's bands (a jump of 1.5 in
+the pixels a row holds): the chimney over the body, the body (the widest); its top face is the rows above the strongest luminance
+step (the dark band under the mantel, ratio 5.1) and its front the rows below. The depth the sprite cannot show is read from
+the room: the body's back is the wall's face (the walls' art base row), so the depth is the top face's rows but not past the wall
+behind it (32 rows read, 21 px left by the wall: the chimney's front would otherwise stand inside the wall and be hidden). The
+chimney stands on the back edge to the ceiling. The firebox is the largest region of the front darker than half its
+upper-quartile luminance with jambs either side (a hole): a recess as deep as the body, its back the opening's own pixels; the
+fire sprite stands in it. Shelves (a plain rectangle, no step: the depth is the wall behind) and rectangular tables (a slab
+over its feet, the front legs from the lowest band, the back legs the front legs a body's depth back) use the same class;
+screen 2's shelves are built (the shelf is 116 px tall, taller than its room's 94: the room is as high as its walls' faces, so
+it is cut at the ceiling and its top 22 rows are lost).
+
+**Posts (table-10, screen 2) and the rooms not yet fitted.** table-10 is not a chair: the original draws a wooden post with braces
+and a crossbar on a stone footing (the 0.3.0 game stood Blender chairs there). Its rows are grouped into runs of one extent; the
+lowest rows still 0.85 of the widest of the lowest third are the footing, a square block; every run above is a slab as deep as the
+shaft is wide (the narrowest run of 10 rows or more: 8 px), stacked so each stands on the one below it. The post is 106 px high
+and its room's walls 94, so the ceiling cuts it: the crossbar is above the ceiling, unseen. (The shelf, 116 px, is cut the same way.
+Whether the room is really 94 or taller is not decidable from the art: the cap row says 94, the shelf and the post say more.) The
+fits cover innwalls frames 19 to 30 and 33 to 36: 32 of the 74 interiors (1 to 6, 33 to 38, 65 to 68, ...) have only such walls.
+In the other 42 the walls stay the plaster boxes at 3.6 m, the ceiling stays where it was, and nothing of this is built there
+(`walls_fitted`: the walls, the ceiling and the stone must agree); the sky is gone from all of them.
+
+**What stands on furniture.** `place_on_surface` (the original camera's view ray through a sprite's foot meets the surface) now
+runs in an interior too: `interior_solids.surface_height` tests the foot against the tops of the furniture drawn before the
+sprite (the pie's `que` 248 against the table's y 243): the top disc's ellipse for a round table, the top polygon for a bed, the top rectangle of a table with legs (screen 3's cups).
+The pie is 0.80 m up on the table top. The solid pie is the other unit's; only where it stands is here.
+
+**Limits, seen.** The walls' top faces stretch their 6-row cap across the footprint's 48 (never seen, under the ceiling). Piers
+are boxes of the hard rectangle, 48 px thick where the art draws 18, and the corridor is 31 px wide where the art's is 59:
+the footprints are the collision's, kept. The stairs of screen 3 are still the Blender stand-in; the lit floor and the unshaded solids disagree a little in brightness. The hearth's chimney (100 px by the
+wall-contact depth) is cut at the ceiling (94).
