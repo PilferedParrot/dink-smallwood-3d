@@ -1536,3 +1536,88 @@ the footprints removed or shifted 10 px it goes red. The pre-registered original
 pixels 11.70 to 18.14): the 3D links read lighter than the drawn chains. Stopped after two attempts, as the rule says.
 Evidence: `docs/images/doors-m3.jpg`. Limits: the chains look like uniform blue-grey straps up close and through the
 original camera; the gatehouse's threshold hides part of the arch's lower opening.
+
+## Solid fences — October 7, M3 solid unit (Sonnet 5.5 unit of the Opus 5.5 lead)
+
+Chris, playing 0.3.0 on 2026-10-07: "the pig fence is not drawn correctly." The rail fences (lands/Fence fence-01..06, the island's
+isle-07 and isle-08) were fixed cards of the 3/4-view art: edge-on from the side, fence-04 (the north-south column) a
+side rail turned 90 degrees and laid over a 4.8 m card, diagonals and corners not joined. Now each stands as solid posts and
+rails, derived from its art's pixels and textured by them, from every side.
+
+**Reading** (`tools/fence_fit.py` -> `game/prototype/fences.json`). The art is a picture of a 3D fence taken by the original
+camera, screen = (X, Z - Y) (see Buildings). A post is a column of its own pixels; its foot F is the row after its last drawn row
+(the front face's bottom edge on the ground), its width is read from the rows just above F, its top is its first drawn row.
+fence-01 (the fence seen from the front) gives the module: posts 4 wide, as deep as wide (the lit cap measures 2-3 rows, the
+artist's; bridge_rails.gd takes a prism so), 42 high (F - top - width); a rail is 6 rows of a column, two faces of a square
+bar, 3 x 3. The island's lattice (isle-07, 5 posts, 3 bars a bay in an X) is read the same way: posts 3 wide and 55 high, bars
+1.5 square. A bay's bars are a search: for each bar the (bottom height over one post, over the next) whose projected box (the
+convex hull of its eight corners as the art draws it) covers the most art pixels not yet explained and the fewest transparent
+ones; then the length it runs past an end post (fence-01's rails stick out 10-14 px at both ends). The five front and diagonal
+lands arts fit to IoU 0.88 (silhouette of the model against the art's pixels), isle-07 to 0.79 (`docs/images/fences-fit-m3.png`:
+magenta is art the model misses, cyan model over transparent). What was left were the rope ties at the joints: each is a box
+a little wider and deeper than its post and as high as a rail, at the height of each cluster of rail ends on the post; how far
+it reaches past the post (2.5 px lands, 1.5 island) is the half pixel that fits the front view's silhouette best (fence-01
+0.85 to 0.88; no other number is fitted). The turned sprites show the same fence, so only their posts' places differ: fence-02, 03, 05, 06
+are read the same way (their posts stand on a diagonal, and a post is turned along its bay); a sprite's edge cuts a post, which
+is then found from the columns drawn and stood whole.
+
+**Which rows are depth.** A post's foot F is a ground row 1:1 (the convention the buildings and bridges use), not the
+hotspot's row: fence-01's hotspot (dy 41) is six rows above its posts' feet (46, 47, 47), and the hardbox is centred on the feet
+(rows 35 to 58 about 47). The map's chains confirm the foot: on the island's 731 the top fence (isle-07 at 324, 182) has its first
+post's foot at world row 181, and the column isle-08 at (207, 270) starts at 270 - 148 + 59 = 181; its second placement 74 rows
+below starts on the first column's third post (255 against 257) and fourth (293 against 295). On the pigpen 407 the corner
+piece fence-02 at (91, 105) ends on a post whose foot is (40, 111) and the column fence-04 at (41, 164) starts on (42, 113);
+its four placements (164, 239, 313, 387 at x 42; 202, 276, 349 at 495) chain every 74 rows, the next one's first post 3-4 rows
+under the last one's third (a shared post is one post: below). `tests/test_fps_fences.py` reads all of this from the map. A
+hotspot as the ground line would put the first post of 731's column 6 rows off the fence's.
+
+**The two column arts** (fence-04, isle-08). A rail drawn along the depth axis has no front face and its posts stand one
+under another behind its top faces, so the pixels do not give them; each column's posts were read by hand from the pixel
+dump (`COLUMNS` in the tool): fence-04's first post's cap is rows 0-2 and its last post's column ends at row 117, three posts
+every 35.5 rows; isle-08's first foot is row 59 (the chain above) and its column ends at row 172 (foot 173), four posts every 38 rows (the
+chain above says four). Their rails are not readable. fence-04's two bars stand level at the heights the front view's stand at on average
+(28 and 10 over the ground; the front view's 75-px sag over a 36-row bay would be a kink the art does not show), as wide
+across the line as the art is between its knots (7: the poles are crooked); isle-08's lattice takes the front view's bays as
+they are. These are the only places a value was taken from a neighbouring art instead of read, and the column's silhouette
+fits worst (IoU 0.63 and 0.66).
+
+**Building** (`game/scripts/fence_solid.gd`). Each post a square prism, each bar a square bar, one mesh of boxes per entity
+(unshaded, alpha scissor, double sided, casting shadows as the cards did). Textured by the projection through the original
+camera: a vertex's uv is where the original camera draws it in the art, so from the original camera a fence is its art's own
+pixels (shadow dither removed, as `clean_texture`), and a face the camera does not see takes the pixels of the face the
+camera sees opposite it (a post from behind is the post from the front; a bar's underside its front), so no face reads
+the staircase edge of the art. A post the map shares between two segments is one post (posts within `MERGE` = 6 px in the world:
+the only tuned number, since the chains stand 1-5 px apart and the posts of one fence 35 or more), and the bars that
+meet it end on it (a rail whose post was merged ends where the surviving post stands); a bar of the same line, height and span
+is built once, so the segment placed on two screens (409/408) and two column pieces the map overlaps (407's last, 439's first,
+25 rows apart: both columns' posts stand, as the original draws them interleaved) do not double or z-fight; a rail runs
+past a free end post only (one no other segment stood on). `clip_rect` is honoured: 407's two hard=1 openings (the gate:
+fence-01 cut to its left 65 columns at (526, 144) and its right 57 at (126, 359)) stand as the cut art. The rays' body
+on the hardbox, the passable hard=1 pieces' lack of one, and the walking collision (game.gd reads the source) are as before.
+The fixed-card rules are untouched: `billboard_art` still leaves fences out of `coincident_first` (they are not billboards).
+An entity the original does not draw (type 2) stands nothing and takes no post. isle-08's `_model_key` was "rock" (a billboard);
+it is now "fence" with the others (its hardbox as its body).
+
+**Through the original camera** (`tools/fence_original_diff.py`, `docs/images/fences-original-camera-m3.jpg`). Mean |RGB| of
+407 against the original's picture drawn as the original draws it (the picture of `facade_contact_sheet.reference()` ignores
+the sprites' `clip_rect`, which trims the image, so it draws the two gate pieces whole; game.gd's 2D path honours it, and so
+does this build, so the tool draws them cut): the 0.3.0 package 24.86, this build 24.59; with the light's shadows off 20.63 and
+19.98; within 5 px of the picture's wood 26.76 and 26.62 (shadows off 22.17 and 21.81). Against the uncut picture this build reads
+25.63 against 24.50: the strips of the two gate pieces, which the cards drew whole and the original does not. The 0.3.0 package
+drew no west column at all from the original camera (a card turned 90 degrees is edge-on to it); now it stands, thinner than the
+original's. Seen by eye (the sheet): the north, south and east runs, the diagonals at the north-east and the pen's corners are
+the picture's, down to the rope ties.
+
+**Result.** `docs/images/fences-solid-m3.jpg`: fifteen eye-level views of the pigpen (407), the 0.3.0 package beside this build:
+from inside and outside, the four corners close up, along the north fence and along the west column;
+`fences-solid-m3-other.jpg`: the yard of Dink's house (439), 441 and the island's enclosure (731, story layer 1), the same;
+`fences-original-camera-m3.jpg`: 407 through the original camera between the picture and the 0.3.0 build. Looked at: the fences
+are solid, joined at corners and across screens, with tops, backs and ends, and the rope ties show from the side. Limits: the
+ties are plain boxes, the art's rope is irregular; the two columns, through the original camera, are thinner than the original's
+(a 4-px post under a 7-px bar against crooked poles); a corner post takes the first segment's orientation (a rail from the other
+segment ends in its middle); type 0 (background) fence placements are still painted flat into the ground, as before (441 has
+one); the island's story layers 0 and 2 were not rendered; the island's columns through the original camera are thin lines.
+**Re-run:** `/usr/bin/python3 tools/fence_original_diff.py 407 render.png` for the camera numbers, `/usr/bin/python3 tools/fence_fit.py` (the json; `--overlay PREFIX` writes `PREFIX-lands.png` and `PREFIX-island.png`, and `docs/images/fences-fit-m3.png` is the two side by side),
+and inside `env -u WAYLAND_DISPLAY bwrap --dev-bind / / --tmpfs /dev/input --unshare-net`: `../../../.venv/bin/python -m pytest -q
+tests/test_fps_fences.py` (about 4 minutes; `FENCES_GAME=<an older game dir>` is the control: the 0.3.0 build fails the sweep
+(`kind` card) and the render (0 pixels from the axis against 4,082)).

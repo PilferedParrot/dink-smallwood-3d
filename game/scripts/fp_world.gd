@@ -10,6 +10,7 @@ const DEPTH := 400.0*SCALE
 const BUILDINGS := preload("res://scripts/sprite_buildings.gd")
 const RAILS := preload("res://scripts/bridge_rails.gd")
 const CASTLE_DOORS := preload("res://scripts/castle_doors.gd")
+const FENCE_SOLID := preload("res://scripts/fence_solid.gd")
 # Models that stand in for a sprite, sized to it; the rest keep their own sizes (or their hardbox).
 # Not "crate": it stands in for anything scripted or unknown (tools leaning on walls, sacks), and a
 # cube as tall as a leaning rake is a wall.
@@ -34,6 +35,7 @@ var facades: Dictionary = {}
 var buildings # sprite_buildings.gd
 var rails # bridge_rails.gd: the bridges' railings and decks' ray plates
 var castle_doors # castle_doors.gd: the wall panel and lowered drawbridge built on fitted castle faces
+var fences # fence_solid.gd: the rail fences' posts and rails, solid
 var fitted_built: Dictionary = {} # world position key -> the node holding it (null: reserved), this scene
 var plan_key := "" # scene, screen and story layer the plan below was gathered for
 var plan_claimed: Dictionary = {} # "screen:index" -> true: sprites a fitted house draws (itself, its parts)
@@ -76,6 +78,8 @@ func setup(game) -> void:
 	rails = RAILS.new()
 	rails.setup(self)
 	castle_doors = CASTLE_DOORS.new(self)
+	fences = FENCE_SOLID.new()
+	fences.setup(self)
 
 func point(x: float, y: float) -> Vector3:
 	return Vector3((x-320.0)*SCALE,0,(y-200.0)*SCALE)
@@ -143,14 +147,11 @@ func _model_key(e: Dictionary) -> String:
 	if "/island/" in p:
 		# By the art's own file: isle-01..06 are round huts, isle-07..12 rail fences, isle-13..18 spears.
 		# (The torches of the same folder, seq 425, have frames 1-6 too, so the frame cannot say.)
-		# isle-08 is the exception: it is a rail drawn along the depth axis (30 x 192 px: a lattice
-		# post as tall as its length), which as a card in the +z plane is a 4.8 m pole that vanishes
-		# edge-on from the side. It keeps its billboard until it is rebuilt from the side-view rail
-		# turned 90 degrees, as the fence post column is (add_billboard).
+		# isle-08 is the rail fence drawn along the depth axis (30 x 192 px): it stands with the others (fence_solid.gd).
 		var file := p.get_file()
 		var number := int(file.trim_prefix("isle-")) if file.begins_with("isle-") else 0
 		if number >= 1 and number <= 6: return "hut"
-		return "fence" if number in [7,9,10,11,12] else "rock"
+		return "fence" if number in [7,8,9,10,11,12] else "rock"
 	if "/door/" in p: return "door"
 	if "/details/inacc" in p:
 		return {1:"shelf",2:"table",3:"bed",4:"shelf",5:"fireplace",6:"cave_entrance"}.get(frame,"table")
@@ -409,6 +410,7 @@ func build_ground(screen: Dictionary) -> void:
 	buildings.sequences = host.sequences
 	structural_seen.clear()
 	fitted_built.clear()
+	fences.reset()
 	neighbour_actors.clear()
 	neighbour_states.clear()
 	# The current screen's own buildings carry its story state; a neighbour showing the
@@ -1739,6 +1741,7 @@ func is_structure(key: String, path: String) -> bool:
 func add_billboard(node: Node3D, e: Dictionary, id: int, key: String, collision: bool, screen: int) -> void:
 	var path := frame_path(e)
 	if castle_doors.has(path) and castle_doors.add(node,e,id,path,collision,screen): return
+	if key == "fence" and fences.has(path) and fences.add(node,e,id,key,collision,screen): return # solid posts and rails
 	var texture := clean_texture(path)
 	if texture == null: return
 	var d: Dictionary = host._frame(int(e.get("pseq",e.get("seq",0))),int(e.get("pframe",e.get("frame",1))))

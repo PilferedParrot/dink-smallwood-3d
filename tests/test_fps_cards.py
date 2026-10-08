@@ -33,24 +33,25 @@ GODOT = os.environ.get("GODOT") or shutil.which("godot") or shutil.which("godot4
 )
 pytestmark = pytest.mark.skipif(not Path(GODOT).is_file(), reason="Godot unavailable; set GODOT")
 
-# Scenes loaded for the second test: trees and bushes (376, 251), the pigpen's fences (439), castle walls (402),
-# the well and the save machine (408 has the machine), a signpost (376), the island's huts, fences and spears (764).
-SCENES = [376, 251, 439, 402, 408, 764, 731]
+# Scenes loaded for the second test: trees and bushes (376, 251), the pigpen's yard (439, 409, 441, 469: their fences are solid
+# now, tests/test_fps_fences.py, so the cards left are barrels, crates and grass), castle walls (402), the well and the save
+# machine (408 has the machine), a signpost (376), the island's huts and spears (764, 731).
+SCENES = [376, 251, 439, 402, 408, 764, 731, 409, 441, 469]
 
 
 def is_structure(path: str) -> bool:
     """The independent rule, read from the art's own folders and file names."""
     p = path.lower()
     name = p.rsplit("/", 1)[-1]
-    if "/lands/fence/" in p or "/struct/castle/" in p:
+    if "/struct/castle/" in p:  # the lands' rail fences and the island's (isle-07, 08) are solid posts and rails: no card
         return True
     if "innwalls" in p or "stnwalls" in p:  # walls
         return True
     if "/struct/island/" in p:  # isle-01..06 round huts, 07..12 rail fences; 13..18 spears and the torches stand up
         m = re.match(r"isle-(\d+)", name)
-        # isle-08 is a rail drawn along the depth axis, a 30 x 192 px post: a card in the +z plane would vanish
-        # edge-on from the side, so it stays a billboard (fp_world.model_key)
-        return bool(m) and 1 <= int(m.group(1)) <= 12 and int(m.group(1)) != 8
+        # isle-07 and isle-08 are solid posts and rails, never a card (fence_solid.gd); isle-09..12 (rail fences the map places
+        # nowhere) would keep a fixed card, as would the huts
+        return bool(m) and (1 <= int(m.group(1)) <= 6 or 9 <= int(m.group(1)) <= 12)
     if "/struct/bridge/" in p:  # brdge-04, 07, 09, 11 the rope railings stand as cards; the rest are decks, painted into the ground
         return int(re.search(r"(\d+)", name).group(1)) in (4, 7, 9, 11)
     if "/struct/landmark/" in p:  # landm-01..03 the well, 04..06 the stone bridge (a deck, painted), 07..12 signs
@@ -107,7 +108,7 @@ def test_every_card_of_the_map_is_a_billboard_unless_its_art_is_a_structure(swep
     keys = {(c["key"], c["mode"]) for c in swept}
     for kind in [("oak_tree", "billboard"), ("pine_tree", "billboard"), ("dead_tree", "billboard"), ("bush", "billboard"),
                  ("rock", "billboard"), ("well", "billboard"), ("save", "billboard"), ("knight", "billboard"), ("dragon", "billboard"),
-                 ("fence", "fixed"), ("wall", "fixed"), ("sign", "fixed")]:
+                 ("wall", "fixed"), ("sign", "fixed")]:
         assert kind in keys, kind
     # The island's huts are no cards any more: all 16 stand in 3D (tests/test_fps_huts.py), so no ("hut", "fixed") is swept.
     assert ("hut", "fixed") not in keys
@@ -116,11 +117,14 @@ def test_every_card_of_the_map_is_a_billboard_unless_its_art_is_a_structure(swep
     assert any("/stone/mdink/" in c["path"].lower() and c["mode"] == "billboard" for c in swept)
     # Both placed castle doors are fitted surfaces now (tests/test_fps_doors.py), so neither is a card.
     assert not any(c["path"].lower().endswith(("cdoor-01.png", "cdoor-06.png")) for c in swept)
-    # The island: rail fences fixed, spears and torches standing up (the huts, isle-01..06, are 3D pieces: no cards at all).
+    # The island: spears and torches standing up (the huts, isle-01..06, are 3D pieces: no cards at all; the rail fences, isle-07
+    # and isle-08, are solid posts and rails: tests/test_fps_fences.py).
     island = {(c["path"].rsplit("/", 1)[-1].lower(), c["mode"]) for c in swept if "/island/" in c["path"].lower()}
-    assert ("isle-07.png", "fixed") in island and ("isle-18.png", "billboard") in island
+    assert ("isle-18.png", "billboard") in island
     assert not any(name in ("isle-%02d.png" % n for n in range(1, 7)) for name, mode in island)
-    assert ("isle-08.png", "billboard") in island  # the depth-axis rail post: edge-on from the side as a card
+    assert not any(name in ("isle-07.png", "isle-08.png") for name, mode in island)
+    # The lands' rail fences are solid too: no card of any of them.
+    assert not any("/lands/fence/" in c["path"].lower() for c in swept)
     assert ("torch-01.png", "billboard") in island
 
 
