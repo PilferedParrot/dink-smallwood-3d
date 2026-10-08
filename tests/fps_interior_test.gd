@@ -7,6 +7,7 @@ extends SceneTree
 #   table     the round table's footprint radius and its top's height; its legs
 #   bed       each bed's width and height
 #   hearth    the hearth's height and whether a recess and a stack stand in it
+#   fire      the fire's plane depth (m) and whether it is a fixed card; hearthz the hearth's hotspot depth (m)
 #   pie       the pie's height above the floor, and the table top's
 # Verdict: written 2026-10-07 (Sonnet 5.5 subagent).
 const GAME = preload("res://scripts/fps_game.gd")
@@ -58,7 +59,13 @@ func _run() -> void:
 		elif key == "fireplace":
 			var surfaces := 0
 			for m in node.find_children("*", "MeshInstance3D", true, false): surfaces += (m as MeshInstance3D).mesh.get_surface_count()
+			print("INT hearthz ", snappedf(node.global_position.z, 0.001))
 			print("INT hearth ", solid, " ", snappedf(box.size.y, 0.001), " ", snappedf(box.size.x, 0.001), " ", snappedf(box.size.z, 0.001))
+		elif int(e.get("pseq", e.get("seq", 0))) == 86:
+			# the fire (fire-01, drawn over the hearth's firebox): where its plane stands, and whether it still turns to the camera
+			var model := node.get_node_or_null("Model")
+			var fixed: bool = model is Sprite3D and (model as Sprite3D).billboard == BaseMaterial3D.BILLBOARD_DISABLED
+			print("INT fire ", snappedf(node.global_position.z, 0.001), " ", fixed)
 		elif int(e.get("pseq", 0)) == 421 and int(e.get("pframe", 0)) == 11:
 			print("INT pie ", snappedf(node.position.y, 0.001))
 	var top := 0.0

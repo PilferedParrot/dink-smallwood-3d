@@ -29,8 +29,13 @@ class MB:
 	var index := PackedInt32Array()
 	var size := Vector2.ONE
 	var o := Vector2.ZERO
+	# The ground's foreshortening: a ground depth z drawn by the original camera at the picture's row cz + (z - cz) * zk stands in the
+	# world at z. The picture's own coordinates are kept for the texture (the camera saw a circle on the ground squashed to zk), the
+	# world is the circle itself. 1 leaves the sprite's frame as drawn.
+	var zc := 0.0
+	var zk := 1.0
 	func vert(x: float, y: float, z: float, uv: Vector2) -> int:
-		verts.append(Vector3(x + o.x, y, z + o.y) * 0.025)
+		verts.append(Vector3(x + o.x, y, zc + (z - zc) / zk + o.y) * 0.025)
 		uvs.append(uv / size)
 		return verts.size() - 1
 	func quad(a: int, b: int, c: int, d: int) -> void:
@@ -352,6 +357,11 @@ func round_surfaces(fit: Dictionary, path: String, o: Vector2) -> Array:
 	var cx := float(fit.cx)
 	var cz := float(fit.cz)
 	var k := float(fit.k)
+	# The picture is the camera's view of a round table: its ground circle drawn at aspect k. Everything below is built in the
+	# picture's coordinates (the ring is the ellipse the sprite shows) and the vertices are stood at their true ground depth, so
+	# the table is as deep as it is wide and its legs are square on the circle they stand on.
+	mb.zc = cz
+	mb.zk = k
 	var rt := float(fit.top.r)
 	var ht := float(fit.top.height)
 	var ru := float(fit.under.r)
@@ -395,7 +405,7 @@ func round_surfaces(fit: Dictionary, path: String, o: Vector2) -> Array:
 			var src: Dictionary = legs[int(leg.source)]
 			var st := float(src.angle)
 			anchor = Vector2(cx + float(fit.rho) * cos(st), cz + k * float(fit.rho) * sin(st)) - at
-		prism(mb, rect_base(at.x - half, at.x + half, at.y - half, at.y + half), 0.0, hu, anchor, false)
+		prism(mb, rect_base(at.x - half, at.x + half, at.y - half * k, at.y + half * k), 0.0, hu, anchor, false) # square on the ground
 	var surfaces: Array = [[mb.mesh(), material(path)]]
 	cache[key] = surfaces
 	return _shifted(surfaces, o)
@@ -693,6 +703,33 @@ func add_doors(screen: int, parent: Node3D) -> void:
 		lintel.set_surface_override_material(0, material(stone, true))
 		parent.add_child(lintel)
 		parent.set_meta("exit_door", true)
+
+# --- What stands in a recess ----------------------------------------------------------------------------------------------------
+# A sprite the original draws inside the opening of a fitted body (the fire in the hearth: fire-01, drawn over the firebox, its own
+# brick the box's inner sides) is the back of that recess, not a card in front of it. Where the sprite's picture lies within an
+# opening's picture (to `SEAT_SLACK` px) and it is drawn after the body, it is seated: its plane at the recess's back (the body's
+# back, frontal_dims z_b) and its hotspot at the height the picture gives it against the body's own front plane (the picture is the
+# same one the opening's back wears), so the camera sees the same rows. Returns {} if there is no such opening, else
+# {"z": the plane's depth in world px, "y": the hotspot's height in px}. `size`: the picture's size in px.
+const SEAT_SLACK := 4.0
+func recess_seat(e: Dictionary, size: Vector2, screen: int) -> Dictionary:
+	if absf(float(e.get("size", 100)) - 100.0) >= 0.5: return {}
+	var o := hotspot(e)
+	var mine := Rect2(Vector2(float(e.get("x", 0)), float(e.get("y", 0))) - o, size)
+	var order := float(e.get("que", 0)) if int(e.get("que", 0)) != 0 else float(e.get("y", 0))
+	for w in world.drawn_sprites(screen, int(world.host.vm.globals.get("vision", 0))):
+		var fit := fit_of(world.frame_path(w))
+		if str(fit.get("kind", "")) != "frontal" or not fit.has("opening") or not handles(w): continue
+		var w_order := float(w.get("que", 0)) if int(w.get("que", 0)) != 0 else float(w.get("y", 0))
+		if order <= w_order: continue
+		var wo := hotspot(w)
+		var top_left := Vector2(float(w.get("x", 0)), float(w.get("y", 0))) - wo
+		var op: Dictionary = fit.opening
+		var hole := Rect2(top_left + Vector2(float(op.cols[0]), float(op.rows[0])), Vector2(float(op.cols[1]) - float(op.cols[0]), float(op.rows[1]) - float(op.rows[0])))
+		if not hole.grow(SEAT_SLACK).encloses(mine): continue
+		var dims := frontal_dims(w, fit, wo, screen)
+		return {"z": top_left.y + float(dims.z_b) + 0.5, "y": float(dims.z_f) - (float(e.get("y", 0)) - top_left.y)}
+	return {}
 
 # --- What stands on a surface ---------------------------------------------------------------------------------------------------
 # The height of the highest solid top the original camera's ray through world px `foot` meets among the screen's furniture drawn

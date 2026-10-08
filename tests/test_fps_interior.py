@@ -85,6 +85,7 @@ def test_dinks_house_stands_solid_with_no_sky_and_a_door(tmp_path):
     # the table: a top of the sprite's radius (32 px), on legs, 0.8 m high; the pie stands on it
     solid, wx, wy, wz = lines["table"][0]
     assert solid == "true" and abs(float(wx) - 64.3 * SCALE) < 0.05 and 0.75 < float(wy) < 0.85
+    assert abs(float(wz) - float(wx)) < 0.05, (wx, wz)  # a round table is as deep as it is wide (0.3.0: its depth was the picture's, x0.57)
     top = float(lines["tabletop"][0][0])
     assert abs(float(lines["pie"][0][0]) - top) < 0.005 and top > 0.7, (lines["pie"], top)
     # two beds, each a box of the sprite's size (121 px wide, 31 px high)
@@ -94,3 +95,8 @@ def test_dinks_house_stands_solid_with_no_sky_and_a_door(tmp_path):
     # the hearth reaches the ceiling with its chimney
     solid, hy, hx, hz = lines["hearth"][0]
     assert solid == "true" and abs(float(hy) - room) < 0.15, lines["hearth"]
+    # the fire stands inside the firebox, at its back (the hearth's front plane is 1 px south of its hotspot; the recess is
+    # deep as the wall behind it allows, 20 px), a fixed card there: 0.3.0 left it a camera-facing card 7 px behind the hearth's front, proud of the recess
+    fire_z, fire_fixed = lines["fire"][0]
+    depth_in = float(lines["hearthz"][0][0]) + SCALE - float(fire_z)
+    assert fire_fixed == "true" and depth_in > 0.45, (lines["fire"], lines["hearthz"])
