@@ -1,0 +1,215 @@
+{
+  "selected": {
+    "profile": {
+      "major_radius_px": 4.954506872311198,
+      "minor_radius_px": 2.350465600957683,
+      "wire_radius_px": 0.9802878337013345,
+      "plane_tilt_deg": 34.52124714780558,
+      "center_offset_px": -1.9470964678349945,
+      "phase_px": -0.5739165616123918,
+      "right_link_count": 19
+    },
+    "train_loss": 0.08506677795051559,
+    "holdout_loss": 0.09794610728186405,
+    "all_stats": {
+      "pixels": 363,
+      "envelope_pixels": 396,
+      "occupancy": 0.9166666666666666,
+      "hole_areas": [
+        6,
+        6,
+        6,
+        5,
+        4,
+        3,
+        3
+      ],
+      "hole_count": 7
+    },
+    "source_stats": {
+      "pixels": 376,
+      "envelope_pixels": 403,
+      "occupancy": 0.9330024813895782,
+      "hole_areas": [
+        8,
+        4,
+        4,
+        3,
+        3,
+        3,
+        2
+      ],
+      "hole_count": 7
+    }
+  },
+  "runs": [
+    {
+      "profile": {
+        "major_radius_px": 4.859908074469468,
+        "minor_radius_px": 1.8887501712888055,
+        "wire_radius_px": 1.154737368906392,
+        "plane_tilt_deg": 20.316053729573262,
+        "center_offset_px": -1.9711166986239255,
+        "phase_px": -3.9421995161006707,
+        "right_link_count": 18
+      },
+      "train_loss": 0.10631999517333464,
+      "holdout_loss": 0.14843771242191825,
+      "all_stats": {
+        "pixels": 368,
+        "envelope_pixels": 391,
+        "occupancy": 0.9411764705882353,
+        "hole_areas": [
+          4,
+          4,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          1,
+          1,
+          1
+        ],
+        "hole_count": 11
+      },
+      "source_stats": {
+        "pixels": 376,
+        "envelope_pixels": 403,
+        "occupancy": 0.9330024813895782,
+        "hole_areas": [
+          8,
+          4,
+          4,
+          3,
+          3,
+          3,
+          2
+        ],
+        "hole_count": 7
+      }
+    },
+    {
+      "profile": {
+        "major_radius_px": 4.954506872311198,
+        "minor_radius_px": 2.350465600957683,
+        "wire_radius_px": 0.9802878337013345,
+        "plane_tilt_deg": 34.52124714780558,
+        "center_offset_px": -1.9470964678349945,
+        "phase_px": -0.5739165616123918,
+        "right_link_count": 19
+      },
+      "train_loss": 0.08506677795051559,
+      "holdout_loss": 0.09794610728186405,
+      "all_stats": {
+        "pixels": 363,
+        "envelope_pixels": 396,
+        "occupancy": 0.9166666666666666,
+        "hole_areas": [
+          6,
+          6,
+          6,
+          5,
+          4,
+          3,
+          3
+        ],
+        "hole_count": 7
+      },
+      "source_stats": {
+        "pixels": 376,
+        "envelope_pixels": 403,
+        "occupancy": 0.9330024813895782,
+        "hole_areas": [
+          8,
+          4,
+          4,
+          3,
+          3,
+          3,
+          2
+        ],
+        "hole_count": 7
+      }
+    },
+    {
+      "profile": {
+        "major_radius_px": 4.880116089718746,
+        "minor_radius_px": 2.548673598733478,
+        "wire_radius_px": 0.9560184499276096,
+        "plane_tilt_deg": 42.17934940269073,
+        "center_offset_px": -1.9328491360986755,
+        "phase_px": 2.8663601622037342,
+        "right_link_count": 20
+      },
+      "train_loss": 0.09562045523921317,
+      "holdout_loss": 0.11320995814055959,
+      "all_stats": {
+        "pixels": 360,
+        "envelope_pixels": 390,
+        "occupancy": 0.9230769230769231,
+        "hole_areas": [
+          5,
+          4,
+          4,
+          4,
+          3,
+          3,
+          2
+        ],
+        "hole_count": 7
+      },
+      "source_stats": {
+        "pixels": 376,
+        "envelope_pixels": 403,
+        "occupancy": 0.9330024813895782,
+        "hole_areas": [
+          8,
+          4,
+          4,
+          3,
+          3,
+          3,
+          2
+        ],
+        "hole_count": 7
+      }
+    },
+    {
+      "profile": {
+        "major_radius_px": 5.038826626877531,
+        "minor_radius_px": 1.9284527736408994,
+        "wire_radius_px": 1.3655844509201969,
+        "plane_tilt_deg": 42.406469676646765,
+        "center_offset_px": -1.7830119170597132,
+        "phase_px": 2.198531348011275,
+        "right_link_count": 21
+      },
+      "train_loss": 0.12148858584860792,
+      "holdout_loss": 0.1173572687501967,
+      "all_stats": {
+        "pixels": 393,
+        "envelope_pixels": 393,
+        "occupancy": 1.0,
+        "hole_areas": [],
+        "hole_count": 0
+      },
+      "source_stats": {
+        "pixels": 376,
+        "envelope_pixels": 403,
+        "occupancy": 0.9330024813895782,
+        "hole_areas": [
+          8,
+          4,
+          4,
+          3,
+          3,
+          3,
+          2
+        ],
+        "hole_count": 7
+      }
+    }
+  ]
+}

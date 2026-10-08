@@ -25,7 +25,7 @@ func _run() -> void:
 		game.load_map(int(spec[0]), false)
 		await create_timer(0.5).timeout
 		game.vm.cancel_all()
-		var row := {"screen": int(spec[0]), "name": str(spec[1]), "parts": {}, "chain_vertices": {}, "chain_centers": {}}
+		var row := {"screen": int(spec[0]), "name": str(spec[1]), "parts": {}, "chain_vertices": {}, "chain_centers": {}, "chain_rings": {}, "chain_colors": {}, "chain_color_counts": {}, "chain_segments": {}, "chain_vertex_color": {}, "chain_projected_vertices": {}}
 		for id in game.entities.keys():
 			if id == 1: continue
 			var e: Dictionary = game.entities[id]
@@ -62,14 +62,50 @@ func _run() -> void:
 					if str(part.name).begins_with("Chain"):
 						row["parts"][str(part.name)] = []
 						row["chain_vertices"][str(part.name)] = verts.size()
+						var material: StandardMaterial3D = part.get_surface_override_material(0)
+						row["chain_vertex_color"][str(part.name)] = material != null and material.vertex_color_use_as_albedo
+						var color_values: PackedColorArray = part.mesh.surface_get_arrays(0)[Mesh.ARRAY_COLOR]
+						var colors := {}
+						var counts := {}
+						for color in color_values:
+							var rgb := [roundi(color.r*255.0),roundi(color.g*255.0),roundi(color.b*255.0)]
+							colors[str(rgb)] = rgb
+							counts[str(rgb)] = int(counts.get(str(rgb),0))+1
+						row["chain_colors"][str(part.name)] = colors.values()
+						row["chain_color_counts"][str(part.name)] = counts.values()
+						var arc := int(part.get_meta("chain_arc_sections",12))
+						var tube := int(part.get_meta("chain_tube_sections",6))
+						row["chain_segments"][str(part.name)] = [arc,tube]
+						if control == "" and str(part.name) == "ChainRight":
+							var projected: Array = []
+							var source_origin: Vector2 = game.fp_world.screen_origin(int(spec[0]))
+							for vertex in verts:
+								var world_vertex: Vector3 = part.to_global(vertex)
+								projected.append([source_origin.x+320.0+world_vertex.x/SCALE,source_origin.y+200.0+(world_vertex.z-world_vertex.y)/SCALE])
+							row["chain_projected_vertices"][str(part.name)] = projected
+						var ring_vertices := arc*tube*6
+						var quarter := int(arc/4)*tube*6
+						var half := int(arc/2)*tube*6
+						var three_quarter := int(3*arc/4)*tube*6
+						var inner := int(tube/2)*6
 						var centers: Array = []
-						for first in range(0,verts.size(),432): # one link: 12 ellipse sections × 6 tube sections × 6 triangle vertices
+						var rings: Array = []
+						for first in range(0,verts.size(),ring_vertices):
+							if first+ring_vertices > verts.size(): break
 							var center := Vector3.ZERO
-							for j in range(first,mini(first+432,verts.size())): center += part.to_global(verts[j])
-							center /= float(mini(432,verts.size()-first))
+							for j in range(first,first+ring_vertices): center += part.to_global(verts[j])
+							center /= float(ring_vertices)
 							var screen_origin: Vector2 = game.fp_world.screen_origin(int(spec[0]))
 							centers.append([screen_origin.x+320.0+center.x/SCALE,center.y/SCALE,screen_origin.y+200.0+center.z/SCALE])
+							var side0 := (part.to_global(verts[first+quarter])+part.to_global(verts[first+quarter+inner]))*0.5
+							var side1 := (part.to_global(verts[first+three_quarter])+part.to_global(verts[first+three_quarter+inner]))*0.5
+							var major0 := (part.to_global(verts[first])+part.to_global(verts[first+inner]))*0.5
+							var major1 := (part.to_global(verts[first+half])+part.to_global(verts[first+half+inner]))*0.5
+							var minor_vector := (side0-side1)*0.5/SCALE
+							var wire := part.to_global(verts[first+quarter]).distance_to(part.to_global(verts[first+quarter+inner]))*0.5/SCALE
+							rings.append({"minor": [minor_vector.x,minor_vector.y,minor_vector.z], "major": major0.distance_to(major1)*0.5/SCALE, "wire": wire})
 						row["chain_centers"][str(part.name)] = centers
+						row["chain_rings"][str(part.name)] = rings
 						continue
 					var coordinates: Array = []
 					for v in verts:

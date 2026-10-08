@@ -1,0 +1,58 @@
+{
+  "ChainLeft": {
+    "links": 18,
+    "sections": [
+      16,
+      8
+    ],
+    "major_radius_px": 4.40000087022781,
+    "minor_radius_px": 3.0000020299219115,
+    "wire_radius_px": 0.559995919466019,
+    "source_projected_width_range_px": [
+      7.0185194151001715,
+      7.0554930379370395
+    ],
+    "source_projected_pitch_range_px": [
+      8.206491547756157,
+      8.207262190922272
+    ],
+    "adjacent_plane_dot_range": [
+      0.4999968703275544,
+      0.5000024215939128
+    ],
+    "mesh_palette_vertex_counts": {
+      "(49, 49, 57)": 8640,
+      "(74, 95, 106)": 432,
+      "(33, 33, 33)": 3456,
+      "(70, 74, 90)": 1296
+    }
+  },
+  "ChainRight": {
+    "links": 20,
+    "sections": [
+      16,
+      8
+    ],
+    "major_radius_px": 4.40000265836716,
+    "minor_radius_px": 2.9999958182830917,
+    "wire_radius_px": 0.559996068477631,
+    "source_projected_width_range_px": [
+      6.675538874298417,
+      7.197697576588887
+    ],
+    "source_projected_pitch_range_px": [
+      7.834517114670119,
+      7.835130080499463
+    ],
+    "adjacent_plane_dot_range": [
+      0.4999981878622629,
+      0.50000399828459
+    ],
+    "mesh_palette_vertex_counts": {
+      "(49, 49, 57)": 9600,
+      "(74, 95, 106)": 480,
+      "(33, 33, 33)": 3840,
+      "(70, 74, 90)": 1440
+    }
+  }
+}

@@ -1,0 +1,46 @@
+{
+  "source": "assets/graphics/struct/Castle/cdoor-06.png",
+  "source_sha256": "afad48fec1ccbb4318b21aff1746d7a9296d26d831f415f81cc5670b495bf6c3",
+  "method": "tools/fit_chain_geometry.py; deterministic seed 20261008; 4x validation; train rows 55..90,103..108; held out 91..102",
+  "profile": {
+    "major_radius_px": 4.954506872311198,
+    "minor_radius_px": 2.350465600957683,
+    "wire_radius_px": 0.9802878337013345,
+    "plane_tilt_deg": 34.52124714780558,
+    "center_offset_px": -1.9470964678349945,
+    "phase_px": -0.5739165616123918,
+    "right_link_count": 19
+  },
+  "fit_train_loss": 0.08506677795051559,
+  "fit_holdout_loss": 0.09794610728186405,
+  "fitted_source_stats": {
+    "pixels": 376,
+    "envelope_pixels": 403,
+    "occupancy": 0.9330024813895782,
+    "hole_areas": [
+      8,
+      4,
+      4,
+      3,
+      3,
+      3,
+      2
+    ],
+    "hole_count": 7
+  },
+  "fitted_mesh_stats_4x": {
+    "pixels": 363,
+    "envelope_pixels": 396,
+    "occupancy": 0.9166666666666666,
+    "hole_areas": [
+      6,
+      6,
+      6,
+      5,
+      4,
+      3,
+      3
+    ],
+    "hole_count": 7
+  }
+}
