@@ -30,10 +30,19 @@ var menu_scroll: ScrollContainer
 var page_serial := 0
 var return_page := "title"
 var toast_backing: PanelContainer
+var heading: Label
+var equipment_name: Label
+var menu_footer: Button
+var modal_feedback: PanelContainer
+var modal_feedback_text: Label
+var panel_style: StyleBoxTexture
+var title_panel_style: StyleBoxEmpty
+var panel_underlay: ColorRect
+var hint_backing: PanelContainer
 const CREAM := Color("f6ebcb")
 const GOLD := Color("ffdc79")
 const INK := Color("292019")
-const MARBLE = preload("res://assets/graphics/inter/Text-box/main-01.png")
+const CHOICE_BACKDROP = preload("res://assets/graphics/inter/Text-box/main-03.png")
 const LOGO = preload("res://assets/graphics/Startme/options/dinkl-01.png")
 
 func _ready() -> void:
@@ -52,16 +61,25 @@ func _ready() -> void:
 	menu_theme = Theme.new()
 	menu_theme.default_font_size = 22
 	menu_theme.set_color("font_color", "Label", CREAM)
-	for state in ["normal", "hover", "pressed", "focus"]:
-		var box := StyleBoxFlat.new()
-		box.bg_color = Color("34261c") if state == "normal" else Color("604727")
-		box.border_color = GOLD if state == "focus" else Color("9b7f51")
-		box.set_border_width_all(4 if state == "focus" else 2)
-		box.content_margin_left = 20
-		box.content_margin_right = 20
-		box.content_margin_top = 12
-		box.content_margin_bottom = 12
+	# Reuse an original chest recess; no new bitmap or invented ornament.
+	var button_texture := AtlasTexture.new()
+	button_texture.atlas = preload("res://assets/graphics/inter/Menu/menu-01.png")
+	button_texture.region = Rect2(239, 82, 69, 61)
+	for state in ["normal", "hover", "pressed", "disabled"]:
+		var box := StyleBoxTexture.new()
+		box.texture = button_texture
+		for side in [SIDE_LEFT, SIDE_TOP, SIDE_RIGHT, SIDE_BOTTOM]:
+			box.set_texture_margin(side, 5)
+		box.axis_stretch_horizontal = StyleBoxTexture.AXIS_STRETCH_MODE_TILE
+		box.modulate_color = Color.WHITE if state == "normal" else Color("ffe4af")
+		box.content_margin_left = 20; box.content_margin_right = 20
+		box.content_margin_top = 8; box.content_margin_bottom = 8
 		menu_theme.set_stylebox(state, "Button", box)
+	var focus_frame := StyleBoxFlat.new()
+	focus_frame.bg_color = Color.TRANSPARENT
+	focus_frame.border_color = GOLD
+	focus_frame.set_border_width_all(4)
+	menu_theme.set_stylebox("focus", "Button", focus_frame)
 	menu_theme.set_color("font_color", "Button", CREAM)
 	menu_theme.set_color("font_hover_color", "Button", Color.WHITE)
 	menu_theme.set_color("font_focus_color", "Button", Color.WHITE)
@@ -108,16 +126,23 @@ func _ready() -> void:
 	crosshair.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	root.add_child(crosshair)
 	hint = Label.new()
-	hint.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_WIDE)
-	hint.offset_top = -38
-	hint.offset_left = 20
-	hint.offset_right = -20
+	hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	hint.add_theme_color_override("font_shadow_color", Color.BLACK)
 	hint.add_theme_constant_override("shadow_offset_x", 2)
 	hint.add_theme_constant_override("shadow_offset_y", 2)
-	hint.add_theme_font_size_override("font_size", 18)
-	root.add_child(hint)
+	hint.add_theme_font_size_override("font_size", 20)
+	hint_backing = PanelContainer.new()
+	hint_backing.anchor_left = 0.5; hint_backing.anchor_right = 0.5
+	hint_backing.anchor_top = 1.0; hint_backing.anchor_bottom = 1.0
+	hint_backing.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var hint_style := StyleBoxFlat.new()
+	hint_style.bg_color = Color("17130f")
+	hint_style.content_margin_left = 12; hint_style.content_margin_right = 12
+	hint_style.content_margin_top = 6; hint_style.content_margin_bottom = 6
+	hint_backing.add_theme_stylebox_override("panel", hint_style)
+	root.add_child(hint_backing)
+	hint_backing.add_child(hint)
 	toast = Label.new()
 	toast.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	toast.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -154,6 +179,10 @@ func _ready() -> void:
 	title_art.anchor_left = 0.06; title_art.anchor_right = 0.52
 	title_art.anchor_top = 0.10; title_art.anchor_bottom = 0.54
 	root.add_child(title_art)
+	panel_underlay = ColorRect.new()
+	panel_underlay.color = Color("17130f")
+	panel_underlay.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	root.add_child(panel_underlay)
 	panel = PanelContainer.new()
 	panel.anchor_left = 0.08
 	panel.anchor_right = 0.92
@@ -165,21 +194,49 @@ func _ready() -> void:
 	panel.offset_bottom = 0
 	panel.custom_minimum_size = Vector2(360, 0)
 	var style := StyleBoxTexture.new()
-	style.texture = MARBLE
-	style.texture_margin_left = 8; style.texture_margin_right = 8
-	style.texture_margin_top = 8; style.texture_margin_bottom = 8
+	# FreeDink's actual choice renderer uses main02/03/04, not the unused
+	# pale main01 plate. Tile the original dark dither rather than stretching it.
+	style.texture = CHOICE_BACKDROP
+	style.axis_stretch_horizontal = StyleBoxTexture.AXIS_STRETCH_MODE_TILE
+	style.axis_stretch_vertical = StyleBoxTexture.AXIS_STRETCH_MODE_TILE
 	style.content_margin_left = 32
 	style.content_margin_right = 32
 	style.content_margin_top = 24
 	style.content_margin_bottom = 24
+	panel_style = style
+	title_panel_style = StyleBoxEmpty.new()
+	title_panel_style.content_margin_left = 32; title_panel_style.content_margin_right = 32
+	title_panel_style.content_margin_top = 24; title_panel_style.content_margin_bottom = 24
 	panel.add_theme_stylebox_override("panel", style)
 	panel.mouse_filter = Control.MOUSE_FILTER_STOP
 	root.add_child(panel)
 	vines_left = _vine("res://assets/graphics/inter/Text-box/main-02.png")
 	vines_right = _vine("res://assets/graphics/inter/Text-box/main-04.png")
 	var contents := VBoxContainer.new()
-	contents.add_theme_constant_override("separation", 12)
+	contents.add_theme_constant_override("separation", 8)
 	panel.add_child(contents)
+	var heading_row := HBoxContainer.new()
+	heading_row.add_theme_constant_override("separation", 12)
+	contents.add_child(heading_row)
+	heading = Label.new()
+	heading.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	heading.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	heading.add_theme_color_override("font_color", GOLD)
+	heading_row.add_child(heading)
+	modal_feedback = PanelContainer.new()
+	modal_feedback.add_theme_stylebox_override("panel", toast_style)
+	heading_row.add_child(modal_feedback)
+	modal_feedback_text = Label.new()
+	modal_feedback_text.add_theme_color_override("font_color", GOLD)
+	modal_feedback_text.add_theme_font_size_override("font_size", 20)
+	modal_feedback_text.clip_text = true
+	modal_feedback.add_child(modal_feedback_text)
+	modal_feedback.hide()
+	equipment_name = Label.new()
+	equipment_name.add_theme_color_override("font_color", CREAM)
+	equipment_name.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	contents.add_child(equipment_name)
+	equipment_name.hide()
 	var scroll := ScrollContainer.new()
 	menu_scroll = scroll
 	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
@@ -188,7 +245,7 @@ func _ready() -> void:
 	contents.add_child(scroll)
 	column = VBoxContainer.new()
 	column.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	column.add_theme_constant_override("separation", 12)
+	column.add_theme_constant_override("separation", 8)
 	scroll.add_child(column)
 	dialogue_continue = Button.new()
 	dialogue_continue.custom_minimum_size.y = 52
@@ -196,8 +253,14 @@ func _ready() -> void:
 	dialogue_continue.pressed.connect(_continue_dialogue)
 	dialogue_continue.hide()
 	contents.add_child(dialogue_continue)
+	menu_footer = Button.new()
+	menu_footer.custom_minimum_size.y = 48
+	menu_footer.focus_mode = Control.FOCUS_ALL
+	menu_footer.pressed.connect(_button_pressed.bind("back", null))
+	contents.add_child(menu_footer)
+	menu_footer.hide()
 	# Instructions and notifications must render above the modal dimming layer.
-	root.move_child(hint, -1)
+	root.move_child(hint_backing, -1)
 	root.move_child(toast_backing, -1)
 	_set_playing_visuals(false)
 
@@ -211,11 +274,23 @@ func _vine(path: String) -> TextureRect:
 	return vine
 
 func _process(_delta: float) -> void:
+	panel_underlay.visible = panel.visible and page != "title"
 	if panel.visible:
-		vines_left.position = panel.position + Vector2(-78, -22)
-		vines_left.size = Vector2(125, minf(panel.size.y + 44, 440))
-		vines_right.position = panel.position + Vector2(panel.size.x - 50, -22)
+		panel_underlay.position = panel.position
+		panel_underlay.size = panel.size
+		vines_left.position = panel.position + Vector2(-65, 0)
+		vines_left.size = Vector2(80, 140)
+		vines_right.position = panel.position + Vector2(panel.size.x - 15, 0)
 		vines_right.size = vines_left.size
+	# A solid plaque keeps control instructions readable against every scene.
+	var available := root.size.x - 40
+	var font_size := hint.get_theme_font_size("font_size")
+	var text_width := hint.get_theme_font("font").get_string_size(hint.text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size).x
+	var width := minf(available, text_width + 24)
+	hint_backing.offset_left = -width / 2; hint_backing.offset_right = width / 2
+	var height := maxf(38, hint.get_minimum_size().y + 12)
+	hint_backing.offset_bottom = -6 if modal else -150
+	hint_backing.offset_top = hint_backing.offset_bottom - height
 
 func _make_bar(fill: Color) -> ProgressBar:
 	var bar := ProgressBar.new()
@@ -242,17 +317,18 @@ func _layout_for(next_page: String) -> void:
 	if next_page == "title":
 		panel.anchor_left = 0.56; panel.anchor_right = 0.94
 		panel.anchor_top = 0.12; panel.anchor_bottom = 0.86
-		overlay.color = Color(0.025, 0.015, 0.008, 0.97)
+		overlay.color = Color.BLACK
 	elif next_page == "dialogue":
 		panel.anchor_left = 0.12; panel.anchor_right = 0.88
-		panel.anchor_top = 0.64; panel.anchor_bottom = 0.93
+		panel.anchor_top = 0.58; panel.anchor_bottom = 0.93
 		overlay.color = Color(0.025, 0.015, 0.008, 0.08)
 	else:
 		panel.anchor_left = 0.14; panel.anchor_right = 0.86
 		panel.anchor_top = 0.07; panel.anchor_bottom = 0.90
 		overlay.color = Color(0.025, 0.015, 0.008, 0.72)
 	title_art.visible = next_page == "title"
-	vines_left.show(); vines_right.show()
+	panel.add_theme_stylebox_override("panel", title_panel_style if next_page == "title" else panel_style)
+	vines_left.visible = next_page != "title"; vines_right.visible = next_page != "title"
 
 func _ensure_controller_navigation() -> void:
 	var buttons := {"ui_accept": JOY_BUTTON_A, "ui_cancel": JOY_BUTTON_B, "ui_up": JOY_BUTTON_DPAD_UP, "ui_down": JOY_BUTTON_DPAD_DOWN, "ui_left": JOY_BUTTON_DPAD_LEFT, "ui_right": JOY_BUTTON_DPAD_RIGHT}
@@ -283,7 +359,6 @@ func _input(event: InputEvent) -> void:
 func _update_hint() -> void:
 	if not is_instance_valid(hint): return
 	if modal:
-		hint.offset_top = -38
 		if page == "loading":
 			hint.text = "Loading Stonebrook…"
 			return
@@ -294,9 +369,10 @@ func _update_hint() -> void:
 		else:
 			var back := "Resume" if return_page == "game" else "Back"
 			hint.text = "D-pad / LS  Choose     A  Confirm" if controller_active else "Arrows  Choose     Enter or click  Confirm"
+			if page == "settings":
+				hint.text += "     Left / right  Adjust" if not controller_active else "     Left / right  Adjust"
 			if page != "title": hint.text += "     B  " + back if controller_active else "     Esc  " + back
 		return
-	hint.offset_top = -190
 	if controller_active:
 		hint.text = "LS  Move   RS  Look   RT / X  Attack   A  Talk   Back  Equipment   Start  Pause"
 	else:
@@ -305,6 +381,7 @@ func _update_hint() -> void:
 		hint.text += "     LT / Y  Magic" if controller_active else "     Right click  Magic"
 
 func _clear(title: String, next_page: String) -> void:
+	_clear_toast()
 	if next_page == "pause": return_page = "game"
 	elif next_page == "title": return_page = "title"
 	elif next_page != page and next_page not in ["dialogue", "loading"]:
@@ -315,6 +392,8 @@ func _clear(title: String, next_page: String) -> void:
 		column.remove_child(child)
 		child.queue_free()
 	dialogue_continue.hide()
+	menu_footer.hide()
+	equipment_name.hide()
 	modal = true
 	dialogue_mode = false
 	page = next_page
@@ -323,7 +402,8 @@ func _clear(title: String, next_page: String) -> void:
 	_set_playing_visuals(false)
 	overlay.show()
 	panel.show()
-	_label(title, 32, INK)
+	heading.text = title
+	heading.add_theme_font_size_override("font_size", roundi(32.0 * text_scale))
 	_update_hint()
 	_reset_scroll_after_layout.call_deferred(page_serial)
 
@@ -334,7 +414,7 @@ func _reset_scroll_after_layout(serial: int) -> void:
 	await get_tree().process_frame
 	if serial == page_serial and panel.visible: menu_scroll.scroll_vertical = 0
 
-func _label(text: String, size: int = 22, color: Color = INK) -> Label:
+func _label(text: String, size: int = 22, color: Color = CREAM) -> Label:
 	var label := Label.new()
 	label.text = text
 	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
@@ -365,8 +445,13 @@ func _focus() -> void:
 	for child in _focusable_children(column):
 		if child is Control and child.focus_mode != Control.FOCUS_NONE:
 			if child is BaseButton and child.disabled: continue
-			child.call_deferred("grab_focus")
-			break
+			_grab_current_focus.call_deferred(child, page_serial)
+			return
+	if menu_footer.visible: _grab_current_focus.call_deferred(menu_footer, page_serial)
+
+func _grab_current_focus(child: Control, serial: int) -> void:
+	if serial == page_serial and is_instance_valid(child) and child.is_inside_tree() and child.is_visible_in_tree():
+		child.grab_focus()
 
 func _focusable_children(node: Node) -> Array[Control]:
 	var found: Array[Control] = []
@@ -380,9 +465,13 @@ func set_text_scale(value: float) -> void:
 	text_scale = clampf(value, 0.85, 1.3)
 	if not is_instance_valid(root): return
 	menu_theme.default_font_size = roundi(22.0 * text_scale)
-	hint.add_theme_font_size_override("font_size", roundi(18.0 * text_scale))
+	hint.add_theme_font_size_override("font_size", roundi(20.0 * text_scale))
 	toast.add_theme_font_size_override("font_size", roundi(22.0 * text_scale))
 	status_dock.set_text_scale(text_scale)
+	heading.add_theme_font_size_override("font_size", roundi(32.0 * text_scale))
+	equipment_name.add_theme_font_size_override("font_size", roundi(22.0 * text_scale))
+	modal_feedback_text.add_theme_font_size_override("font_size", roundi(20.0 * text_scale))
+	menu_footer.custom_minimum_size.y = roundi(48.0 * text_scale)
 	for node in column.get_children():
 		if node.has_meta("base_font_size"):
 			node.add_theme_font_size_override("font_size", roundi(float(node.get_meta("base_font_size")) * text_scale))
@@ -400,7 +489,7 @@ func show_title(has_save: bool) -> void:
 	_button("Credits & support", "credits")
 	_button("Quit", "quit")
 	_label("Move with WASD. Look with the mouse.\nE to talk. Left click to attack.\nI for equipment. Esc to pause.\nController? See Settings & controls.", 18)
-	_label("Unofficial 3D adaptation by PilferedParrot\nDevelopment release %s" % version, 16)
+	_label("Unofficial 3D adaptation by PilferedParrot\nDevelopment release %s" % version, 18)
 	_focus()
 
 func show_pause() -> void:
@@ -438,7 +527,7 @@ func show_dialogue(text: String, speaker: String = "Dink") -> void:
 	dialogue_continue.text = "Continue   ·   A" if controller_active else "Continue   ·   Enter"
 	dialogue_continue.custom_minimum_size.y = roundi(52.0 * text_scale)
 	dialogue_continue.show()
-	dialogue_continue.call_deferred("grab_focus")
+	_grab_current_focus.call_deferred(dialogue_continue, page_serial)
 
 func _continue_dialogue() -> void:
 	hide_dialogue()
@@ -475,6 +564,7 @@ func close_menu() -> void:
 	page = "game"
 	_set_playing_visuals(true)
 	_update_hint()
+	_sync_feedback()
 
 func request_back() -> void:
 	if dialogue_mode or page in ["title", "loading"]: return
@@ -484,24 +574,42 @@ func request_back() -> void:
 func _clear_toast() -> void:
 	toast.text = ""
 	toast_backing.hide()
+	if is_instance_valid(modal_feedback): modal_feedback.hide()
+	if is_instance_valid(toast_timer): toast_timer.stop()
 
 func notify(text: String) -> void:
 	toast.text = text
-	toast_backing.visible = not text.is_empty()
 	toast_timer.start()
+	_sync_feedback()
+
+func _sync_feedback() -> void:
+	var active := not toast.text.is_empty() and toast_timer.time_left > 0
+	toast_backing.visible = active and not modal
+	modal_feedback.visible = active and modal
+	if active and modal:
+		modal_feedback_text.text = toast.text
+		modal_feedback_text.tooltip_text = toast.text
+		var font_size := roundi(20.0 * text_scale)
+		var width := modal_feedback_text.get_theme_font("font").get_string_size(toast.text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size).x
+		modal_feedback.custom_minimum_size.x = minf(width + 32, 280)
 
 func show_inventory(items: Array, magic_items: Array) -> void:
 	_clear("Your equipment", "inventory")
 	_label("Choose a filled slot to equip it. E marks equipped items.", 18)
-	var description := _label("Select a weapon, item or spell.", 22)
+	equipment_name.text = "Select a weapon, item or spell."
+	equipment_name.add_theme_font_size_override("font_size", roundi(22.0 * text_scale))
+	equipment_name.show()
 	var chest = preload("res://scripts/dink_equipment_chest.gd").new()
+	chest.name = "EquipmentChest"
 	chest.configure(items, magic_items, equipment_stats, status_dock.item_texture, text_scale)
 	chest.selected.connect(_button_pressed)
-	chest.highlighted.connect(_describe_equipment.bind(description))
+	chest.highlighted.connect(_describe_equipment.bind(equipment_name))
 	column.add_child(chest)
 	if magic_items.is_empty():
 		_label("No magic yet. Seek a teacher on your travels.", 18)
-	_button("Back to paused adventure" if return_page == "pause" else "Back to adventure", "back")
+	menu_footer.text = "Back to paused adventure" if return_page == "pause" else "Back to adventure"
+	menu_footer.custom_minimum_size.y = roundi(48.0 * text_scale)
+	menu_footer.show()
 	_focus()
 
 func _describe_equipment(text: String, label: Label) -> void:
@@ -515,11 +623,12 @@ func show_journal(text: String) -> void:
 
 func show_settings(settings: Dictionary) -> void:
 	_clear("Settings & controls", "settings")
-	_label("Move: WASD / left stick    Aim: mouse / right stick\nAttack: left click / RT / X    Magic: right click / LT / Y\nTalk: E / A    Jump: Space / right stick click    Sprint: Shift / left stick click    Equipment: I / Back (Select)\nQuick weapons: 1–9 / LB and RB    Pause: Esc / Start\nWorld map: M or Pause → World map (once received)\nMenus: arrows / D-pad / left stick, Enter / A, Esc / B\nController labels use the Xbox layout; other mapped gamepads use the same button positions.", 18)
+	_label("Move: WASD / left stick    Aim: mouse / right stick\nAttack: left click / RT / X    Magic: right click / LT / Y\nTalk: E / A    Jump: Space / right stick click    Sprint: Shift / left stick click\nEquipment: I / Back (Select)    Quick weapons: 1–9 / LB and RB    Pause: Esc / Start\nWorld map: M or Pause → World map (once received)\nMenus: arrows / D-pad / left stick, Enter / A, Esc / B\nController labels use the Xbox layout; other mapped gamepads use the same button positions.", 18)
 	for setting in [["master", "Master volume", 0.0, 1.0, 0.1, 0.8], ["music", "Music volume", 0.0, 1.0, 0.05, 0.55], ["sfx", "Sound effects", 0.0, 1.0, 0.1, 0.8], ["text_scale", "Text size", 0.85, 1.3, 0.05, 1.0], ["mouse_sensitivity", "Mouse sensitivity", 0.0005, 0.006, 0.0005, 0.002], ["fov", "Field of view", 60.0, 105.0, 1.0, 80.0], ["controller_sensitivity", "Controller look sensitivity", 0.5, 4.0, 0.1, 2.0], ["controller_deadzone", "Controller stick dead zone", 0.05, 0.4, 0.05, 0.2]]:
 		var key: String = setting[0]
 		var value_label := _label(setting[1], 18)
 		var slider := HSlider.new()
+		slider.set_meta("setting_key", key)
 		slider.min_value = setting[2]
 		slider.max_value = setting[3]
 		slider.step = setting[4]
@@ -562,7 +671,7 @@ func _setting_readout(value: float, label: Label, title: String, key: String) ->
 	if key in ["master", "music", "sfx", "controller_deadzone"]: shown = "%d%%" % roundi(value * 100)
 	elif key == "fov": shown = "%d°" % roundi(value)
 	elif key == "text_scale": shown = "%d%%" % roundi(value * 100)
-	elif key == "mouse_sensitivity": shown = "%.4f" % value
+	elif key == "mouse_sensitivity": shown = "%.2f×" % (value / 0.002)
 	label.text = "%s   %s" % [title, shown]
 
 func _reduced_motion_changed(value: bool) -> void:

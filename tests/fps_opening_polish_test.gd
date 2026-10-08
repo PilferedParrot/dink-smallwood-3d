@@ -87,7 +87,7 @@ func _run() -> void:
 	check(not is_equal_approx(before, game.fps_yaw), "Off-camera NPC dialogue frames the camera on the speaker")
 	check(game.fps_pitch < 0.2, "NPC framing recovers from looking at the ceiling")
 	check(game._fps_speaker_name(2) == "Milder", "Milder receives a readable speaker label")
-	check(game.ui.column.get_child_count() > 0 and game.ui.column.get_child(0).text == "Milder", "Dialogue UI displays the NPC name")
+	check(game.ui.heading.text == "Milder" and game.ui.heading.is_visible_in_tree(), "Dialogue UI displays the NPC name in the fixed heading")
 	await _capture("offcamera-milder.png")
 	var framed_yaw: float = game.fps_yaw
 	game.entities[900002] = {"x": 140.0, "y": 200.0, "active": 1, "script": "s1-h2-o", "type": 1}

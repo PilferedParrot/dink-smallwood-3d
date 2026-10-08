@@ -12,6 +12,11 @@ func check(condition: bool, message: String) -> void:
 		push_error(message)
 
 func _init() -> void:
+	await process_frame
+	# Headless Window starts at64x64; expand aspect would otherwise give a
+	# square logical canvas rather than the player's1280x800 menu layout.
+	root.size = Vector2i(1280, 800)
+	await process_frame
 	var ui := UI.new()
 	root.add_child(ui)
 	ui.action_requested.connect(_on_action)
@@ -50,8 +55,12 @@ func _init() -> void:
 	ui.show_settings({})
 	await process_frame
 	await process_frame
-	var music_slider: HSlider = ui.column.get_child(5)
-	check(is_equal_approx(music_slider.value, 0.55) and ui.column.get_child(4).text.contains("55%"), "Music readout preserves the actual 55% default instead of rounding to 60%")
+	var music_slider: HSlider
+	var music_readout: Label
+	for node in ui.column.get_children():
+		if node is HSlider and node.get_meta("setting_key", "") == "music": music_slider = node
+		if node is Label and node.text.begins_with("Music volume"): music_readout = node
+	check(music_slider != null and is_equal_approx(music_slider.value, 0.55) and music_readout.text.contains("55%"), "Music readout preserves the actual 55% default instead of rounding to 60%")
 	var first_slider: HSlider = root.gui_get_focus_owner() as HSlider
 	check(first_slider != null, "Settings focuses its first slider")
 	if first_slider != null:
@@ -111,20 +120,30 @@ func _init() -> void:
 	for i in range(16): spells.append({"name": "Fireball %d" % i, "script": "item-fb", "seq": 437, "frame": 1})
 	ui.show_inventory([], spells)
 	await process_frame
-	var chest = ui.column.get_child(3)
+	var chest = ui.column.get_node("EquipmentChest")
 	check(chest._slot_buttons.size() == 8, "Magic chest presents eight selectable slots per page")
 	chest._page_next.grab_focus()
 	await _button(JOY_BUTTON_A)
 	check(chest._spell_page == 1, "Controller can reach the second magic page")
 	await _button(JOY_BUTTON_A)
 	check(received == "equip_magic" and payload == 8, "Second magic page preserves the inventory index")
+	ui.show_inventory([{"name": "Pig feed", "script": "item-pig"}], [])
+	await process_frame
+	await process_frame
+	ui.menu_footer.grab_focus()
+	await process_frame
+	check(ui.heading.get_global_rect().end.y <= ui.menu_scroll.get_global_rect().position.y, "Equipment heading remains pinned while Back is focused")
+	check(ui.menu_footer.get_global_rect().end.y <= ui.panel.get_global_rect().end.y, "Equipment Back remains inside panel")
+	check(ui.equipment_name.text.contains("Pig feed") and not ui.equipment_name.text.contains("…"), "Selected item name is complete outside the scrolling chest")
 	ui.close_menu()
+	ui.set_text_scale(1.0)
 	ui.show_pause()
 	await process_frame
 	await process_frame
 	await process_frame
 	check(ui.menu_scroll.scroll_vertical == 0, "Pause resets scrolling after equipment")
-	check(ui.column.get_child(0).get_global_rect().position.y >= ui.menu_scroll.get_global_rect().position.y, "Pause heading remains visible above Return")
+	check(ui.heading.get_global_rect().end.y <= ui.menu_scroll.get_global_rect().position.y, "Pause heading remains outside scrolling content")
+	check(ui.column.get_child(ui.column.get_child_count() - 1).get_global_rect().end.y <= ui.menu_scroll.get_global_rect().end.y, "Default1280x800 pause shows the complete final action")
 	ui.show_settings({})
 	await process_frame
 	await process_frame
@@ -145,7 +164,12 @@ func _init() -> void:
 	ui.request_back()
 	check(received == "resume", "Standalone equipment Back resumes gameplay")
 	ui.notify("Equipped Fists")
-	check(ui.toast_backing.visible, "Notifications have a visible solid contrast backing")
+	check(ui.modal_feedback.visible and not ui.toast_backing.visible, "Menu notifications use their own header space")
+	ui.show_settings({})
+	check(not ui.modal_feedback.visible and ui.toast.text.is_empty(), "Changing page clears stale notification instead of covering the heading")
+	ui.close_menu()
+	ui.notify("Equipped Fists")
+	check(ui.toast_backing.visible, "Gameplay notifications have solid contrast backing")
 	ui._clear_toast()
 	check(not ui.toast_backing.visible, "Expired notifications remove their backing")
 	ui.queue_free()

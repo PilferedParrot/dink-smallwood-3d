@@ -1,14 +1,14 @@
 {
   "as_of": "2026-10-07",
-  "final_export_sha256": "ac121866d0a6e59a3cf5298b4763ad3c0c54c4ee35c96f9fc646eb24d189fc90",
+  "final_export_sha256": "ce80bd0d924a10ceb53021a9cfafc53129fbd318fd3690cd6160afdfeb0f3f67",
   "blind_review_export_sha256": "a48a1c82c14316fcfd03449cc9cec802def6d0b313f593ed46fd073d3aa41c64",
   "normal_input_frames": [
-    "menus-1280",
-    "wide-final-1920"
+    "shipping-ui-1280",
+    "shipping-ui-1920"
   ],
   "text_size_frames": [
-    "scale-min",
-    "scale-max"
+    "release-text-85",
+    "release-text-130"
   ],
   "staged_frames": [
     "feed-verified-1280",
@@ -16,14 +16,20 @@
     "pickup-confirmed-1280"
   ],
   "setup": "Staged map407 saves inject feed/pickup and camera; campaign/map startup skipped. Heart main/touch run, W collection saves life10. Feed actual mouse hold runs use; grain render remains inconclusive. Profiles all isolated.",
-  "checks": "13 focused tests passed with isolated XDG paths; 5 final music/UI checks and7 aspect/UI/FPS checks also passed.",
+  "checks": "13 focused tests passed; final backing/header-only revision5 UI checks passed; measured controls contrast17.66:1 at85/130%, EscPause15.54:1, Defense/life count14.39:1.",
   "models_selected": {
     "lead": "gpt-6.1-sol high",
-    "assets_and_dock": "gpt-6-luna medium (2 turns)",
+    "assets_and_dock": "gpt-6-luna medium (3 prior turns +1 readability worker)",
     "chest": "gpt-6-sol high (1 turn)",
-    "planning_integration_and_new_visibility_conditions": "gpt-6-astra high (4 turns: planning, integration, feed layout, pickup layout)",
-    "blind_player": "gpt-6-astra high (1 turn)"
+    "planning_integration_and_new_visibility_conditions": "gpt-6-astra high (4 prior turns +1 follow-up integration)",
+    "blind_player": "gpt-6-astra high (1 turn)",
+    "fresh_blind_frame_panel": "gpt-6-astra high (4 independent lenses: first-time, visual, accessibility, Chris proxy)"
   },
   "token_usage": "Unavailable through collaboration tools; not estimated.",
-  "frame_revision_note": "Geometry/text-size contact sheets precede the final music-step correction; feed-verified-1280/final-settings.png shows the final55% readout. All other pictured interface geometry is unchanged."
+  "frame_revision_note": "Final normal/130% HUD+equipment captures use final_export_sha256. Text/settings and save-feedback boundary frames use text_and_boundary_export_sha256; final changes only constrain enlarged HUD category labels and shorten its EXP tag. Initial blind/pickup captures retain their documented earlier revisions.",
+  "followup_boundary_frames": [
+    "release-boundary-1280",
+    "shipping-equipment-130"
+  ],
+  "text_and_boundary_export_sha256": "cfe3811eb607557c5014ff0459e5a2e1f970217c413303776c8ded04b7659dc5"
 }

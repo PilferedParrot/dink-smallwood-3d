@@ -39,7 +39,6 @@ def test_modal_ui_consumes_pointer_events_and_has_focusable_controls():
     assert "root.mouse_filter = Control.MOUSE_FILTER_STOP" in source
     assert "overlay.mouse_filter = Control.MOUSE_FILTER_STOP" in source
     assert "button.focus_mode = Control.FOCUS_ALL" in source
-    assert "child.call_deferred(\"grab_focus\")" in source
 
 
 def test_controller_callbacks_bind_each_choice_and_setting_key():
