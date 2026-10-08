@@ -76,10 +76,11 @@ def test_dinks_house_stands_solid_with_no_sky_and_a_door(tmp_path):
     assert abs(room - 94 * SCALE) < 0.01
     for wid, solid, height, visible in lines["wall"]:
         assert solid == "true" and abs(float(height) - room) < 0.01 and visible == "true", (wid, solid, height, visible)
-    # the exit: a door as wide as the corridor between the jambs (308 to 339), as high as Dink's door art, at the screen's edge
+    # the exit: a door as wide as the corridor between the jambs (308 to 339), Dink's door art (24 x 52.8 px) kept in proportion
+    # at that width (68.2 px = 1.70 m, above the 1.65 m eye; the art's own 52.8 px read as a slot), at the screen's edge
     door = lines["door"][0]
     assert door[0] != "none", lines["door"]
-    assert abs(float(door[0]) - 31 * SCALE) < 0.01 and abs(float(door[1]) - 52.8 * SCALE) < 0.02
+    assert abs(float(door[0]) - 31 * SCALE) < 0.01 and abs(float(door[1]) - 31 * 52.79 / 24 * SCALE) < 0.02
     assert abs(float(door[2]) - (400 - 200) * SCALE) < 0.01
     # the table: a top of the sprite's radius (32 px), on legs, 0.8 m high; the pie stands on it
     solid, wx, wy, wz = lines["table"][0]

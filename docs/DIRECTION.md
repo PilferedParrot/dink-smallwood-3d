@@ -1554,8 +1554,10 @@ house on screen 439), its picture a parallelogram (columns, one slope for its to
 art's camera aspect, 0.3 px rms) mapped onto an upright rectangle the width of the corridor between the walls' footprints
 (308 to 339, 31 px: the art's door is 32 px wide, a coincidence the corridor's footprint did not need), the stone of the walls above
 it up to the ceiling. The door stands at the base row the jambs' art ends on (400, the floor's edge). Walking into it warps through the
-warp sprite (index 24, type 2, never drawn) as before. Two caveats, both the art's: the door is 53 px high (1.32 m) and Dink's eye
-is at 1.65 m, so seen from the doorway the lintel is at eye level; and only exits that run off the screen's bottom are handled (screen
+warp sprite (index 24, type 2, never drawn) as before. At the art's own scale the door is 53 px high (1.32 m) under Dink's 1.65 m
+eye: from the doorway it read as a slot under a slab of stone, and at the warp point he faced stone. The lead's change (Opus 5.5,
+same evening): the door closes the opening, so it takes the corridor's width with its picture kept in proportion (31 x 68 px,
+1.70 m), never above the ceiling (evidence: `tmp/solid/door-fix.jpg` in the lead's worktree). One caveat remains: only exits that run off the screen's bottom are handled (screen
 3's exit is in its west wall: no door there, the wall is closed).
 
 **Walls.** The footprint is the sprite's hard rectangle (collision unchanged). A wall frame is its cap over its face: the cap is

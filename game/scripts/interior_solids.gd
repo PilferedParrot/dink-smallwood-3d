@@ -654,7 +654,9 @@ func add_doors(screen: int, parent: Node3D) -> void:
 		var x0: float = ex.x0
 		var x1: float = ex.x1
 		var z: float = ex.z
-		var hd := float(fit.height)
+		# The door closes the opening: the corridor's width, its picture kept in proportion (the art's own 0.025 m/px makes
+		# it 1.32 m, under the 1.65 m eye, and from the doorway it read as a slot under a wall), never above the ceiling.
+		var hd := minf(h, (x1 - x0) * float(fit.height) / maxf(float(fit.cols[1]) - float(fit.cols[0]), 1.0))
 		var mb := MB.new()
 		mb.size = Vector2(float(fit.size[0]), float(fit.size[1]))
 		mb.o = Vector2(-320.0, -200.0) # screen px to metres about the screen's centre, as point() does
