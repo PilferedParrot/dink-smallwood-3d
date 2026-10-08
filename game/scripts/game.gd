@@ -456,7 +456,15 @@ func _physics_process(delta: float) -> void:
 		hud_clock = 0
 		var stats: Dictionary = vm.globals.duplicate()
 		stats["location"] = _location()
+		_add_equipment_stats(stats)
 		ui.show_hud(stats)
+
+func _add_equipment_stats(stats: Dictionary) -> void:
+	# Presentation receives live equipment even before the inventory is opened.
+	var weapon_index := int(vm.globals.get("cur_weapon", 0)) - 1
+	var spell_index := int(vm.globals.get("cur_magic", 0)) - 1
+	stats["weapon_item"] = items[weapon_index] if weapon_index >= 0 and weapon_index < items.size() else {}
+	stats["spell_item"] = magic_items[spell_index] if spell_index >= 0 and spell_index < magic_items.size() else {}
 
 func _input(event: InputEvent) -> void:
 	if not is_instance_valid(ui) or not event.is_action_pressed("map") or event.is_echo(): return
@@ -482,9 +490,9 @@ func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("pause") or event.is_action_pressed("ui_cancel"):
 		if ui.dialogue_mode: return
 		if playing:
-			if ui.modal: ui.close_menu()
+			if ui.modal: ui.request_back()
 			else: ui.show_pause()
-		elif ui.page != "title": ui.show_title(FileAccess.file_exists("user://adventure.json"))
+		elif ui.page != "title": ui.request_back()
 		get_viewport().set_input_as_handled()
 		return
 	if ui.modal or not playing: return
@@ -1324,8 +1332,7 @@ func _ui_action(action: String, payload: Variant) -> void:
 		"settings": ui.show_settings(settings)
 		"credits": ui.show_credits()
 		"back":
-			if playing: ui.show_pause()
-			else: ui.show_title(FileAccess.file_exists("user://adventure.json"))
+			ui.request_back()
 		"journal": ui.show_journal("%s\n\nRecent conversations\n\n%s" % [_location(),"\n\n".join(dialogue_log.slice(maxi(0,dialogue_log.size()-20)))])
 		"equip": _equip(int(payload),false)
 		"equip_magic": _equip(int(payload),true)

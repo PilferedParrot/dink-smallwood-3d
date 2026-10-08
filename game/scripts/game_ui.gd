@@ -20,15 +20,29 @@ var page := "title"
 var text_scale := 1.0
 var menu_theme: Theme
 var controller_active := false
-const CREAM := Color("eadfc2")
-const GOLD := Color("d4ad62")
-const GREEN := Color("182d27")
+var title_art: TextureRect
+var vines_left: TextureRect
+var vines_right: TextureRect
+var status_dock: Control
+var equipment_stats: Dictionary = {}
+var dialogue_continue: Button
+var menu_scroll: ScrollContainer
+var page_serial := 0
+var return_page := "title"
+var toast_backing: PanelContainer
+const CREAM := Color("f6ebcb")
+const GOLD := Color("ffdc79")
+const INK := Color("292019")
+const MARBLE = preload("res://assets/graphics/inter/Text-box/main-01.png")
+const LOGO = preload("res://assets/graphics/Startme/options/dinkl-01.png")
 
 func _ready() -> void:
 	layer = 10
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	_ensure_controller_navigation()
-	controller_active = not Input.get_connected_joypads().is_empty()
+	# A plugged-in pad does not mean it is the device the player is using.
+	# Switch cues when actual keyboard/pointer/controller input arrives.
+	controller_active = false
 	root = Control.new()
 	root.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	# Keep clicks and pointer events inside a menu from reaching the 3D world.
@@ -40,10 +54,9 @@ func _ready() -> void:
 	menu_theme.set_color("font_color", "Label", CREAM)
 	for state in ["normal", "hover", "pressed", "focus"]:
 		var box := StyleBoxFlat.new()
-		box.bg_color = Color("30453a") if state == "normal" else Color("51644a")
-		box.border_color = GOLD if state == "focus" else Color("637450")
-		box.set_border_width_all(3 if state == "focus" else 1)
-		box.set_corner_radius_all(5)
+		box.bg_color = Color("34261c") if state == "normal" else Color("604727")
+		box.border_color = GOLD if state == "focus" else Color("9b7f51")
+		box.set_border_width_all(4 if state == "focus" else 2)
 		box.content_margin_left = 20
 		box.content_margin_right = 20
 		box.content_margin_top = 12
@@ -52,7 +65,10 @@ func _ready() -> void:
 	menu_theme.set_color("font_color", "Button", CREAM)
 	menu_theme.set_color("font_hover_color", "Button", Color.WHITE)
 	menu_theme.set_color("font_focus_color", "Button", Color.WHITE)
+	menu_theme.set_color("font_disabled_color", "Button", Color("c3b79e"))
 	root.theme = menu_theme
+	status_dock = load("res://scripts/dink_status_bar.gd").new()
+	root.add_child(status_dock)
 	hud = Label.new()
 	hud.position = Vector2(28, 22)
 	hud.add_theme_color_override("font_shadow_color", Color.BLACK)
@@ -72,6 +88,11 @@ func _ready() -> void:
 	compass_label.anchor_right = 0.5
 	compass_label.offset_left = -30
 	compass_label.offset_top = 24
+	compass_label.offset_left = -250; compass_label.offset_right = 250
+	compass_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	compass_label.add_theme_color_override("font_shadow_color", Color.BLACK)
+	compass_label.add_theme_constant_override("shadow_offset_x", 2)
+	compass_label.add_theme_constant_override("shadow_offset_y", 2)
 	compass_label.add_theme_color_override("font_color", GOLD)
 	compass_label.add_theme_font_size_override("font_size", 18)
 	compass_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -88,26 +109,51 @@ func _ready() -> void:
 	root.add_child(crosshair)
 	hint = Label.new()
 	hint.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_WIDE)
-	hint.offset_top = -48
-	hint.offset_left = 28
+	hint.offset_top = -38
+	hint.offset_left = 20
+	hint.offset_right = -20
+	hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	hint.add_theme_color_override("font_shadow_color", Color.BLACK)
+	hint.add_theme_constant_override("shadow_offset_x", 2)
+	hint.add_theme_constant_override("shadow_offset_y", 2)
 	hint.add_theme_font_size_override("font_size", 18)
 	root.add_child(hint)
 	toast = Label.new()
-	toast.set_anchors_and_offsets_preset(Control.PRESET_TOP_WIDE)
-	toast.offset_top = 65
+	toast.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	toast.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	toast.add_theme_color_override("font_color", GOLD)
-	root.add_child(toast)
+	toast_backing = PanelContainer.new()
+	toast_backing.anchor_left = 0.18; toast_backing.anchor_right = 0.82
+	toast_backing.offset_top = 65; toast_backing.offset_bottom = 65
+	toast_backing.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var toast_style := StyleBoxFlat.new()
+	toast_style.bg_color = Color("21180f")
+	toast_style.border_color = GOLD
+	toast_style.set_border_width_all(1)
+	toast_style.content_margin_left = 16; toast_style.content_margin_right = 16
+	toast_style.content_margin_top = 10; toast_style.content_margin_bottom = 10
+	toast_backing.add_theme_stylebox_override("panel", toast_style)
+	root.add_child(toast_backing)
+	toast_backing.add_child(toast)
+	toast_backing.hide()
 	toast_timer = Timer.new()
 	toast_timer.one_shot = true
 	toast_timer.wait_time = 4.0
 	toast_timer.timeout.connect(_clear_toast)
 	add_child(toast_timer)
 	overlay = ColorRect.new()
-	overlay.color = Color(0.01, 0.025, 0.018, 0.78)
+	overlay.color = Color(0.035, 0.025, 0.02, 0.78)
 	overlay.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	overlay.mouse_filter = Control.MOUSE_FILTER_STOP
 	root.add_child(overlay)
+	title_art = TextureRect.new()
+	title_art.texture = LOGO
+	title_art.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	title_art.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	title_art.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	title_art.anchor_left = 0.06; title_art.anchor_right = 0.52
+	title_art.anchor_top = 0.10; title_art.anchor_bottom = 0.54
+	root.add_child(title_art)
 	panel = PanelContainer.new()
 	panel.anchor_left = 0.08
 	panel.anchor_right = 0.92
@@ -117,12 +163,11 @@ func _ready() -> void:
 	panel.offset_right = 0
 	panel.offset_top = 0
 	panel.offset_bottom = 0
-	panel.custom_minimum_size = Vector2(420, 300)
-	var style := StyleBoxFlat.new()
-	style.bg_color = Color("15241f")
-	style.border_color = Color("8c7950")
-	style.set_border_width_all(2)
-	style.set_corner_radius_all(10)
+	panel.custom_minimum_size = Vector2(360, 0)
+	var style := StyleBoxTexture.new()
+	style.texture = MARBLE
+	style.texture_margin_left = 8; style.texture_margin_right = 8
+	style.texture_margin_top = 8; style.texture_margin_bottom = 8
 	style.content_margin_left = 32
 	style.content_margin_right = 32
 	style.content_margin_top = 24
@@ -130,15 +175,47 @@ func _ready() -> void:
 	panel.add_theme_stylebox_override("panel", style)
 	panel.mouse_filter = Control.MOUSE_FILTER_STOP
 	root.add_child(panel)
+	vines_left = _vine("res://assets/graphics/inter/Text-box/main-02.png")
+	vines_right = _vine("res://assets/graphics/inter/Text-box/main-04.png")
+	var contents := VBoxContainer.new()
+	contents.add_theme_constant_override("separation", 12)
+	panel.add_child(contents)
 	var scroll := ScrollContainer.new()
+	menu_scroll = scroll
+	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	scroll.follow_focus = true
-	panel.add_child(scroll)
+	contents.add_child(scroll)
 	column = VBoxContainer.new()
 	column.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	column.add_theme_constant_override("separation", 12)
 	scroll.add_child(column)
+	dialogue_continue = Button.new()
+	dialogue_continue.custom_minimum_size.y = 52
+	dialogue_continue.focus_mode = Control.FOCUS_ALL
+	dialogue_continue.pressed.connect(_continue_dialogue)
+	dialogue_continue.hide()
+	contents.add_child(dialogue_continue)
+	# Instructions and notifications must render above the modal dimming layer.
+	root.move_child(hint, -1)
+	root.move_child(toast_backing, -1)
 	_set_playing_visuals(false)
+
+func _vine(path: String) -> TextureRect:
+	var vine := TextureRect.new()
+	vine.texture = load(path)
+	vine.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	vine.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	vine.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	root.add_child(vine)
+	return vine
+
+func _process(_delta: float) -> void:
+	if panel.visible:
+		vines_left.position = panel.position + Vector2(-78, -22)
+		vines_left.size = Vector2(125, minf(panel.size.y + 44, 440))
+		vines_right.position = panel.position + Vector2(panel.size.x - 50, -22)
+		vines_right.size = vines_left.size
 
 func _make_bar(fill: Color) -> ProgressBar:
 	var bar := ProgressBar.new()
@@ -155,23 +232,27 @@ func _make_bar(fill: Color) -> ProgressBar:
 
 func _set_playing_visuals(playing: bool) -> void:
 	if is_instance_valid(crosshair): crosshair.visible = playing
-	if is_instance_valid(health_bar): health_bar.visible = playing
-	if is_instance_valid(mana_bar): mana_bar.visible = playing
+	if is_instance_valid(health_bar): health_bar.visible = false
+	if is_instance_valid(mana_bar): mana_bar.visible = false
+	if is_instance_valid(hud): hud.visible = false
+	if is_instance_valid(status_dock): status_dock.visible = playing
 	if is_instance_valid(compass_label): compass_label.visible = playing
 
 func _layout_for(next_page: String) -> void:
 	if next_page == "title":
-		panel.anchor_left = 0.055; panel.anchor_right = 0.43
-		panel.anchor_top = 0.10; panel.anchor_bottom = 0.90
-		overlay.color = Color(0.01, 0.025, 0.018, 0.32)
+		panel.anchor_left = 0.56; panel.anchor_right = 0.94
+		panel.anchor_top = 0.12; panel.anchor_bottom = 0.86
+		overlay.color = Color(0.025, 0.015, 0.008, 0.97)
 	elif next_page == "dialogue":
-		panel.anchor_left = 0.055; panel.anchor_right = 0.945
-		panel.anchor_top = 0.60; panel.anchor_bottom = 0.97
-		overlay.color = Color(0.01, 0.025, 0.018, 0.18)
+		panel.anchor_left = 0.12; panel.anchor_right = 0.88
+		panel.anchor_top = 0.64; panel.anchor_bottom = 0.93
+		overlay.color = Color(0.025, 0.015, 0.008, 0.08)
 	else:
 		panel.anchor_left = 0.14; panel.anchor_right = 0.86
-		panel.anchor_top = 0.07; panel.anchor_bottom = 0.93
-		overlay.color = Color(0.01, 0.025, 0.018, 0.70)
+		panel.anchor_top = 0.07; panel.anchor_bottom = 0.90
+		overlay.color = Color(0.025, 0.015, 0.008, 0.72)
+	title_art.visible = next_page == "title"
+	vines_left.show(); vines_right.show()
 
 func _ensure_controller_navigation() -> void:
 	var buttons := {"ui_accept": JOY_BUTTON_A, "ui_cancel": JOY_BUTTON_B, "ui_up": JOY_BUTTON_DPAD_UP, "ui_down": JOY_BUTTON_DPAD_DOWN, "ui_left": JOY_BUTTON_DPAD_LEFT, "ui_right": JOY_BUTTON_DPAD_RIGHT}
@@ -201,15 +282,39 @@ func _input(event: InputEvent) -> void:
 
 func _update_hint() -> void:
 	if not is_instance_valid(hint): return
+	if modal:
+		hint.offset_top = -38
+		if page == "loading":
+			hint.text = "Loading Stonebrook…"
+			return
+		if dialogue_mode:
+			hint.text = "A  Continue / choose" if controller_active else "Enter or click  Continue / choose"
+			if dialogue_continue.visible:
+				dialogue_continue.text = "Continue   ·   A" if controller_active else "Continue   ·   Enter"
+		else:
+			var back := "Resume" if return_page == "game" else "Back"
+			hint.text = "D-pad / LS  Choose     A  Confirm" if controller_active else "Arrows  Choose     Enter or click  Confirm"
+			if page != "title": hint.text += "     B  " + back if controller_active else "     Esc  " + back
+		return
+	hint.offset_top = -190
 	if controller_active:
-		hint.text = "LS  Move   RS  Aim   RT / X  Attack   LT / Y  Magic   A  Talk   LB / RB  Weapon   Back  Equipment   Start  Pause"
+		hint.text = "LS  Move   RS  Look   RT / X  Attack   A  Talk   Back  Equipment   Start  Pause"
 	else:
-		hint.text = "WASD  Move     Mouse  Aim     Left click  Attack     Right click  Magic     E  Talk     I  Equipment     Esc  Pause"
+		hint.text = "WASD  Move     Mouse  Look     Left click  Attack     E  Talk     I  Equipment     Esc  Pause"
+	if not equipment_stats.get("spell_item", {}).is_empty():
+		hint.text += "     LT / Y  Magic" if controller_active else "     Right click  Magic"
 
 func _clear(title: String, next_page: String) -> void:
+	if next_page == "pause": return_page = "game"
+	elif next_page == "title": return_page = "title"
+	elif next_page != page and next_page not in ["dialogue", "loading"]:
+		return_page = page if page in ["pause", "title"] else "game"
+	page_serial += 1
+	menu_scroll.scroll_vertical = 0
 	for child in column.get_children():
 		column.remove_child(child)
 		child.queue_free()
+	dialogue_continue.hide()
 	modal = true
 	dialogue_mode = false
 	page = next_page
@@ -218,9 +323,18 @@ func _clear(title: String, next_page: String) -> void:
 	_set_playing_visuals(false)
 	overlay.show()
 	panel.show()
-	_label(title, 32, GOLD)
+	_label(title, 32, INK)
+	_update_hint()
+	_reset_scroll_after_layout.call_deferred(page_serial)
 
-func _label(text: String, size: int = 22, color: Color = CREAM) -> Label:
+func _reset_scroll_after_layout(serial: int) -> void:
+	# Replacing content changes the old scroll range after the container lays out.
+	# Reset after deferred focus as well, so each page opens with its heading.
+	await get_tree().process_frame
+	await get_tree().process_frame
+	if serial == page_serial and panel.visible: menu_scroll.scroll_vertical = 0
+
+func _label(text: String, size: int = 22, color: Color = INK) -> Label:
 	var label := Label.new()
 	label.text = text
 	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
@@ -233,6 +347,7 @@ func _label(text: String, size: int = 22, color: Color = CREAM) -> Label:
 func _button(text: String, action: String, value: Variant = null) -> Button:
 	var button := Button.new()
 	button.text = text
+	button.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	button.custom_minimum_size.y = roundi(48.0 * text_scale)
 	button.set_meta("base_minimum_height", 48)
 	button.focus_mode = Control.FOCUS_ALL
@@ -241,14 +356,25 @@ func _button(text: String, action: String, value: Variant = null) -> Button:
 	return button
 
 func _button_pressed(action: String, value: Variant) -> void:
+	if action == "new_game":
+		_clear("Beginning your adventure…", "loading")
+		_label("Loading Stonebrook. Your adventure will begin shortly.", 22)
 	action_requested.emit(action, value)
 
 func _focus() -> void:
-	for child in column.get_children():
+	for child in _focusable_children(column):
 		if child is Control and child.focus_mode != Control.FOCUS_NONE:
 			if child is BaseButton and child.disabled: continue
 			child.call_deferred("grab_focus")
 			break
+
+func _focusable_children(node: Node) -> Array[Control]:
+	var found: Array[Control] = []
+	for child in node.get_children():
+		if child is Control and child.focus_mode != Control.FOCUS_NONE:
+			found.append(child)
+		found.append_array(_focusable_children(child))
+	return found
 
 func set_text_scale(value: float) -> void:
 	text_scale = clampf(value, 0.85, 1.3)
@@ -256,6 +382,7 @@ func set_text_scale(value: float) -> void:
 	menu_theme.default_font_size = roundi(22.0 * text_scale)
 	hint.add_theme_font_size_override("font_size", roundi(18.0 * text_scale))
 	toast.add_theme_font_size_override("font_size", roundi(22.0 * text_scale))
+	status_dock.set_text_scale(text_scale)
 	for node in column.get_children():
 		if node.has_meta("base_font_size"):
 			node.add_theme_font_size_override("font_size", roundi(float(node.get_meta("base_font_size")) * text_scale))
@@ -263,21 +390,21 @@ func set_text_scale(value: float) -> void:
 			node.custom_minimum_size.y = roundi(float(node.get_meta("base_minimum_height")) * text_scale)
 
 func show_title(has_save: bool) -> void:
-	_clear("DINK SMALLWOOD", "title")
+	_clear("Your adventure awaits", "title")
 	var version := str(ProjectSettings.get_setting("application/config/version", ""))
-	_label("FIRST-PERSON ADVENTURE · VERSION %s" % version, 16, GOLD)
-	_label("A familiar world. A different perspective.\nA 3D adaptation by PilferedParrot.", 20)
+	_label("Dink Smallwood in first person", 20)
 	if has_save:
 		_button("Continue adventure", "continue")
 	_button("Begin adventure", "new_game")
 	_button("Settings & controls", "settings")
 	_button("Credits & support", "credits")
 	_button("Quit", "quit")
-	_label("Unofficial adaptation · Development release %s\nBlender-built world and FreeDink sound" % version, 16, Color("9dad95"))
+	_label("Move with WASD. Look with the mouse.\nE to talk. Left click to attack.\nI for equipment. Esc to pause.\nController? See Settings & controls.", 18)
+	_label("Unofficial 3D adaptation by PilferedParrot\nDevelopment release %s" % version, 16)
 	_focus()
 
 func show_pause() -> void:
-	_clear("A moment by the roadside", "pause")
+	_clear("Adventure paused", "pause")
 	_button("Return to adventure", "resume")
 	_button("Save adventure", "save")
 	_button("Load saved adventure", "load")
@@ -287,9 +414,12 @@ func show_pause() -> void:
 	_button("Settings & controls", "settings")
 	_button("Credits & support", "credits")
 	_button("Title screen", "title")
+	_button("Quit game", "quit")
 	_focus()
 
 func show_hud(stats: Dictionary) -> void:
+	equipment_stats = stats
+	status_dock.update_stats(stats)
 	var life := float(stats.get("life", 10)); var life_max := maxf(float(stats.get("lifemax", 10)), 1.0)
 	var mana := float(stats.get("magic_level", 0)); var mana_max := maxf(float(stats.get("magic_cost", 100)), 1.0)
 	health_bar.value = clampf(life / life_max * 100.0, 0.0, 100.0)
@@ -297,20 +427,18 @@ func show_hud(stats: Dictionary) -> void:
 	hud.text = "DINK   •   Health %d / %d   •   Level %d   •   Gold %d\n%s" % [life,life_max,stats.get("level",1),stats.get("gold",0),stats.get("location", "Stonebrook")]
 	var weapon := str(stats.get("weapon", stats.get("weapon_name", "")))
 	if not weapon.is_empty(): hud.text += "\nWeapon: " + weapon
-	compass_label.text = str(stats.get("compass", ""))
+	compass_label.text = str(stats.get("location", ""))
 	_update_hint()
 
 func show_dialogue(text: String, speaker: String = "Dink") -> void:
 	_clear(speaker, "dialogue")
 	dialogue_mode = true
+	_update_hint()
 	_label(text, 26)
-	var button := Button.new()
-	button.text = "Continue   ›"
-	button.custom_minimum_size.y = roundi(52.0 * text_scale)
-	button.focus_mode = Control.FOCUS_ALL
-	button.pressed.connect(_continue_dialogue)
-	column.add_child(button)
-	_focus()
+	dialogue_continue.text = "Continue   ·   A" if controller_active else "Continue   ·   Enter"
+	dialogue_continue.custom_minimum_size.y = roundi(52.0 * text_scale)
+	dialogue_continue.show()
+	dialogue_continue.call_deferred("grab_focus")
 
 func _continue_dialogue() -> void:
 	hide_dialogue()
@@ -319,6 +447,7 @@ func _continue_dialogue() -> void:
 func show_choices(title: String, options: Array) -> void:
 	_clear(title if not title.is_empty() else "What will you do?", "dialogue")
 	dialogue_mode = true
+	_update_hint()
 	for i in range(options.size()):
 		var button := Button.new()
 		button.text = str(options[i])
@@ -342,40 +471,54 @@ func close_menu() -> void:
 	root.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	panel.hide()
 	overlay.hide()
+	title_art.hide(); vines_left.hide(); vines_right.hide()
 	page = "game"
 	_set_playing_visuals(true)
+	_update_hint()
+
+func request_back() -> void:
+	if dialogue_mode or page in ["title", "loading"]: return
+	var action := "pause" if return_page == "pause" else ("title" if return_page == "title" else "resume")
+	action_requested.emit(action, null)
 
 func _clear_toast() -> void:
 	toast.text = ""
+	toast_backing.hide()
 
 func notify(text: String) -> void:
 	toast.text = text
+	toast_backing.visible = not text.is_empty()
 	toast_timer.start()
 
 func show_inventory(items: Array, magic_items: Array) -> void:
 	_clear("Your equipment", "inventory")
-	_label("Choose an item to equip or use it.", 18)
-	for i in range(items.size()):
-		_button(str(items[i].get("name", items[i].get("script", "Item"))).capitalize(), "equip", i)
-	if not magic_items.is_empty():
-		_label("Magic", 24, GOLD)
-		for i in range(magic_items.size()):
-			_button(str(magic_items[i].get("name",magic_items[i].get("script","Spell"))).capitalize(), "equip_magic", i)
-	_button("Back to adventure", "resume")
+	_label("Choose a filled slot to equip it. E marks equipped items.", 18)
+	var description := _label("Select a weapon, item or spell.", 22)
+	var chest = preload("res://scripts/dink_equipment_chest.gd").new()
+	chest.configure(items, magic_items, equipment_stats, status_dock.item_texture, text_scale)
+	chest.selected.connect(_button_pressed)
+	chest.highlighted.connect(_describe_equipment.bind(description))
+	column.add_child(chest)
+	if magic_items.is_empty():
+		_label("No magic yet. Seek a teacher on your travels.", 18)
+	_button("Back to paused adventure" if return_page == "pause" else "Back to adventure", "back")
 	_focus()
+
+func _describe_equipment(text: String, label: Label) -> void:
+	label.text = text
 
 func show_journal(text: String) -> void:
 	_clear("Adventure journal", "journal")
 	_label(text, 22)
-	_button("Back to adventure", "resume")
+	_button("Back to paused adventure", "back")
 	_focus()
 
 func show_settings(settings: Dictionary) -> void:
-	_clear("Make yourself comfortable", "settings")
+	_clear("Settings & controls", "settings")
 	_label("Move: WASD / left stick    Aim: mouse / right stick\nAttack: left click / RT / X    Magic: right click / LT / Y\nTalk: E / A    Jump: Space / right stick click    Sprint: Shift / left stick click    Equipment: I / Back (Select)\nQuick weapons: 1–9 / LB and RB    Pause: Esc / Start\nWorld map: M or Pause → World map (once received)\nMenus: arrows / D-pad / left stick, Enter / A, Esc / B\nController labels use the Xbox layout; other mapped gamepads use the same button positions.", 18)
-	for setting in [["master", "Master volume", 0.0, 1.0, 0.1, 0.8], ["music", "Music volume", 0.0, 1.0, 0.1, 0.55], ["sfx", "Sound effects", 0.0, 1.0, 0.1, 0.8], ["text_scale", "Text size", 0.85, 1.3, 0.05, 1.0], ["mouse_sensitivity", "Mouse sensitivity", 0.0005, 0.006, 0.0005, 0.002], ["fov", "Field of view", 60.0, 105.0, 1.0, 80.0], ["controller_sensitivity", "Controller look sensitivity", 0.5, 4.0, 0.1, 2.0], ["controller_deadzone", "Controller stick dead zone", 0.05, 0.4, 0.05, 0.2]]:
+	for setting in [["master", "Master volume", 0.0, 1.0, 0.1, 0.8], ["music", "Music volume", 0.0, 1.0, 0.05, 0.55], ["sfx", "Sound effects", 0.0, 1.0, 0.1, 0.8], ["text_scale", "Text size", 0.85, 1.3, 0.05, 1.0], ["mouse_sensitivity", "Mouse sensitivity", 0.0005, 0.006, 0.0005, 0.002], ["fov", "Field of view", 60.0, 105.0, 1.0, 80.0], ["controller_sensitivity", "Controller look sensitivity", 0.5, 4.0, 0.1, 2.0], ["controller_deadzone", "Controller stick dead zone", 0.05, 0.4, 0.05, 0.2]]:
 		var key: String = setting[0]
-		_label(setting[1], 18, GOLD)
+		var value_label := _label(setting[1], 18)
 		var slider := HSlider.new()
 		slider.min_value = setting[2]
 		slider.max_value = setting[3]
@@ -383,8 +526,13 @@ func show_settings(settings: Dictionary) -> void:
 		slider.value = float(settings.get(key, setting[5]))
 		slider.custom_minimum_size.y = roundi(30.0 * text_scale)
 		slider.focus_mode = Control.FOCUS_ALL
+		slider.draw.connect(_draw_slider_focus.bind(slider))
+		slider.focus_entered.connect(slider.queue_redraw)
+		slider.focus_exited.connect(slider.queue_redraw)
 		slider.value_changed.connect(_setting_changed.bind(key))
+		slider.value_changed.connect(_setting_readout.bind(value_label, str(setting[1]), key))
 		column.add_child(slider)
+		_setting_readout(slider.value, value_label, str(setting[1]), key)
 	var invert := CheckButton.new()
 	invert.text = "Invert controller vertical look"
 	invert.focus_mode = Control.FOCUS_ALL
@@ -403,6 +551,20 @@ func show_settings(settings: Dictionary) -> void:
 func _setting_changed(value: float, key: String) -> void:
 	action_requested.emit("setting", {"key": key, "value": value})
 
+func _draw_slider_focus(slider: HSlider) -> void:
+	if slider.has_focus():
+		var frame := Rect2(Vector2(-3, -3), slider.size + Vector2(6, 6))
+		slider.draw_rect(frame, INK, false, 4)
+		slider.draw_rect(frame, GOLD, false, 2)
+
+func _setting_readout(value: float, label: Label, title: String, key: String) -> void:
+	var shown := "%.2f" % value
+	if key in ["master", "music", "sfx", "controller_deadzone"]: shown = "%d%%" % roundi(value * 100)
+	elif key == "fov": shown = "%d°" % roundi(value)
+	elif key == "text_scale": shown = "%d%%" % roundi(value * 100)
+	elif key == "mouse_sensitivity": shown = "%.4f" % value
+	label.text = "%s   %s" % [title, shown]
+
 func _reduced_motion_changed(value: bool) -> void:
 	action_requested.emit("setting", {"key": "reduced_motion", "value": value})
 
@@ -410,7 +572,7 @@ func _controller_invert_changed(value: bool) -> void:
 	action_requested.emit("setting", {"key": "controller_invert_y", "value": value})
 
 func show_credits() -> void:
-	_clear("A shared adventure", "credits")
+	_clear("Credits & support", "credits")
 	_label("3D adaptation · PilferedParrot\nOriginal Dink Smallwood · Seth A. Robinson\nArtwork · Justin Martin\nStory & world · Seth A. Robinson, Greg Smith, Justin Martin\nAdditional levels · Chris Bakker\nv1.08 fixes · Talmadge Bradley III\nFree audio · GNU FreeDink contributors\nEngine · Godot contributors", 20)
 	_label("New code: Apache 2.0. Original art, story and audio retain their own licenses. Detailed attributions are bundled in licenses/. This is an unofficial, modified adaptation.", 18)
 	_button("Support PilferedParrot on Patreon ↗", "patreon")

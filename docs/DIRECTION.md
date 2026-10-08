@@ -1,5 +1,7 @@
 # Direction — September 24, 2026
 
+Interface direction and original-art references: [INTERFACE_DIRECTION.md](INTERFACE_DIRECTION.md) (2026-10-07).
+
 This file supersedes the review process in `OPENING_REVIEW.md` and any
 "no Sprite3D" rule in `FIRST_PERSON.md` / `IMPLEMENTATION.md`. Read it first.
 
