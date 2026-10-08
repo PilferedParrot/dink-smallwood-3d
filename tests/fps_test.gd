@@ -27,6 +27,18 @@ func _run() -> void:
 
 	check(game.fp_world != null, "FPS host creates the first-person world renderer")
 	check(game.camera.projection == Camera3D.PROJECTION_PERSPECTIVE, "FPS camera uses perspective projection")
+	check(game.camera.keep_aspect == Camera3D.KEEP_HEIGHT, "Widescreen preserves vertical field of view")
+	var previous_size := root.size
+	root.size = Vector2i(1280, 800)
+	await process_frame
+	var normal_projection: Projection = game.camera.get_camera_projection()
+	root.size = Vector2i(1920, 1080)
+	await process_frame
+	var wide_projection: Projection = game.camera.get_camera_projection()
+	check(is_equal_approx(normal_projection.y.y, wide_projection.y.y), "Widening the window leaves vertical projection unchanged")
+	check(wide_projection.x.x < normal_projection.x.x, "Widening the window reveals more horizontally")
+	root.size = previous_size
+	await process_frame
 	check(is_equal_approx(game.camera.position.y, EYE_HEIGHT), "Camera eye height is 1.65m at rest")
 	check(is_equal_approx(game.camera.position.x, (float(game.entities[1].x)-320.0)*SCALE), "Camera follows source x coordinate")
 	check(is_equal_approx(game.camera.position.z, (float(game.entities[1].y)-200.0)*SCALE), "Camera follows source y coordinate")
