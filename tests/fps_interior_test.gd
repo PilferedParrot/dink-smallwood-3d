@@ -3,6 +3,7 @@ extends SceneTree
 # game does, arriving from the outdoors, and prints one "INT key value..." line per fact tests/test_fps_interior.py checks:
 #   sky       the environment keeps no sky inside (the outdoor sky was drawn past the corridor's end with a flat background set)
 #   wall      each wall node: built from its sprite (interior_solid), its height in metres
+#   plaster   a wall's texture filter and the mean step (0-255) between neighbouring stone texels
 #   door      the exit door's width, its height, its place
 #   table     the round table's footprint radius and its top's height; its legs
 #   bed       each bed's width and height
@@ -27,6 +28,7 @@ func _aabb(node: Node3D) -> AABB:
 		first = false
 	return box
 
+var plaster_done := false
 func _run() -> void:
 	var game = GAME.new()
 	game.test_mode = true
@@ -52,6 +54,25 @@ func _run() -> void:
 		var box := _aabb(node)
 		if key == "wall":
 			print("INT wall ", id, " ", solid, " ", snappedf(box.size.y, 0.001), " ", node.visible)
+			if not plaster_done:
+				# what the wall shows of its stone: the filter, and the mean step between neighbouring texels of the stone's rows
+				for m in node.find_children("*", "MeshInstance3D", true, false):
+					var mat := (m as MeshInstance3D).get_surface_override_material(0) as StandardMaterial3D
+					if mat == null or mat.albedo_texture == null: continue
+					var img: Image = mat.albedo_texture.get_image()
+					if img.is_compressed(): img.decompress()
+					if img.get_width() < 40 or img.get_height() < 60: continue
+					var steps := 0.0
+					var n := 0
+					for yy in range(20, 80):
+						for xx in range(img.get_width() - 1):
+							var a := img.get_pixel(xx, yy)
+							var b := img.get_pixel(xx + 1, yy)
+							steps += absf((a.r + a.g + a.b) - (b.r + b.g + b.b)) / 3.0
+							n += 1
+					print("INT plaster ", mat.texture_filter, " ", snappedf(steps / float(n) * 255.0, 0.01))
+					plaster_done = true
+					break
 		elif key == "table" and int(e.get("pseq", 0)) == 87:
 			print("INT table ", solid, " ", snappedf(box.size.x, 0.001), " ", snappedf(box.size.y, 0.001), " ", snappedf(box.size.z, 0.001))
 		elif key == "bed":

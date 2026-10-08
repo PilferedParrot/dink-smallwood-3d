@@ -85,19 +85,144 @@ func is_wall(e: Dictionary) -> bool:
 	return str(fit_of(world.frame_path(e)).get("kind", "")) == "wall"
 
 # --- Materials and nodes ------------------------------------------------------------------------------------------------------
-func material(path: String, repeat: bool = false) -> StandardMaterial3D:
-	var key := "%s:%s" % [path, repeat]
+func material(path: String, repeat: bool = false, plaster: bool = false) -> StandardMaterial3D:
+	var key := "%s:%s:%s" % [path, repeat, plaster]
 	if materials.has(key): return materials[key]
 	var m := StandardMaterial3D.new()
 	m.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
 	m.albedo_texture = world.host._texture("res://" + path)
 	m.texture_filter = BaseMaterial3D.TEXTURE_FILTER_NEAREST_WITH_MIPMAPS
+	if plaster:
+		var smooth := plaster_texture(path)
+		if smooth != null:
+			m.albedo_texture = smooth
+			m.texture_filter = BaseMaterial3D.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
 	m.texture_repeat = repeat
 	m.cull_mode = BaseMaterial3D.CULL_DISABLED
 	m.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA_SCISSOR
 	m.alpha_scissor_threshold = 0.5
 	materials[key] = m
 	return m
+
+# --- The plaster ---------------------------------------------------------------------------------------------------------------
+# The walls' art is a plaster drawn as a per-pixel dither: at the original's own scale (a pixel is a screen pixel) the eye takes it for
+# an even tone with a faint grain, but in first person a pixel is 3 to 20 screen pixels and nearest filtering shows the dither as
+# static. The tone is what the original shows: the stone's rows (interior.json "stone": between the cap and the baseboard) are
+# low-passed at the grain's own scale, the correlation length of the art's dither (the distance at which the autocorrelation of
+# its detail, the picture less its row means, falls below 1/e), and sampled bilinearly, so a texel magnified is a soft gradient and
+# not a block. The cap, the baseboard and the stone's row-wise shading (the lighting the artist painted) are kept: the row means are
+# not filtered, only the detail about them. No colour is painted: every colour is a weighted mean of the art's own pixels.
+var plasters: Dictionary = {}
+func plaster_texture(path: String) -> Texture2D:
+	if plasters.has(path): return plasters[path]
+	var fit := fit_of(path)
+	var img: Image = world.sprite_image(path)
+	var tex: Texture2D = null
+	if img != null and fit.has("stone"):
+		var rows: Array = fit.stone
+		var smooth := plaster_image(img, int(rows[0]), int(rows[1]))
+		smooth.generate_mipmaps()
+		tex = ImageTexture.create_from_image(smooth)
+	plasters[path] = tex
+	return tex
+
+# The distance (px) at which the autocorrelation of the detail of rows r0..r1 falls to 1/e, the larger of the two axes (1 at least).
+func grain_length(img: Image, r0: int, r1: int) -> float:
+	var w := img.get_width()
+	var lum := PackedFloat32Array()
+	var h := r1 - r0
+	for y in h:
+		var mean := 0.0
+		for x in w:
+			var c := img.get_pixel(x, r0 + y)
+			mean += 0.3 * c.r + 0.59 * c.g + 0.11 * c.b
+		mean /= float(w)
+		for x in w:
+			var c := img.get_pixel(x, r0 + y)
+			lum.append(0.3 * c.r + 0.59 * c.g + 0.11 * c.b - mean)
+	var best := 1.0
+	for axis in 2:
+		var prev := 1.0
+		var found := 0.0
+		for lag in range(1, 12):
+			var sum := 0.0
+			var n := 0
+			var norm := 0.0
+			for y in h - (lag if axis == 1 else 0):
+				for x in w - (lag if axis == 0 else 0):
+					var a := lum[y * w + x]
+					var b := lum[(y + (lag if axis == 1 else 0)) * w + x + (lag if axis == 0 else 0)]
+					sum += a * b
+					norm += a * a
+					n += 1
+			var corr := sum / maxf(norm, 1.0e-9)
+			if corr < 0.36788:
+				found = float(lag - 1) + (prev - 0.36788) / maxf(prev - corr, 1.0e-6)
+				break
+			prev = corr
+		best = maxf(best, found)
+	return best
+
+# `img` with rows r0..r1 low-passed (a Gaussian of sigma = the grain's correlation length, 3 sigma wide, renormalised at the
+# band's edges and over opaque pixels) in the detail only: the row means (the shading) are put back.
+func plaster_image(img: Image, r0: int, r1: int) -> Image:
+	var sigma := grain_length(img, r0, r1)
+	var radius := int(ceil(3.0 * sigma))
+	var kernel := PackedFloat32Array()
+	for i in range(-radius, radius + 1): kernel.append(exp(-0.5 * float(i * i) / (sigma * sigma)))
+	var w := img.get_width()
+	var h := r1 - r0
+	var src := PackedColorArray()
+	for y in h:
+		for x in w: src.append(img.get_pixel(x, r0 + y))
+	var pass_x := PackedColorArray()
+	pass_x.resize(w * h)
+	for y in h:
+		for x in w:
+			var acc := Color(0, 0, 0, 0)
+			var wsum := 0.0
+			for i in range(-radius, radius + 1):
+				var xx := x + i
+				if xx < 0 or xx >= w: continue
+				var c := src[y * w + xx]
+				if c.a < 0.5: continue
+				var k := kernel[i + radius]
+				acc += c * k
+				wsum += k
+			pass_x[y * w + x] = acc / wsum if wsum > 0.0 else src[y * w + x]
+	var out: Image = img.duplicate()
+	for y in h:
+		for x in w:
+			if src[y * w + x].a < 0.5: continue
+			var acc := Color(0, 0, 0, 0)
+			var wsum := 0.0
+			for i in range(-radius, radius + 1):
+				var yy := y + i
+				if yy < 0 or yy >= h: continue
+				var c := pass_x[yy * w + x]
+				var k := kernel[i + radius]
+				acc += c * k
+				wsum += k
+			var blurred := acc / wsum
+			blurred.a = src[y * w + x].a
+			out.set_pixel(x, r0 + y, blurred)
+	# the shading back: each row keeps its own mean
+	for y in h:
+		var before := Color(0, 0, 0, 0)
+		var after := Color(0, 0, 0, 0)
+		var n := 0
+		for x in w:
+			if src[y * w + x].a < 0.5: continue
+			before += src[y * w + x]
+			after += out.get_pixel(x, r0 + y)
+			n += 1
+		if n == 0: continue
+		var shift := (before - after) / float(n)
+		for x in w:
+			if src[y * w + x].a < 0.5: continue
+			var c := out.get_pixel(x, r0 + y)
+			out.set_pixel(x, r0 + y, Color(clampf(c.r + shift.r, 0.0, 1.0), clampf(c.g + shift.g, 0.0, 1.0), clampf(c.b + shift.b, 0.0, 1.0), c.a))
+	return out
 
 func node_of(surfaces: Array) -> Node3D:
 	var node := Node3D.new()
@@ -294,8 +419,8 @@ func wall_surfaces(e: Dictionary, fit: Dictionary, path: String, o: Vector2, scr
 		own.vert(x1, h, z0, Vector2(float(fit.size[0]), 0.0)), own.vert(x0, h, z0, Vector2(0, 0.0))]
 	own.quad(tv[0], tv[1], tv[2], tv[3])
 	var out: Array = []
-	out.append([own.mesh(), material(path)])
-	if rock.verts.size() > 0: out.append([rock.mesh(), material(stone, true)])
+	out.append([own.mesh(), material(path, false, true)])
+	if rock.verts.size() > 0: out.append([rock.mesh(), material(stone, true, true)])
 	return out
 
 func _wall_v(f: Dictionary, y: float) -> float:
@@ -336,11 +461,12 @@ func terrain_material(screen: int) -> StandardMaterial3D:
 	var img: Image = world.sprite_image(stone)
 	if img == null: return null
 	var rows: Array = sfit.stone
-	var crop := img.get_region(Rect2i(0, int(rows[0]), img.get_width(), int(rows[1]) - int(rows[0])))
+	var crop := plaster_image(img, int(rows[0]), int(rows[1])).get_region(Rect2i(0, int(rows[0]), img.get_width(), int(rows[1]) - int(rows[0])))
+	crop.generate_mipmaps()
 	var m := StandardMaterial3D.new()
 	m.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
 	m.albedo_texture = ImageTexture.create_from_image(crop)
-	m.texture_filter = BaseMaterial3D.TEXTURE_FILTER_NEAREST_WITH_MIPMAPS
+	m.texture_filter = BaseMaterial3D.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
 	m.uv1_triplanar = true
 	m.uv1_world_triplanar = true
 	m.uv1_scale = Vector3.ONE / (float(img.get_width()) * S)
@@ -700,7 +826,7 @@ func add_doors(screen: int, parent: Node3D) -> void:
 		var lintel := MeshInstance3D.new()
 		lintel.name = "ExitLintel"
 		lintel.mesh = sb.mesh()
-		lintel.set_surface_override_material(0, material(stone, true))
+		lintel.set_surface_override_material(0, material(stone, true, true))
 		parent.add_child(lintel)
 		parent.set_meta("exit_door", true)
 
