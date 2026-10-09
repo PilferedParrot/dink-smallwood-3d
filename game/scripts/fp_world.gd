@@ -1514,7 +1514,10 @@ func add_hut(node: Node3D, e: Dictionary, id: int, collision: bool) -> void:
 # scripts keep working); movement still reads the source hardbox (game.gd). Drawn at its sprite's hotspot, scaled by its size.
 func prop_fitted(e: Dictionary) -> bool:
 	var path := frame_path(e)
-	return not path.is_empty() and props.has(path)
+	# The well (struct/Landmark landm-01..03) keeps its sprite for now: its fitted solid (landmarks.json, RC3 unit) has a flat
+	# untextured slab for a roof, because the outline cannot fix the roof's pitch (7-17 degrees), and at eye level it read worse
+	# than the sprite's thatched, pitched roof. Next: take the pitch from the fitted house roofs of the same thatch (lead, 10-08).
+	return not path.is_empty() and props.has(path) and not "/landmark/" in path.to_lower()
 
 func add_prop(node: Node3D, e: Dictionary, id: int, collision: bool, screen: int) -> void:
 	for part in seam_parts(e,screen):

@@ -34,8 +34,8 @@ GODOT = os.environ.get("GODOT") or shutil.which("godot") or shutil.which("godot4
 pytestmark = pytest.mark.skipif(not Path(GODOT).is_file(), reason="Godot unavailable; set GODOT")
 
 # Scenes loaded for the second test: trees and bushes (376, 251), the pigpen's yard (439, 409, 441, 469: their fences are solid
-# now, tests/test_fps_fences.py, so the cards left are barrels, crates and grass), castle walls (402), screen 408 (the well and the
-# save machine, solids now: tests/test_fps_landmarks.py), a signpost (376), the island's huts and spears (764, 731).
+# now, tests/test_fps_fences.py, so the cards left are barrels, crates and grass), castle walls (402), screen 408 (the well, a
+# billboard, and the save machine, a solid now: tests/test_fps_landmarks.py), a signpost (376), the island's huts and spears (764, 731).
 SCENES = [376, 251, 439, 402, 408, 764, 731, 409, 441, 469]
 
 
@@ -107,12 +107,11 @@ def test_every_card_of_the_map_is_a_billboard_unless_its_art_is_a_structure(swep
     # The instrument could see both kinds, and the cases the lead measured: every oak and pine, the shrubs, the well.
     keys = {(c["key"], c["mode"]) for c in swept}
     for kind in [("oak_tree", "billboard"), ("pine_tree", "billboard"), ("dead_tree", "billboard"), ("bush", "billboard"),
-                 ("rock", "billboard"), ("knight", "billboard"), ("dragon", "billboard"),
+                 ("rock", "billboard"), ("well", "billboard"), ("knight", "billboard"), ("dragon", "billboard"),
                  ("wall", "fixed"), ("sign", "fixed")]:
         assert kind in keys, kind
-    # The well and the save machine are no cards any more: both stand in 3D (tests/test_fps_landmarks.py), so none is swept.
-    assert not any(c["path"].lower().endswith(("/landmark/landm-01.png", "/landmark/landm-02.png", "/landmark/landm-03.png"))
-                   or "/inter/save/" in c["path"].lower() for c in swept)
+    # The save machine is no card any more: it stands in 3D (tests/test_fps_landmarks.py), so it is not swept.
+    assert not any("/inter/save/" in c["path"].lower() for c in swept)
     # The island's huts are no cards any more: all 16 stand in 3D (tests/test_fps_huts.py), so no ("hut", "fixed") is swept.
     assert ("hut", "fixed") not in keys
     assert sum(1 for c in swept if c["key"] == "oak_tree") > 500

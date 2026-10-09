@@ -48,7 +48,7 @@ def test_both_landmarks_are_on_the_screen(landmarks):
     assert set(landmarks) == {"well", "save"}, landmarks
 
 
-@pytest.mark.parametrize("name,cls", [("well", "compound"), ("save", "ring")])
+@pytest.mark.parametrize("name,cls", [("save", "ring")])
 def test_a_landmark_is_a_solid_not_a_card(landmarks, name, cls):
     m = landmarks[name]
     assert m["kind"] == "solid" and m["cls"] == cls, m
@@ -64,3 +64,9 @@ def test_the_save_machine_is_not_the_same_from_two_sides_and_keeps_its_script(la
 
 def test_the_well_has_a_body_the_rays_hit(landmarks):
     assert landmarks["well"]["layer"] >= 1, landmarks["well"]
+
+
+def test_the_well_keeps_its_sprite_until_its_roof_has_a_pitch(landmarks):
+    # The lead's call on the RC3 sheet: the fitted well's roof is a flat untextured slab (the outline cannot fix its pitch)
+    # and read worse at eye level than the sprite (fp_world prop_fitted). Its fit stays in landmarks.json for the next pass.
+    assert landmarks["well"]["kind"] == "billboard", landmarks["well"]
