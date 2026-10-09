@@ -78,8 +78,11 @@ def test_dinks_house_stands_solid_with_no_sky_and_a_door(tmp_path):
         assert solid == "true" and abs(float(height) - room) < 0.01 and visible == "true", (wid, solid, height, visible)
     # the plaster is the tone the original shows, not its dither magnified: bilinear (Godot 3 = LINEAR_WITH_MIPMAPS; 0.3.0 drew the
     # art with nearest filtering, 2), the mean step between neighbouring texels of the stone under 4 of 255 (the art's own: 9.4)
-    filt, step = lines["plaster"][0]
+    filt, step, rowstep = lines["plaster"][0]
     assert int(filt) == 3 and float(step) < 4.0, lines["plaster"]
+    # no stripe per pixel row: restoring each row's own mean put the dither's row noise back (2.55 levels between
+    # neighbouring rows' means in rc2 eb739f9, drawn as streaks across the walls; 0.41 with the smoothed trend)
+    assert float(rowstep) < 1.0, lines["plaster"]
     # the exit: a door as wide as the corridor between the jambs (308 to 339), Dink's door art (24 x 52.8 px) kept in proportion
     # at that width (68.2 px = 1.70 m, above the 1.65 m eye; the art's own 52.8 px read as a slot), at the screen's edge
     door = lines["door"][0]

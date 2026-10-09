@@ -70,7 +70,18 @@ func _run() -> void:
 							var b := img.get_pixel(xx + 1, yy)
 							steps += absf((a.r + a.g + a.b) - (b.r + b.g + b.b)) / 3.0
 							n += 1
-					print("INT plaster ", mat.texture_filter, " ", snappedf(steps / float(n) * 255.0, 0.01))
+					# and down the rows: the step between neighbouring rows' means (a stripe per pixel row reads as streaks)
+					var rowstep := 0.0
+					var prev := -1.0
+					for yy in range(20, 80):
+						var mean := 0.0
+						for xx in range(img.get_width()):
+							var c := img.get_pixel(xx, yy)
+							mean += (c.r + c.g + c.b) / 3.0
+						mean /= float(img.get_width())
+						if prev >= 0.0: rowstep += absf(mean - prev)
+						prev = mean
+					print("INT plaster ", mat.texture_filter, " ", snappedf(steps / float(n) * 255.0, 0.01), " ", snappedf(rowstep / 59.0 * 255.0, 0.01))
 					plaster_done = true
 					break
 		elif key == "table" and int(e.get("pseq", 0)) == 87:

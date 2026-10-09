@@ -164,7 +164,7 @@ func grain_length(img: Image, r0: int, r1: int) -> float:
 	return best
 
 # `img` with rows r0..r1 low-passed (a Gaussian of sigma = the grain's correlation length, 3 sigma wide, renormalised at the
-# band's edges and over opaque pixels) in the detail only: the row means (the shading) are put back.
+# band's edges and over opaque pixels); the shading is the trend of the row means, smoothed by the same kernel.
 func plaster_image(img: Image, r0: int, r1: int) -> Image:
 	var sigma := grain_length(img, r0, r1)
 	var radius := int(ceil(3.0 * sigma))
@@ -206,18 +206,37 @@ func plaster_image(img: Image, r0: int, r1: int) -> Image:
 			var blurred := acc / wsum
 			blurred.a = src[y * w + x].a
 			out.set_pixel(x, r0 + y, blurred)
-	# the shading back: each row keeps its own mean
+	# the shading back: each row takes the trend of the original's row means, the means smoothed down the rows by the same
+	# kernel. Putting each row's own mean back (rc2 eb739f9) restored the dither's row-to-row noise too (2.5 grey levels, std,
+	# on inn-19): a stripe per pixel row that mipmapping drew as streaks across the wall (lead, 2026-10-08).
+	var means := PackedColorArray()
+	var counts := PackedInt32Array()
+	means.resize(h)
+	counts.resize(h)
 	for y in h:
 		var before := Color(0, 0, 0, 0)
-		var after := Color(0, 0, 0, 0)
 		var n := 0
 		for x in w:
 			if src[y * w + x].a < 0.5: continue
 			before += src[y * w + x]
-			after += out.get_pixel(x, r0 + y)
 			n += 1
-		if n == 0: continue
-		var shift := (before - after) / float(n)
+		means[y] = before / float(n) if n > 0 else Color(0, 0, 0, 0)
+		counts[y] = n
+	for y in h:
+		if counts[y] == 0: continue
+		var trend := Color(0, 0, 0, 0)
+		var wsum := 0.0
+		for i in range(-radius, radius + 1):
+			var yy := y + i
+			if yy < 0 or yy >= h or counts[yy] == 0: continue
+			trend += means[yy] * kernel[i + radius]
+			wsum += kernel[i + radius]
+		trend /= wsum
+		var after := Color(0, 0, 0, 0)
+		for x in w:
+			if src[y * w + x].a < 0.5: continue
+			after += out.get_pixel(x, r0 + y)
+		var shift := trend - after / float(counts[y])
 		for x in w:
 			if src[y * w + x].a < 0.5: continue
 			var c := out.get_pixel(x, r0 + y)
