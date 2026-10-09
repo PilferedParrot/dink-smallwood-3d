@@ -96,3 +96,14 @@ def test_a_prop_follows_the_frame_its_sequence_shows(classified):
     assert anim, "no animated barrel on screen 439"
     # whole (with a ray body), splintered on the ground (flat: none), whole again
     assert anim[0] == ["barel-01.png:body", "barel-03.png:nobody", "barel-01.png:body"], anim
+
+
+def test_props_the_player_walks_through_are_no_deeper_than_their_footprint(classified):
+    # The grain bags on 539 (hard 1: the player walks through them) are placed 11-31 px apart in a column. Uncapped, each
+    # stood 74 px (1.85 m) deep and they ran together into one long shape through the original's camera (rc1 probe,
+    # 2026-10-08). Their hardbox is 32 px deep; the cap is the hardbox plus 6 px, as for a prop that stops the player.
+    props, _ = classified
+    bags = [r for r in props if r.get("screen") == 539 and "/grain/bag-" in r.get("path", "")]
+    assert len(bags) == 4, bags
+    for r in bags:
+        assert r["d"] <= (32 + 6) * 0.025 + 0.01, r

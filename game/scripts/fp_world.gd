@@ -1534,11 +1534,13 @@ func build_prop(node: Node3D, e: Dictionary, id: int, collision: bool, path: Str
 	model.name = "Model"
 	model.position = Vector3(-float(d.get("dx",0))*SCALE,0,-float(d.get("dy",0))*SCALE)*factor
 	var span: Vector2 = props.footprint(path)
-	if span != Vector2.ZERO and int(e.get("hard",0)) == 0:
-		# A solid prop is as deep as it is wide, deeper than the source hardbox the player is stopped by (a hardbox is the
-		# original's flattened footprint). It stands on the hardbox's middle, and is no deeper than the hardbox with the
-		# distance the player keeps from it (game.gd: grown by 4), less a margin for the camera's near plane: the camera never
-		# stands inside it. A barrel or a sack, whose hardbox is as deep as it is wide, is not squashed at all.
+	if span != Vector2.ZERO:
+		# A solid prop is as deep as it is wide, deeper than the source hardbox (a hardbox is the original's flattened
+		# footprint). It stands on the hardbox's middle, and is no deeper than the hardbox with the distance the player
+		# keeps from it (game.gd: grown by 4), less a margin for the camera's near plane: the camera never stands inside it.
+		# A barrel or a sack, whose hardbox is as deep as it is wide, is not squashed at all. The rule holds for props the
+		# player walks through too (hard 1): uncapped, the grain bags on 539, placed 11-31 px apart, stood 74 px deep each
+		# and ran together into one long shape (lead, 2026-10-08).
 		var rect: Rect2 = hard_rect(e)
 		var squash := clampf((rect.size.y+6.0*factor)/maxf(1.0,(span.y-span.x)*factor),0.2,1.0)
 		model.scale = Vector3(factor,factor,factor*squash)
