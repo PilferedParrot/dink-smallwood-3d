@@ -1985,7 +1985,10 @@ func update_billboard(sp: Sprite3D, e: Dictionary) -> void:
 			var at := sp.get_parent() as Node3D
 			var to_actor := Vector2(at.global_position.x-camera.global_position.x,at.global_position.z-camera.global_position.z)
 			if to_actor.length() < 0.001: break
-			var rel: Vector2 = (DIRS[seq-base] as Vector2).normalized().rotated(-Vector2(0,-1).angle_to(to_actor.normalized()))
+			var facing: Vector2 = DIRS[seq-base]
+			# Who speaks faces you (first-person presentation only: the entity's own direction, which the scripts read, is kept).
+			if at.get_meta("face_camera",false): facing = -to_actor
+			var rel: Vector2 = facing.normalized().rotated(-Vector2(0,-1).angle_to(to_actor.normalized()))
 			var best := seq-base
 			var best_dot := -2.0
 			for k in DIRS:

@@ -482,12 +482,19 @@ func _dialogue(text: String, speaker: int, context: Dictionary) -> void:
 	if test_mode:
 		await get_tree().process_frame
 	else:
-		if displayed_speaker != 1 and entities.has(displayed_speaker): _fps_frame_speaker(displayed_speaker)
+		var facing_visual: Node3D = null
+		if displayed_speaker != 1 and entities.has(displayed_speaker):
+			_fps_frame_speaker(displayed_speaker)
+			facing_visual = visuals.get(displayed_speaker)
+			if is_instance_valid(facing_visual):
+				facing_visual.set_meta("face_camera", true)
+				_update_visual(displayed_speaker)
 		elif displayed_speaker == 1: _fps_grief_dialogue_camera(context)
 		ui.show_dialogue(line, speaker_name)
 		# Hide a held model immediately, including the first rendered dialogue frame.
 		_fps_update_viewmodel(0.0)
 		await ui.dialogue_finished
+		if is_instance_valid(facing_visual): facing_visual.remove_meta("face_camera")
 		_fps_restore_dialogue_camera()
 	dialogue_busy = false
 
