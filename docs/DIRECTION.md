@@ -1902,3 +1902,20 @@ surface the camera saw is the sprite projected back, UV = (cx + X, cz + k Z - Y)
 - Test: `tests/test_fps_landmarks.py` (fails on the old code: both were `Sprite3D`; the save machine is not the same from the south
   and the east). Blind to: whether either reads well (look at `tmp/landmarks_sheet.jpg`), the roof's true pitch, and what the
   save machine's near half looks like (the sprite shows none).
+
+## RC3: who speaks faces you; the save machine stands — October 8-9 (Opus 5.5 lead; Sonnet 5.5 unit)
+
+From the RC1 review's open list (`/home/chris/dink-review-rc1/review/FINDINGS.md`), on branch `claude/rc3`:
+- **A speaker in dialogue faces you.** While a line shows, the speaker's visual carries `face_camera` and the billboard
+  picks the frame drawn facing the camera (`fp_world.gd update_billboard`, `fps_game.gd _dialogue`); the entity's own
+  direction, which the scripts read, is unchanged. The opening's Mother showed her back (map facing south-west, Dink east
+  of her); in the real opening dialogue her face now turns to Dink (`tmp/solid/rc3-contact.jpg`, first row).
+- **The pigs turn with the camera already.** Pinned by `tests/test_fps_facing.py`. The review's "side-on from every side"
+  is the art: pigs have only the four diagonal walks, each a three-quarter profile.
+- **The save machine is solid** (Sonnet unit, see "The landmarks are solid" above): a grating floor and the arched wall on
+  its far half, fitted from the outline. From the front and through the original camera it keeps its picture; from the
+  sides it reads as a curved wall on a disc, plainer than the sprite's front picture.
+- **The well keeps its sprite** (`prop_fitted`): its fitted roof is a flat untextured slab (the outline cannot fix the
+  pitch), worse at eye level than the sprite. Next: the pitch from the fitted house roofs of the same thatch.
+Checks: 153 passed; `test_fps_sideflip`'s rail test is a known flake (it failed in the full run and in one rerun, then
+passed twice alone at low load; GPT-6.1 Sol measured 4/5 on RC1): a harness fix is queued.
