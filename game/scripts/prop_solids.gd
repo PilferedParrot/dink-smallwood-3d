@@ -205,6 +205,7 @@ func _box(path: String, fit: Dictionary) -> Array:
 	for b in fit.get("boxes", [[0, 0, 0]]):
 		var g: Array = _box_corners(fit, b)
 		var y0 := float(b[2])
+		var hb := hh if b.size() < 4 else float(b[3]) # a box of its own height (a post ends in the roof's underside)
 		# Faces: face i stands on the edge from corner i to i + 1. Its corners as seen from outside: bottom left, bottom
 		# right, top right, top left.
 		var centre := Vector2(float(b[0]), float(b[1]))
@@ -219,7 +220,7 @@ func _box(path: String, fit: Dictionary) -> Array:
 			if p0.dot(right) > p1.dot(right):
 				bl = p1
 				br = p0
-			faces.append({"nz": normal.y, "pts": [[bl, y0], [br, y0], [br, y0 + hh], [bl, y0 + hh]]})
+			faces.append({"nz": normal.y, "pts": [[bl, y0], [br, y0], [br, y0 + hb], [bl, y0 + hb]]})
 		var best := 0
 		for i in 4:
 			if float(faces[i].nz) > float(faces[best].nz): best = i
@@ -243,8 +244,8 @@ func _box(path: String, fit: Dictionary) -> Array:
 			index.append_array(PackedInt32Array([base, base + 1, base + 2, base, base + 2, base + 3]))
 		var tb := verts.size()
 		for p in g:
-			verts.append(at.call(p, y0 + hh))
-			tex_uv.append((proj.call(p, y0 + hh) as Vector2)/size)
+			verts.append(at.call(p, y0 + hb))
+			tex_uv.append((proj.call(p, y0 + hb) as Vector2)/size)
 		index.append_array(PackedInt32Array([tb, tb + 1, tb + 2, tb, tb + 2, tb + 3]))
 		if slab:
 			var ub := edge_v.size()
@@ -286,8 +287,56 @@ func _compound(path: String, fit: Dictionary) -> Array:
 	for part in fit.parts:
 		var p: Dictionary = (part as Dictionary).duplicate()
 		p["zc"] = zc
-		out.append_array(_box(path, p))
+		out.append_array(_gable(path, p) if str(p.get("class", "")) == "gable" else _box(path, p))
 	return out
+
+# A gable roof (the well's; tools/landmark_fit.py): two planes from the ridge down to the eaves, a thatch thickness each, on the
+# fitted rectangle w x d (yawed; the ridge along its long axis d), the ends closed by the shell's cross-section. The pitch is
+# the thatched cottages' (fit.pitch); the open underside is the underside of the thatch. Every vertex takes the picture of the
+# top slope the original camera saw (UV = its projection), at the same distance from the ridge and along it: the camera saw
+# one slope, so the far slope, the undersides and the ends take that one's thatch (a pitched roof is symmetric about its ridge).
+func _gable(path: String, fit: Dictionary) -> Array:
+	var size := Vector2(float(fit.size[0]), float(fit.size[1]))
+	var cx := float(fit.cx)
+	var cz := float(fit.cz)
+	var k := float(fit.k)
+	var zc := float(fit.zc)
+	var hw := float(fit.w)/2.0
+	var hd := float(fit.d)/2.0
+	var ridge := float(fit.ridge)
+	var rise := float(fit.rise)
+	var thick := float(fit.h)
+	var centre := Vector2(float(fit.boxes[0][0]), float(fit.boxes[0][1]))
+	var across := Vector2(cos(float(fit.yaw)), sin(float(fit.yaw)))
+	var along := Vector2(-across.y, across.x)
+	var seen := 1.0 if across.y >= 0.0 else -1.0 # the slope whose normal turns to the camera (+Z)
+	var top := func(u: float) -> float: return ridge - rise*absf(u)/hw
+	var lat := func(u: float, v: float) -> Vector2: return centre + u*across + v*along
+	var quads: Array = [] # each: four (u across, v along, height) corners, counter-clockwise seen from outside
+	for sgn in [-1.0, 1.0]:
+		var ue: float = sgn*hw
+		var ye: float = top.call(ue)
+		quads.append([[0.0, -hd, ridge], [0.0, hd, ridge], [ue, hd, ye], [ue, -hd, ye]]) # the slope's top
+		quads.append([[0.0, -hd, ridge - thick], [ue, -hd, ye - thick], [ue, hd, ye - thick], [0.0, hd, ridge - thick]]) # its underside
+		quads.append([[ue, -hd, ye], [ue, hd, ye], [ue, hd, ye - thick], [ue, -hd, ye - thick]]) # the eave's edge
+		for v in [-hd, hd]: # the end: the shell's cross-section
+			quads.append([[0.0, v, ridge], [ue, v, ye], [ue, v, ye - thick], [0.0, v, ridge - thick]])
+	var verts := PackedVector3Array()
+	var tex_uv := PackedVector2Array()
+	var index := PackedInt32Array()
+	for quad in quads:
+		var base := verts.size()
+		for c in quad:
+			var q: Vector2 = lat.call(c[0], c[1])
+			verts.append(Vector3(cx + q.x, c[2], zc + q.y)*S)
+			# The picture of the top slope the camera saw: the vertex's own point on it, mirrored to the seen side; a vertex a thatch
+			# thickness below the top (the underside, the eave's edge, the ends) takes the point that far up the slope, so the thickness
+			# shows thatch, not a sliver of one row stretched down.
+			var us := absf(absf(float(c[0])) - (float(top.call(float(c[0]))) - float(c[2]))*cos(atan(rise/hw)))
+			var qs: Vector2 = lat.call(seen*us, c[1])
+			tex_uv.append(Vector2(cx + qs.x, cz + k*qs.y - float(top.call(us)))/size)
+		index.append_array(PackedInt32Array([base, base + 1, base + 2, base, base + 2, base + 3]))
+	return [[_arrays(verts, tex_uv, index), _texture(path, fit)]]
 
 # --- ring -----------------------------------------------------------------------------------------------------------
 # A ring open to the camera (the save machine; tools/landmark_fit.py ring_fit): a grating floor on the ground and a wall on the far

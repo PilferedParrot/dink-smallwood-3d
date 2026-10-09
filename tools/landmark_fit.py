@@ -14,8 +14,13 @@ the two fat things, the roof (the upper) and the stone base (the lower), and rem
   * roof: a thin slab on the ground rectangle w x d yawed about the vertical, fitted so its projected top parallelogram
     overlaps the roof silhouette best (differential evolution, seeded). Its thickness is a post's width (a beam). It stands over
     the posts' middle in depth, so its height y0 follows from where its centre is drawn: row = cz + k Z - y0.
-A slab (the roof: thin, seen from above) takes its top's picture on its underside and its edges. Its texture is the roof's lit planks
-(the warm pixels): the dark band the original draws under the eave is a shadow, not a plank.
+  * the roof's PITCH is not in the outline (the two slope edges fitted 7 to 17 degrees). It is the thatched houses': the median of the
+    rise/run that facade_fit.HOUSES reads from the art of the six cottages (PITCH below), applied to the roof across its ridge,
+    which runs along the roof's long axis. The ridge's height is the one thing left to fit: the height whose projected gable
+    overlaps the roof silhouette best. A gable roof (class 'gable'): two planes ridge to eaves, a thatch thickness, gable ends
+    closed; the posts end at its underside.
+The roof takes its slope's picture on its underside, its far slope and its ends (prop_solids.gd _gable). Its texture is the roof's lit
+planks (the warm pixels): the dark band the original draws under the eave is a shadow, not a plank.
 The entry is {'class': 'compound', base, parts[...]}: every part keeps its own mask (the sprite pixels it was fitted from; the
 game inpaints the rest, so the posts' wood does not paint the rim). prop_solids.gd builds it.
 Usage: /usr/bin/python3 tools/landmark_fit.py [--out game/prototype/landmarks.json] [--sheet tmp/landmarks]
@@ -36,6 +41,8 @@ ROOT = F.ROOT
 OPEN = 5        # radius (px) of the disc a roof or a base survives and a post (<= 8 px wide) does not
 POST_RUN = 10   # a post is a run of warm pixels at least this long in one column
 WARM = 8        # red minus blue: wood is warm, the well's stone is not
+D_MIN = 65      # the roof is at least this long (px): the free fit (55) stops short of the left tip the picture draws, leaving a post's top uncovered
+PITCH = float(np.median([p for h in F.HOUSES for p in h[3]]))  # rise/run of the thatched cottages' roofs (facade_fit.HOUSES: 1.1)
 DARK = 2        # a post's shaded face is as wide again as its lit run's edge: px added each side
 
 
@@ -116,16 +123,48 @@ def well_fit(rgba: np.ndarray, k: float) -> dict | None:
         boxes.append([round((p['x0'] + p['x1']) / 2 - cx, 2), round(z, 2)])
     zr = float(np.mean(zs))
     thick = side
-    # The roof's top face centre is drawn at (rcx, rcz) = (cx + X, cz + k Z - (y0 + thick)).
+    # The roof's flat-slab fit puts its top face centre at (rcx, rcz) = (cx + X, cz + k Z - (y0 + thick)); its footprint is w x d,
+    # yawed, the ridge along the long axis d (local z), the pitch across it (local x).
     y0 = cz + k * zr - rcz - thick
     xr = rcx - cx
+    assert rd >= rw, 'the ridge runs along the long axis: the fit put it across'
+    ex, ez = np.array([np.cos(yaw), np.sin(yaw)]), np.array([-np.sin(yaw), np.cos(yaw)])  # across the ridge, along it
+
+    def gable_pts(xc, w, d, ridge):
+        """The gable's vertices (sprite px): ridge ends, eave corners, and the eave corners a thatch thickness down."""
+        eave = ridge - PITCH * w / 2
+        out = []
+        for u, v, y in ((0, -d / 2, ridge), (0, d / 2, ridge)) + tuple((su * w / 2, sv * d / 2, eave - dy) for su in (-1, 1) for sv in (-1, 1) for dy in (0, thick)):
+            q = np.array([xc, zr]) + u * ex + v * ez
+            out.append((cx + q[0], cz + k * q[1] - y))
+        return out
+
+    def gable_cost(p):
+        if p[2] < p[1]:
+            return 2.0  # the ridge runs along the long axis
+        m = P.hull_mask(gable_pts(*p[:1], p[1], p[2], p[3]), roof.shape)
+        return 1.0 - (m & roof).sum() / max(1, (m | roof).sum())
+    from scipy.optimize import differential_evolution
+    wd = float(np.ptp(np.nonzero(roof.any(0))[0]))
+    r = differential_evolution(gable_cost, [(xr - wd, xr + wd), (8, 1.5 * wd), (D_MIN, 1.5 * wd), (y0, y0 + thick + 60)], seed=1, popsize=24,
+                               maxiter=200, tol=1e-7, polish=False)
+    xr, rw, rd, ridge = [float(v) for v in r.x]
+    iou_g = 1.0 - float(r.fun)
+    rise = PITCH * rw / 2
+    ctr = np.array([xr, zr])
+    print('gable: pitch %.2f rise %.2f ridge %.1f (flat slab top %.1f) iou %.4f (flat slab %.4f)' % (PITCH, rise, ridge, y0 + thick, iou_g, iou))
     for b in boxes:
         b.append(round(rim, 2))
+        # The post ends in the roof's underside, at the ridge side of its top (it is yawed like the roof, so its faces are the roof's axes).
+        u = float((np.array([b[0], b[1]]) - ctr) @ ex)
+        u_near = max(0.0, abs(u) - side / 2)
+        b.append(round(ridge - thick - rise * u_near / (rw / 2) - rim, 2))
     out_posts = {'class': 'box', 'size': base['size'], 'cx': cx, 'cz': cz, 'k': k, 'w': round(side, 2), 'd': round(side, 2),
                  'yaw': round(float(yaw), 4), 'h': round(y0 - rim, 2), 'boxes': boxes, 'mask': pack(post_px)}
-    out_roof = {'class': 'box', 'size': base['size'], 'cx': cx, 'cz': cz, 'k': k, 'w': round(rw, 2), 'd': round(rd, 2),
-                'yaw': round(float(yaw), 4), 'h': round(thick, 2), 'boxes': [[round(xr, 2), round(zr, 2), round(y0, 2)]],
-                'slab': True, 'iou': round(iou, 4), 'mask': pack(roof & warm)}
+    out_roof = {'class': 'gable', 'size': base['size'], 'cx': cx, 'cz': cz, 'k': k, 'w': round(rw, 2), 'd': round(rd, 2),
+                'yaw': round(float(yaw), 4), 'h': round(thick, 2), 'boxes': [[round(xr, 2), round(zr, 2), round(ridge - rise - thick, 2)]],
+                'pitch': round(PITCH, 3), 'rise': round(rise, 2), 'ridge': round(ridge, 2), 'iou': round(iou_g, 4),
+                'iou_flat': round(iou, 4), 'mask': pack(roof & warm)}
     return {'class': 'compound', 'size': base['size'], 'cx': cx, 'cz': cz, 'k': round(k, 4), 'base': base, 'parts': [out_posts, out_roof],
             'rim': round(rim, 2)}
 
@@ -188,8 +227,19 @@ def overlay(rgba: np.ndarray, e: dict) -> Image.Image:
     dr = ImageDraw.Draw(img)
     S = 6
     for part in e['parts']:
-        for X, Z, Y0 in part['boxes']:
-            g, px = P.box_corners((part['cx'] + X, part['cz'] + part['k'] * Z - Y0, part['w'], part['d'], part['yaw'], part['h']), part['k'])
+        if part['class'] == 'gable':  # ridge and eaves of the top, in the sprite's own camera
+            X, Z, Y0 = part['boxes'][0]
+            c, sn = np.cos(part['yaw']), np.sin(part['yaw'])
+            def pt(u, v, y):
+                return ((part['cx'] + X + u * c - v * sn) * S, (part['cz'] + part['k'] * (Z + u * sn + v * c) - y) * S)
+            w2, d2, ye = part['w'] / 2, part['d'] / 2, part['ridge'] - part['rise']
+            for a, b in (((0, -d2, part['ridge']), (0, d2, part['ridge'])), ((-w2, -d2, ye), (-w2, d2, ye)), ((w2, -d2, ye), (w2, d2, ye)),
+                         ((0, -d2, part['ridge']), (-w2, -d2, ye)), ((0, -d2, part['ridge']), (w2, -d2, ye)),
+                         ((0, d2, part['ridge']), (-w2, d2, ye)), ((0, d2, part['ridge']), (w2, d2, ye))):
+                dr.line([pt(*a), pt(*b)], fill=(255, 0, 255, 255), width=2)
+            continue
+        for X, Z, Y0, *hb in part['boxes']:
+            g, px = P.box_corners((part['cx'] + X, part['cz'] + part['k'] * Z - Y0, part['w'], part['d'], part['yaw'], hb[0] if hb else part['h']), part['k'])
             for i in range(4):
                 j = (i + 1) % 4
                 dr.line([(px[i][0] * S, px[i][1] * S), (px[j][0] * S, px[j][1] * S)], fill=(255, 255, 0, 255), width=2)
