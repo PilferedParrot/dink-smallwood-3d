@@ -97,6 +97,10 @@ def test_dinks_house_stands_solid_with_no_sky_and_a_door(tmp_path):
     for solid, bx, by, bz in lines["bed"]:
         assert solid == "true" and abs(float(bx) - 121 * SCALE) < 0.06 and abs(float(by) - 31 * SCALE) < 0.03, (bx, by)
     # the hearth reaches the ceiling with its chimney
+    # its back (where the chimney's face stands) is in front of the wall's face, not in its plane: coplanar, the plaster drew
+    # over the chimney (rc2 before the lead's fix)
+    back, wall = (float(v) for v in lines["hearthback"][0])
+    assert wall > 0 and back >= wall + 0.99, lines["hearthback"]
     solid, hy, hx, hz = lines["hearth"][0]
     assert solid == "true" and abs(float(hy) - room) < 0.15, lines["hearth"]
     # the fire stands inside the firebox, at its back (the hearth's front plane is 1 px south of its hotspot; the recess is

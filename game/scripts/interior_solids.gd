@@ -588,7 +588,9 @@ func frontal_dims(e: Dictionary, fit: Dictionary, o: Vector2, screen: int) -> Di
 	var depth := split - r0
 	var zw := wall_behind(e, top_left.x + x0, top_left.x + x1, top_left.y + z_f, screen)
 	if depth <= 0.0 or zw > 0.0:
-		var limit := (top_left.y + z_f - zw) if zw > 0.0 else float(world.hard_rect(e).size.y)
+		# One px short of the wall: a stack on the body's back edge (the chimney) would otherwise lie in the wall's own plane,
+		# and which of the two coplanar faces draws is luck (the plaster low-pass of 4415115 hid the chimney) (lead, 2026-10-08).
+		var limit := (top_left.y + z_f - zw - 1.0) if zw > 0.0 else float(world.hard_rect(e).size.y)
 		depth = limit if depth <= 0.0 else minf(depth, limit)
 	return {"x0": x0, "x1": x1, "z_f": z_f, "z_b": z_f - depth, "depth": depth, "y_top": minf(z_f - split, room_height(screen)), "y_bot": z_f - float(body.rows[1])}
 

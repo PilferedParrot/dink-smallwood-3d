@@ -81,6 +81,12 @@ func _run() -> void:
 			var surfaces := 0
 			for m in node.find_children("*", "MeshInstance3D", true, false): surfaces += (m as MeshInstance3D).mesh.get_surface_count()
 			print("INT hearthz ", snappedf(node.global_position.z, 0.001))
+			# the body's back (the chimney's front face) against the wall behind it, in the screen's px
+			var hfit: Dictionary = fw.solids.fit_of(fw.frame_path(e))
+			var ho: Vector2 = fw.solids.hotspot(e)
+			var hd: Dictionary = fw.solids.frontal_dims(e, hfit, ho, 1)
+			var hl := Vector2(float(e.get("x", 0)), float(e.get("y", 0))) - ho
+			print("INT hearthback ", snappedf(hl.y + float(hd.z_b), 0.01), " ", snappedf(fw.solids.wall_behind(e, hl.x + float(hd.x0), hl.x + float(hd.x1), hl.y + float(hd.z_f), 1), 0.01))
 			print("INT hearth ", solid, " ", snappedf(box.size.y, 0.001), " ", snappedf(box.size.x, 0.001), " ", snappedf(box.size.z, 0.001))
 		elif int(e.get("pseq", e.get("seq", 0))) == 86:
 			# the fire (fire-01, drawn over the hearth's firebox): where its plane stands, and whether it still turns to the camera
