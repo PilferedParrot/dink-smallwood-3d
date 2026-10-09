@@ -19,6 +19,7 @@
 extends RefCounted
 
 const FITS := "res://prototype/props.json"
+const LANDMARK_FITS := "res://prototype/landmarks.json" # tools/landmark_fit.py: compound solids (the well)
 var buildings # sprite_buildings.gd
 var S := 0.025 # metres per source pixel
 var fits: Dictionary = {}
@@ -31,6 +32,9 @@ func _init(b, scale: float) -> void:
 	if FileAccess.file_exists(FITS):
 		var parsed: Variant = JSON.parse_string(FileAccess.get_file_as_string(FITS))
 		if parsed is Dictionary: fits = parsed
+	if FileAccess.file_exists(LANDMARK_FITS):
+		var more: Variant = JSON.parse_string(FileAccess.get_file_as_string(LANDMARK_FITS))
+		if more is Dictionary: fits.merge(more,true)
 
 func has(path: String) -> bool:
 	return fits.has(path)
@@ -39,6 +43,10 @@ func has(path: String) -> bool:
 # (back + front)/2. A flat prop has none: (0, 0).
 func footprint(path: String) -> Vector2:
 	var fit: Dictionary = fits.get(path, {})
+	if str(fit.get("class", "")) == "compound": fit = fit.base # a compound stands on its base
+	if str(fit.get("class", "")) == "ring":
+		var rz := float(fit.cz) - (1.0 - float(fit.k))*float(fit.rf)
+		return Vector2(rz - float(fit.rf), rz + float(fit.rf))
 	var k := float(fit.get("k", 0.4878))
 	match str(fit.get("class", "")):
 		"round":
@@ -71,12 +79,23 @@ func surfaces(path: String) -> Array:
 		"round": out = _round(path, fit)
 		"pillow": out = _pillow(path, fit)
 		"box": out = _box(path, fit)
+		"compound": out = _compound(path, fit)
+		"ring": out = _ring(path, fit)
 		"flat": out = _flat(path, fit)
 	cache[path] = out
 	return out
 
-func _texture(path: String) -> ImageTexture:
-	return buildings._texture(buildings.filled(buildings.image(path)))
+# The sprite as the texture of one part: a part fitted from some of the sprite's pixels (fit.mask, one bit a pixel, row by row)
+# keeps those and takes the rest from their neighbours (filled), so a post's wood does not paint the rim it stands on.
+func _texture(path: String, fit: Dictionary = {}) -> ImageTexture:
+	var img: Image = buildings.image(path)
+	if fit.has("mask"):
+		var bits := Marshalls.base64_to_raw(str(fit.mask))
+		var data := img.get_data()
+		for p in img.get_width()*img.get_height():
+			if not (bits[p >> 3] >> (7 - (p & 7))) & 1: data[p*4 + 3] = 0
+		img.set_data(img.get_width(), img.get_height(), false, Image.FORMAT_RGBA8, data)
+	return buildings._texture(buildings.filled(img))
 
 func _arrays(verts: PackedVector3Array, uvs: PackedVector2Array, index: PackedInt32Array) -> ArrayMesh:
 	var arrays := []
@@ -139,7 +158,7 @@ func _round(path: String, fit: Dictionary) -> Array:
 	tex_uv.append(Vector2(cx, cz - th)/size)
 	for c in n:
 		index.append_array(PackedInt32Array([base + n, base + c, base + (c + 1) % n]))
-	return [[_arrays(verts, tex_uv, index), _texture(path)]]
+	return [[_arrays(verts, tex_uv, index), _texture(path, fit)]]
 
 # --- box ------------------------------------------------------------------------------------------------------------
 # A box, or a stack of them on one lattice (fit.boxes: each box's offset X, Z of its footprint's middle from the lattice
@@ -174,11 +193,15 @@ func _box(path: String, fit: Dictionary) -> Array:
 	var k := float(fit.k)
 	var hh := float(fit.h)
 	var zc := cz - (1.0 - k)*_front(fit) # the footprint's front corner stays on the row the picture draws it on
+	if fit.has("zc"): zc = float(fit.zc) # a part of a compound stands in its compound's frame
 	var proj := func(p: Vector2, y: float) -> Vector2: return Vector2(cx + p.x, cz + k*p.y - y)
 	var at := func(p: Vector2, y: float) -> Vector3: return Vector3(cx + p.x, y, zc + p.y)*S
 	var verts := PackedVector3Array()
 	var tex_uv := PackedVector2Array()
 	var index := PackedInt32Array()
+	var slab: bool = fit.get("slab", false)
+	var edge_v := PackedVector3Array() # a slab's edges and underside: one plain colour, below
+	var edge_i := PackedInt32Array()
 	for b in fit.get("boxes", [[0, 0, 0]]):
 		var g: Array = _box_corners(fit, b)
 		var y0 := float(b[2])
@@ -202,6 +225,13 @@ func _box(path: String, fit: Dictionary) -> Array:
 			if float(faces[i].nz) > float(faces[best].nz): best = i
 		for i in 4:
 			var src: int = i
+			if slab:
+				var eb := edge_v.size()
+				for j in 4:
+					var pt: Array = faces[i].pts[j]
+					edge_v.append(at.call(pt[0], pt[1]))
+				edge_i.append_array(PackedInt32Array([eb, eb + 1, eb + 2, eb, eb + 2, eb + 3]))
+				continue
 			if float(faces[i].nz) < WELL_SEEN:
 				src = (i + 2) % 4 if float(faces[(i + 2) % 4].nz) >= WELL_SEEN else best
 			var base := verts.size()
@@ -216,7 +246,111 @@ func _box(path: String, fit: Dictionary) -> Array:
 			verts.append(at.call(p, y0 + hh))
 			tex_uv.append((proj.call(p, y0 + hh) as Vector2)/size)
 		index.append_array(PackedInt32Array([tb, tb + 1, tb + 2, tb, tb + 2, tb + 3]))
-	return [[_arrays(verts, tex_uv, index), _texture(path)]]
+		if slab:
+			var ub := edge_v.size()
+			for p in g: edge_v.append(at.call(p, y0))
+			edge_i.append_array(PackedInt32Array([ub, ub + 1, ub + 2, ub, ub + 2, ub + 3]))
+	var out: Array = [[_arrays(verts, tex_uv, index), _texture(path, fit)]]
+	if slab:
+		# A slab (a roof: a layer of planks seen from above) shows its top; its edges and underside, which the camera never saw
+		# as more than a smear of the planks' grain, are the planks' mean colour.
+		var m := StandardMaterial3D.new()
+		m.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+		m.albedo_color = _mean_colour(path, fit)
+		m.cull_mode = BaseMaterial3D.CULL_DISABLED
+		var none := PackedVector2Array()
+		none.resize(edge_v.size())
+		out.append([_arrays(edge_v, none, edge_i), m])
+	return out
+
+# The mean colour of the pixels a part was fitted from (fit.mask).
+func _mean_colour(path: String, fit: Dictionary) -> Color:
+	var img: Image = buildings.image(path)
+	var bits := Marshalls.base64_to_raw(str(fit.mask))
+	var data := img.get_data()
+	var sum := Vector3.ZERO
+	var n := 0
+	for p in img.get_width()*img.get_height():
+		if (bits[p >> 3] >> (7 - (p & 7))) & 1:
+			sum += Vector3(data[p*4], data[p*4 + 1], data[p*4 + 2])
+			n += 1
+	return Color(sum.x/255.0/maxf(1, n), sum.y/255.0/maxf(1, n), sum.z/255.0/maxf(1, n))
+
+# --- compound -------------------------------------------------------------------------------------------------------
+# Several solids of one sprite (tools/landmark_fit.py: the well's stone base, its posts and its roof), each from its own pixels,
+# in the base's frame: the base circle's front stays on the row the picture draws it on and the parts keep their place on it.
+func _compound(path: String, fit: Dictionary) -> Array:
+	var base: Dictionary = fit.base
+	var out: Array = _round(path, base)
+	var zc := float(base.cz) - (1.0 - float(base.k))*float(base.nodes[0][1])
+	for part in fit.parts:
+		var p: Dictionary = (part as Dictionary).duplicate()
+		p["zc"] = zc
+		out.append_array(_box(path, p))
+	return out
+
+# --- ring -----------------------------------------------------------------------------------------------------------
+# A ring open to the camera (the save machine; tools/landmark_fit.py ring_fit): a grating floor on the ground and a wall on the far
+# half, the half whose inside the picture shows. Everything the camera saw is the picture projected back, UV = (cx + X, cz + k Z - Y):
+# the floor (Y = 0), the wall's inside and its top. What it never saw takes the picture of what it did: the wall's outside, the
+# inside's picture at the same height and angle (the huts' rule: the unseen half is the seen half's), its two ends their own
+# projection. Double sided: a ring is seen from both sides of every face.
+func _ring(path: String, fit: Dictionary) -> Array:
+	var size := Vector2(float(fit.size[0]), float(fit.size[1]))
+	var cx := float(fit.cx)
+	var cz := float(fit.cz)
+	var k := float(fit.k)
+	var rf := float(fit.rf)
+	var rw := float(fit.rw)
+	var ri := float(fit.ri)
+	var hh := float(fit.h)
+	var zc := cz - (1.0 - k)*rf # the floor's front stays on the row the picture draws it on
+	var verts := PackedVector3Array()
+	var tex_uv := PackedVector2Array()
+	var index := PackedInt32Array()
+	var at := func(r: float, t: float, y: float) -> Vector3: return Vector3(cx + r*cos(t), y, zc + r*sin(t))*S
+	var proj := func(r: float, t: float, y: float) -> Vector2: return Vector2(cx + r*cos(t), cz + k*r*sin(t) - y)/size
+	var lift := 0.4 # px: the floor stands a hair over the ground, not z-fought by it
+	var nf := 48
+	var centre := verts.size()
+	verts.append(at.call(0.0, 0.0, lift))
+	tex_uv.append(proj.call(0.0, 0.0, 0.0))
+	for c in nf:
+		var t := TAU*float(c)/nf
+		verts.append(at.call(rf, t, lift))
+		tex_uv.append(proj.call(rf, t, 0.0))
+	for c in nf: index.append_array(PackedInt32Array([centre, centre + 1 + c, centre + 1 + (c + 1) % nf]))
+	var a0 := float(fit.a0)
+	var a1 := float(fit.a1)
+	var nw := 24
+	for i in nw:
+		var t0: float = lerpf(a0, a1, float(i)/nw)
+		var t1: float = lerpf(a0, a1, float(i + 1)/nw)
+		# The inside (exact), the outside (the inside's picture), the top (exact: each corner's own projection).
+		for face in 2:
+			var r: float = ri if face == 0 else rw
+			var b := verts.size()
+			for q in [[t0, 0.0], [t1, 0.0], [t1, hh], [t0, hh]]:
+				verts.append(at.call(r, q[0], q[1]))
+				tex_uv.append(proj.call(ri, q[0], q[1]))
+			index.append_array(PackedInt32Array([b, b + 1, b + 2, b, b + 2, b + 3]))
+		var b := verts.size()
+		for q in [[rw, t0], [rw, t1], [ri, t1], [ri, t0]]:
+			verts.append(at.call(q[0], q[1], hh))
+			tex_uv.append(proj.call(q[0], q[1], hh))
+		index.append_array(PackedInt32Array([b, b + 1, b + 2, b, b + 2, b + 3]))
+	for t in [a0, a1]:
+		var b := verts.size()
+		for q in [[ri, 0.0], [rw, 0.0], [rw, hh], [ri, hh]]:
+			verts.append(at.call(q[0], t, q[1]))
+			tex_uv.append(proj.call(q[0], t, q[1]))
+		index.append_array(PackedInt32Array([b, b + 1, b + 2, b, b + 2, b + 3]))
+	var m := StandardMaterial3D.new()
+	m.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	m.albedo_texture = _texture(path, fit)
+	m.texture_filter = BaseMaterial3D.TEXTURE_FILTER_NEAREST_WITH_MIPMAPS
+	m.cull_mode = BaseMaterial3D.CULL_DISABLED
+	return [[_arrays(verts, tex_uv, index), m]]
 
 # --- pillow ---------------------------------------------------------------------------------------------------------
 func _pillow_half(fit: Dictionary) -> float:
@@ -266,7 +400,7 @@ func _pillow(path: String, fit: Dictionary) -> Array:
 			var a0 := i*(nl + 1) + j
 			var d0 := (i + 1)*(nl + 1) + j
 			index.append_array(PackedInt32Array([a0, a0 + 1, d0 + 1, a0, d0 + 1, d0]))
-	return [[_arrays(verts, tex_uv, index), _texture(path)]]
+	return [[_arrays(verts, tex_uv, index), _texture(path, fit)]]
 
 # --- flat -----------------------------------------------------------------------------------------------------------
 func _flat(path: String, fit: Dictionary) -> Array:

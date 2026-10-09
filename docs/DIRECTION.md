@@ -1871,3 +1871,34 @@ dialogue; the pigs' facing is unverified; the first-person bow and hand are unte
 end walls stretch; the beds' sides smear; the ceiling is untextured; the 734 crate stack's back row stands in the wall.
 Checks: 147 passed, 1 intermittent (`test_fps_sideflip`, passes on rerun) on b8cf665; interior tests pass on eb739f9.
 Contact sheet from the installed packages: `tmp/solid/rc2-contact.jpg`.
+
+## The landmarks are solid: the well and the save machine (RC3, Sonnet 5.5 unit)
+
+Review finding 1: the well (`struct/Landmark/landm-01..03`) and the save machine (`inter/Save/save-01..05`) were camera-facing
+billboards, the same picture from all four sides. Both are now meshes built by `scripts/prop_solids.gd` from fits that
+`tools/landmark_fit.py` writes into `game/prototype/landmarks.json` (by sprite path; the five save frames and the three well
+frames are each one silhouette, so one fit). Same camera as every fitted sprite: screen = (X, Z - Y), aspect k = 0.4878; every
+surface the camera saw is the sprite projected back, UV = (cx + X, cz + k Z - Y); what it never saw takes the picture of what it did.
+- **The well** (class `compound`): split by shape, not by colour. Opening the silhouette with a disc wider than a post (OPEN =
+  5 px) leaves the two fat things, the roof (upper) and the stone base (lower). The base is `prop_fit.round_fit`, the huts'
+  solid of revolution, with a flat top. The posts are the warm pixels outside the roof standing as long vertical runs (POST_RUN =
+  10 px; DARK = 2 px for the shaded face); a post stands on the rim, so its lowest row gives its depth, Z = (foot row - cz + rim)/k
+  - w/2. The roof is a thin slab on a yawed rectangle fitted by overlap of its projected top with the roof silhouette; it
+  stands over the posts' middle in depth, so its height follows from where its centre is drawn; its thickness is a post's width.
+  Each part keeps a bit mask of the pixels it was fitted from, and the game inpaints the rest (a post's wood does not paint the
+  rim). A slab's edges and underside, which the camera never saw, are the roof's mean colour. Tuned numbers: OPEN, POST_RUN, DARK,
+  the slab thickness rule. The outline does not say the roof's pitch (the two fitted slope edges disagree: 7 to 17 degrees), so
+  it is flat. Seen from eye level the roof is therefore its underside: plain, and the base is the sprite's dark stone, darker than
+  the sprite's tent-roofed picture reads.
+- **The save machine** (class `ring`): a grating floor on the ground and a wall on its far half. The floor's circle is the
+  near arc of the silhouette's lowest row per column (the beams poking past it are outliers of a robust fit); the wall's
+  outer radius and height are the far arc of the silhouette's highest row per column (A - k sqrt(Rw^2 - x^2), A = cz - H). The
+  wall is the half whose inside the picture shows (an open ring: the near half would hide the floor). One tuned number: the
+  wall's thickness, WALL_T = 0.4 of its outer radius (the outline shows only the top's outer edge). Its outside takes the inside's
+  picture at the same angle and height (mirrored); its top and its two ends are projected as drawn. The old low drum with its
+  picture painted on the lid is gone (`prop_fit.py` no longer fits `inter/save`).
+- Not changed: collision (movement reads the source hardbox, `game.gd`); the save machine's ray body is its faces', on layer 2
+  because it has a script, so talking to it and touching it still reach it. `fp_world.gd prop_fitted` no longer excludes `/save/`.
+- Test: `tests/test_fps_landmarks.py` (fails on the old code: both were `Sprite3D`; the save machine is not the same from the south
+  and the east). Blind to: whether either reads well (look at `tmp/landmarks_sheet.jpg`), the roof's true pitch, and what the
+  save machine's near half looks like (the sprite shows none).
