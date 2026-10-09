@@ -4,8 +4,7 @@
     /usr/bin/python3 tools/bridge_split.py [--out game/prototype/bridges.json] [--overlay docs/images/bridge-split-m3.jpg]
 
 The original draws a rope railing on a bridge as part of the deck's own sprite (brdge-06, 08, 10: the far railing above
-the planks) or as a sprite of its own (brdge-04, 07, 09, 11: the near railing). The side ropes of the north-south decks
-(brdge-01..03) are NOT split: see below. In the original's projection a point at height Y on the ground point (x, z) is drawn at (x, z - Y);
+the planks) or as a sprite of its own (brdge-04, 07, 09, 11: the near railing). North-south sections (brdge-01..03) form deck-bounded modular side rails: see below. In the original's projection a point at height Y on the ground point (x, z) is drawn at (x, z - Y);
 so a standing railing's pixels are exactly the art's pixels above the line its posts stand on, and the planks are
 exactly the art's pixels below it. The tool finds that split in the art and writes it to game/prototype/bridges.json,
 which game/scripts/bridge_rails.gd reads (fp_world.gd calls it for a deck and a near railing); tests/test_fps_bridge_rails.py
@@ -20,11 +19,15 @@ The reading (all of it from the art, no per-screen value):
     opaque pixels above min(t(x), the line) in each column; everything else stays painted in the ground.
     The posts are the columns where the card holds a vertical run of at least POST_RUN pixels (a rope never runs
     straight up 16 px; a post runs 38).
-  brdge-01..03, the north-south decks, are not split (decision of the lead after the sheet, 2026-10-02): the art draws the
-    side rope over the planks' own rows (in this projection a rope at height H is drawn H rows above where it lies), so a rope
-    that stands at the end posts' height (01's 41 px) cannot also stay over the deck; and 02 and 03 draw no posts at all. A
-    standing version (the first commit of this unit, 99af3dc) hung a rod in the air along the deck, a metre past its ends. Their
-    side ropes stay painted in the ground, as in M2.
+  "ns" (brdge-01..03): plank rows have at least 40 percent warm-brown pixels.
+    01's opaque vertical runs above its first plank row supply the square posts,
+    height (post rows minus top-face depth) and side columns. Only these narrow
+    side strips leave the ground; the planks beneath are filled from adjacent
+    pixels of that same row, so central seams are untouched. 02's tail below its
+    last plank row stays grounded. Runtime joins contiguous sections, collapses
+    coincident copies, bounds elevated rope to the deck and reconstructs missing
+    terminal supports from 01. This replaces 99af3dc's rejected whole-strip +H
+    translation that hung rope beyond the deck ends. No per-screen fit is used.
   "near" (brdge-04, 07, 09, 11): the posts are vertical runs, as above; each stands on its lowest drawn pixel, the line
     through the feet is where the railing stands (a hotspot is wherever the artist put it: 11's is 23 px above its
     feet), and everything above that line is a card on it with the posts cut out as prisms. The railings' lines
@@ -49,6 +52,7 @@ PREFIX = "assets/graphics/struct/Bridge/brdge-%s.png"
 POST_RUN = 16  # a column's vertical run of rail pixels that makes it part of a post
 EW = ("06", "08", "10")
 NEAR = ("04", "07", "09", "11")
+NS = ("01", "02", "03")
 
 
 def load(number: str) -> np.ndarray:
@@ -167,6 +171,57 @@ def split_near(im: np.ndarray) -> dict:
     return {"kind": "near", "line": [round(float(a), 4), round(float(s), 5)], "posts": posts, "card": card}
 
 
+def split_ns(im: np.ndarray, supports: list) -> dict:
+    """Modular NS planks and side strips. 01 supplies the observed post profile;
+    03 continues a span, while 02's pixels below the wood remain a ground tie.
+    Height is the clear upper post's rows minus its square top-face depth.
+    Geometry is bounded to the planks, never a full strip translated by height.
+    A missing terminal support is reconstructed from 01, explicitly, at a run end.
+    """
+    opaque, warm = masks(im)
+    rows = np.flatnonzero(warm.sum(axis=1) >= 0.4 * im.shape[1])
+    y0, y1 = int(rows.min()), int(rows.max()) + 1
+    wood = np.argwhere(warm[y0:y1])
+    x0, x1 = int(wood[:, 1].min()), int(wood[:, 1].max()) + 1
+    widths = [p[1] - p[0] + 1 for p in supports]
+    height = float(np.median([p[3] + 1 - p[2] - wide for p, wide in zip(supports, widths)]))
+    centers = [(p[0] + p[1] + 1) / 2.0 for p in supports]
+    card = np.zeros_like(opaque)
+    for p in supports:
+        lo, hi = max(0, p[0] - 1), min(im.shape[1], p[1] + 2)
+        card[:y1, lo:hi] = opaque[:y1, lo:hi]
+    return {"kind": "ns", "planks": [x0, x1, y0, y1], "support_art": PREFIX % "01",
+            "support_profiles": supports, "side_centers": centers, "height": height,
+            "rope_width": float(np.median(widths)) / 2.0, "card": card}
+
+
+def ns_rope_atlases():
+    """Post-free 03 supplies neutral/olive fibre and its adjacent dark outline.
+    Reflect the observed outline onto the unseen side; repair holes only from
+    the same column. RG rejects red plank seams missed by the warm-brown rule.
+    Coordinates are retained so materials can be checked against actual pixels.
+    """
+    im = load("03")
+    valid = (im[:, :, 3] >= 128) & (im[:, :, 0] - im[:, :, 1] < 24)
+    bright = valid & (im[:, :, :3].sum(axis=2) >= 330)
+    result = []
+    for lo, hi in [(0, im.shape[1] // 3), (im.shape[1] * 2 // 3, im.shape[1])]:
+        core = lo + int(np.argmax(bright[:, lo:hi].sum(axis=0)))
+        shadow = max([core-1, core+1], key=lambda x: int((valid[:, x] &
+                     (im[:, x, :3].sum(axis=1) <= im[:, core, :3].sum(axis=1))).sum()))
+        pixels, provenance = [], []
+        for y in range(im.shape[0]):
+            for x in [shadow, core, shadow]:
+                rows = np.flatnonzero(valid[:, x])
+                sy = int(min(rows, key=lambda row: abs(int(row)-y)))
+                pixels.append(im[sy, x].tolist())
+                provenance.append([x, sy])
+        result.append(dict(donor=PREFIX % "03", width=3, height=im.shape[0],
+                           core_column=core, shadow_column=shadow,
+                           pixels=pixels, provenance=provenance))
+    return result
+
+
 def build() -> tuple[dict, dict]:
     out = {}
     detail = {}
@@ -179,13 +234,22 @@ def build() -> tuple[dict, dict]:
         d = split_near(load(n))
         detail[n] = d
         out[PREFIX % n] = {"kind": "near", "line": d["line"], "posts": d["posts"], "card": runs_of(d["card"])}
-    out["_meta"] = {"post_run": POST_RUN, "ew_post_heights": ew_heights}
+    upper = load("01")
+    opaque, warm = masks(upper)
+    foot = int(np.flatnonzero(warm.sum(axis=1) >= 0.4 * upper.shape[1]).min())
+    supports = posts_of(opaque[:foot])
+    for n in NS:
+        d = split_ns(load(n), supports)
+        detail[n] = d
+        out[PREFIX % n] = dict(d, card=runs_of(d["card"]))
+    out["_meta"] = {"post_run": POST_RUN, "ew_post_heights": ew_heights,
+                    "ns_rope_atlases": ns_rope_atlases()}
     return out, detail
 
 
 def overlay(detail: dict, path: Path) -> None:
     tiles = []
-    for n in EW + NEAR:
+    for n in EW + NEAR + NS:
         d = detail[n]
         im = load(n)
         base = Image.new("RGBA", (im.shape[1], im.shape[0]), (90, 160, 200, 255))
@@ -200,7 +264,7 @@ def overlay(detail: dict, path: Path) -> None:
         if d["kind"] == "ew":
             a, s = d["line"]
             dr.line([(0, a * scale), (im.shape[1] * scale, (a + s * im.shape[1]) * scale)], fill=(255, 255, 0), width=1)
-        for x0, x1, y0, y1 in d["posts"]:
+        for x0, x1, y0, y1 in d.get("posts", []):
             dr.rectangle([x0 * scale, y0 * scale, (x1 + 1) * scale, (y1 + 1) * scale], outline=(0, 255, 0))
         dr.rectangle([0, 0, 60, 11], fill=(0, 0, 0))
         dr.text((2, 0), "brdge-" + n, fill=(255, 255, 255))
@@ -232,7 +296,7 @@ def main() -> None:
     Path(args.out).write_text(json.dumps(data, separators=(",", ":")))
     print("wrote", args.out, "ew post heights", data["_meta"]["ew_post_heights"])
     for n, d in detail.items():
-        print(n, d["kind"], "posts", d["posts"], d.get("line", ""))
+        print(n, d["kind"], "posts", d.get("posts", d.get("support_profiles", [])), d.get("line", d.get("planks", "")))
     if args.overlay:
         overlay(detail, Path(args.overlay))
 

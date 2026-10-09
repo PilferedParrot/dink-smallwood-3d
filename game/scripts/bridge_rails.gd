@@ -18,15 +18,15 @@ extends RefCounted
 # own pixels. Its other faces sample the post's own edge columns.
 # The railing is cut from the art as it is (world.sprite_image), not from the card texture that drops isolated black pixels
 # as shadow dither: a rope's outline has such pixels.
-# The north-south decks (brdge-01..03) have no entry: their side ropes stay painted in the ground with the planks, as in
-# M2. The art draws the rope over the planks' own rows (a rope at height H is drawn H rows above where it lies), so a rope
-# that stands at the end posts' height cannot also stay over the deck, and 02 and 03 draw no posts: a first version that stood
-# them (commit 99af3dc) hung rods in the air along the deck, a metre past its ends.
+# North-south sections use ns_bridge_rails.gd: deck-bounded spans, terminal
+# supports reconstructed from 01, shared joins including screen-edge copies, and
+# source-projected textures borrowed across adjacent sections. 02's tail stays grounded.
 # Every deck also takes a thin body on the ray layer (the layer arrows and rays use; as the houses' ray_body), where
 # its planks are: walking is unchanged (it is the source's hardness, game.gd).
 const SCALE := 0.025
 const MIN_POST := 3.0 # px: a post cut by its sprite's edge is at least this wide
 const PLATE := 0.05 # m: the deck's ray plate
+const NS_RAILS := preload("res://scripts/ns_bridge_rails.gd")
 
 var world # fp_world.gd
 var data: Dictionary = {}
@@ -35,12 +35,14 @@ var mesh_cache: Dictionary = {} # path -> [[Mesh, texture], ...] built once per 
 var plate_cache: Dictionary = {} # path -> the ray plate's hull points (PackedVector3Array)
 var raw_cache: Dictionary = {} # path -> the art as it is, with mipmaps (ImageTexture)
 var material_cache: Dictionary = {}
+var ns_rails
 
 func setup(fp_world) -> void:
 	world = fp_world
 	var path := "res://prototype/bridges.json"
 	var parsed: Variant = JSON.parse_string(FileAccess.get_file_as_string(path)) if FileAccess.file_exists(path) else null
 	data = parsed if parsed is Dictionary else {}
+	ns_rails = NS_RAILS.new(self)
 
 func entry(path: String) -> Dictionary:
 	var e: Variant = data.get(path, {})
@@ -68,6 +70,7 @@ func plank_image(path: String, source: Image) -> Image:
 func _planks(path: String, source: Image, tag: String) -> Image:
 	var e := entry(path)
 	if e.is_empty() or str(e.kind) == "near": return source
+	if str(e.kind) == "ns" and tag == "plate": return source # retain the original ray footprint
 	var key := path+":"+tag+":"+str(source.get_width())+"x"+str(source.get_height())
 	if plank_cache.has(key): return plank_cache[key]
 	var w := source.get_width()
@@ -76,16 +79,30 @@ func _planks(path: String, source: Image, tag: String) -> Image:
 	var grid := _grid(e.card,w,h)
 	for y in h:
 		for x in w:
-			if grid[y*w+x] == 1: image.set_pixel(x,y,Color(0,0,0,0))
+			if grid[y*w+x] != 1: continue
+			var fill := Color.TRANSPARENT
+			if str(e.kind) == "ns" and y >= int(e.planks[2]) and y < int(e.planks[3]):
+				# Only the narrow side strips are inpainted. Copy the nearest uncovered
+				# opaque pixel on this same plank row, including its dark seam.
+				for radius in w:
+					for nx in [x-radius,x+radius]:
+						if nx < 0 or nx >= w or grid[y*w+nx] == 1: continue
+						var color := source.get_pixel(nx,y)
+						if color.a >= 0.5:
+							fill = color
+							break
+					if fill.a >= 0.5: break
+			image.set_pixel(x,y,fill)
 	plank_cache[key] = image
 	return image
 
 # --- a deck's railing and ray plate -------------------------------------------------------------------------
-func add_deck(node: Node3D, e: Dictionary, id: int, collision: bool) -> void:
+func add_deck(node: Node3D, e: Dictionary, id: int, collision: bool, screen: int = -1) -> void:
 	var path: String = world.frame_path(e)
 	var df: Vector2i = world.display_frame(e)
 	var d: Dictionary = world.host._frame(df.x,df.y)
-	if has(path) and str(entry(path).kind) != "near": _add_rail(node,path,d)
+	if has(path) and str(entry(path).kind) == "ns": ns_rails.add(node,e,d,screen)
+	elif has(path) and str(entry(path).kind) != "near": _add_rail(node,path,d)
 	if collision: node.add_child(_plate(path,d,id))
 
 # The railing's meshes (built once per art) as a "Rail" child of the sprite's node.
@@ -305,7 +322,7 @@ func _plate_points(path: String, d: Dictionary) -> PackedVector3Array:
 	if texture == null: return points
 	var image := _planks(path,texture.get_image(),"plate")
 	var wood_only := false
-	if not has(path):
+	if not has(path) or str(entry(path).get("kind","")) == "ns":
 		var wood := 0
 		var opaque := 0
 		for y in image.get_height():

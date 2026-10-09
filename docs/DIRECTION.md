@@ -1813,3 +1813,35 @@ after looking at the unit's sheets:
   they are seen from (Doom's way, this file's structural change). Chris's complaint named things you walk round that are
   flat: those are now solids. The reviewer kit noted that Mother standing still shows one frame from every side; that is
   her still frame, and is left for a later pass.
+
+
+**North-south ropes and source-fit iron chains** (2026-10-08, local row8 unit from
+cc381df; GPT-6.1 Sol implementation/integration, GPT-6 Sol chain worker, Astra
+planning and bounded rendered review). NS01/03/02 now form deck-bounded standing
+side ropes with source01 square terminal supports, shared cross-screen joins and
+the offset701 cap aligned.02's tail stays grounded. Source plank seams and ray
+footprints remain; a real W-key crossing448→416 ends at(217,285)before and after.
+Side/bottom material uses a rope-only03 donor with shared world-depth phase,
+removing timber contamination. The projected top/end textures retain their
+source-colored striping: this constrained improvement is explicitly for lead
+acceptance, not a full smooth-rope material claim. See
+`docs/evidence/ns-bridges-20261008/README.md` and final sheets/full PNGs.
+
+The chains now use source dark tones, compact open alternating 3D links and a
+deterministic outer/inner contour fit. The rejected width-only profile matched
+envelope size but had15–19px apertures and67% occupied iron versus source2–8px
+and93.3%; the fitted render is90.8% with4–7px apertures. Actual loaded-triangle
+raster,4x/8x sampling and held-out rows verify the fit. All four attachments
+remain connected in reviewed closeups. Astra passed the diagnosed aperture
+correction; stylized wire shading is not an identical-source-pixel claim.
+`tools/fit_chain_geometry.py`, the fitted prototype JSON and the door test
+retain source/old/filled/displaced controls. Evidence:
+`docs/evidence/chains-20261008/README.md`.
+
+Checks:14bridge tests, door/source-raster checks and the integrated suite
+**146passed**. The old frozen game fails the new functional gates as intended.
+Linux PCK contains the prototype profiles, constructs80/448 from packed-only
+resources, and all14 packed chain captures match reviewed source PNGs exactly.
+No push/release. The data probe emits resource/RID shutdown-leak warnings; no
+lifecycle-cleanup claim is made. The separate frozen candidate gate evidence
+is on2c14740; it excludes these row8 changes.

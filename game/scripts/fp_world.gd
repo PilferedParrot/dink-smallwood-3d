@@ -952,7 +952,7 @@ func make_entity(e: Dictionary, id: int, parent: Node3D, collision: bool = true,
 		return node
 	if paints_ground(e,screen):
 		node.set_meta("ground_painted",true) # painted into the ground (paint_background)
-		if key == "bridge_deck": rails.add_deck(node,e,id,collision) # its railing stands on it; rays hit it
+		if key == "bridge_deck": rails.add_deck(node,e,id,collision,screen) # its railing stands on it; rays hit it
 		return node
 	if key == "castle":
 		add_castle_piece(node,e,id,screen,collision)

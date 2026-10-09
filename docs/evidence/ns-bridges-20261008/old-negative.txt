@@ -1,0 +1,125 @@
+FFF                                                                      [100%]
+=================================== FAILURES ===================================
+________ test_north_south_modular_ropes_join_and_terminate_on_supports _________
+
+swept = ({(102, 1, 0): {'path': 'assets/graphics/struct/Landmark/landm-04.png', 'node': 'deck', 'meshes': 0, 'posts': 0, ...},...416, 2, 1): {'index': 2, 'meshes': {}, 'path': 'assets/graphics/struct/Bridge/brdge-03.png', 'screen': 416, ...}, ...})
+
+    @godot_needed
+    def test_north_south_modular_ropes_join_and_terminate_on_supports(swept):
+        ns = swept[3]
+        assert {k[0] for k in ns} == {416,448,480,512,533,544,701}
+>       assert not _ns_geometry_errors(ns)
+E       AssertionError: assert not [((416, 1, 0), 'RopeLeft', 'missing standing side'), ((416, 1, 0), 'RopeRight', 'missing standing side'), ((416, 1, 0)...g side'), ((416, 2, 0), 'RopeLeft', 'missing standing side'), ((416, 2, 0), 'RopeRight', 'missing standing side'), ...]
+E        +  where [((416, 1, 0), 'RopeLeft', 'missing standing side'), ((416, 1, 0), 'RopeRight', 'missing standing side'), ((416, 1, 0)...g side'), ((416, 2, 0), 'RopeLeft', 'missing standing side'), ((416, 2, 0), 'RopeRight', 'missing standing side'), ...] = _ns_geometry_errors({(416, 1, 0): {'index': 1, 'meshes': {}, 'path': 'assets/graphics/struct/Bridge/brdge-01.png', 'screen': 416, ...}, (4...(416, 2, 1): {'index': 2, 'meshes': {}, 'path': 'assets/graphics/struct/Bridge/brdge-03.png', 'screen': 416, ...}, ...})
+
+tests/test_fps_bridge_rails.py:305: AssertionError
+_ test_every_bridge_sprite_of_the_map_is_built_with_its_railing_and_its_ray_body _
+
+swept = ({(102, 1, 0): {'path': 'assets/graphics/struct/Landmark/landm-04.png', 'node': 'deck', 'meshes': 0, 'posts': 0, ...},...416, 2, 1): {'index': 2, 'meshes': {}, 'path': 'assets/graphics/struct/Bridge/brdge-03.png', 'screen': 416, ...}, ...})
+
+    @godot_needed
+    def test_every_bridge_sprite_of_the_map_is_built_with_its_railing_and_its_ray_body(swept):
+        rails, cards, plates, ns = swept
+        expected = map_bridges()
+        seen = {(s, i) for (s, i, _v) in rails}
+        assert seen == set(expected), (sorted(set(expected) - seen)[:8], sorted(seen - set(expected))[:8])
+        fr = frames()
+        problems = []
+        for (screen, index, vision), r in sorted(rails.items()):
+            name = r["path"].rsplit("/", 1)[-1]
+            who = (screen, index, vision, name)
+            if r["node"] == "deck":
+                # a deck is a thin body on the ray layer: layer 1, no mask, one shape
+                if not re.fullmatch(r"1/0/[1-9]\d*", r["body"]):
+                    problems.append((who, "ray body", r["body"]))
+            else:
+                if not re.fullmatch(r"[12]/0/[1-9]\d*", r["body"]):
+                    problems.append((who, "the near railing keeps its body on the hardbox", r["body"]))
+            if name in STONE:
+                if r["meshes"] != 0:
+                    problems.append((who, "the stone bridge has no railing", r["meshes"]))
+                continue
+            dx, dy = fr[r["path"]]
+            e = entry_of(name) if name not in NS else None
+            w = art(name).size[0]
+            if name in EW or name in NEAR:
+                card = cards.get((screen, index, vision))
+                if card is None or r["meshes"] < 2 or r["posts"] != 1:
+                    problems.append((who, "a card and its posts", r["meshes"], r["posts"], card))
+                    continue
+                xl, zl, xr, zr, top = card
+                a, s = e["line"]
+                if abs(xl - (-dx * SCALE)) > 0.01 or abs(zl - (a - dy) * SCALE) > 0.02 or abs((zr - zl) - s * w * SCALE) > 0.02:
+                    problems.append((who, "the card is not on the foot line", (xl, zl, zr - zl), (-dx * SCALE, (a - dy) * SCALE, s * w * SCALE)))
+                if abs(r["min"][1]) > 0.001 or not 0.85 <= r["max"][1] <= 1.35:
+                    problems.append((who, "the railing stands from the deck to the rope's height", r["min"][1], r["max"][1]))
+            elif name in NS:
+                if r["meshes"] < 2 or not 0.85 <= r["max"][1] <= 1.05:
+                    problems.append((who, "both side ropes must stand above the deck", r["meshes"], r["max"][1]))
+                # Its plate is where its planks are: the wood of the plank rows of the art (the end posts above 01's planks and the
+                # rope's tail past 02's are not deck), to within the dark rim and the dither (0.08 m).
+                im = art(name)
+                px = im.load()
+                # plank rows: at least 40 percent of the sprite's width is warm brown (01's end posts are brown too, but narrow)
+                rows = [y for y in range(im.size[1]) if sum(warm(px[x, y]) for x in range(im.size[0])) >= 0.4 * im.size[0]]
+                wood = [(x, y) for y in rows for x in range(im.size[0]) if warm(px[x, y])]
+                plate = plates.get((screen, index, vision))
+                if plate is None or not wood:
+                    problems.append((who, "no plate", plate))
+                    continue
+                want = [(min(x for x, _ in wood) - dx) * SCALE, (max(x for x, _ in wood) + 1 - dx) * SCALE,
+                        (min(y for _, y in wood) - dy) * SCALE, (max(y for _, y in wood) + 1 - dy) * SCALE]
+                have = [plate[0], plate[1], plate[2], plate[3]]
+                if any(abs(a - b) > 0.08 for a, b in zip(have, want)) or abs(plate[4] - 0.05) > 0.001:
+                    problems.append((who, "the plate is not where the planks are", have, want))
+                built = ns.get((screen,index,vision),{}).get("meshes",{})
+                for side in ("RopeLeft","RopeRight"):
+                    vertices = built.get(side,[])
+                    if not vertices or min(v[1] for v in vertices) < 0.8:
+                        problems.append((who,"missing or flat longitudinal rope",side))
+                    elif min(v[2] for v in vertices) < want[2]-0.025 or max(v[2] for v in vertices) > want[3]+0.025:
+                        problems.append((who,"elevated rope overruns the independently read planks",side))
+            if name in EW:
+                plate = plates.get((screen, index, vision))
+                a, s_ = e["line"]
+                top_z = (min(a, a + s_ * w) - dy) * SCALE
+                if plate is None or plate[2] < top_z - 0.03:
+                    problems.append((who, "the plate reaches over the railing", plate, top_z))
+>       assert not problems, "%d of %d: %s" % (len(problems), len(rails), problems[:6])
+E       AssertionError: 174 of 112: [((416, 1, 0, 'brdge-01.png'), 'both side ropes must stand above the deck', 0, -inf), ((416, 1, 0, 'brdge-01.png'), 'missing or flat longitudinal rope', 'RopeLeft'), ((416, 1, 0, 'brdge-01.png'), 'missing or flat longitudinal rope', 'RopeRight'), ((416, 1, 1, 'brdge-01.png'), 'both side ropes must stand above the deck', 0, -inf), ((416, 1, 1, 'brdge-01.png'), 'missing or flat longitudinal rope', 'RopeLeft'), ((416, 1, 1, 'brdge-01.png'), 'missing or flat longitudinal rope', 'RopeRight')]
+E       assert not [((416, 1, 0, 'brdge-01.png'), 'both side ropes must stand above the deck', 0, -inf), ((416, 1, 0, 'brdge-01.png'), 'm... longitudinal rope', 'RopeLeft'), ((416, 1, 1, 'brdge-01.png'), 'missing or flat longitudinal rope', 'RopeRight'), ...]
+
+tests/test_fps_bridge_rails.py:387: AssertionError
+_ test_standing_rails_leave_the_ground_and_central_north_south_plank_seams_are_preserved _
+
+grounded = [(404, 0, 2, 10, 1583, 7999, ...), (416, 0, 0, 0, 0, 0, ...), (448, 0, 0, 0, 0, 0, ...), (480, 0, 0, 0, 0, 0, ...), (512, 0, 3, 0, 2020, 10932, ...), (533, 1, 0, 0, 0, 0, ...), ...]
+
+    @godot_needed
+    def test_standing_rails_leave_the_ground_and_central_north_south_plank_seams_are_preserved(grounded):
+        # Measured: the unmodified build holds 100 percent of the east-west decks' railing pixels in the ground (5186 of 5186);
+        # the split build 0.3 percent (14: planks of the same colours as a rope pixel); every plank pixel is kept (26930 of 26930)
+        # and every north-south deck's opaque pixels are in the ground as the art has them (101609 of 101609 less the stone
+        # bridge's, which is not counted here).
+        grounded, ns = grounded
+        assert len(grounded) == 10 and {r[0] for r in grounded} == {404, 416, 448, 480, 512, 533, 544, 693, 701}, grounded
+        left = sum(r[3] for r in grounded)
+        total = sum(r[4] for r in grounded)
+        assert total > 5000 and left <= 0.05 * total, (left, total)
+        split = [r for r in grounded if r[2] > 0]
+        assert {r[0] for r in split} == {404, 512, 693}, split
+        for screen, vision, n_split, in_ground, rail_total, planks, kept, whole_decks, whole, whole_kept in split:
+            assert rail_total > 1500 and in_ground <= 0.15 * rail_total, (screen, vision, in_ground, rail_total)
+            assert planks > 7000 and kept >= 0.99 * planks, ("the planks were eaten", screen, vision, kept, planks)
+        assert {r[0] for r in ns} == {416,448,480,512,533,544,701}, ns
+        for screen,vision,planks,kept,edges,edge_kept in ns:
+            assert planks > 500 and kept >= 0.995*planks, ("central wood or seams erased",screen,vision,kept,planks)
+>           assert edges > 20 and edge_kept <= 0.85*edges, ("cold edge strokes still painted flat",screen,vision,edge_kept,edges)
+E           AssertionError: ('cold edge strokes still painted flat', 416, 0, 854, 854)
+E           assert (854 > 20 and 854 <= (0.85 * 854))
+
+tests/test_fps_bridge_rails.py:428: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_fps_bridge_rails.py::test_north_south_modular_ropes_join_and_terminate_on_supports
+FAILED tests/test_fps_bridge_rails.py::test_every_bridge_sprite_of_the_map_is_built_with_its_railing_and_its_ray_body
+FAILED tests/test_fps_bridge_rails.py::test_standing_rails_leave_the_ground_and_central_north_south_plank_seams_are_preserved
+3 failed, 10 deselected in 13.74s

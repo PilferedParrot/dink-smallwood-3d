@@ -55,6 +55,7 @@ def main():
     ap.add_argument('--work', default=str(ROOT / 'tmp/view-sheet'))
     ap.add_argument('--width', type=int, default=1700)
     ap.add_argument('--arg', action='append', default=[], help='extra fps_capture.gd argument, e.g. --vision=1')
+    ap.add_argument('--procs', type=int, choices=range(1, 7), default=4, help='simultaneous capture jobs (count llvmpipe threads too)')
     args = ap.parse_args()
     cols = [(c.split('=', 1)[0], Path(c.split('=', 1)[1]).resolve()) for c in args.col]
     views = json.loads(args.views.read_text())
@@ -63,7 +64,7 @@ def main():
     for v in views:
         by_screen.setdefault(int(v['screen']), []).append({k: v[k] for k in v if k not in ('screen', 'note')})
     jobs = [(label, co, n, vs) for label, co in cols for n, vs in by_screen.items()]
-    with ThreadPoolExecutor(max_workers=min(4, len(jobs))) as ex:
+    with ThreadPoolExecutor(max_workers=min(args.procs, len(jobs))) as ex:
         list(ex.map(lambda j: run(j[1], j[2], j[3], work / j[0] / str(j[2]), args.arg), jobs))
     gap = 6
     w = (args.width - gap * (len(cols) - 1)) // len(cols)

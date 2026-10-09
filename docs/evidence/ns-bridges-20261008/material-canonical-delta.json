@@ -1,0 +1,32 @@
+[
+  {
+    "screen": 416,
+    "changed": 54,
+    "mean": 0.0013930555555555556
+  },
+  {
+    "screen": 448,
+    "changed": 37,
+    "mean": 0.0008208333333333334
+  },
+  {
+    "screen": 480,
+    "changed": 0,
+    "mean": 0.0
+  },
+  {
+    "screen": 512,
+    "changed": 0,
+    "mean": 0.0
+  },
+  {
+    "screen": 544,
+    "changed": 0,
+    "mean": 0.0
+  },
+  {
+    "screen": 701,
+    "changed": 124,
+    "mean": 0.002977777777777778
+  }
+]

@@ -102,6 +102,7 @@ func _sweep() -> void:
 		game.generation += 1
 		fw.interior = fw.is_inside(n)
 		for vision in [0, 1, 2]:
+			game.vm.globals["vision"] = vision # actual story context for modular joins
 			for source in fw.drawn_sprites(n, vision):
 				var e: Dictionary = source.duplicate()
 				if not _is_bridge_art(fw.frame_path(e)): continue
@@ -139,6 +140,37 @@ func _sweep() -> void:
 							var v: PackedVector3Array = ((c as MeshInstance3D).mesh.surface_get_arrays(0)[Mesh.ARRAY_VERTEX])
 							print("CARD %d %d %d %s foot x %.4f z %.4f to x %.4f z %.4f top %.4f" % [n, int(e.get("index", -1)), vision, fw.frame_path(e), v[0].x, v[0].z, v[1].x, v[1].z, (c as MeshInstance3D).mesh.get_aabb().end.y])
 							break
+				if fw.frame_path(e).get_file() in ["brdge-01.png","brdge-02.png","brdge-03.png"]:
+					var row := {"screen":n,"index":int(e.get("index",-1)),"vision":vision,"path":fw.frame_path(e),"meshes":{},"materials":{}}
+					if rail != null:
+						for part in rail.get_children():
+							if not part is MeshInstance3D: continue
+							var points: Array = []
+							var materials: Array = []
+							for surface in part.mesh.get_surface_count():
+								var arrays: Array = part.mesh.surface_get_arrays(surface)
+								var vertices: PackedVector3Array = arrays[Mesh.ARRAY_VERTEX]
+								var uvs: PackedVector2Array = arrays[Mesh.ARRAY_TEX_UV]
+								for vertex in vertices:
+									var actual: Vector3 = rail.transform*part.transform*vertex
+									points.append([actual.x,actual.y,actual.z])
+								if str(part.name) in ["RopeLeft","RopeRight"]:
+									var mat: StandardMaterial3D = part.material_override if part.material_override != null else part.get_surface_override_material(surface)
+									var image: Image = mat.albedo_texture.get_image()
+									if image.is_compressed(): image.decompress()
+									var samples: Array = []
+									var coords: Array = []
+									for uv in uvs: coords.append([uv.x,uv.y])
+									if image.get_width() == 3:
+										for yy in image.get_height():
+											for xx in image.get_width():
+												var c := image.get_pixel(xx,yy)
+												samples.append([roundi(c.r*255),roundi(c.g*255),roundi(c.b*255),roundi(c.a*255)])
+									materials.append({"size":[image.get_width(),image.get_height()],"pixels":samples,"uvs":coords,"vertices":[]})
+									for vertex in vertices: materials[-1].vertices.append([vertex.x,vertex.y,vertex.z])
+							row.meshes[str(part.name)] = points
+							if not materials.is_empty(): row.materials[str(part.name)] = materials
+					print("NSJSON ",JSON.stringify(row))
 				scratch.remove_child(node)
 				node.free()
 	scratch.free()
@@ -173,6 +205,10 @@ func _ground() -> void:
 		var whole_decks := 0
 		var whole := 0
 		var whole_kept := 0
+		var ns_planks := 0
+		var ns_planks_kept := 0
+		var ns_edges := 0
+		var ns_edges_kept := 0
 		for e in fw.background_sprites(n, vision):
 			var path: String = fw.frame_path(e)
 			if str(path).find("/struct/Bridge/brdge-") < 0: continue
@@ -181,6 +217,29 @@ func _ground() -> void:
 			var art: Image = fw.sprite_image(path)
 			var left := int(float(e.get("x", 0)) - 20.0 - float(d.get("dx", 0)))
 			var top := int(float(e.get("y", 0)) - float(d.get("dy", 0)))
+			if path.get_file() in ["brdge-01.png","brdge-02.png","brdge-03.png"]:
+				# Independently read central plank rows and cold edge strokes from
+				# original pixels, without the split mask or generated mesh metadata.
+				for y in art.get_height():
+					var warm_count := 0
+					for x in art.get_width():
+						var c := art.get_pixel(x,y)
+						if c.a >= 0.5 and (c.r-c.g)*255.0 >= 24.0 and (c.g-c.b)*255.0 >= 10.0: warm_count += 1
+					for x in art.get_width():
+						var a := art.get_pixel(x,y)
+						if a.a < 0.99: continue
+						var gx := left+x
+						var gy := top+y
+						if gx < 0 or gy < 0 or gx >= image.get_width() or gy >= image.get_height(): continue
+						var g := image.get_pixel(gx,gy)
+						var same := absf(a.r-g.r) < 0.002 and absf(a.g-g.g) < 0.002 and absf(a.b-g.b) < 0.002
+						var central := x >= art.get_width()/4 and x < art.get_width()*3/4
+						if central and float(warm_count) >= 0.4*art.get_width():
+							ns_planks += 1
+							if same: ns_planks_kept += 1
+						elif not central and a.r-a.g < 12.0/255.0:
+							ns_edges += 1
+							if same: ns_edges_kept += 1
 			if not (mask.has(path) and str(mask[path].kind) == "ew"): # an "ns" entry (the first version of this unit) is not a split the build may make
 				# A deck that is painted whole (the north-south decks): every opaque pixel of its art that
 				# nothing later paints over is in the ground as the art has it, its side ropes included, as at 46b68a0.
@@ -222,6 +281,7 @@ func _ground() -> void:
 					if absf(a.r - g.r) < 0.002 and absf(a.g - g.g) < 0.002 and absf(a.b - g.b) < 0.002:
 						count += 1
 		print("GROUND %d v%d split=%d rail_pixels_in_ground=%d rail_total=%d planks=%d planks_kept=%d whole_decks=%d whole=%d whole_kept=%d" % [n, vision, split_decks, count, card_total, planks, kept, whole_decks, whole, whole_kept])
+		if ns_planks > 0: print("NSGROUND %d v%d planks=%d kept=%d cold_edges=%d edge_kept=%d" % [n,vision,ns_planks,ns_planks_kept,ns_edges,ns_edges_kept])
 		total += count
 		planks_total += planks
 		kept_total += kept

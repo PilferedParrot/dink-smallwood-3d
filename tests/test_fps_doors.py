@@ -5,13 +5,20 @@ the actual mesh vertices built by a loaded scene. It rejects the old Sprite3D, a
 upright, and (analytically) a south-facing card whose apparent width does not track the diagonal wall's width.
 """
 import json
+import hashlib
 import math
 import os
 import shutil
 import subprocess
+from copy import deepcopy
 from pathlib import Path
 
 import pytest
+import numpy as np
+from PIL import Image
+from scipy import ndimage as ndi
+
+from tools.fit_chain_geometry import compare_masks, projected_mask, rasterize_actual_triangles, source_mask
 
 ROOT = Path(__file__).resolve().parents[1]
 GODOT = os.environ.get("GODOT") or shutil.which("godot") or shutil.which("godot4") or str(
@@ -136,6 +143,141 @@ def _chain_attached(row, face, top_left):
     return True
 
 
+def _source_chain_palette():
+    """Opaque suspended right-chain pixels, away from arch/wood and the leaf overlap."""
+    path = ROOT / "game/assets/graphics/struct/Castle/cdoor-06.png"
+    image = Image.open(path).convert("RGBA")
+    channels = [[], [], []]
+    count = 0
+    for y in range(image.height):
+        for x in range(65, image.width):
+            leaf_top = 111 + .45 * (x - 60)
+            color = image.getpixel((x, y))
+            if y >= leaf_top - 3 or color[3] <= 127:
+                continue
+            count += 1
+            for channel, value in zip(channels, color[:3]):
+                channel.append(value)
+    assert count == 633  # protects the mask from silently including a different surface
+    for channel in channels:
+        channel.sort()
+    return [tuple(channel[round((count - 1) * q)] for channel in channels)
+            for q in (.25, .5, .75, .90)]
+
+
+def _chain_fidelity(row):
+    palette = _source_chain_palette()
+    document = json.loads((ROOT / "game/prototype/cdoor_chain_profile.json").read_text())
+    assert document["source_sha256"] == hashlib.sha256(
+        (ROOT / "game/assets/graphics/struct/Castle/cdoor-06.png").read_bytes()).hexdigest()
+    profile = document["profile"]
+    assert palette[1] == (49, 49, 57)
+    for name, start, end in (("ChainLeft", (0, 60), (76, 177)),
+                             ("ChainRight", (48, 19), (124, 147))):
+        rings = row["chain_rings"][name]
+        centers = row["chain_centers"][name]
+        arc, tube = row["chain_segments"][name]
+        assert row["chain_vertex_color"][name]
+        assert {tuple(c) for c in row["chain_colors"][name]} == set(palette)
+        assert arc >= 16 and tube >= 8  # enough facets for round wire in close obliques
+        color_counts = {tuple(c): n for c, n in zip(row["chain_colors"][name],
+                                                    row["chain_color_counts"][name])}
+        total = sum(color_counts.values())
+        assert .08 <= (color_counts[palette[2]] + color_counts[palette[3]]) / total <= .20
+        assert .01 <= color_counts[palette[3]] / total <= .07
+        assert len(rings) == len(centers) == row["chain_vertices"][name] // (arc * tube * 6)
+        source_length = math.dist(start, end)
+        right_length = math.dist((48, 19), (124, 147))
+        expected_count = profile["right_link_count"] if name == "ChainRight" else round(
+            source_length / right_length * (profile["right_link_count"] - 1)) + 1
+        assert len(rings) == expected_count
+        normal = (-(end[1] - start[1]) / source_length, (end[0] - start[0]) / source_length)
+        for ring in rings:
+            minor = ring["minor"]
+            wire = ring["wire"]
+            minor_size = math.dist(minor, (0, 0, 0))
+            projected_half_width = abs(minor[0] * normal[0] + (minor[2] - minor[1]) * normal[1])
+            width = 2 * (projected_half_width + wire)
+            assert minor_size - wire > .15  # true open rings, with aperture fit by the raster check
+            assert 5.5 <= width <= 8.0
+            assert abs(ring["major"] - profile["major_radius_px"]) < .02
+            assert abs(minor_size - profile["minor_radius_px"]) < .02
+            assert abs(wire - profile["wire_radius_px"]) < .02
+        for p, q in zip(rings, rings[1:]):
+            a, b = p["minor"], q["minor"]
+            dot = sum(x * y for x, y in zip(a, b)) / math.dist(a, (0, 0, 0)) / math.dist(b, (0, 0, 0))
+            assert abs(dot - math.cos(math.radians(2 * profile["plane_tilt_deg"]))) < .03
+        for p, q in zip(centers, centers[1:]):
+            projected_pitch = math.dist((p[0], p[2] - p[1]), (q[0], q[2] - q[1]))
+            assert 7.5 <= projected_pitch <= 9.0
+
+
+def _chain_negative_controls(row):
+    # Deliberately corrupt the measured mesh report; each property must be independently effective.
+    uniform = deepcopy(row)
+    for name in uniform["chain_colors"]:
+        uniform["chain_colors"][name] = [uniform["chain_colors"][name][0]]
+    with pytest.raises(AssertionError):
+        _chain_fidelity(uniform)
+
+    coplanar = deepcopy(row)
+    for name, rings in coplanar["chain_rings"].items():
+        for ring in rings[1:]:
+            ring["minor"] = rings[0]["minor"][:]
+    with pytest.raises(AssertionError):
+        _chain_fidelity(coplanar)
+
+    filled = deepcopy(row)
+    for rings in filled["chain_rings"].values():
+        for ring in rings:
+            ring["minor"] = [v * .15 for v in ring["minor"]]
+    with pytest.raises(AssertionError):
+        _chain_fidelity(filled)
+
+
+def _assert_chain_raster(coverage, source, domain):
+    result = compare_masks(coverage, source, domain)
+    mesh, art = result["mesh"], result["source"]
+    assert art["pixels"] == 376 and sum(art["hole_areas"]) == 27
+    assert abs(mesh["occupancy"] - art["occupancy"]) <= .08
+    assert 4 <= mesh["hole_count"] <= 10
+    assert .5 * sum(art["hole_areas"]) <= sum(mesh["hole_areas"]) <= 1.5 * sum(art["hole_areas"])
+    assert max(mesh["hole_areas"]) <= max(art["hole_areas"]) + 4
+    assert result["iou"] >= .75
+    assert result["median_row_center_error_px"] <= 1.0
+    return result
+
+
+def _chain_raster_fidelity(row, top_left):
+    source, domain = source_mask()
+    triangles = row["chain_projected_vertices"]["ChainRight"]
+    actual4 = rasterize_actual_triangles(triangles, top_left, scale=4)
+    actual8 = rasterize_actual_triangles(triangles, top_left, scale=8)
+    measured4 = _assert_chain_raster(actual4, source, domain)
+    measured8 = _assert_chain_raster(actual8, source, domain)
+    assert abs(measured4["mesh"]["occupancy"] - measured8["mesh"]["occupancy"]) < .04
+    assert measured4["mesh"]["hole_count"] == measured8["mesh"]["hole_count"]
+    assert abs(measured4["iou"] - measured8["iou"]) < .04
+    y = np.indices(domain.shape)[0]
+    holdout = domain & (y >= 91) & (y < 103)  # excluded from parameter fitting
+    assert compare_masks(actual4, source & holdout, holdout)["iou"] >= .72
+
+    # Geometric controls exercise the same actual-triangle raster validator.
+    shifted = rasterize_actual_triangles([[x + 2, yy] for x, yy in triangles], top_left)
+    filled = ndi.binary_fill_holes((actual4 >= .5) & domain).astype(float)
+    old = projected_mask({"major_radius_px": 4.4, "minor_radius_px": 3.0,
+                          "wire_radius_px": .56, "plane_tilt_deg": 30.0,
+                          "center_offset_px": 0.0, "phase_px": 0.0,
+                          "right_link_count": 20})
+    thick_only = projected_mask({"major_radius_px": 4.4, "minor_radius_px": 2.1,
+                                 "wire_radius_px": 1.25, "plane_tilt_deg": 30.0,
+                                 "center_offset_px": 0.0, "phase_px": 0.0,
+                                 "right_link_count": 20})
+    for rejected in (shifted, filled, old, thick_only):
+        with pytest.raises(AssertionError):
+            _assert_chain_raster(rejected, source, domain)
+
+
 def test_castle_doors_share_wall_plane_and_drawbridge_is_down(tmp_path):
     actual = _run(tmp_path / "actual")
     assert set(actual[402]["parts"]) == {"Panel"}
@@ -157,6 +299,9 @@ def test_castle_doors_share_wall_plane_and_drawbridge_is_down(tmp_path):
     assert all(_leaf_ratio(leaf, east) < 0.25 for east in (True, False))
     _, bridge_top_left = _source(80, "cdoor-06.png")
     assert _chain_attached(actual[80], gate, bridge_top_left)
+    _chain_fidelity(actual[80])
+    _chain_negative_controls(actual[80])
+    _chain_raster_fidelity(actual[80], bridge_top_left)
 
     a, b, normal = wall
     wall_edge = (b[0] - a[0], b[1] - a[1])

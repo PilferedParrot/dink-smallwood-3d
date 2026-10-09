@@ -9,12 +9,20 @@ const FACE_CLEARANCE := 0.5 # source px = 1.25 cm, in front of the wall to avoid
 const GROUND_CLEARANCE := 0.4 # source px = 1 cm, above the ground
 const LEFT_CHAIN := [Vector2(0,60), Vector2(76,177)]
 const RIGHT_CHAIN := [Vector2(48,19), Vector2(124,147)]
+const CHAIN_PROFILE_PATH := "res://prototype/cdoor_chain_profile.json"
+const CHAIN_ARC_SECTIONS := 16
+const CHAIN_TUBE_SECTIONS := 8
 
 var fw
 var split_cache: Dictionary = {}
+var chain_palette: Array = []
+var chain_profile: Dictionary = {}
 
 func _init(world) -> void:
 	fw = world
+	var document = JSON.parse_string(FileAccess.get_file_as_string(CHAIN_PROFILE_PATH))
+	if document is Dictionary: chain_profile = document.get("profile",{})
+	assert(not chain_profile.is_empty(), "Missing fitted cdoor chain profile")
 
 func has(path: String) -> bool:
 	return path == PANEL or path == BRIDGE
@@ -176,41 +184,95 @@ func _chain_quad(st: SurfaceTool, a: Vector3, b: Vector3, c: Vector3, d: Vector3
 		st.set_color(color)
 		st.add_vertex(p)
 
-# Narrow links rather than a wide pixel card. Their path is taut between the art's two attachment points; the
-# ring plane faces diagonally between the two lateral views, so its width stays legible from either side. Each
-# first and last ring straddles its arch/leaf anchor, so no side view can lose the join.
-func _chain_links(model: Node3D, name: String, points: Array) -> void:
+# Only the suspended right chain is used for the iron palette. Opaque pixels at x >= 65 and at
+# least 3 px above the leaf exclude the stone arch, wood, and the chain/leaf overlap. The actual
+# Compatibility capture shows vertex RGB maps directly to output RGB here; srgb_to_linear made it black.
+func _chain_palette() -> Array:
+	if not chain_palette.is_empty(): return chain_palette
+	var source: Image = fw.sprite_image(BRIDGE)
+	if source.is_compressed(): source.decompress()
+	source.convert(Image.FORMAT_RGBA8)
+	var reds: Array[int] = []
+	var greens: Array[int] = []
+	var blues: Array[int] = []
+	for y in source.get_height():
+		for x in range(65, source.get_width()):
+			if float(y) >= _leaf_top(float(x))-3.0: continue
+			var color := source.get_pixel(x,y)
+			if color.a > 0.5:
+				reds.append(roundi(color.r*255.0))
+				greens.append(roundi(color.g*255.0))
+				blues.append(roundi(color.b*255.0))
+	reds.sort()
+	greens.sort()
+	blues.sort()
+	for q in [0.25, 0.50, 0.75, 0.90]:
+		var index := int(round((reds.size()-1)*q))
+		chain_palette.append(Color(float(reds[index])/255.0,float(greens[index])/255.0,float(blues[index])/255.0))
+	return chain_palette
+
+# Open iron links follow the taut path between the art's attachment points. Adjacent ring planes
+# cross, and their original-camera widths match the source stroke. The end rings straddle the
+# arch/leaf anchors so the side views retain each join.
+func _fitted_chain_center(points: Array, source_path: Array, u: float, length: float, source_length: float, offset: float, phase: float) -> Vector3:
+	var warped := clampf(u+phase/source_length*sin(PI*u),0.0,1.0)
+	var center := _chain_at(points,warped*length)
+	var direction: Vector2 = ((source_path[source_path.size()-1] as Vector2)-(source_path[0] as Vector2)).normalized()
+	var normal := Vector2(-direction.y,direction.x)
+	return center+Vector3(normal.x,0.0,normal.y)*offset*sin(PI*u)*fw.SCALE
+
+func _chain_links(model: Node3D, name: String, points: Array, source_path: Array) -> void:
 	var length := 0.0
 	for i in range(points.size()-1): length += (points[i] as Vector3).distance_to(points[i+1])
-	var count := maxi(2,int(ceil(length/0.14))+1) # a link every 5.6 source px
+	var source_length := 0.0
+	for i in range(source_path.size()-1): source_length += (source_path[i] as Vector2).distance_to(source_path[i+1])
+	var right_span := (RIGHT_CHAIN[0] as Vector2).distance_to(RIGHT_CHAIN[1])
+	var right_count := int(chain_profile["right_link_count"])
+	var count := right_count if name == "ChainRight" else maxi(2,int(round(source_length/right_span*float(right_count-1)))+1)
+	var offset := float(chain_profile["center_offset_px"]) if name == "ChainRight" else 0.0
+	var phase := float(chain_profile["phase_px"]) if name == "ChainRight" else 0.0
+	var major: float = float(chain_profile["major_radius_px"])*fw.SCALE
+	var minor: float = float(chain_profile["minor_radius_px"])*fw.SCALE
+	var wire: float = float(chain_profile["wire_radius_px"])*fw.SCALE
+	var tilt_angle := deg_to_rad(float(chain_profile["plane_tilt_deg"]))
+	var palette := _chain_palette()
 	var st := SurfaceTool.new()
 	st.begin(Mesh.PRIMITIVE_TRIANGLES)
 	for link in count:
-		var distance := length*float(link)/float(count-1)
-		var center := _chain_at(points,distance)
-		var tangent := (_chain_at(points,minf(distance+0.03,length))-_chain_at(points,maxf(distance-0.03,0.0))).normalized()
-		var side := tangent.cross(Vector3.UP).normalized()
-		if side.length() < 0.001: side = tangent.cross(Vector3.RIGHT).normalized()
-		side = (side+tangent.cross(side).normalized()).normalized()
+		var u := float(link)/float(count-1)
+		var center := _fitted_chain_center(points,source_path,u,length,source_length,offset,phase)
+		var tangent := (_fitted_chain_center(points,source_path,minf(1.0,u+0.001),length,source_length,offset,phase)-_fitted_chain_center(points,source_path,maxf(0.0,u-0.001),length,source_length,offset,phase)).normalized()
+		var lateral := tangent.cross(Vector3.UP).normalized()
+		if lateral.length() < 0.001: lateral = tangent.cross(Vector3.RIGHT).normalized()
+		var front := (lateral+tangent.cross(lateral).normalized()).normalized()
+		var depth := tangent.cross(front).normalized()
+		# Alternate the source-fitted plane angle about the original camera.
+		var tilt := -tilt_angle if link % 2 == 0 else tilt_angle
+		var side := front*cos(tilt)+depth*sin(tilt)
 		var binormal := tangent.cross(side).normalized()
-		var major := 0.11
-		var minor := 0.037
-		var wire := 0.014
-		var color := Color(0.34,0.41,0.49)
 		var ring := func(theta: float, phi: float) -> Vector3:
-			var around := center + tangent*(major*cos(theta)) + side*(minor*sin(theta))
-			var radial := (tangent*(cos(theta)/major)+side*(sin(theta)/minor)).normalized()
+			var around: Vector3 = center + tangent*(major*cos(theta)) + side*(minor*sin(theta))
+			var radial: Vector3 = (tangent*(cos(theta)/major)+side*(sin(theta)/minor)).normalized()
 			return around + (radial*cos(phi)+binormal*sin(phi))*wire
-		for i in 12:
-			var t0 := TAU*float(i)/12.0
-			var t1 := TAU*float(i+1)/12.0
-			for k in 6:
-				var p0 := TAU*float(k)/6.0
-				var p1 := TAU*float(k+1)/6.0
-				_chain_quad(st,ring.call(t0,p0),ring.call(t1,p0),ring.call(t1,p1),ring.call(t0,p1),color)
+		for i in CHAIN_ARC_SECTIONS:
+			var t0 := TAU*float(i)/float(CHAIN_ARC_SECTIONS)
+			var t1 := TAU*float(i+1)/float(CHAIN_ARC_SECTIONS)
+			for k in CHAIN_TUBE_SECTIONS:
+				var p0 := TAU*float(k)/float(CHAIN_TUBE_SECTIONS)
+				var p1 := TAU*float(k+1)/float(CHAIN_TUBE_SECTIONS)
+				# The 8-sided wire catches sparse glints from the source p75/p90 pixels.
+				# Opposing sectors allow one facet to show from either oblique side.
+				var shade: Color = palette[1]
+				if k == 3 or k == 4: shade = palette[0]
+				elif k == 1 or k == 5:
+					if i % 8 == 0: shade = palette[3]
+					elif i % 2 == 0: shade = palette[2]
+				_chain_quad(st,ring.call(t0,p0),ring.call(t1,p0),ring.call(t1,p1),ring.call(t0,p1),shade)
 	var part := MeshInstance3D.new()
 	part.name = name
 	part.mesh = st.commit()
+	part.set_meta("chain_arc_sections",CHAIN_ARC_SECTIONS)
+	part.set_meta("chain_tube_sections",CHAIN_TUBE_SECTIONS)
 	var material := StandardMaterial3D.new()
 	material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
 	material.vertex_color_use_as_albedo = true
@@ -264,7 +326,7 @@ func add(node: Node3D, e: Dictionary, id: int, path: String, collision: bool, sc
 				var source_at: Vector2 = source_point
 				var h := top_height*(end.x-source_at.x)/(end.x-start.x)
 				points.append(Vector3(top_left.x+source_at.x-node_at.x,h+GROUND_CLEARANCE,top_left.y+source_at.y+h-node_at.y)*fw.SCALE)
-			_chain_links(model,str(chain[0]),points)
+			_chain_links(model,str(chain[0]),points,path_points)
 	node.set_meta("castle_door",true)
 	node.set_meta("height",maxf(0.2,fw.sprite_height(e)*fw.SCALE))
 	node.set_meta("surface_position",node.position)

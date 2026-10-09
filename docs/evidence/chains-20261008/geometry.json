@@ -1,0 +1,154 @@
+{
+  "profile": {
+    "major_radius_px": 4.954506872311198,
+    "minor_radius_px": 2.350465600957683,
+    "wire_radius_px": 0.9802878337013345,
+    "plane_tilt_deg": 34.52124714780558,
+    "center_offset_px": -1.9470964678349945,
+    "phase_px": -0.5739165616123918,
+    "right_link_count": 19
+  },
+  "source_stats": {
+    "pixels": 376,
+    "envelope_pixels": 403,
+    "occupancy": 0.9330024813895782,
+    "hole_areas": [
+      8,
+      4,
+      4,
+      3,
+      3,
+      3,
+      2
+    ],
+    "hole_count": 7
+  },
+  "actual_triangle_stats_4x": {
+    "mesh": {
+      "pixels": 365,
+      "envelope_pixels": 398,
+      "occupancy": 0.9170854271356784,
+      "hole_areas": [
+        6,
+        6,
+        6,
+        5,
+        4,
+        3,
+        3
+      ],
+      "hole_count": 7
+    },
+    "source": {
+      "pixels": 376,
+      "envelope_pixels": 403,
+      "occupancy": 0.9330024813895782,
+      "hole_areas": [
+        8,
+        4,
+        4,
+        3,
+        3,
+        3,
+        2
+      ],
+      "hole_count": 7
+    },
+    "iou": 0.8854961832061069,
+    "median_row_center_error_px": 0.0,
+    "median_row_width_error_px": 0.0
+  },
+  "actual_triangle_stats_8x": {
+    "mesh": {
+      "pixels": 346,
+      "envelope_pixels": 384,
+      "occupancy": 0.9010416666666666,
+      "hole_areas": [
+        7,
+        6,
+        6,
+        5,
+        5,
+        5,
+        4
+      ],
+      "hole_count": 7
+    },
+    "source": {
+      "pixels": 376,
+      "envelope_pixels": 403,
+      "occupancy": 0.9330024813895782,
+      "hole_areas": [
+        8,
+        4,
+        4,
+        3,
+        3,
+        3,
+        2
+      ],
+      "hole_count": 7
+    },
+    "iou": 0.8656330749354005,
+    "median_row_center_error_px": 0.25,
+    "median_row_width_error_px": 1.0
+  },
+  "chains": {
+    "ChainLeft": {
+      "links": 18,
+      "sections": [
+        16,
+        8
+      ],
+      "major_radius_px": 4.95450913906097,
+      "minor_radius_px": 2.3504672032885217,
+      "wire_radius_px": 0.98028764128685,
+      "source_projected_width_range_px": [
+        6.354637630716862,
+        6.387504344999922
+      ],
+      "source_projected_pitch_range_px": [
+        8.206631082121794,
+        8.20722944387161
+      ],
+      "adjacent_plane_dot_range": [
+        0.35765045215730706,
+        0.35768962434890433
+      ],
+      "mesh_palette_vertex_counts": {
+        "(49, 49, 57)": 8640,
+        "(74, 95, 106)": 432,
+        "(33, 33, 33)": 3456,
+        "(70, 74, 90)": 1296
+      }
+    },
+    "ChainRight": {
+      "links": 19,
+      "sections": [
+        16,
+        8
+      ],
+      "major_radius_px": 4.95450675487518,
+      "minor_radius_px": 2.3504650961025053,
+      "wire_radius_px": 0.980290547013283,
+      "source_projected_width_range_px": [
+        5.914106377831899,
+        6.6326251094819675
+      ],
+      "source_projected_pitch_range_px": [
+        8.17736163687215,
+        8.376613377381238
+      ],
+      "adjacent_plane_dot_range": [
+        0.35035445198436416,
+        0.3650443890762081
+      ],
+      "mesh_palette_vertex_counts": {
+        "(49, 49, 57)": 9120,
+        "(74, 95, 106)": 456,
+        "(33, 33, 33)": 3648,
+        "(70, 74, 90)": 1368
+      }
+    }
+  }
+}

@@ -147,12 +147,30 @@ def test_an_east_west_decks_foot_line_is_its_planks_top_edge_and_no_railing_pixe
     assert len(e["posts"]) >= 2 and all(p[3] - p[2] >= 30 for p in e["posts"])
 
 
-def test_the_north_south_decks_are_not_split_and_every_other_bridge_art_is():
+def test_the_north_south_profiles_follow_the_original_plank_rows_and_clear_upper_posts():
     data = rails_json()
+    upper = art("brdge-01.png")
+    px = upper.load()
+    foot = next(y for y in range(upper.height) if sum(warm(px[x,y]) for x in range(upper.width)) >= 0.4*upper.width)
+    columns = [x for x in range(upper.width) if sum(px[x,y][3]>=128 for y in range(foot)) >= 0.8*foot]
+    groups = []
+    for x in columns:
+        if not groups or x > groups[-1][-1]+1: groups.append([])
+        groups[-1].append(x)
+    assert len(groups) == 2
+    height = sum(foot-len(g) for g in groups)/2
     for name in sorted(NS):
-        assert "assets/graphics/struct/Bridge/" + name not in data, ("a north-south deck's rope must stay in the ground", name)
+        e = entry_of(name)
+        im = art(name)
+        rows = [y for y in range(im.height) if sum(warm(im.getpixel((x,y))) for x in range(im.width)) >= 0.4*im.width]
+        assert e["kind"] == "ns" and e["planks"][2:] == [min(rows),max(rows)+1]
+        # Total opacity and uninterrupted-run readings disagree at a dithered
+        # column by half a pixel; keep that measured source resolution explicit.
+        assert all(abs(a-b) <= 0.5 for a,b in zip(e["side_centers"],[(min(g)+max(g)+1)/2 for g in groups]))
+        assert abs(e["height"]-height) <= 0.5
+        assert all(r[0] < max(rows)+1 for r in e["card"]), "lower-cap tail must stay grounded"
     got = {k.rsplit("/", 1)[-1] for k in data if k != "_meta"}
-    assert got == EW | NEAR | {"brdge-04.png"}, got
+    assert got == EW | NS | NEAR | {"brdge-04.png"}, got
 
 
 @pytest.mark.parametrize("name", sorted(NEAR))
@@ -203,7 +221,11 @@ def parse_sweep(stdout):
     rails = {}
     cards = {}
     plates = {}
+    ns = {}
     for line in stdout.splitlines():
+        if line.startswith("NSJSON "):
+            row = json.loads(line.removeprefix("NSJSON "))
+            ns[(row["screen"],row["index"],row["vision"])] = row
         m = re.match(r"PLATE (\d+) (\d+) (\d+) (\S+) x (\S+) to (\S+) z (\S+) to (\S+) top (\S+)", line)
         if m:
             plates[(int(m.group(1)), int(m.group(2)), int(m.group(3)))] = [float(m.group(i)) for i in range(5, 10)]
@@ -215,7 +237,7 @@ def parse_sweep(stdout):
         m = re.match(r"CARD (\d+) (\d+) (\d+) (\S+) foot x (\S+) z (\S+) to x (\S+) z (\S+) top (\S+)", line)
         if m:
             cards[(int(m.group(1)), int(m.group(2)), int(m.group(3)))] = [float(m.group(i)) for i in range(5, 10)]
-    return rails, cards, plates
+    return rails, cards, plates, ns
 
 
 @pytest.fixture(scope="module")
@@ -225,9 +247,115 @@ def swept(tmp_path_factory):
     return parse_sweep(result.stdout)
 
 
+def _ns_geometry_errors(ns):
+    """Read deck unions independently from placements/art; inspect actual vertices,
+    including terminal posts and both sides of cross-screen/offset joins.
+    """
+    world = json.loads((ROOT / "game/data/world.json").read_text())["screens"]
+    fr = frames()
+    records = []
+    errors = []
+    for key,row in ns.items():
+        screen,index,vision = key
+        source = next(e for e in world[str(screen)]["sprites"] if e["index"] == index)
+        dx,dy = fr[row["path"]]
+        im = art(row["path"].rsplit("/",1)[-1])
+        rows = [y for y in range(im.height) if sum(warm(im.getpixel((x,y))) for x in range(im.width)) >= 0.4*im.width]
+        ox = ((screen-1)%32)*600-20+source["x"]
+        oz = ((screen-1)//32)*400+source["y"]
+        records.append(dict(key=key,row=row,vision=vision,ox=ox,oz=oz,
+                            center=ox-dx+im.width/2,back=oz-dy+min(rows),front=oz-dy+max(rows)+1))
+    for r in records:
+        built = r["row"]["meshes"]
+        posts = built.get("Posts",[])
+        for forward in (False,True):
+            edge = r["front"] if forward else r["back"]
+            other = next((q for q in records if q["vision"] == r["vision"] and abs(q["center"]-r["center"])<=3
+                          and abs((q["back"] if forward else q["front"])-edge)<=0.5),None)
+            for name in ("RopeLeft","RopeRight"):
+                vertices = built.get(name,[])
+                if not vertices:
+                    errors.append((r["key"],name,"missing standing side"));continue
+                depth = max(v[2] for v in vertices) if forward else min(v[2] for v in vertices)
+                end = [v for v in vertices if abs(v[2]-depth)<0.0001]
+                cx = (min(v[0] for v in end)+max(v[0] for v in end))/2
+                if other is not None:
+                    neighbor = other["row"]["meshes"].get(name,[])
+                    if not neighbor:
+                        errors.append((r["key"],name,"missing continuation"));continue
+                    nd = min(v[2] for v in neighbor) if forward else max(v[2] for v in neighbor)
+                    ne = [v for v in neighbor if abs(v[2]-nd)<0.0001]
+                    nx = (min(v[0] for v in ne)+max(v[0] for v in ne))/2
+                    a = (r["ox"]+cx/SCALE,r["oz"]+depth/SCALE)
+                    b = (other["ox"]+nx/SCALE,other["oz"]+nd/SCALE)
+                    if math.dist(a,b)>0.1:errors.append((r["key"],name,"unwelded join",a,b))
+                else:
+                    # An open run end needs a square support at its deck edge,
+                    # reaching from ground to the elevated rope on each side.
+                    near = [v for v in posts if abs(v[0]-cx)<0.09 and abs(r["oz"]+v[2]/SCALE-edge)<5.1]
+                    if not near or min(v[1] for v in near)>0.001 or max(v[1] for v in near)<0.85:
+                        errors.append((r["key"],name,"unsupported terminal"))
+    return errors
+
+
+@godot_needed
+def test_north_south_modular_ropes_join_and_terminate_on_supports(swept):
+    ns = swept[3]
+    assert {k[0] for k in ns} == {416,448,480,512,533,544,701}
+    assert not _ns_geometry_errors(ns)
+    # Corrupt the measured scene geometry, not implementation metadata. Removing
+    # its end posts or moving a middle-section endpoint must turn this check red.
+    no_posts = json.loads(json.dumps(list(ns.values())))
+    for row in no_posts:row["meshes"].pop("Posts",None)
+    assert _ns_geometry_errors({(r["screen"],r["index"],r["vision"]):r for r in no_posts})
+    shifted = json.loads(json.dumps(list(ns.values())))
+    for row in shifted:
+        if row["screen"] == 448 and row["index"] == 2:
+            for verts in row["meshes"].values():
+                for v in verts:v[2]+=0.2
+    assert _ns_geometry_errors({(r["screen"],r["index"],r["vision"]):r for r in shifted})
+
+
+@godot_needed
+def test_north_south_side_materials_use_only_opaque_rope_pixels_and_shared_depth_phase(swept):
+    donor = art("brdge-03.png")
+    expected = []
+    for lo,hi in [(0,donor.width//3),(donor.width*2//3,donor.width)]:
+        def valid(x,y):
+            r,g,b,a=donor.getpixel((x,y))
+            return a>=128 and r-g<24
+        def bright(x,y):
+            return valid(x,y) and sum(donor.getpixel((x,y))[:3])>=330
+        core=max(range(lo,hi),key=lambda x:sum(bright(x,y) for y in range(donor.height)))
+        shadow=max([core-1,core+1],key=lambda x:sum(valid(x,y) and sum(donor.getpixel((x,y))[:3])<=sum(donor.getpixel((core,y))[:3]) for y in range(donor.height)))
+        samples=[]
+        for y in range(donor.height):
+            for x in [shadow,core,shadow]:
+                row=min((yy for yy in range(donor.height) if valid(x,yy)),key=lambda yy:abs(yy-y))
+                samples.append(list(donor.getpixel((x,row))))
+        expected.append(samples)
+    world=json.loads((ROOT/'game/data/world.json').read_text())["screens"]
+    phases=[]
+    for (screen,index,vision),row in swept[3].items():
+        source=next(e for e in world[str(screen)]["sprites"] if e["index"]==index)
+        global_depth=((screen-1)//32)*400+source["y"]
+        for side,name in enumerate(["RopeLeft","RopeRight"]):
+            surfaces=row["materials"].get(name,[])
+            assert len(surfaces)==2, "old whole-sprite side material must fail"
+            material=surfaces[1]
+            assert material["size"]==[3,donor.height] and material["pixels"]==expected[side]
+            assert all(p[3]==255 and p[0]-p[1]<24 for p in material["pixels"])
+            for uv,vertex in zip(material["uvs"],material["vertices"]):
+                # Same absolute depth gives the same repeated phase for either
+                # section, screen copy or offset-x join; x never enters side UV.
+                phases.append(uv[1]-(global_depth+vertex[2]/SCALE)/donor.height)
+                assert -0.0001<=uv[0]<=1.0001
+    assert max(phases)-min(phases)<0.0001, "side donor phase resets at section/screen boundaries"
+
+
 @godot_needed
 def test_every_bridge_sprite_of_the_map_is_built_with_its_railing_and_its_ray_body(swept):
-    rails, cards, plates = swept
+    rails, cards, plates, ns = swept
     expected = map_bridges()
     seen = {(s, i) for (s, i, _v) in rails}
     assert seen == set(expected), (sorted(set(expected) - seen)[:8], sorted(seen - set(expected))[:8])
@@ -262,8 +390,8 @@ def test_every_bridge_sprite_of_the_map_is_built_with_its_railing_and_its_ray_bo
             if abs(r["min"][1]) > 0.001 or not 0.85 <= r["max"][1] <= 1.35:
                 problems.append((who, "the railing stands from the deck to the rope's height", r["min"][1], r["max"][1]))
         elif name in NS:
-            if r["meshes"] != 0 or r["posts"] != 0:
-                problems.append((who, "a north-south deck stands nothing: its rope stays in the ground", r["meshes"], r["posts"]))
+            if r["meshes"] < 2 or not 0.85 <= r["max"][1] <= 1.05:
+                problems.append((who, "both side ropes must stand above the deck", r["meshes"], r["max"][1]))
             # Its plate is where its planks are: the wood of the plank rows of the art (the end posts above 01's planks and the
             # rope's tail past 02's are not deck), to within the dark rim and the dither (0.08 m).
             im = art(name)
@@ -280,6 +408,13 @@ def test_every_bridge_sprite_of_the_map_is_built_with_its_railing_and_its_ray_bo
             have = [plate[0], plate[1], plate[2], plate[3]]
             if any(abs(a - b) > 0.08 for a, b in zip(have, want)) or abs(plate[4] - 0.05) > 0.001:
                 problems.append((who, "the plate is not where the planks are", have, want))
+            built = ns.get((screen,index,vision),{}).get("meshes",{})
+            for side in ("RopeLeft","RopeRight"):
+                vertices = built.get(side,[])
+                if not vertices or min(v[1] for v in vertices) < 0.8:
+                    problems.append((who,"missing or flat longitudinal rope",side))
+                elif min(v[2] for v in vertices) < want[2]-0.025 or max(v[2] for v in vertices) > want[3]+0.025:
+                    problems.append((who,"elevated rope overruns the independently read planks",side))
         if name in EW:
             plate = plates.get((screen, index, vision))
             a, s_ = e["line"]
@@ -297,20 +432,24 @@ def grounded(tmp_path_factory):
     result = _run_godot(["--ground", "--mask=" + str(mask)], False, tmp_path_factory.mktemp("ground"), 600)
     assert "SCRIPT ERROR" not in result.stderr and "Parse Error" not in result.stdout, (result.stderr + result.stdout)[-2500:]
     rows = []
+    ns = []
     for line in result.stdout.splitlines():
         m = re.match(r"GROUND (\d+) v(\d) split=(\d+) rail_pixels_in_ground=(\d+) rail_total=(\d+) planks=(\d+) planks_kept=(\d+) "
                      r"whole_decks=(\d+) whole=(\d+) whole_kept=(\d+)", line)
         if m:
             rows.append(tuple(int(m.group(i)) for i in range(1, 11)))
-    return rows
+        m = re.match(r"NSGROUND (\d+) v(\d) planks=(\d+) kept=(\d+) cold_edges=(\d+) edge_kept=(\d+)",line)
+        if m: ns.append(tuple(int(m.group(i)) for i in range(1,7)))
+    return rows, ns
 
 
 @godot_needed
-def test_the_east_west_railing_is_gone_from_the_painted_ground_and_the_planks_and_north_south_ropes_are_not(grounded):
+def test_standing_rails_leave_the_ground_and_central_north_south_plank_seams_are_preserved(grounded):
     # Measured: the unmodified build holds 100 percent of the east-west decks' railing pixels in the ground (5186 of 5186);
     # the split build 0.3 percent (14: planks of the same colours as a rope pixel); every plank pixel is kept (26930 of 26930)
     # and every north-south deck's opaque pixels are in the ground as the art has them (101609 of 101609 less the stone
     # bridge's, which is not counted here).
+    grounded, ns = grounded
     assert len(grounded) == 10 and {r[0] for r in grounded} == {404, 416, 448, 480, 512, 533, 544, 693, 701}, grounded
     left = sum(r[3] for r in grounded)
     total = sum(r[4] for r in grounded)
@@ -320,10 +459,10 @@ def test_the_east_west_railing_is_gone_from_the_painted_ground_and_the_planks_an
     for screen, vision, n_split, in_ground, rail_total, planks, kept, whole_decks, whole, whole_kept in split:
         assert rail_total > 1500 and in_ground <= 0.15 * rail_total, (screen, vision, in_ground, rail_total)
         assert planks > 7000 and kept >= 0.99 * planks, ("the planks were eaten", screen, vision, kept, planks)
-    whole_rows = [r for r in grounded if r[7] > 0]
-    assert {r[0] for r in whole_rows} == {416, 448, 480, 512, 533, 544, 701}, whole_rows
-    for screen, vision, _s, _g, _t, _p, _k, whole_decks, whole, whole_kept in whole_rows:
-        assert whole > 3000 and whole_kept >= 0.99 * whole, ("a north-south rope left the ground", screen, vision, whole_kept, whole)
+    assert {r[0] for r in ns} == {416,448,480,512,533,544,701}, ns
+    for screen,vision,planks,kept,edges,edge_kept in ns:
+        assert planks > 500 and kept >= 0.995*planks, ("central wood or seams erased",screen,vision,kept,planks)
+        assert edges > 20 and edge_kept <= 0.85*edges, ("cold edge strokes still painted flat",screen,vision,edge_kept,edges)
 
 
 @pytest.fixture(scope="module")
