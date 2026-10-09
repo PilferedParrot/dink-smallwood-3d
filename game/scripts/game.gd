@@ -586,19 +586,33 @@ func _hard_rect(e: Dictionary) -> Rect2:
 	var factor := float(e.get("size",100))/100.0
 	return Rect2(Vector2(float(e.get("x",0)),float(e.get("y",0)))+Vector2(hb[0],hb[1])*factor,Vector2(hb[2]-hb[0],hb[3]-hb[1])*factor)
 
-func _blocked(pos: Vector2, mover: int) -> bool:
+# `from` is where a mover is stepping from (Vector2.INF for a plain "is this point solid" query).
+# The 4 px clearance band the game adds round every solid keeps the camera out of sprites; it
+# must never trap a mover that already stands in it (a screen transition can land there: 376 ->
+# 377 puts Dink at x=32 inside the grown box of a tree whose own box starts at x=33). A mover
+# already inside a band is held out of the solid itself and may not step closer to it, but may
+# step away or slide along it.
+func _blocked(pos: Vector2, mover: int, from: Vector2 = Vector2.INF) -> bool:
 	for id in entities:
 		if id == mover or id == 1: continue
 		var e: Dictionary = entities[id]
 		if int(e.get("active",1)) == 0 or int(e.get("hard",1)) != 0 or e.get("warp") != null: continue
 		if footprint_sprites.has(int(e.get("editor_num",0))): continue # its footprint stands for it
-		if _hard_rect(e).grow(4).has_point(pos): return true
-	return _structure_blocked(pos)
+		var rect := _hard_rect(e)
+		if not rect.grow(FOOTPRINT_GROW).has_point(pos): continue
+		if from != Vector2.INF and not rect.has_point(pos) and rect.grow(FOOTPRINT_GROW).has_point(from) and not rect.has_point(from) \
+				and _rect_distance(rect,pos) >= _rect_distance(rect,from) - 0.0001: continue
+		return true
+	return _structure_blocked(pos,from)
+
+func _rect_distance(rect: Rect2, p: Vector2) -> float:
+	var d := Vector2(maxf(maxf(rect.position.x-p.x,0.0),p.x-rect.end.x),maxf(maxf(rect.position.y-p.y,0.0),p.y-rect.end.y))
+	return d.length()
 
 # The anonymous structure of the screen: tile hardness and the buildings' footprints. Movers,
 # missiles and lines of fire all stop at it.
-func _structure_blocked(pos: Vector2) -> bool:
-	return _footprint_blocked(pos) or _tile_blocked(pos)
+func _structure_blocked(pos: Vector2, from: Vector2 = Vector2.INF) -> bool:
+	return _footprint_blocked(pos,from) or _tile_blocked(pos)
 
 func _load_footprints(number: int) -> void:
 	footprint_sprites.clear()
@@ -615,9 +629,9 @@ func _load_footprints(number: int) -> void:
 		if owner == 0: screen_footprints.append(poly)
 		elif footprint_sprites.has(owner): footprint_sprites[owner].append(poly)
 
-func _footprint_blocked(pos: Vector2) -> bool:
+func _footprint_blocked(pos: Vector2, from: Vector2 = Vector2.INF) -> bool:
 	for poly in screen_footprints:
-		if _in_footprint(pos,poly): return true
+		if _in_footprint(pos,poly,from): return true
 	if footprint_sprites.is_empty(): return false
 	for id in entities:
 		if id == 1: continue
@@ -625,15 +639,26 @@ func _footprint_blocked(pos: Vector2) -> bool:
 		var polys: Array = footprint_sprites.get(int(e.get("editor_num",0)),[])
 		if polys.is_empty() or int(e.get("active",1)) == 0: continue
 		for poly in polys:
-			if _in_footprint(pos,poly): return true
+			if _in_footprint(pos,poly,from): return true
 	return false
 
-func _in_footprint(pos: Vector2, poly: PackedVector2Array) -> bool:
+# A point is in a footprint when it is inside the polygon or within the clearance band of its
+# edge. A mover that already stands in the band (not in the polygon itself) may leave it or
+# slide along it, but not step closer (see `_blocked`).
+func _in_footprint(pos: Vector2, poly: PackedVector2Array, from: Vector2 = Vector2.INF) -> bool:
 	if Geometry2D.is_point_in_polygon(pos,poly): return true
+	var edge := _edge_distance(pos,poly)
+	if edge > FOOTPRINT_GROW: return false
+	if from != Vector2.INF and not Geometry2D.is_point_in_polygon(from,poly):
+		var from_edge := _edge_distance(from,poly)
+		if from_edge <= FOOTPRINT_GROW and edge >= from_edge - 0.0001: return false
+	return true
+
+func _edge_distance(pos: Vector2, poly: PackedVector2Array) -> float:
+	var best := INF
 	for i in poly.size():
-		var closest := Geometry2D.get_closest_point_to_segment(pos,poly[i],poly[(i+1)%poly.size()])
-		if closest.distance_to(pos) <= FOOTPRINT_GROW: return true
-	return false
+		best = minf(best,Geometry2D.get_closest_point_to_segment(pos,poly[i],poly[(i+1)%poly.size()]).distance_to(pos))
+	return best
 
 func _tile_blocked(pos: Vector2) -> bool:
 	if pos.x < 20 or pos.x >= 620 or pos.y < 0 or pos.y >= 400: return false
@@ -669,8 +694,8 @@ func _move_entity(id: int, displacement: Vector2, ignore_hardness: bool = false)
 	var pos := _position2(id)
 	var e: Dictionary = entities[id]
 	var noclip := ignore_hardness or int(e.get("noclip",0)) != 0
-	if noclip or not _blocked(pos+Vector2(displacement.x,0),id): pos.x += displacement.x
-	if noclip or not _blocked(pos+Vector2(0,displacement.y),id): pos.y += displacement.y
+	if noclip or not _blocked(pos+Vector2(displacement.x,0),id,pos): pos.x += displacement.x
+	if noclip or not _blocked(pos+Vector2(0,displacement.y),id,pos): pos.y += displacement.y
 	e["x"] = pos.x
 	e["y"] = pos.y
 
