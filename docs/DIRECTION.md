@@ -1845,3 +1845,29 @@ resources, and all14 packed chain captures match reviewed source PNGs exactly.
 No push/release. The data probe emits resource/RID shutdown-leak warnings; no
 lifecycle-cleanup claim is made. The separate frozen candidate gate evidence
 is on2c14740; it excludes these row8 changes.
+
+## RC2: the review round's fixes — October 8 (Opus 5.5 lead; Sonnet 5.5 units; GPT-6.1 Sol units)
+
+A blind four-lens review of RC1 (`/home/chris/dink-review-rc1/review/FINDINGS.md`: 97 findings, none blocking play) and
+GPT-6.1 Sol's 570-screen original-camera probe (`/home/chris/dink-row6-sol-20261008/docs/evidence/rc1-gate-20261008/`) found
+what RC2 fixes:
+- **The round table is round:** its ground circle was built at the picture's foreshortened depth; the vertices now stand at
+  true ground depth (depth = width) on legs square on the ground (Sonnet unit, `interior_solids.gd` MB.zk).
+- **The fire sits in the hearth's recess:** a sprite drawn inside a fitted body's opening is the recess's back, not a card
+  in front (`recess_seat`).
+- **The plaster reads as plaster:** at 10-20x magnification, nearest filtering showed the wall art's 1x dither as static.
+  The stone rows are low-passed at the dither's own grain (its autocorrelation length) and sampled bilinearly; cap,
+  baseboard and the artist's row shading are kept. At grazing angles the kept row shading streaks a little.
+- **The chimney stands:** with the hearth's depth capped exactly at the wall, the chimney's face lay in the wall's plane and
+  the new plaster drew over it; the hearth now stops 1 px short of the wall.
+- **Grain bags (539) are bags:** the footprint depth cap now holds for props the player walks through too.
+- **The clearance band never traps** (376 -> 377): a mover standing in a solid's 4 px band may step away or slide along it,
+  never closer (`game.gd _blocked`).
+- **Interface polish** (Sol, 52ca6c6): the bar's own engraved labels, On/Off toggles, an outlined reticle, hints that fade
+  and come back with F1. **North-south bridge railings stand and the drawbridge chains are iron links** (Sol, 73995b1).
+
+Still open, with reasons in FINDINGS.md: the save machine and well are still sprites; Mother faces away in the opening
+dialogue; the pigs' facing is unverified; the first-person bow and hand are untextured; no key remapping; the cottages'
+end walls stretch; the beds' sides smear; the ceiling is untextured; the 734 crate stack's back row stands in the wall.
+Checks: 147 passed, 1 intermittent (`test_fps_sideflip`, passes on rerun) on b8cf665; interior tests pass on eb739f9.
+Contact sheet from the installed packages: `tmp/solid/rc2-contact.jpg`.
