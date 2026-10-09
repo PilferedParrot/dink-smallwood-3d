@@ -1918,9 +1918,17 @@ func add_billboard(node: Node3D, e: Dictionary, id: int, key: String, collision:
 	if not sp.has_meta("static"):
 		place_on_surface(node,sp,e,d,screen)
 		set_sprite_texture(sp,path,texture,d)
+	if interior and not sp.has_meta("static"):
+		# A sprite drawn inside a fitted body's opening (the fire in the hearth) is the back of that recess (interior_solids.gd recess_seat).
+		var seat: Dictionary = solids.recess_seat(e,texture.get_size(),screen)
+		if not seat.is_empty():
+			node.position = point(float(e.get("x",0)),float(seat.z))+Vector3(0,float(seat.y)*SCALE,0)
+			node.set_meta("surface_position",node.position)
+			node.set_meta("recess_seat",true)
+			fixed = true
 	if fixed:
 		sp.billboard = BaseMaterial3D.BILLBOARD_DISABLED
-		sp.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_ON
+		sp.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF if node.has_meta("recess_seat") else GeometryInstance3D.SHADOW_CASTING_SETTING_ON
 	node.add_child(sp)
 	if not fixed: shadow_twin(sp,false)
 	var height := maxf(0.2,sprite_height(e)*SCALE*factor)
