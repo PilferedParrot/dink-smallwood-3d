@@ -9,7 +9,17 @@ const STATUS_HEIGHT := 80.0
 const CONTROL_HEIGHT := 196.0
 const MIN_DOCK_WIDTH := 900.0
 const MAX_DOCK_WIDTH := 1120.0
-const ART_HEALTH_RECT := Rect2(303, 29, 241, 12)
+# FreeDink status.cpp draws the 640x80 bar at screen y=400. These
+# regions follow its digit/health origins; the lower-right inset is EXP.
+const ART_STRENGTH_RECT := Rect2(81, 12, 53, 20)
+const ART_DEFENSE_RECT := Rect2(81, 34, 53, 20)
+const ART_MAGIC_RECT := Rect2(81, 56, 53, 20)
+const ART_COINS_RECT := Rect2(298, 54, 99, 22)
+const ART_EXP_RECT := Rect2(404, 54, 110, 22)
+const ART_LEVEL_RECT := Rect2(517, 54, 30, 22)
+const ART_HEALTH_RECT := Rect2(284, 12, 253, 17)
+# Value line boxes include unused font ascent/descent; ink remains within the bar.
+const ART_HEALTH_VALUE_RECT := Rect2(284, 9, 253, 23)
 const ICON_WEAPON_RECT := Rect2(147, 10, 63, 55)
 const ICON_SPELL_RECT := Rect2(550, 10, 63, 55)
 const COLOR_TEXT := Color("f1d99a")
@@ -19,6 +29,7 @@ const COLOR_HEALTH := Color("a94f42")
 const COLOR_TAG_BG := Color(0.025, 0.035, 0.04, 1.0)
 
 var _text_scale := 1.0
+var _context_hints_visible := true
 var _stats: Dictionary = {}
 var _sequence_frames: Dictionary = {}
 var _weapon_texture: Texture2D
@@ -68,6 +79,12 @@ func update_stats(stats: Dictionary) -> void:
 
 func set_text_scale(value: float) -> void:
 	_text_scale = clampf(value, 0.75, 1.8)
+	queue_redraw()
+
+func set_context_hints_visible(value: bool) -> void:
+	if _context_hints_visible == value:
+		return
+	_context_hints_visible = value
 	queue_redraw()
 
 func item_texture(item: Dictionary) -> Texture2D:
@@ -135,17 +152,12 @@ func _draw() -> void:
 	var font_scale := scale_factor * _text_scale
 	var fs := maxi(10, roundi(14.0 * font_scale))
 	var number_fs := maxi(10, roundi(15.0 * font_scale))
-	var shadow_offset := Vector2(1.0, 1.0) * maxf(1.0, font_scale)
 
-	# Cover only the baked label glyphs, leaving their stonework, frames and values intact.
-	_draw_art_label(font, "Attack", Rect2(8, 5, 65, 21), 23, scale_factor, font_scale, fs, shadow_offset)
-	_draw_art_label(font, "Defense", Rect2(5, 28, 68, 21), 45, scale_factor, font_scale, fs, shadow_offset)
-	_draw_art_label(font, "Magic", Rect2(12, 51, 60, 22), 68, scale_factor, font_scale, fs, shadow_offset)
-	_draw_art_label(font, "Life", Rect2(230, 2, 44, 20), 20, scale_factor, font_scale, fs, shadow_offset)
-
-	_draw_value(font, str(int(_stats.get("strength", 0))), x + 79 * scale_factor, _dock_y + 18 * scale_factor, number_fs, COLOR_TEXT, shadow_offset)
-	_draw_value(font, str(int(_stats.get("defense", 0))), x + 79 * scale_factor, _dock_y + 40 * scale_factor, number_fs, COLOR_TEXT, shadow_offset)
-	_draw_value(font, str(int(_stats.get("magic", 0))), x + 79 * scale_factor, _dock_y + 62 * scale_factor, number_fs, COLOR_TEXT, shadow_offset)
+	# Keep the artwork's engraved labels visible. Fit the live digits to their
+	# original regions, including at enlarged text settings.
+	_draw_value(font, str(int(_stats.get("strength", 0))), ART_STRENGTH_RECT, number_fs)
+	_draw_value(font, str(int(_stats.get("defense", 0))), ART_DEFENSE_RECT, number_fs)
+	_draw_value(font, str(int(_stats.get("magic", 0))), ART_MAGIC_RECT, number_fs)
 
 	var life_max := maxi(1, int(_stats.get("lifemax", 10)))
 	var life := clampi(int(_stats.get("life", 10)), 0, life_max)
@@ -154,37 +166,30 @@ func _draw() -> void:
 	var health_fill := Rect2(health_rect.position, Vector2(health_rect.size.x * float(life) / float(life_max), health_rect.size.y))
 	if health_fill.size.x > 0:
 		draw_rect(health_fill, COLOR_HEALTH)
-	_draw_value(font, "%d / %d" % [life, life_max], x + 320 * scale_factor, _dock_y + 22 * scale_factor, fs, COLOR_TEXT, shadow_offset)
-	_draw_value(font, str(int(_stats.get("gold", 0))), x + 320 * scale_factor, _dock_y + 67 * scale_factor, fs, COLOR_TEXT, shadow_offset)
+	_draw_value(font, "%d / %d" % [life, life_max], ART_HEALTH_VALUE_RECT, fs, HORIZONTAL_ALIGNMENT_CENTER)
+	_draw_value(font, str(int(_stats.get("gold", 0))), ART_COINS_RECT, number_fs)
 
 	var level := maxi(1, int(_stats.get("level", 1)))
 	var exp_value := maxi(0, int(_stats.get("exp", 0)))
 	var exp_target := mini(99999, 100 * level * level)
-	_draw_tag(font, "Lv %d · EXP %d/%d" % [level, exp_value, exp_target], x + 365 * scale_factor, _dock_y - 8 * scale_factor, fs, scale_factor)
+	_draw_value(font, "EXP", Rect2(404, 38, 110, 22), fs, HORIZONTAL_ALIGNMENT_CENTER)
+	_draw_value(font, "%d/%d" % [exp_value, exp_target], ART_EXP_RECT, fs, HORIZONTAL_ALIGNMENT_CENTER)
+	_draw_value(font, "Lv", Rect2(517, 38, 30, 22), fs, HORIZONTAL_ALIGNMENT_CENTER)
+	_draw_value(font, str(level), ART_LEVEL_RECT, number_fs, HORIZONTAL_ALIGNMENT_CENTER)
 
 	_draw_item_icon(_weapon_texture, x, ICON_WEAPON_RECT, scale_factor)
 	_draw_item_icon(_spell_texture, x, ICON_SPELL_RECT, scale_factor)
-	_draw_tag(font, _item_label(_stats.get("weapon_item", {}), "weapon"), x + 178.5 * scale_factor, _dock_y - 8 * scale_factor, fs, scale_factor)
-	_draw_tag(font, _spell_label(), x + 581.5 * scale_factor, _dock_y - 8 * scale_factor, fs, scale_factor)
+	if _context_hints_visible:
+		_draw_tag(font, _item_label(_stats.get("weapon_item", {}), "weapon"), x + 178.5 * scale_factor, _dock_y - 8 * scale_factor, fs, scale_factor)
+		_draw_tag(font, _spell_label(), x + 581.5 * scale_factor, _dock_y - 8 * scale_factor, fs, scale_factor)
+	elif _spell_label() != "No spell":
+		_draw_value(font, _spell_readiness(), Rect2(520, -24, 120, 22), fs, HORIZONTAL_ALIGNMENT_CENTER)
 
 func _draw_item_icon(texture: Texture2D, origin_x: float, source_rect: Rect2, scale_factor: float) -> void:
 	if texture == null:
 		return
 	var target := Rect2(Vector2(origin_x, _dock_y) + source_rect.position * scale_factor, source_rect.size * scale_factor)
 	draw_texture_rect(texture, target, false)
-
-func _draw_art_label(font: Font, label: String, source_rect: Rect2, baseline: float, origin_scale: float, font_scale: float, font_size: int, shadow_offset: Vector2) -> void:
-	# Expand the plaque with user text scaling so larger settings keep every glyph on backing.
-	var plaque_position := Vector2((size.x - _dock_width) * 0.5, _dock_y) + source_rect.position * origin_scale
-	var plaque_size := Vector2(source_rect.size.x * origin_scale, source_rect.size.y * font_scale)
-	draw_rect(Rect2(plaque_position, plaque_size), COLOR_TAG_BG)
-	var text_x := (size.x - _dock_width) * 0.5 + (source_rect.position.x + 2.0) * origin_scale
-	var text_baseline := _dock_y + baseline * origin_scale
-	# Keep labels clear of their neighbouring value columns at130% text.
-	var label_size := font_size
-	while font.get_string_size(label, HORIZONTAL_ALIGNMENT_LEFT, -1, label_size).x > source_rect.size.x * origin_scale - 4 * origin_scale and label_size > 14:
-		label_size -= 1
-	_draw_text(font, label, text_x, text_baseline, label_size, COLOR_TEXT, shadow_offset)
 
 func _item_label(value: Variant, default_kind: String) -> String:
 	if value is Dictionary and not str(value.get("name", "")).strip_edges().is_empty():
@@ -197,13 +202,16 @@ func _spell_label() -> String:
 	var spell: Variant = _stats.get("spell_item", {})
 	if not spell is Dictionary or str(spell.get("script", "")).is_empty():
 		return "No spell"
+	return _item_label(spell, "spell") + "  ·  " + _spell_readiness()
+
+func _spell_readiness() -> String:
 	var cost := maxi(0, int(_stats.get("magic_cost", 0)))
 	if cost <= 0:
-		return _item_label(spell, "spell") + "  ·  Recharging"
+		return "Recharging"
 	var magic_level := clampi(int(_stats.get("magic_level", 0)), 0, cost)
 	if magic_level < cost:
-		return _item_label(spell, "spell") + "  ·  Recharging %d%%" % roundi(100.0 * float(magic_level) / float(cost))
-	return _item_label(spell, "spell") + "  ·  Ready"
+		return "Recharging %d%%" % roundi(100.0 * float(magic_level) / float(cost))
+	return "Ready"
 
 func _draw_tag(font: Font, label: String, center_x: float, baseline_y: float, font_size: int, scale_factor: float) -> void:
 	var text_width := font.get_string_size(label, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size).x
@@ -218,11 +226,23 @@ func _draw_tag(font: Font, label: String, center_x: float, baseline_y: float, fo
 	var text_x := center_x - font.get_string_size(shown, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size).x * 0.5
 	_draw_text(font, shown, text_x, baseline_y - 5.0 * scale_factor, font_size, COLOR_TEXT, Vector2.ONE * maxf(1.0, scale_factor))
 
-func _draw_value(font: Font, text: String, x: float, baseline: float, font_size: int, color: Color, shadow_offset: Vector2) -> void:
-	var width := font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size).x
-	var top := baseline - font.get_ascent(font_size)
-	draw_rect(Rect2(x - 2, top - 1, width + 4, font.get_height(font_size) + 2), COLOR_TAG_BG)
-	_draw_text(font, text, x, baseline, font_size, color, shadow_offset)
+func _draw_value(font: Font, text: String, source_rect: Rect2, font_size: int, alignment: HorizontalAlignment = HORIZONTAL_ALIGNMENT_LEFT) -> void:
+	var origin := Vector2((size.x - _dock_width) * 0.5, _dock_y)
+	var target := Rect2(origin + source_rect.position * _dock_scale, source_rect.size * _dock_scale)
+	var outline := maxi(1, ceili(_dock_scale))
+	var fitted_size := font_size
+	while fitted_size > 8 and (font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, fitted_size).x + outline * 2 > target.size.x or font.get_height(fitted_size) + outline * 2 > target.size.y):
+		fitted_size -= 1
+	var text_width := font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, fitted_size).x
+	var text_x := target.position.x + outline
+	if alignment == HORIZONTAL_ALIGNMENT_CENTER:
+		text_x = target.get_center().x - text_width * 0.5
+	var baseline := target.get_center().y + (font.get_ascent(fitted_size) - font.get_descent(fitted_size)) * 0.5
+	var position := Vector2(text_x, baseline)
+	# A complete outline separates every edge from the textured stone without
+	# concealing any of the original artwork behind a rectangular value chip.
+	draw_string_outline(font, position, text, HORIZONTAL_ALIGNMENT_LEFT, -1, fitted_size, outline, Color.BLACK)
+	draw_string(font, position, text, HORIZONTAL_ALIGNMENT_LEFT, -1, fitted_size, COLOR_TEXT)
 
 func _draw_text(font: Font, text: String, x: float, baseline: float, font_size: int, color: Color, shadow_offset: Vector2) -> void:
 	draw_string(font, Vector2(x + shadow_offset.x, baseline + shadow_offset.y), text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size, COLOR_SHADOW)

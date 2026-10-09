@@ -1,0 +1,82 @@
+[
+  {
+    "frame": "builds/interface-polish-20261008/final-1280/adventure.png",
+    "frame_size": [
+      1280,
+      800
+    ],
+    "box": "21x25+630+393",
+    "label": "Outlined reticle",
+    "contrast": 12.31,
+    "contrast_needed": 4.5,
+    "height_px_1080p": 14.8,
+    "verdict": "polish",
+    "problems": [
+      "height 15px@1080p < 18px"
+    ],
+    "notes": [
+      "frame is 1280x800: below 1080p both numbers are biased (downscaled frames hide thin text)"
+    ],
+    "polarity": "light-on-dark",
+    "interpretation": "Non-text aiming graphic: compare contrast with3:1. The text-height flag does not apply; still no all-background certification."
+  },
+  {
+    "frame": "builds/interface-polish-20261008/final-1280/adventure.png",
+    "frame_size": [
+      1280,
+      800
+    ],
+    "box": "77x23+731+704",
+    "label": "Life count",
+    "contrast": 7.97,
+    "contrast_needed": 4.5,
+    "height_px_1080p": 18.9,
+    "verdict": "pass",
+    "problems": [],
+    "notes": [
+      "frame is 1280x800: below 1080p both numbers are biased (downscaled frames hide thin text)"
+    ],
+    "polarity": "light-on-dark"
+  },
+  {
+    "frame": "builds/interface-polish-20261008/final-1280/adventure.png",
+    "frame_size": [
+      1280,
+      800
+    ],
+    "box": "53x25+808+765",
+    "label": "EXP count",
+    "contrast": 9.9,
+    "contrast_needed": 4.5,
+    "height_px_1080p": 17.6,
+    "verdict": "polish",
+    "problems": [
+      "height 18px@1080p < 18px"
+    ],
+    "notes": [
+      "frame is 1280x800: below 1080p both numbers are biased (downscaled frames hide thin text)"
+    ],
+    "polarity": "light-on-dark"
+  },
+  {
+    "frame": "builds/interface-polish-20261008/final-130/hints-hidden.png",
+    "frame_size": [
+      1280,
+      800
+    ],
+    "box": "21x25+630+393",
+    "label": "Outlined reticle outdoors",
+    "contrast": 10.98,
+    "contrast_needed": 4.5,
+    "height_px_1080p": 14.8,
+    "verdict": "polish",
+    "problems": [
+      "height 15px@1080p < 18px"
+    ],
+    "notes": [
+      "frame is 1280x800: below 1080p both numbers are biased (downscaled frames hide thin text)"
+    ],
+    "polarity": "light-on-dark",
+    "interpretation": "Non-text aiming graphic: compare contrast with3:1. The text-height flag does not apply; still no all-background certification."
+  }
+]

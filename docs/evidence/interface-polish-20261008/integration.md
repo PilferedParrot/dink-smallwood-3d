@@ -1,0 +1,11 @@
+# Final interface integration judgment — 2026-10-08
+
+Astra inspected the nine supplied full exported-game PNGs. This is the requested narrow integration check, not another blind review or a general visual/accessibility certification. Judgment: acceptable for the scoped interface fixes; no new blocking visual defect in these frames.
+
+- **HUD:** `export-1280/adventure.png` and `hints-faded.png` retain the original Attack, Defense, Magic, Life and Coins lettering. No replacement label plaques or doubled Life remain. Stat digits align with their engraved rows. The larger outlined life count fits inside its fill, while EXP caption/value and level fit the lower-right artwork without collisions. Life and EXP are materially more readable than the earlier isolated captures. The faded frame removes the control strip and empty/name chips while retaining the HUD.
+- **Saved title:** `export-1280/saved-title.png` fits Continue adventure and the remaining buttons. Focus is clear; the instruction and release text remain within the screen.
+- **Settings:** `export-1280/settings.png` shows separated slider corner focus marks; they do not cross the track. `invert-off.png` and `invert-on.png` explicitly and legibly distinguish Off and On. `export-130/invert-on.png` also fits the complete label and On state at 130% text. The partial preceding slider at the top is ordinary scrolled content, not overlap with the focused toggle.
+- **Journal:** `export-1280/journal.png` clearly separates the location, Recent conversations heading, three speaker-labelled opening lines and return button. No visible collision or clipping.
+- **Equipment:** `export-130/equipment-back.png` fits the selected-item description, original inventory art and focused Back to adventure button at 130% text.
+
+Limits: these are static frames. They establish neither the revised wall-clock hint duration nor input behavior, persistence, long-history scrolling, all numeric extremes, or general contrast compliance. The supplied 130% frames cover settings and equipment, not the enlarged HUD. The lead's final input capture is still needed for the subsequent timer change; no geometry change is under judgment here. No additional tests or source edits were performed for this check.

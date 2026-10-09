@@ -475,16 +475,16 @@ func _dialogue(text: String, speaker: int, context: Dictionary) -> void:
 	if expected != generation: return
 	dialogue_busy = true
 	var line := _interpolate(text, context)
-	dialogue_log.append(line)
-	if dialogue_log.size() > 100: dialogue_log.pop_front()
+	var displayed_speaker := speaker
+	if displayed_speaker == 0: displayed_speaker = int(context.get("sprite_id", 0))
+	var speaker_name := _fps_speaker_name(displayed_speaker, context)
+	_record_dialogue(line, speaker_name)
 	if test_mode:
 		await get_tree().process_frame
 	else:
-		var displayed_speaker := speaker
-		if displayed_speaker == 0: displayed_speaker = int(context.get("sprite_id", 0))
 		if displayed_speaker != 1 and entities.has(displayed_speaker): _fps_frame_speaker(displayed_speaker)
 		elif displayed_speaker == 1: _fps_grief_dialogue_camera(context)
-		ui.show_dialogue(line, _fps_speaker_name(displayed_speaker, context))
+		ui.show_dialogue(line, speaker_name)
 		# Hide a held model immediately, including the first rendered dialogue frame.
 		_fps_update_viewmodel(0.0)
 		await ui.dialogue_finished

@@ -39,6 +39,9 @@ var panel_style: StyleBoxTexture
 var title_panel_style: StyleBoxEmpty
 var panel_underlay: ColorRect
 var hint_backing: PanelContainer
+var gameplay_hint_used := false
+var gameplay_hint_deadline_msec := 0
+const GAMEPLAY_HINT_SECONDS := 8.0
 const CREAM := Color("f6ebcb")
 const GOLD := Color("ffdc79")
 const INK := Color("292019")
@@ -121,7 +124,9 @@ func _ready() -> void:
 	crosshair.offset_left = -8; crosshair.offset_right = 8
 	crosshair.offset_top = -14; crosshair.offset_bottom = 14
 	crosshair.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	crosshair.add_theme_color_override("font_color", Color(1, 0.94, 0.72, 0.82))
+	crosshair.add_theme_color_override("font_color", Color("fff0b8"))
+	crosshair.add_theme_color_override("font_outline_color", Color.BLACK)
+	crosshair.add_theme_constant_override("outline_size", 3)
 	crosshair.add_theme_font_size_override("font_size", 24)
 	crosshair.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	root.add_child(crosshair)
@@ -282,6 +287,15 @@ func _process(_delta: float) -> void:
 		vines_left.size = Vector2(80, 140)
 		vines_right.position = panel.position + Vector2(panel.size.x - 15, 0)
 		vines_right.size = vines_left.size
+	if modal:
+		hint_backing.modulate.a = 1.0
+		hint_backing.show()
+	else:
+		# UI help expires in real time even when a heavy scene renders slowly.
+		var remaining := maxf(0.0, float(gameplay_hint_deadline_msec - Time.get_ticks_msec()) / 1000.0)
+		hint_backing.modulate.a = minf(1.0, remaining) if gameplay_hint_used else 1.0
+		hint_backing.visible = hint_backing.modulate.a > 0.0
+		status_dock.set_context_hints_visible(hint_backing.visible)
 	# A solid plaque keeps control instructions readable against every scene.
 	var available := root.size.x - 40
 	var font_size := hint.get_theme_font_size("font_size")
@@ -316,7 +330,7 @@ func _set_playing_visuals(playing: bool) -> void:
 func _layout_for(next_page: String) -> void:
 	if next_page == "title":
 		panel.anchor_left = 0.56; panel.anchor_right = 0.94
-		panel.anchor_top = 0.12; panel.anchor_bottom = 0.86
+		panel.anchor_top = 0.10; panel.anchor_bottom = 0.92
 		overlay.color = Color.BLACK
 	elif next_page == "dialogue":
 		panel.anchor_left = 0.12; panel.anchor_right = 0.88
@@ -348,6 +362,13 @@ func _ensure_controller_navigation() -> void:
 		if not InputMap.action_has_event(action, event): InputMap.action_add_event(action, event)
 
 func _input(event: InputEvent) -> void:
+	if not modal and event is InputEventKey and event.pressed and not event.echo and event.physical_keycode == KEY_F1:
+		gameplay_hint_used = true
+		gameplay_hint_deadline_msec = Time.get_ticks_msec() + roundi(GAMEPLAY_HINT_SECONDS * 1000)
+		get_viewport().set_input_as_handled()
+	elif not modal and not gameplay_hint_used and _uses_gameplay_control(event):
+		gameplay_hint_used = true
+		gameplay_hint_deadline_msec = Time.get_ticks_msec() + roundi(GAMEPLAY_HINT_SECONDS * 1000)
 	if event is InputEventJoypadButton and event.pressed or event is InputEventJoypadMotion and absf(event.axis_value) > 0.25:
 		controller_active = true
 	elif event is InputEventKey and event.pressed or event is InputEventMouseButton and event.pressed or event is InputEventMouseMotion and event.relative.length() > 2.0:
@@ -355,6 +376,17 @@ func _input(event: InputEvent) -> void:
 	else:
 		return
 	_update_hint()
+
+func _uses_gameplay_control(event: InputEvent) -> bool:
+	if event is InputEventKey:
+		return event.pressed and event.physical_keycode in [KEY_W, KEY_A, KEY_S, KEY_D, KEY_E, KEY_I, KEY_SPACE]
+	if event is InputEventMouseButton:
+		return event.pressed and event.button_index in [MOUSE_BUTTON_LEFT, MOUSE_BUTTON_RIGHT]
+	if event is InputEventMouseMotion:
+		return event.relative.length() > 2.0
+	if event is InputEventJoypadMotion:
+		return absf(event.axis_value) > 0.25
+	return event is InputEventJoypadButton and event.pressed
 
 func _update_hint() -> void:
 	if not is_instance_valid(hint): return
@@ -479,6 +511,8 @@ func set_text_scale(value: float) -> void:
 			node.custom_minimum_size.y = roundi(float(node.get_meta("base_minimum_height")) * text_scale)
 
 func show_title(has_save: bool) -> void:
+	gameplay_hint_used = false
+	gameplay_hint_deadline_msec = 0
 	_clear("Your adventure awaits", "title")
 	var version := str(ProjectSettings.get_setting("application/config/version", ""))
 	_label("Dink Smallwood in first person", 20)
@@ -488,7 +522,7 @@ func show_title(has_save: bool) -> void:
 	_button("Settings & controls", "settings")
 	_button("Credits & support", "credits")
 	_button("Quit", "quit")
-	_label("Move with WASD. Look with the mouse.\nE to talk. Left click to attack.\nI for equipment. Esc to pause.\nController? See Settings & controls.", 18)
+	_label("Move with WASD. Look with the mouse.\nE to talk. Left click to attack.\nI for equipment. Esc to pause.\nF1 to show controls again. Controller? See Settings & controls.", 18)
 	_label("Unofficial 3D adaptation by PilferedParrot\nDevelopment release %s" % version, 18)
 	_focus()
 
@@ -623,7 +657,7 @@ func show_journal(text: String) -> void:
 
 func show_settings(settings: Dictionary) -> void:
 	_clear("Settings & controls", "settings")
-	_label("Move: WASD / left stick    Aim: mouse / right stick\nAttack: left click / RT / X    Magic: right click / LT / Y\nTalk: E / A    Jump: Space / right stick click    Sprint: Shift / left stick click\nEquipment: I / Back (Select)    Quick weapons: 1–9 / LB and RB    Pause: Esc / Start\nWorld map: M or Pause → World map (once received)\nMenus: arrows / D-pad / left stick, Enter / A, Esc / B\nController labels use the Xbox layout; other mapped gamepads use the same button positions.", 18)
+	_label("Move: WASD / left stick    Aim: mouse / right stick\nAttack: left click / RT / X    Magic: right click / LT / Y\nTalk: E / A    Jump: Space / right stick click    Sprint: Shift / left stick click\nEquipment: I / Back (Select)    Quick weapons: 1–9 / LB and RB    Pause: Esc / Start\nWorld map: M or Pause → World map (once received)\nControls help: F1 (shows for 8 seconds)\nMenus: arrows / D-pad / left stick, Enter / A, Esc / B\nController labels use the Xbox layout; other mapped gamepads use the same button positions.", 18)
 	for setting in [["master", "Master volume", 0.0, 1.0, 0.1, 0.8], ["music", "Music volume", 0.0, 1.0, 0.05, 0.55], ["sfx", "Sound effects", 0.0, 1.0, 0.1, 0.8], ["text_scale", "Text size", 0.85, 1.3, 0.05, 1.0], ["mouse_sensitivity", "Mouse sensitivity", 0.0005, 0.006, 0.0005, 0.002], ["fov", "Field of view", 60.0, 105.0, 1.0, 80.0], ["controller_sensitivity", "Controller look sensitivity", 0.5, 4.0, 0.1, 2.0], ["controller_deadzone", "Controller stick dead zone", 0.05, 0.4, 0.05, 0.2]]:
 		var key: String = setting[0]
 		var value_label := _label(setting[1], 18)
@@ -642,17 +676,25 @@ func show_settings(settings: Dictionary) -> void:
 		slider.value_changed.connect(_setting_readout.bind(value_label, str(setting[1]), key))
 		column.add_child(slider)
 		_setting_readout(slider.value, value_label, str(setting[1]), key)
-	var invert := CheckButton.new()
+	var invert := Button.new()
+	invert.toggle_mode = true
+	invert.set_meta("setting_key", "controller_invert_y")
 	invert.text = "Invert controller vertical look"
 	invert.focus_mode = Control.FOCUS_ALL
 	invert.button_pressed = settings.get("controller_invert_y", false)
 	invert.toggled.connect(_controller_invert_changed)
+	invert.toggled.connect(_toggle_readout.bind(invert, "Invert controller vertical look"))
+	_toggle_readout(invert.button_pressed, invert, "Invert controller vertical look")
 	column.add_child(invert)
-	var reduced := CheckButton.new()
+	var reduced := Button.new()
+	reduced.toggle_mode = true
+	reduced.set_meta("setting_key", "reduced_motion")
 	reduced.text = "Reduce camera movement"
 	reduced.focus_mode = Control.FOCUS_ALL
 	reduced.button_pressed = settings.get("reduced_motion", false)
 	reduced.toggled.connect(_reduced_motion_changed)
+	reduced.toggled.connect(_toggle_readout.bind(reduced, "Reduce camera movement"))
+	_toggle_readout(reduced.button_pressed, reduced, "Reduce camera movement")
 	column.add_child(reduced)
 	_button("Done", "back")
 	_focus()
@@ -661,10 +703,22 @@ func _setting_changed(value: float, key: String) -> void:
 	action_requested.emit("setting", {"key": key, "value": value})
 
 func _draw_slider_focus(slider: HSlider) -> void:
-	if slider.has_focus():
-		var frame := Rect2(Vector2(-3, -3), slider.size + Vector2(6, 6))
-		slider.draw_rect(frame, INK, false, 4)
-		slider.draw_rect(frame, GOLD, false, 2)
+	if not slider.has_focus(): return
+	# Corner brackets frame the control without crossing its track or thumb.
+	var left := 1.0
+	var right := slider.size.x - 1.0
+	var top := 1.0
+	var bottom := slider.size.y - 1.0
+	var length := minf(8.0, slider.size.y * 0.25)
+	for x in [left, right]:
+		var inward := length if x == left else -length
+		for y in [top, bottom]:
+			var vertical := length if y == top else -length
+			slider.draw_line(Vector2(x, y), Vector2(x + inward, y), GOLD, 2)
+			slider.draw_line(Vector2(x, y), Vector2(x, y + vertical), GOLD, 2)
+
+func _toggle_readout(value: bool, button: Button, title: String) -> void:
+	button.text = "%s   %s" % [title, "On" if value else "Off"]
 
 func _setting_readout(value: float, label: Label, title: String, key: String) -> void:
 	var shown := "%.2f" % value

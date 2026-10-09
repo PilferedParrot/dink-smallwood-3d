@@ -38,6 +38,7 @@ var last_music := ""
 var generation := 0
 var visited: Array = []
 var dialogue_log: Array = []
+var journal_log: Array = []
 var test_mode := false
 var hardness_cache: Dictionary = {}
 # Buildings the 3D world rebuilds from their sprites stand on fitted footprints, derived from
@@ -159,6 +160,7 @@ func _new_game() -> void:
 	magic_items.clear()
 	visited.clear()
 	dialogue_log.clear()
+	journal_log.clear()
 	next_entity = 2
 	_make_player()
 	await vm.run("main", "main", 1)
@@ -978,14 +980,20 @@ func _dialogue(text: String, speaker: int, context: Dictionary) -> void:
 	if expected != generation: return
 	dialogue_busy = true
 	var line := _interpolate(text,context)
-	dialogue_log.append(line)
-	if dialogue_log.size()>100: dialogue_log.pop_front()
+	var speaker_name := "Dink" if speaker == 1 else "Conversation"
+	_record_dialogue(line, speaker_name)
 	if test_mode:
 		await get_tree().process_frame
 	else:
 		ui.show_dialogue(line,"Dink" if speaker == 1 else "Conversation")
 		await ui.dialogue_finished
 	dialogue_busy = false
+
+func _record_dialogue(line: String, speaker_name: String = "") -> void:
+	dialogue_log.append(line)
+	journal_log.append("%s: %s" % [speaker_name, line] if not speaker_name.is_empty() else line)
+	if dialogue_log.size() > 100: dialogue_log.pop_front()
+	if journal_log.size() > 100: journal_log.pop_front()
 
 func _script_move(id: int, dir: int, destination: float, speed: float) -> void:
 	if not entities.has(id): return
@@ -1062,7 +1070,14 @@ func dink_call(command: String, args: Array, context: Dictionary) -> Variant:
 		"say", "say_xy":
 			var line := _interpolate(a,context)
 			ui.notify(line)
-			dialogue_log.append(line)
+			var speaker_id := int(b) if cmd == "say" else 0
+			if speaker_id == 1:
+				_record_dialogue(line, "Dink")
+			elif has_method("_fps_speaker_name"):
+				var speaker_name := str(call("_fps_speaker_name", speaker_id, context))
+				_record_dialogue(line, "" if speaker_name == "Conversation" else speaker_name)
+			else:
+				_record_dialogue(line)
 			return 0
 		"choice":
 			var options: Array = b if b is Array else []
@@ -1358,7 +1373,7 @@ func _ui_action(action: String, payload: Variant) -> void:
 		"credits": ui.show_credits()
 		"back":
 			ui.request_back()
-		"journal": ui.show_journal("%s\n\nRecent conversations\n\n%s" % [_location(),"\n\n".join(dialogue_log.slice(maxi(0,dialogue_log.size()-20)))])
+		"journal": ui.show_journal("%s\n\nRecent conversations\n\n%s" % [_location(),"\n\n".join(journal_log.slice(maxi(0,journal_log.size()-20)))])
 		"equip": _equip(int(payload),false)
 		"equip_magic": _equip(int(payload),true)
 		"setting":
@@ -1382,7 +1397,7 @@ func _write_json(path: String, data: Dictionary) -> bool:
 
 func _save_game(path: String = "user://adventure.json") -> bool:
 	if not playing or dialogue_busy or entities[1].get("frozen",false): return false
-	return _write_json(path,{"version":1,"vm":vm.snapshot_state(),"screen":current_screen,"entities":entities,"editor_state":editor_state,"items":items,"magic_items":magic_items,"visited":visited,"dialogue_log":dialogue_log,"next_entity":next_entity,"locked":locked})
+	return _write_json(path,{"version":1,"vm":vm.snapshot_state(),"screen":current_screen,"entities":entities,"editor_state":editor_state,"items":items,"magic_items":magic_items,"visited":visited,"dialogue_log":dialogue_log,"journal_log":journal_log,"next_entity":next_entity,"locked":locked})
 
 func _load_game(path: String = "user://adventure.json") -> bool:
 	var data := _read_json(path)
@@ -1396,6 +1411,7 @@ func _load_game(path: String = "user://adventure.json") -> bool:
 	magic_items = data.get("magic_items",[])
 	visited = data.get("visited",[])
 	dialogue_log = data.get("dialogue_log",[])
+	journal_log = data.get("journal_log", dialogue_log.duplicate())
 	entities[1] = data.entities["1"]
 	load_map(int(data.screen),false)
 	for visual in visuals.values(): visual.queue_free()

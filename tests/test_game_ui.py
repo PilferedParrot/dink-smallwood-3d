@@ -11,6 +11,12 @@ GODOT = os.environ.get("GODOT") or shutil.which("godot") or shutil.which("godot4
 pytestmark = pytest.mark.skipif(not Path(GODOT).is_file(), reason="Godot unavailable; set GODOT")
 
 
+@pytest.fixture(autouse=True)
+def isolated_engine_profile(tmp_path, monkeypatch):
+    for name, folder in [("XDG_DATA_HOME", "data"), ("XDG_CONFIG_HOME", "config"), ("XDG_CACHE_HOME", "cache")]:
+        monkeypatch.setenv(name, str(tmp_path / folder))
+
+
 def test_game_ui_parses_with_supported_godot():
     result = subprocess.run(
         [str(GODOT), "--headless", "--path", "game", "--check-only", "--script", "scripts/game_ui.gd"],
