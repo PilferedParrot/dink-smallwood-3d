@@ -1514,9 +1514,10 @@ func add_hut(node: Node3D, e: Dictionary, id: int, collision: bool) -> void:
 # scripts keep working); movement still reads the source hardbox (game.gd). Drawn at its sprite's hotspot, scaled by its size.
 func prop_fitted(e: Dictionary) -> bool:
 	var path := frame_path(e)
-	# The well (struct/Landmark landm-01..03) keeps its sprite for now: its fitted solid (landmarks.json, RC3 unit) has a flat
-	# untextured slab for a roof, because the outline cannot fix the roof's pitch (7-17 degrees), and at eye level it read worse
-	# than the sprite's thatched, pitched roof. Next: take the pitch from the fitted house roofs of the same thatch (lead, 10-08).
+	# The well (struct/Landmark landm-01..03) keeps its sprite. Its fitted solid (landmarks.json) now has a gable roof at the thatched
+	# cottages' pitch, textured from the sprite, but its stone base reads as a black drum (taller and darker than the sprite's low
+	# heap of stones) at eye level and through the original camera, and the posts are lanky under the roof: worse than the sprite
+	# (RC3 well unit, 10-09; docs/DIRECTION.md). Remove the exclusion when the base is fixed.
 	return not path.is_empty() and props.has(path) and not "/landmark/" in path.to_lower()
 
 func add_prop(node: Node3D, e: Dictionary, id: int, collision: bool, screen: int) -> void:

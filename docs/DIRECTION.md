@@ -1919,3 +1919,22 @@ From the RC1 review's open list (`/home/chris/dink-review-rc1/review/FINDINGS.md
   pitch), worse at eye level than the sprite. Next: the pitch from the fitted house roofs of the same thatch.
 Checks: 153 passed; `test_fps_sideflip`'s rail test is a known flake (it failed in the full run and in one rerun, then
 passed twice alone at low load; GPT-6.1 Sol measured 4/5 on RC1): a harness fix is queued.
+
+## RC3: the well's gable roof — October 9 (Sonnet 5.5 unit; the well keeps its sprite)
+
+`tools/landmark_fit.py` now fits the well's roof as a gable (class `gable`, built by `prop_solids.gd _gable`) in place of the flat slab:
+two planes from the ridge to the eaves, a thatch thickness, the ends closed by the shell's cross-section, the ridge along the roof's
+long axis. **The pitch is the cottages', not tuned to the well:** the median rise/run of `facade_fit.HOUSES` (0.9; 0.8 and 1.1; 1.1; 1.1;
+0.8 and 1.1; 1.1) is 1.1 (48 degrees), parsed from that table, applied across the ridge in the well's true ground units. What is
+fitted is the footprint and the ridge height, by overlap of the projected gable with the roof's silhouette, yaw and the posts' depth
+held from the old fit: IoU 0.83 (the flat slab 0.82). The unconstrained fit stops short (d 55, IoU 0.86) and leaves the picture's left
+tip and a post's top uncovered, so the roof is at least `D_MIN` = 65 px long (a tuned number). Every vertex takes the picture of the
+slope the camera saw, mirrored about the ridge for the far slope, and a vertex a thickness below the top takes the point that far up
+the slope, so undersides, eave edges and ends show thatch rather than a stretched row. The posts reach the roof's underside (a
+per-box height, the 4th number of a post box).
+**The exclusion in `prop_fitted` stays.** Rendered at eye level from four sides and through the original camera
+(`tmp/well_sheet.jpg`, `tmp/well/after2`), the roof now reads as pitched thatch, but the previous unit's stone base is a black drum
+(taller than the sprite's low heap of stones; the sprite's base reads dark purple with highlights) and the roof sits high on long thin
+posts, so the solid reads worse than the sprite. Next: the base (its wall texture and height against the picture), then remove the
+exclusion and flip `test_the_well_keeps_its_sprite_until_its_base_reads`. Tests: `test_the_wells_roof_is_a_gable_not_a_flat_slab` (the
+roof mesh's height spread is at least 0.45 m; the flat slab's was 0.14 m: fails on the old fit) and `test_the_wells_pitch_is_the_thatched_cottages`.

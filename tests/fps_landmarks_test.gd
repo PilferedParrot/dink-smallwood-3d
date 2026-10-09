@@ -74,5 +74,31 @@ func _run() -> void:
 		var size := hi - lo if pts.size() > 0 else Vector3.ZERO
 		print("LANDMARK ", int(e.get("index", -1)), " ", path, " ", kind, " ", cls, " ", snappedf(size.x, 0.001), " ", snappedf(size.z, 0.001), " ",
 			snappedf(size.y, 0.001), " ", snappedf(ns, 0.001), " ", snappedf(ew, 0.001), " ", layer, " ", str(e.get("script", "")).length() > 0)
+	# The well's fitted roof, whether or not the well stands as one in the game: the last surface of its compound is the roof. A gable is
+	# higher along its ridge than at its eaves; the flat slab it replaced was one thickness (0.14 m) from end to end.
+	var wp := "assets/graphics/struct/Landmark/landm-01.png"
+	if world.props.has(wp):
+		var roof: Mesh = (world.props.surfaces(wp).back())[0]
+		var rv: PackedVector3Array = roof.surface_get_arrays(0)[Mesh.ARRAY_VERTEX]
+		var ymin := 1e9
+		var ymax := -1e9
+		var all := Vector2.ZERO
+		for v in rv:
+			ymin = minf(ymin, v.y)
+			ymax = maxf(ymax, v.y)
+			all += Vector2(v.x, v.z)/rv.size()
+		var ridge := Vector2.ZERO
+		var eave := Vector2.ZERO
+		var nr := 0
+		var ne := 0
+		for v in rv:
+			if v.y > ymax - 0.05:
+				ridge += Vector2(v.x, v.z)
+				nr += 1
+			elif v.y < ymin + 0.2:
+				eave += Vector2(v.x, v.z)
+				ne += 1
+		print("WELLROOF ", snappedf(ymax - ymin, 0.001), " ", snappedf((ridge/maxf(nr, 1) - all).length(), 0.001), " ", snappedf((eave/maxf(ne, 1) - all).length(), 0.001),
+			" ", rv.size())
 	print("FPS LANDMARKS PASS")
 	quit(0)
