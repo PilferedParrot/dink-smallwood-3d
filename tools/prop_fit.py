@@ -10,7 +10,7 @@ camera). One rule per shape class, and the class is the art's (classify()):
     edges. The ground circle's centre row cz is not given by a base arc (a barrel's belly stands wider than its base): the lowest
     drawn row is the front of the base circle, B = cz + k a, so the base radius a is swept and the profile that explains the
     silhouette best (robust least-squares cost) is taken. 'lid' (barrels, vases): the flattest top the outline tolerates.
-    'drum' (the pie, the plate, the save machine): analytic, r = widest half-width, H = height - 2 k r.
+    'drum' (the pie, the plate): analytic, r = widest half-width, H = height - 2 k r.
   * box (crates, chests): a box yawed about the vertical, by maximising the overlap of its projected hexagon with the
     silhouette (box_fit); 'stack' (box-01..06): the unit crate repeated on its own lattice (stack_fit).
   * pillow (grain bags, a ham, a loaf): an ellipsoid lying on a yawed elliptic footprint (pillow_fit).
@@ -308,11 +308,11 @@ def box_overlay(rgba: np.ndarray, e: dict) -> Image.Image:
 
 
 FOLDERS = ['Bonuses/Barrels', 'Bonuses/bottles', 'Bonuses/Chest', 'Bonuses/Coins', 'Items/Boxes', 'Items/Cup', 'Items/Food',
-           'Items/grain', 'Items/Paper', 'Items/Tomb', 'inter/save']  # struct/Teleport (a gold lattice cage) is not a solid: it stays a billboard
+           'Items/grain', 'Items/Paper', 'Items/Tomb']  # inter/save (a ring: tools/landmark_fit.py) and struct/Teleport (a gold lattice cage) is not a solid: it stays a billboard
 SKIP = {'food-31'}  # a person's picture in the food folder (the king), not a prop
 # Billboards still (docs/DIRECTION.md): the tools (poles and blades, a few px thick), the hearts (a pickup hovering over its
 # own shadow) and the status bars are not in FOLDERS.
-DRUMS = {'food-11', 'cup-02', 'save-01', 'save-02', 'save-03', 'save-04', 'save-05'}  # the pie, the plate, the save machine (a low drum whose top is the picture of its hollow)
+DRUMS = {'food-11', 'cup-02'}  # the pie, the plate (the save machine, once a drum, is a ring: tools/landmark_fit.py)
 PILLOWS = {'food-01', 'food-02', 'food-03', 'food-07', 'food-08', 'food-29', 'food-30'}  # a ham, a steak, loaves, a root: lying on the ground
 EDGE_MAX = 3.0     # a round fit whose outline is off by more than this (px, median) is not a solid of revolution (antlers, grapes): it stays a billboard
 BOX_STEMS = ('box-', 'boxb1-01', 'boxb3-01', 'chst')

@@ -1514,10 +1514,7 @@ func add_hut(node: Node3D, e: Dictionary, id: int, collision: bool) -> void:
 # scripts keep working); movement still reads the source hardbox (game.gd). Drawn at its sprite's hotspot, scaled by its size.
 func prop_fitted(e: Dictionary) -> bool:
 	var path := frame_path(e)
-	# The save machine (inter/Save) is a hollow ring of arches: its outline cannot say how high the rim stands, and the
-	# solid of it was a low drum with its picture painted on the lid, worse than the sprite. It keeps its sprite, as the
-	# teleport cage does (lead's call, 2026-10-07).
-	return not path.is_empty() and props.has(path) and not "/save/" in path.to_lower()
+	return not path.is_empty() and props.has(path)
 
 func add_prop(node: Node3D, e: Dictionary, id: int, collision: bool, screen: int) -> void:
 	for part in seam_parts(e,screen):
