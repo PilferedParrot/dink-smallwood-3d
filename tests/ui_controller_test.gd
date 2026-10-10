@@ -34,6 +34,15 @@ func _init() -> void:
 	ui.show_title(false)
 	await process_frame
 	ui.set_text_scale(1.3)
+	ui.show_title(true)
+	await process_frame
+	await process_frame
+	var primer: Label
+	for node in ui.column.get_children():
+		if node is Label and node.text.contains("WASD"): primer = node
+	check(primer != null and primer.get_global_rect().end.y <= ui.menu_scroll.get_global_rect().end.y, "Title keeps its first-person control primer visible at maximum text size with a saved adventure")
+	ui.show_title(false)
+	await process_frame
 	check(ui.root.scale == Vector2.ONE, "Text scaling leaves root geometry unchanged")
 	check(ui.root.get_viewport().gui_get_focus_owner() != null, "Title has controller focus")
 	var down := InputEventJoypadMotion.new()
@@ -103,12 +112,23 @@ func _init() -> void:
 	await _button(JOY_BUTTON_DPAD_DOWN)
 	await _button(JOY_BUTTON_A)
 	check(choice == 2 and not ui.modal, "D-pad and A select the correct dialogue choice")
+	ui.show_dialogue("A short line.", "Mother")
+	await process_frame
+	await process_frame
+	check(ui.panel.size.y < ui.root.size.y*0.34, "A short dialogue panel fits its content instead of reserving35percent of the world")
 	ui.show_dialogue("A long line. ".repeat(80), "Mother")
 	await process_frame
 	check(ui.dialogue_continue.visible and ui.dialogue_continue.get_parent() != ui.column, "Continue remains outside scrolling dialogue text")
+	check(ui.hint.text.is_empty() and not ui.hint_backing.visible, "Dialogue shows the Continue input cue only on its focused button")
+	check(ui.dialogue_continue.text.contains("A"), "The visible Continue action names the active controller input")
+	var dialogue_line: Label = ui.column.get_child(0)
+	check(dialogue_line.get_theme_font_size("font_size") <= ui.menu_theme.default_font_size, "Long dialogue uses the common readable body size")
 	check(not ui.status_dock.visible, "Dialogue hides the dock")
 	await _button(JOY_BUTTON_A)
 	check(not ui.modal, "A continues long dialogue")
+	ui.show_choices("Choose", ["First", "Second"])
+	await process_frame
+	check(ui.hint_backing.visible and ui.hint.text.contains("Choose"), "Choices still show navigation help without a Continue button")
 	ui.show_inventory([{"name":"Fists"}, {"name":"Bow"}], [])
 	await process_frame
 	await _button(JOY_BUTTON_DPAD_RIGHT)

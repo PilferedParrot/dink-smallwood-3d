@@ -16,6 +16,7 @@ var mana_bar: ProgressBar
 var compass_label: Label
 var toast_timer: Timer
 var dialogue_mode := false
+var dialogue_layout_key := Vector4.INF
 var page := "title"
 var text_scale := 1.0
 var menu_theme: Theme
@@ -279,6 +280,7 @@ func _vine(path: String) -> TextureRect:
 	return vine
 
 func _process(_delta: float) -> void:
+	if modal and page == "dialogue": _fit_dialogue_panel()
 	panel_underlay.visible = panel.visible and page != "title"
 	if panel.visible:
 		panel_underlay.position = panel.position
@@ -289,7 +291,7 @@ func _process(_delta: float) -> void:
 		vines_right.size = vines_left.size
 	if modal:
 		hint_backing.modulate.a = 1.0
-		hint_backing.show()
+		hint_backing.visible = not hint.text.is_empty()
 	else:
 		# UI help expires in real time even when a heavy scene renders slowly.
 		var remaining := maxf(0.0, float(gameplay_hint_deadline_msec - Time.get_ticks_msec()) / 1000.0)
@@ -328,6 +330,8 @@ func _set_playing_visuals(playing: bool) -> void:
 	if is_instance_valid(compass_label): compass_label.visible = playing
 
 func _layout_for(next_page: String) -> void:
+	panel.offset_top = 0
+	panel.offset_bottom = 0
 	if next_page == "title":
 		panel.anchor_left = 0.56; panel.anchor_right = 0.94
 		panel.anchor_top = 0.10; panel.anchor_bottom = 0.92
@@ -343,6 +347,21 @@ func _layout_for(next_page: String) -> void:
 	title_art.visible = next_page == "title"
 	panel.add_theme_stylebox_override("panel", title_panel_style if next_page == "title" else panel_style)
 	vines_left.visible = next_page != "title"; vines_right.visible = next_page != "title"
+
+# Short speech uses only the height its heading, text and action need. The
+# former fixed 35% menu card left most of a one-line conversation empty.
+# Long dialogue retains that same height cap and its independent Continue.
+func _fit_dialogue_panel() -> void:
+	var chrome := panel.get_combined_minimum_size().y-menu_scroll.get_combined_minimum_size().y
+	var body := column.get_combined_minimum_size().y
+	var key := Vector4(chrome,body,root.size.y,text_scale)
+	if key == dialogue_layout_key: return
+	dialogue_layout_key = key
+	var height := minf(chrome+body,maxf(chrome,root.size.y*0.35))
+	panel.anchor_top = 0.93
+	panel.anchor_bottom = 0.93
+	panel.offset_top = -height
+	panel.offset_bottom = 0
 
 func _ensure_controller_navigation() -> void:
 	var buttons := {"ui_accept": JOY_BUTTON_A, "ui_cancel": JOY_BUTTON_B, "ui_up": JOY_BUTTON_DPAD_UP, "ui_down": JOY_BUTTON_DPAD_DOWN, "ui_left": JOY_BUTTON_DPAD_LEFT, "ui_right": JOY_BUTTON_DPAD_RIGHT}
@@ -395,9 +414,12 @@ func _update_hint() -> void:
 			hint.text = "Loading Stonebrook…"
 			return
 		if dialogue_mode:
-			hint.text = "A  Continue / choose" if controller_active else "Enter or click  Continue / choose"
 			if dialogue_continue.visible:
+				# The focused action already gives its keyboard/controller cue.
+				hint.text = ""
 				dialogue_continue.text = "Continue   ·   A" if controller_active else "Continue   ·   Enter"
+			else:
+				hint.text = "D-pad / LS  Choose     A  Confirm" if controller_active else "Arrows  Choose     Enter or click  Confirm"
 		else:
 			var back := "Resume" if return_page == "game" else "Back"
 			hint.text = "D-pad / LS  Choose     A  Confirm" if controller_active else "Arrows  Choose     Enter or click  Confirm"
@@ -419,6 +441,7 @@ func _clear(title: String, next_page: String) -> void:
 	elif next_page != page and next_page not in ["dialogue", "loading"]:
 		return_page = page if page in ["pause", "title"] else "game"
 	page_serial += 1
+	dialogue_layout_key = Vector4.INF
 	menu_scroll.scroll_vertical = 0
 	for child in column.get_children():
 		column.remove_child(child)
@@ -514,16 +537,13 @@ func show_title(has_save: bool) -> void:
 	gameplay_hint_used = false
 	gameplay_hint_deadline_msec = 0
 	_clear("Your adventure awaits", "title")
-	var version := str(ProjectSettings.get_setting("application/config/version", ""))
-	_label("Dink Smallwood in first person", 20)
 	if has_save:
 		_button("Continue adventure", "continue")
 	_button("Begin adventure", "new_game")
 	_button("Settings & controls", "settings")
 	_button("Credits & support", "credits")
 	_button("Quit", "quit")
-	_label("Move with WASD. Look with the mouse.\nE to talk. Left click to attack.\nI for equipment. Esc to pause.\nF1 to show controls again. Controller? See Settings & controls.", 18)
-	_label("Unofficial 3D adaptation by PilferedParrot\nDevelopment release %s" % version, 18)
+	_label("WASD move · Mouse look\nE talk · Left click attack\nI gear · Esc pause · F1 help", 18)
 	_focus()
 
 func show_pause() -> void:
@@ -556,11 +576,10 @@ func show_hud(stats: Dictionary) -> void:
 func show_dialogue(text: String, speaker: String = "Dink") -> void:
 	_clear(speaker, "dialogue")
 	dialogue_mode = true
-	_update_hint()
-	_label(text, 26)
-	dialogue_continue.text = "Continue   ·   A" if controller_active else "Continue   ·   Enter"
+	_label(text)
 	dialogue_continue.custom_minimum_size.y = roundi(52.0 * text_scale)
 	dialogue_continue.show()
+	_update_hint()
 	_grab_current_focus.call_deferred(dialogue_continue, page_serial)
 
 func _continue_dialogue() -> void:
@@ -657,7 +676,7 @@ func show_journal(text: String) -> void:
 
 func show_settings(settings: Dictionary) -> void:
 	_clear("Settings & controls", "settings")
-	_label("Move: WASD / left stick    Aim: mouse / right stick\nAttack: left click / RT / X    Magic: right click / LT / Y\nTalk: E / A    Jump: Space / right stick click    Sprint: Shift / left stick click\nEquipment: I / Back (Select)    Quick weapons: 1–9 / LB and RB    Pause: Esc / Start\nWorld map: M or Pause → World map (once received)\nControls help: F1 (shows for 8 seconds)\nMenus: arrows / D-pad / left stick, Enter / A, Esc / B\nController labels use the Xbox layout; other mapped gamepads use the same button positions.", 18)
+	_label("Move: WASD / left stick    Aim: mouse / right stick\nAttack: left click / RT / X    Magic: right click / LT / Y\nTalk: E / A    Jump: Space / right stick click    Sprint: Shift / left stick click\nEquipment: I / Back (Select)    Quick weapons: 1–9 / LB and RB    Pause: Esc / Start\nWorld map: M or Pause → World map (once received)\nControls help: F1 (shows for 8 seconds)\nController labels use the Xbox layout; other mapped gamepads use the same button positions.", 18)
 	for setting in [["master", "Master volume", 0.0, 1.0, 0.1, 0.8], ["music", "Music volume", 0.0, 1.0, 0.05, 0.55], ["sfx", "Sound effects", 0.0, 1.0, 0.1, 0.8], ["text_scale", "Text size", 0.85, 1.3, 0.05, 1.0], ["mouse_sensitivity", "Mouse sensitivity", 0.0005, 0.006, 0.0005, 0.002], ["fov", "Field of view", 60.0, 105.0, 1.0, 80.0], ["controller_sensitivity", "Controller look sensitivity", 0.5, 4.0, 0.1, 2.0], ["controller_deadzone", "Controller stick dead zone", 0.05, 0.4, 0.05, 0.2]]:
 		var key: String = setting[0]
 		var value_label := _label(setting[1], 18)
@@ -736,6 +755,7 @@ func _controller_invert_changed(value: bool) -> void:
 
 func show_credits() -> void:
 	_clear("Credits & support", "credits")
+	_label("Development release %s" % str(ProjectSettings.get_setting("application/config/version", "")), 18)
 	_label("3D adaptation · PilferedParrot\nOriginal Dink Smallwood · Seth A. Robinson\nArtwork · Justin Martin\nStory & world · Seth A. Robinson, Greg Smith, Justin Martin\nAdditional levels · Chris Bakker\nv1.08 fixes · Talmadge Bradley III\nFree audio · GNU FreeDink contributors\nEngine · Godot contributors", 20)
 	_label("New code: Apache 2.0. Original art, story and audio retain their own licenses. Detailed attributions are bundled in licenses/. This is an unofficial, modified adaptation.", 18)
 	_button("Support PilferedParrot on Patreon ↗", "patreon")

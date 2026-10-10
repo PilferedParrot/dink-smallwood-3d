@@ -19,7 +19,7 @@ def isolated_engine_profile(tmp_path, monkeypatch):
 
 def test_game_ui_parses_with_supported_godot():
     result = subprocess.run(
-        [str(GODOT), "--headless", "--path", "game", "--check-only", "--script", "scripts/game_ui.gd"],
+        [str(GODOT), "--headless", "--audio-driver", "Dummy", "--path", "game", "--check-only", "--script", "scripts/game_ui.gd"],
         cwd=ROOT,
         capture_output=True,
         text=True,
@@ -30,7 +30,7 @@ def test_game_ui_parses_with_supported_godot():
 
 def test_controller_can_navigate_and_activate_menu():
     result = subprocess.run(
-        [str(GODOT), "--headless", "--path", "game", "--script", str(ROOT / "tests" / "ui_controller_test.gd")],
+        [str(GODOT), "--headless", "--audio-driver", "Dummy", "--path", "game", "--script", str(ROOT / "tests" / "ui_controller_test.gd")],
         cwd=ROOT,
         capture_output=True,
         text=True,
