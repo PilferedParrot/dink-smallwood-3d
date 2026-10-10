@@ -6,8 +6,12 @@ extends "res://scripts/game.gd"
 const SCALE: float = preload("res://scripts/fp_world.gd").SCALE # metres per source pixel
 const EYE_HEIGHT := 1.65
 const PROJECTILE := preload("res://scripts/fps_projectile.gd")
+const BUG_RECORDER := preload("res://scripts/bug_report_recorder.gd")
 
 var fp_world
+var bug_recorder := BUG_RECORDER.new()
+var bug_report_pending := false
+var last_bug_report := ""
 var fps_yaw := 0.0
 var fps_pitch := -0.08
 var fps_vertical_velocity := 0.0
@@ -800,6 +804,14 @@ func _smoke_test() -> void:
 	get_tree().quit(0 if failures.is_empty() else 1)
 
 func _input(event: InputEvent) -> void:
+	if event is InputEventKey and event.pressed and not event.echo and (event.physical_keycode == KEY_F9 or event.keycode == KEY_F9):
+		if not bug_report_pending and entities.has(1) and vm != null:
+			bug_report_pending = true
+			_save_bug_report.call_deferred()
+		get_viewport().set_input_as_handled()
+		return
+	if playing and is_instance_valid(ui) and not ui.modal:
+		bug_recorder.record_input(event)
 	super._input(event)
 	if not is_instance_valid(ui): return
 	# Remember presses before the GUI consumes a menu button and closes it.
@@ -808,6 +820,14 @@ func _input(event: InputEvent) -> void:
 		if event.is_action_pressed("magic"): fps_magic_held = true
 	if event is InputEventKey and event.pressed and event.physical_keycode == KEY_F11:
 		DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_WINDOWED if DisplayServer.window_get_mode() == DisplayServer.WINDOW_MODE_FULLSCREEN else DisplayServer.WINDOW_MODE_FULLSCREEN)
+
+func _save_bug_report() -> void:
+	# Capture the completed frame before adding the success toast to it.
+	await RenderingServer.frame_post_draw
+	last_bug_report = bug_recorder.write_report(self)
+	bug_report_pending = false
+	if is_instance_valid(ui):
+		ui.notify("Bug report saved locally: " + ProjectSettings.globalize_path(last_bug_report) if not last_bug_report.is_empty() else "Could not save the bug report.")
 
 func _location() -> String:
 	var places := {1:"Dink's home",2:"Ethel's home",407:"Stonebrook • Pig farm",
