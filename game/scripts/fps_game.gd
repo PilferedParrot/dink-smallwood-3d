@@ -144,9 +144,32 @@ func _build_ground(screen: Dictionary) -> void:
 
 func _create_visual(id: int) -> void:
 	if fp_world != null:
+		var e: Dictionary = entities.get(id,{})
+		if e.get("warp") != null and fp_world.interior:
+			var portal: Rect2 = fp_world.solids.portal_rect(current_screen,int(e.get("editor_num",0)))
+			if portal.has_area():
+				var at := Vector2(float(e.x),float(e.y))
+				var factor := maxf(0.01,float(e.get("size",100))/100.0)
+				var start := (portal.position-at)/factor
+				var end := (portal.end-at)/factor
+				e["hardbox"] = [start.x,start.y,end.x,end.y]
+				e["fps_portal"] = true
 		fp_world.create_visual(id)
 	else:
 		super._create_visual(id)
+
+func _warp_trigger_rect(e: Dictionary) -> Rect2:
+	if not e.get("fps_portal",false): return super._warp_trigger_rect(e)
+	var portal := _hard_rect(e)
+	# Approach tolerance along the door normal only. Lateral growth would
+	# trigger from the open floor beside a jamb before its wall stops Dink.
+	return Rect2(portal.position-Vector2(0,7),portal.size+Vector2(0,14))
+
+func _warp_approaching(e: Dictionary, pos: Vector2, scripted: bool, from: Vector2) -> bool:
+	if not e.get("fps_portal",false): return super._warp_approaching(e,pos,scripted,from)
+	# Original inbound scripts land behind the near wall and walk north into
+	# the room. Crossing the new door plane inward must not bounce them out.
+	return from != Vector2.INF and pos.y > from.y
 
 func _update_visual(id: int) -> void:
 	if fp_world != null:
@@ -220,9 +243,10 @@ func _fps_move_player(delta: float) -> void:
 	player["dir"] = _direction(source_direction)
 	var speed := 105.0 * maxf(0.5, float(player.get("speed", 3)) / 3.0)
 	if Input.is_action_pressed("sprint"): speed *= 1.55
+	var from := _position2(1)
 	_move_entity(1, source_direction * speed * input.length() * delta)
 	_set_animation(1, int(player.get("base_walk", 70)) + int(player.dir))
-	_transitions()
+	_transitions(false,from)
 
 func _edge_destination(pos: Vector2) -> Dictionary:
 	var target := current_screen

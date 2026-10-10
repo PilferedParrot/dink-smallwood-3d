@@ -768,9 +768,9 @@ func post_surfaces(fit: Dictionary, path: String, o: Vector2) -> Array:
 	return [[mb.mesh(), material(path)]]
 
 # --- The door -----------------------------------------------------------------------------------------------------------------
-# The exit of a room that runs off the bottom of the screen (a type 2 sprite with a warp, whose hard rectangle ends below the
-# screen): the corridor the walls leave round it ends in a door of Dink's own door art (struct/Details/Door/odor1-01: its parallelogram
-# is mapped onto an upright rectangle the width of the corridor), the stone of the walls above it.
+# A south exit is a type 2 warp whose source hardbox runs off the screen. The jambs' source footprints bound its aperture.
+# Their common north edge is the room-side wall plane: the lower rows of the raised original picture show wall height, not
+# a passage to a second wall at the screen edge. The door and its warp trigger share that plane.
 const DOOR := "assets/graphics/struct/Details/Door/odor1-01.png"
 func exits(screen: int) -> Array:
 	var out: Array = []
@@ -783,6 +783,8 @@ func exits(screen: int) -> Array:
 		var left := -1.0
 		var right := 1.0e9
 		var base := 1.0e9
+		var left_inner := 1.0e9
+		var right_inner := 1.0e9
 		for w in sprites:
 			if not is_wall(w): continue
 			var wr: Rect2 = world.hard_rect(w)
@@ -792,13 +794,27 @@ func exits(screen: int) -> Array:
 			var art := float(w.get("y", 0)) - hotspot(w).y + float(f.base)
 			if wr.end.x <= cx and wr.end.x > left:
 				left = wr.end.x
+				left_inner = wr.position.y
 				base = minf(base, art)
 			if wr.position.x >= cx and wr.position.x < right:
 				right = wr.position.x
+				right_inner = wr.position.y
 				base = minf(base, art)
 		if left < 0.0 or right > 1.0e8 or right - left < 8.0 or right - left > 90.0: continue
-		out.append({"x0": left, "x1": right, "z": base if base < 1.0e8 else 400.0})
+		# A doorway between walls on different rows is not this south-facing construction.
+		if absf(left_inner - right_inner) > 1.0: continue
+		out.append({"editor_num": int(e.get("index", 0)), "x0": left, "x1": right,
+			"zinner": left_inner, "original_base": base})
 	return out
+
+# The source map records are untouched. Runtime warp entities can use this rect as their hardbox, so the visible opening
+# and trigger agree. One source pixel is the finest representable depth in the original map's coordinate grid.
+func portal_rect(screen: int, editor_num: int) -> Rect2:
+	if not walls_fitted(screen): return Rect2()
+	for ex in exits(screen):
+		if int(ex.editor_num) == editor_num:
+			return Rect2(float(ex.x0), float(ex.zinner), float(ex.x1) - float(ex.x0), 1.0)
+	return Rect2()
 
 func add_doors(screen: int, parent: Node3D) -> void:
 	var fit := fit_of(DOOR)
@@ -810,7 +826,7 @@ func add_doors(screen: int, parent: Node3D) -> void:
 	for ex in exits(screen):
 		var x0: float = ex.x0
 		var x1: float = ex.x1
-		var z: float = ex.z
+		var z: float = ex.zinner
 		# The door closes the opening: the corridor's width, its picture kept in proportion (the art's own 0.025 m/px makes
 		# it 1.32 m, under the 1.65 m eye, and from the doorway it read as a slot under a wall), never above the ceiling.
 		var hd := minf(h, (x1 - x0) * float(fit.height) / maxf(float(fit.cols[1]) - float(fit.cols[0]), 1.0))

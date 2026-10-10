@@ -88,7 +88,9 @@ def test_dinks_house_stands_solid_with_no_sky_and_a_door(tmp_path):
     door = lines["door"][0]
     assert door[0] != "none", lines["door"]
     assert abs(float(door[0]) - 31 * SCALE) < 0.01 and abs(float(door[1]) - 31 * 52.79 / 24 * SCALE) < 0.02
-    assert abs(float(door[2]) - (400 - 200) * SCALE) < 0.01
+    # RC4: the door closes the aperture at the jambs' inner face, rather
+    # than the original image's far base row (which made a deep recess).
+    assert abs(float(door[2]) - (352 - 200) * SCALE) < 0.01
     # the table: a top of the sprite's radius (32 px), on legs, 0.8 m high; the pie stands on it
     solid, wx, wy, wz = lines["table"][0]
     assert solid == "true" and abs(float(wx) - 64.3 * SCALE) < 0.05 and 0.75 < float(wy) < 0.85

@@ -710,12 +710,11 @@ func _transitions(scripted_move: bool = false, from_position: Vector2 = Vector2.
 		if id == 1 or not entities.has(id): continue
 		var e: Dictionary = entities[id]
 		if int(e.get("active",1)) == 0: continue
-		if e.get("warp") != null and _hard_rect(e).grow(7).has_point(pos):
+		if e.get("warp") != null and _warp_trigger_rect(e).has_point(pos):
 			# A delayed entrance cutscene can begin inside this doorway's trigger
 			# after its cooldown expires. Let its move_stop walk into the room;
 			# only motion approaching the door should activate a scripted exit.
-			var center := _hard_rect(e).get_center()
-			if scripted_move and from_position != Vector2.INF and pos.distance_squared_to(center) >= from_position.distance_squared_to(center):
+			if not _warp_approaching(e,pos,scripted_move,from_position):
 				continue
 			var warp: Dictionary = e.warp
 			if world.screens.has(str(int(warp.get("map",0)))):
@@ -752,6 +751,13 @@ func _edge_destination(pos: Vector2) -> Dictionary:
 	elif pos.y < 0: target -= 32; pos.y = 390
 	elif pos.y > 400: target += 32; pos.y = 10
 	return {"screen":target,"position":pos}
+
+func _warp_trigger_rect(e: Dictionary) -> Rect2:
+	return _hard_rect(e).grow(7)
+
+func _warp_approaching(e: Dictionary, pos: Vector2, scripted: bool, from: Vector2) -> bool:
+	var center := _hard_rect(e).get_center()
+	return not scripted or from == Vector2.INF or pos.distance_squared_to(center) < from.distance_squared_to(center)
 
 func _run_event(id: int, event: String) -> void:
 	if not entities.has(id): return
