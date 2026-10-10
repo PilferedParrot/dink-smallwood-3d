@@ -12,7 +12,7 @@ def test_clearance_band_landing_does_not_trap_player(tmp_path):
     env["XDG_DATA_HOME"] = str(tmp_path / "data")
     env["XDG_CONFIG_HOME"] = str(tmp_path / "config")
     result = subprocess.run(
-        [GODOT, "--headless", "--path", "game", "--script", str(ROOT / "tests" / "fps_landing_test.gd")],
+        [GODOT, "--headless", "--audio-driver", "Dummy", "--path", "game", "--script", str(ROOT / "tests" / "fps_landing_test.gd")],
         cwd=ROOT,
         env=env,
         text=True,

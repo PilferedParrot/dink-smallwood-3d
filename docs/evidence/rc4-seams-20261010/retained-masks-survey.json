@@ -1,0 +1,9 @@
+{
+	"crossings": 204275,
+	"edge_samples": 221656,
+	"failures": [],
+	"fixture": "vision0 editor layer; no startup scripts; 5px edge spacing, 10px grid",
+	"grid_samples": 1281755,
+	"rejected": 17381,
+	"screens": 570
+}

@@ -37,8 +37,13 @@ func _run() -> void:
 	await process_frame
 	await process_frame
 	check(game.current_screen == 377, "East exit from screen 376 enters 377")
-	var landed: Vector2 = game._position2(1)
-	check(landed.distance_to(Vector2(32.0, 375.003753662109)) < 0.01, "The crossing lands at the reported trap point, got %s" % landed)
+	var crossed: Vector2 = game._position2(1)
+	check(crossed.distance_to(Vector2(21.0, 375.003753662109)) < 0.01, "The FPS crossing preserves world position rather than jumping 11 px into the tree, got %s" % crossed)
+	check(not game._blocked(crossed,1), "The continuous landing is clear")
+	# Retain the original RC2 escape regression for existing saves and scripted
+	# arrivals at the legacy inset. Changing seam mapping must not regress it.
+	var landed := Vector2(32.0,375.003753662109)
+	game.entities[1]["x"] = landed.x; game.entities[1]["y"] = landed.y
 
 	# The fixture's premise: the landing is in the tree's clearance band, not its own box.
 	var tree: Dictionary = {}

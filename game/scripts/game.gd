@@ -730,11 +730,9 @@ func _transitions(scripted_move: bool = false, from_position: Vector2 = Vector2.
 				var before := generation
 				_run_event(id,"touch")
 				if generation != before: return
-	var target := current_screen
-	if pos.x < 20: target -= 1; pos.x = 608
-	elif pos.x > 620: target += 1; pos.x = 32
-	elif pos.y < 0: target -= 32; pos.y = 390
-	elif pos.y > 400: target += 32; pos.y = 10
+	var destination := _edge_destination(pos)
+	var target: int = destination.screen
+	pos = destination.position
 	if target != current_screen:
 		if not locked and world.screens.has(str(target)):
 			vm.cancel_screen_tasks()
@@ -744,6 +742,16 @@ func _transitions(scripted_move: bool = false, from_position: Vector2 = Vector2.
 		else:
 			entities[1].x = clampf(float(entities[1].x),21,619)
 			entities[1].y = clampf(float(entities[1].y),1,399)
+
+# The overhead engine skips inward on arrival. First-person neighbors occupy a
+# continuous world and override this mapping, so collision and rendering agree.
+func _edge_destination(pos: Vector2) -> Dictionary:
+	var target := current_screen
+	if pos.x < 20: target -= 1; pos.x = 608
+	elif pos.x > 620: target += 1; pos.x = 32
+	elif pos.y < 0: target -= 32; pos.y = 390
+	elif pos.y > 400: target += 32; pos.y = 10
+	return {"screen":target,"position":pos}
 
 func _run_event(id: int, event: String) -> void:
 	if not entities.has(id): return

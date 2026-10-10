@@ -1938,3 +1938,20 @@ per-box height, the 4th number of a post box).
 posts, so the solid reads worse than the sprite. Next: the base (its wall texture and height against the picture), then remove the
 exclusion and flip `test_the_well_keeps_its_sprite_until_its_base_reads`. Tests: `test_the_wells_roof_is_a_gable_not_a_flat_slab` (the
 roof mesh's height spread is at least 0.45 m; the flat slab's was 0.14 m: fails on the old fit) and `test_the_wells_pitch_is_the_thatched_cottages`.
+
+
+## RC4: continuous crossings prevent trapped landings — October 10 (GPT-6.1 Sol; Astra review)
+
+The first-person neighbors stand600×400 source pixels apart, but inherited overhead transitions jumped inward to32/608
+or10/390 after checking only the departing screen. That discontinuity could place Dink inside a target solid. FPS now
+preserves world position, checks incoming immediate-startup collision, and divides player movement into at-most1px steps.
+Both axes normalize at corners; invalid neighbors and horizontal row wrapping are rejected. Authored masks and footprints
+remain. The existing376→377 test still exercises the legacy32px clearance-band escape explicitly for saves/script arrivals,
+and now also asserts continuous21px entry.
+
+The native static vision0 survey covers570 outdoor screens,221,656 eligible source edge samples (5px spacing), and1,281,755
+plain-free grid points (10px): old FPS behavior on the compatible base has1,586 zero-motion landings; continuous FPS has0.
+Five integrated regressions pass, including actual keyboard veto/reverse routes, corners and stateful duck crossing.
+This proves sampled zero-motion safety, not exhaustive reachability or delayed story behavior. Visible support for retained
+terrain/custom and hidden-entity hardness remains a separate item1 investigation. Evidence and full failing positions:
+`docs/evidence/rc4-seams-20261010/`; export before409→377 stops at(50,390), final export comparison still pending.

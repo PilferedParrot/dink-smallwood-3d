@@ -224,6 +224,56 @@ func _fps_move_player(delta: float) -> void:
 	_set_animation(1, int(player.get("base_walk", 70)) + int(player.dir))
 	_transitions()
 
+func _edge_destination(pos: Vector2) -> Dictionary:
+	var target := current_screen
+	if pos.x < 20: target -= 1; pos.x += 600.0
+	elif pos.x >= 620: target += 1; pos.x -= 600.0
+	if pos.y < 0: target -= 32; pos.y += 400.0
+	elif pos.y >= 400: target += 32; pos.y -= 400.0
+	return {"screen":target,"position":pos}
+
+func _blocked(pos: Vector2, mover: int, from: Vector2 = Vector2.INF) -> bool:
+	if mover != 1 or (pos.x >= 20.0 and pos.x < 620.0 and pos.y >= 0.0 and pos.y < 400.0):
+		return super._blocked(pos,mover,from)
+	var destination := _edge_destination(pos)
+	var target: int = destination.screen
+	# There is no horizontal seam between the last and first columns of a row.
+	var column := (current_screen-1)%32
+	if locked or not world.screens.has(str(target)) or bool(world.screens[str(target)].get("indoor",false)) \
+			or (pos.x < 20.0 and column == 0) or (pos.x >= 620.0 and column == 31): return true
+	var arrival := neighbour_arrival_state(target)
+	var saved_screen := current_screen
+	var saved_entities := entities
+	var saved_sprites := footprint_sprites
+	var saved_polys := screen_footprints
+	var saved_tiles := footprint_tiles
+	current_screen = target
+	entities = {1:saved_entities[1]}
+	var next := 2
+	for e in arrival.get("sprites",[]):
+		entities[next] = e
+		next += 1
+	# Use fresh dictionaries: _load_footprints clears its containers.
+	footprint_sprites = {}; screen_footprints = []; footprint_tiles = {}
+	_load_footprints(target)
+	var translated_from: Vector2 = from+(destination.position-pos) if from != Vector2.INF else Vector2.INF
+	var blocked := super._blocked(destination.position,mover,translated_from)
+	current_screen = saved_screen
+	entities = saved_entities
+	footprint_sprites = saved_sprites
+	screen_footprints = saved_polys
+	footprint_tiles = saved_tiles
+	return blocked
+
+func _move_entity(id: int, displacement: Vector2, ignore_hardness: bool = false) -> void:
+	if id != 1 or ignore_hardness or int(entities.get(id,{}).get("noclip",0)) != 0:
+		super._move_entity(id,displacement,ignore_hardness)
+		return
+	# Hard.dat has one-pixel cells. A long frame or sprint must not skip a
+	# one-pixel barrier (nor cross a seam before querying its incoming side).
+	var count := maxi(1,ceili(maxf(absf(displacement.x),absf(displacement.y))))
+	for _i in count: super._move_entity(id,displacement/float(count))
+
 func _fps_update_jump(delta: float) -> void:
 	if Input.is_action_just_pressed("jump") and fps_jump_height <= 0.001 and not ui.modal:
 		fps_vertical_velocity = 5.2
