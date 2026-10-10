@@ -14,10 +14,10 @@ func check(ok: bool, message: String) -> void:
 
 func hold(key: int, frames: int) -> void:
 	var event := InputEventKey.new(); event.physical_keycode=key; event.pressed=true
-	Input.parse_input_event(event)
+	Input.parse_input_event(event);Input.flush_buffered_events()
 	for _i in frames: await physics_frame
 	event = InputEventKey.new(); event.physical_keycode=key; event.pressed=false
-	Input.parse_input_event(event)
+	Input.parse_input_event(event);Input.flush_buffered_events()
 	await physics_frame
 
 func _run() -> void:
@@ -55,6 +55,19 @@ func _run() -> void:
 		check(game._position2(1).distance_to(stopped)>0.1,"Reverse input remains playable after rejected crossing")
 		game.world.screens[str(target)].sprites=original
 		game.neighbour_arrival_cache.clear()
+	# Actual source-map regression: the old fixed north landing trapped Dink
+	# at(50,390) on377. With masks retained, reject that blocked arrival and
+	# prove the player can reverse via the ordinary input path.
+	game.load_map(409,false);game.vm.cancel_all();game.ui.close_menu()
+	game.entities[1].x=50.0;game.entities[1].y=2.0
+	game.fps_yaw=0.0;game.fps_pitch=-.08;game._sync_fps_camera()
+	game.playing=true;game.changing=false;game.warp_cooldown=0.0
+	await hold(KEY_W,12)
+	check(game.current_screen==409,"Real409 north crossing rejects a blocked377 arrival")
+	var stopped: Vector2=game._position2(1)
+	check(not game._blocked(stopped,1),"Rejected real-map crossing leaves a free source point")
+	await hold(KEY_S,3)
+	check(game._position2(1).y>stopped.y+1.0,"Real409 reverse input moves after the north veto")
 	game.vm.cancel_all(); game.queue_free(); await process_frame
 	print("FPS COLLISION INPUT PASS" if failures.is_empty() else failures)
 	quit(0 if failures.is_empty() else 1)

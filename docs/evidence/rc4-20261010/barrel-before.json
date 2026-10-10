@@ -1,0 +1,33 @@
+{
+  "setup": "Explicit item/story/position fixture skips campaign progression; actual input and unmodified item-pig/s1-bul or bar-e scripts, isolated profile",
+  "records": [
+    {
+      "name": "before-attack",
+      "screen": 439,
+      "player": "(124.0, 398.0)",
+      "yaw": 0.0,
+      "pitch": -0.65,
+      "player_is_blocked": false,
+      "editor_num": 22,
+      "nohit": 0.0,
+      "last_hit": 0,
+      "brain": 0.0,
+      "seq": 0,
+      "frame": 1
+    },
+    {
+      "name": "after-attack",
+      "screen": 439,
+      "player": "(124.0, 398.0)",
+      "yaw": 0.0,
+      "pitch": -0.65,
+      "player_is_blocked": false,
+      "editor_num": 22,
+      "nohit": 0.0,
+      "last_hit": 0,
+      "brain": 0.0,
+      "seq": 0,
+      "frame": 1
+    }
+  ]
+}
