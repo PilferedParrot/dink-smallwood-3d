@@ -20,17 +20,17 @@
   "comparisons": [
     {
       "finding": "HUD labels/values",
-      "before": "/home/chris/dink-review-rc1/named/005-05-first-view-hud.png",
+      "before": "review-rc1/named/005-05-first-view-hud.png",
       "after": "builds/interface-polish-20261008/final-1280/adventure.png"
     },
     {
       "finding": "Lower view after first use",
-      "before": "/home/chris/dink-review-rc1/named/005-05-first-view-hud.png",
+      "before": "review-rc1/named/005-05-first-view-hud.png",
       "after": "builds/interface-polish-20261008/final-1280/hints-faded.png"
     },
     {
       "finding": "Toggle state",
-      "before": "/home/chris/dink-review-rc1/named/011-11-settings-bottom.png",
+      "before": "review-rc1/named/011-11-settings-bottom.png",
       "after": "builds/interface-polish-20261008/final-1280/motion-on.png"
     },
     {
@@ -40,12 +40,12 @@
     },
     {
       "finding": "Slider focus",
-      "before": "/home/chris/dink-review-rc1/named/009-09-settings-top.png",
+      "before": "review-rc1/named/009-09-settings-top.png",
       "after": "builds/interface-polish-20261008/final-1280/settings.png"
     },
     {
       "finding": "Journal speakers",
-      "before": "/home/chris/dink-review-rc1/named/013-13-journal.png",
+      "before": "review-rc1/named/013-13-journal.png",
       "after": "builds/interface-polish-20261008/final-1280/journal.png"
     }
   ],

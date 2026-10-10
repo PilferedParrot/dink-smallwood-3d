@@ -6,7 +6,7 @@ config/name="Dink Smallwood 3D"
 run/main_scene="res://main.tscn"
 config/features=PackedStringArray("4.6", "GL Compatibility")
 config/description="A first-person 3D Dink Smallwood adventure by PilferedParrot."
-config/version="0.3.0"
+config/version="0.3.1"
 
 [display]
 window/size/viewport_width=1280
