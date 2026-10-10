@@ -1073,8 +1073,14 @@ func create_visual(id: int) -> void:
 	if not host.entities.has(id): return
 	if id == 1:
 		var player := Node3D.new()
+		player.set_meta("billboard",true)
 		host.scene_root.add_child(player)
+		var shadow := Sprite3D.new()
+		shadow.name = "Model"
+		configure_shadow_card(shadow)
+		player.add_child(shadow)
 		host.visuals[id] = player
+		update_visual(id)
 		return
 	var e: Dictionary = host.entities[id]
 	var key := model_key(e)
@@ -1099,6 +1105,22 @@ func update_visual(id: int) -> void:
 	if not is_instance_valid(node): return
 	if id == 1:
 		node.position = point(float(e.x),float(e.y))
+		var shadow := node.get_node_or_null("Model") as Sprite3D
+		if shadow == null: return
+		shadow.visible = int(e.get("active",1)) != 0 and int(e.get("nodraw",0)) == 0 and int(e.get("disabled",0)) == 0
+		if not shadow.visible: return
+		var display: Vector2i = display_frame(e)
+		var toward_sun := Vector3.BACK
+		if light != null and is_instance_valid(light) and light.is_inside_tree(): toward_sun = light.global_transform.basis.z
+		var seen_from_sun := -Vector2(toward_sun.x,toward_sun.z)
+		var seq := directional_sequence(e,display.x,seen_from_sun)
+		var d: Dictionary = host._frame(seq,display.y)
+		var path := str(d.get("path",""))
+		shadow.pixel_size = SCALE*maxf(0.01,float(e.get("size",100))/100.0)
+		shadow.rotation.y = sun_yaw(node)
+		if not path.is_empty() and path != str(shadow.get_meta("path","")):
+			var texture := clean_texture(path)
+			if texture != null: set_sprite_texture(shadow,path,texture,d)
 		return
 	var visible: bool = int(e.get("active",1)) != 0 and int(e.get("nodraw",0)) == 0 and int(e.get("disabled",0)) == 0 and (int(e.get("type",1)) != 2 or node.get_meta("hard_wall",false))
 	node.visible = visible
@@ -1971,6 +1993,24 @@ func add_billboard(node: Node3D, e: Dictionary, id: int, key: String, collision:
 # The frame the original shows now (its animation, else its still frame); a directional actor's
 # frame is the one drawn for its facing as seen from the camera, as Doom does (the prototype's
 # _face_actors).
+func directional_sequence(e: Dictionary, seq: int, to_actor: Vector2, face_camera: bool = false) -> int:
+	if to_actor.length() < 0.001: return seq
+	for base_key in ["base_walk","base_idle","base_attack"]:
+		var base := int(e.get(base_key,-1))
+		if base <= 0 or seq <= base or seq > base+9 or not DIRS.has(seq-base): continue
+		var facing: Vector2 = DIRS[seq-base]
+		if face_camera: facing = -to_actor
+		var rel: Vector2 = facing.normalized().rotated(-Vector2(0,-1).angle_to(to_actor.normalized()))
+		var best := seq-base
+		var best_dot := -2.0
+		for k in DIRS:
+			var dd: float = (DIRS[k] as Vector2).normalized().dot(rel)
+			if dd > best_dot and host.sequences.has(str(base+k)):
+				best_dot = dd
+				best = k
+		return base+best
+	return seq
+
 func update_billboard(sp: Sprite3D, e: Dictionary) -> void:
 	if sp.has_meta("static"): return
 	var seq := int(e.get("seq",0))
@@ -1980,25 +2020,10 @@ func update_billboard(sp: Sprite3D, e: Dictionary) -> void:
 		frame = int(e.get("pframe",1))
 	var camera: Camera3D = host.camera if "camera" in host else null
 	if camera != null and is_instance_valid(camera) and str(sp.get_parent().get_meta("model_key","")) in ACTORS:
-		for base_key in ["base_walk","base_idle","base_attack"]:
-			var base := int(e.get(base_key,-1))
-			if base <= 0 or seq <= base or seq > base+9 or not DIRS.has(seq-base): continue
-			var at := sp.get_parent() as Node3D
-			var to_actor := Vector2(at.global_position.x-camera.global_position.x,at.global_position.z-camera.global_position.z)
-			if to_actor.length() < 0.001: break
-			var facing: Vector2 = DIRS[seq-base]
-			# Who speaks faces you (first-person presentation only: the entity's own direction, which the scripts read, is kept).
-			if at.get_meta("face_camera",false): facing = -to_actor
-			var rel: Vector2 = facing.normalized().rotated(-Vector2(0,-1).angle_to(to_actor.normalized()))
-			var best := seq-base
-			var best_dot := -2.0
-			for k in DIRS:
-				var dd: float = (DIRS[k] as Vector2).normalized().dot(rel)
-				if dd > best_dot and host.sequences.has(str(base+k)):
-					best_dot = dd
-					best = k
-			seq = base+best
-			break
+		var at := sp.get_parent() as Node3D
+		var to_actor := Vector2(at.global_position.x-camera.global_position.x,at.global_position.z-camera.global_position.z)
+		# Who speaks faces you (first-person presentation only: the entity's own direction, which the scripts read, is kept).
+		seq = directional_sequence(e,seq,to_actor,at.get_meta("face_camera",false))
 	var d: Dictionary = host._frame(seq,frame)
 	var path := str(d.get("path",""))
 	sp.pixel_size = SCALE*maxf(0.01,float(e.get("size",100))/100.0)
@@ -2313,11 +2338,8 @@ func shadow_twin(sp: Sprite3D, shifted: bool) -> void:
 	if twin == null:
 		twin = Sprite3D.new()
 		twin.name = "ShadowTwin"
-		twin.shaded = false
-		twin.alpha_cut = SpriteBase3D.ALPHA_CUT_DISCARD
 		twin.texture_filter = sp.texture_filter
-		twin.billboard = BaseMaterial3D.BILLBOARD_DISABLED
-		twin.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_SHADOWS_ONLY
+		configure_shadow_card(twin)
 		sp.add_child(twin)
 	sp.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	twin.rotation.y = sun_yaw(sp) if upright else 0.0
@@ -2325,7 +2347,13 @@ func shadow_twin(sp: Sprite3D, shifted: bool) -> void:
 
 # The yaw, in sp's own frame, that turns a card's face (+z) to the sun: the horizontal direction toward the
 # scene's light (a directional light shines along its -z, so +z points at it).
-func sun_yaw(sp: Sprite3D) -> float:
+func configure_shadow_card(sp: Sprite3D) -> void:
+	sp.shaded = false
+	sp.alpha_cut = SpriteBase3D.ALPHA_CUT_DISCARD
+	sp.billboard = BaseMaterial3D.BILLBOARD_DISABLED
+	sp.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_SHADOWS_ONLY
+
+func sun_yaw(sp: Node3D) -> float:
 	var toward := Vector3.BACK
 	if light != null and is_instance_valid(light) and light.is_inside_tree(): toward = light.global_transform.basis.z
 	var yaw := atan2(toward.x,toward.z) if Vector2(toward.x,toward.z).length() > 0.001 else 0.0

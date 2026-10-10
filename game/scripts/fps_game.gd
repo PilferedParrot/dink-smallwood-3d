@@ -374,12 +374,14 @@ func _fps_update_viewmodel(delta: float) -> void:
 				fps_viewmodel = scene.instantiate()
 				fps_viewmodel.name = "FirstPersonWeapon"
 				camera.add_child(fps_viewmodel)
+		if is_instance_valid(fps_viewmodel): _fps_disable_held_shadows(fps_viewmodel)
 	fps_recoil = maxf(0.0, fps_recoil - delta * 3.5)
 	fps_feed_use = maxf(0.0, fps_feed_use - delta * 4.0)
 	if fps_hand == null:
 		fps_hand = load("res://assets/models/fist.glb").instantiate()
 		camera.add_child(fps_hand)
 		fps_hand.scale = Vector3.ONE*0.44
+		_fps_disable_held_shadows(fps_hand)
 	if is_instance_valid(fps_hand):
 		fps_hand.position = Vector3(0.59,-0.50,-0.86-fps_recoil*0.18) if key == "bow" else Vector3(0.4,-0.59,-0.78)
 		if key == "feed": fps_hand.position = Vector3(0.53, -0.43, -0.94)
@@ -424,6 +426,13 @@ func _fps_make_feed_viewmodel() -> Node3D:
 	label.pixel_size = 0.0025
 	root.add_child(label)
 	return root
+
+# First-person tools sit at the eye, not at Dink's body in the world. Only his
+# source-sprite body casts a player shadow; this also covers imported mesh children.
+func _fps_disable_held_shadows(node: Node) -> void:
+	if node is GeometryInstance3D:
+		(node as GeometryInstance3D).cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	for child in node.get_children(): _fps_disable_held_shadows(child)
 
 func _fps_material(color: Color, roughness: float) -> StandardMaterial3D:
 	var material := StandardMaterial3D.new()

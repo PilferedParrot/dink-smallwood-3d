@@ -1955,3 +1955,9 @@ Five integrated regressions pass, including actual keyboard veto/reverse routes,
 This proves sampled zero-motion safety, not exhaustive reachability or delayed story behavior. Visible support for retained
 terrain/custom and hidden-entity hardness remains a separate item1 investigation. Evidence and full failing positions:
 `docs/evidence/rc4-seams-20261010/`; export before409→377 stops at(50,390), final export comparison still pending.
+
+## RC4: Dink's source-sprite shadow (2026-10-10)
+
+The player visual was an empty Node3D while camera-mounted tools inherited mesh shadow casting. We omitted the player when extending the actors' existing shadow-card mechanism: an oversight, not missing source art. Dink now casts a shadows-only card of his current original directional animation as seen from the sun; every held mesh (including support hand and feed label) casts none. Shared directional selection retains NPC facing behavior.
+
+The player-shadow and facing regressions pass; the new body-card assertion fails on the old exported package. Frozen exported lookdown pairs in `tmp/rc4-evidence/comparisons/shadow.jpg` show the body shadow. Those batch captures hide held tools in both versions; recursive cast-mode assertions cover fist, bow and feed instead. No visible lookdown body is implemented. A possible later body representation is an explicitly partial torso/legs view from Dink's original sprites, coupled to facing and animation; a full 3D body is not recoverable from the single sprite without an additional representation decision.
