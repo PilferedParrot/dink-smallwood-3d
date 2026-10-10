@@ -1,0 +1,43 @@
+{
+	"crossings": 1025768,
+	"edge_coverage": {
+		"east": {
+			"candidates": 228000,
+			"crossings": 206163,
+			"rejected": 15368,
+			"walkable": 221531,
+			"x_sum": 141132000,
+			"y_sum": 45486000
+		},
+		"north": {
+			"candidates": 342000,
+			"crossings": 306705,
+			"rejected": 27473,
+			"walkable": 334178,
+			"x_sum": 109269000,
+			"y_sum": 342000
+		},
+		"south": {
+			"candidates": 342000,
+			"crossings": 306756,
+			"rejected": 26238,
+			"walkable": 332994,
+			"x_sum": 109269000,
+			"y_sum": 136458000
+		},
+		"west": {
+			"candidates": 228000,
+			"crossings": 206144,
+			"rejected": 15430,
+			"walkable": 221574,
+			"x_sum": 4788000,
+			"y_sum": 45486000
+		}
+	},
+	"edge_samples": 1110277,
+	"failures": [],
+	"fixture": "vision0 editor layer; no startup scripts; every 1px edge cell, 10px interior grid",
+	"grid_samples": 1281755,
+	"rejected": 84509,
+	"screens": 570
+}
