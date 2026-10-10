@@ -70,41 +70,48 @@ func _run() -> void:
 	await _capture("feed-use.png")
 
 	# Dialogue framing fixture: test_mode is disabled so the real UI/dialogue
-	# path is exercised; the entity is deliberately off-camera before the line.
+	# path is exercised. S1-BUL is originally spawned by ITEM-PIG with sequence
+	# 341; this isolated actor keeps those source pixels and a real FPS visual.
 	game.test_mode = false
-	game.entities[2] = {"x": 500.0, "y": 200.0, "active":1, "script":"s1-bul", "type":1}
-	# The id belonged to one of the room's walls: its visual goes with it, or the framing aims at
-	# the head of a 3.6 m wall (at 0.025 m/px, 4.5 m away: 0.30 rad up).
-	if game.visuals.has(2):
-		game.visuals[2].queue_free()
-		game.visuals.erase(2)
+	game.vm.globals["vision"] = 0
+	game.load_map(439, false)
+	game.entities[1]["x"] = 320.0
+	game.entities[1]["y"] = 260.0
+	var milder: int = 900101
+	game.entities[milder] = {"x":350.0,"y":130.0,"active":1,"script":"s1-bul","type":1,"pseq":341,"pframe":1,"seq":0,"frame":1,"base_walk":400,"brain":0,"size":100,"hard":1,"runtime_created":true}
+	game._create_visual(milder)
+	check(game.visuals.has(milder) and game.visuals[milder].is_visible_in_tree(), "Source-sequence Milder has visible FPS geometry")
 	game.fps_yaw = 0.0
 	game.fps_pitch = 1.0
 	game._sync_fps_camera()
 	var before: float = game.fps_yaw
-	game._dialogue("A Milder line", 2, {"sprite_id":2})
-	await process_frame
+	game._dialogue("A Milder line", milder, {"sprite_id":milder})
+	await _wait_for_dialogue_layout()
 	check(not is_equal_approx(before, game.fps_yaw), "Off-camera NPC dialogue frames the camera on the speaker")
 	check(game.fps_pitch < 0.2, "NPC framing recovers from looking at the ceiling")
-	check(game._fps_speaker_name(2) == "Milder", "Milder receives a readable speaker label")
+	_assert_actor_fit(milder, "Milder")
+	check(game._fps_speaker_name(milder) == "Milder", "Milder receives a readable speaker label")
 	check(game.ui.heading.text == "Milder" and game.ui.heading.is_visible_in_tree(), "Dialogue UI displays the NPC name in the fixed heading")
 	await _capture("offcamera-milder.png")
 	var framed_yaw: float = game.fps_yaw
-	game.entities[900002] = {"x": 140.0, "y": 200.0, "active": 1, "script": "s1-h2-o", "type": 1}
-	game._dialogue("An Ethel line", 900002, {"sprite_id": 900002})
+	var ethel: int = 900102
+	game.entities[ethel] = {"x":440.0,"y":130.0,"active":1,"script":"s1-h2-o","type":1,"pseq":231,"pframe":1,"seq":0,"frame":1,"base_walk":230,"brain":0,"size":100,"hard":1,"runtime_created":true}
+	game._create_visual(ethel)
+	game._dialogue("An Ethel line", ethel, {"sprite_id":ethel})
 	await process_frame
 	check(is_equal_approx(framed_yaw, game.fps_yaw), "Queued dialogue cannot frame a later speaker before its line")
-	game.ui.dialogue_finished.emit(0)
-	await process_frame
-	await process_frame
+	_end_line()
+	await _wait_for_dialogue_layout()
 	check(not is_equal_approx(framed_yaw, game.fps_yaw), "Next speaker is framed when its queued line begins")
-	game.ui.dialogue_finished.emit(0)
+	_assert_actor_fit(ethel, "Ethel")
+	_end_line()
+	await process_frame
 	await process_frame
 	framed_yaw = game.fps_yaw
 	game._dialogue("A Dink line", 1, {"sprite_id": 1})
-	await process_frame
+	await _wait_for_dialogue_layout()
 	check(is_equal_approx(framed_yaw, game.fps_yaw), "Dink's own line keeps the current view")
-	game.ui.dialogue_finished.emit(0)
+	_end_line()
 	await process_frame
 
 	if failures.is_empty(): print("FPS OPENING POLISH PASS: feed viewmodel/use, grains, NPC framing")
@@ -133,3 +140,25 @@ func _wait_for_feed_grains(timeout_seconds: float) -> Array[int]:
 		if not grains.is_empty(): return grains
 		await process_frame
 	return _feed_grain_ids()
+
+func _wait_for_dialogue_layout() -> void:
+	for i in 8:
+		await process_frame
+		if game.ui.page == "dialogue" and game.ui.panel.visible: return
+	check(false, "Dialogue card becomes visible after its measured layout")
+
+func _assert_actor_fit(id: int, label: String) -> void:
+	if not game.visuals.has(id): return
+	var source: Vector3 = game.camera.global_position
+	var points: Array[Vector3] = game._fps_visible_points(game.visuals[id], source)
+	check(points.size() >= 4, "%s uses visible source actor bounds" % label)
+	if points.is_empty(): return
+	var bounds: Rect2 = game._fps_projected_bounds(points)
+	var safe: Rect2 = game.ui.speech_safe_rect()
+	check(bounds.has_area() and safe.encloses(bounds), "%s whole actor fits above opaque UI" % label)
+	check(game.fps_dialogue_frame_valid, "%s has a committed valid dialogue shot" % label)
+	check(game._fps_subject_rays_clear(source, game._fps_points_center(points), points, id, false), "%s head and torso rays are clear" % label)
+
+func _end_line() -> void:
+	game.ui.hide_dialogue()
+	game.ui.dialogue_finished.emit(0)

@@ -574,7 +574,7 @@ func background_sprites(number: int, vision: int) -> Array:
 	var out: Array = []
 	var decks: Array = []
 	for e in sprites:
-		if effective_type(e) == 1 and model_key(e) != "bridge_deck": upright[background_key(e)] = true
+		if effective_type(e) == 1 and not paints_ground(e,number): upright[background_key(e)] = true
 	for e in sprites:
 		if not paints_ground(e,number): continue
 		if upright.has(background_key(e)): continue
@@ -625,10 +625,19 @@ func paint_background(sprites: Array, img: Image) -> void:
 # Whether a sprite is a background sprite painted into its screen's ground (paint_background).
 func paints_ground(e: Dictionary, screen: int) -> bool:
 	if model_key(e) == "bridge_deck": return true # whatever its type: the map draws a deck as an upright sprite
-	if effective_type(e) != 0 or source_path(e).contains("/struct/"): return false
+	if (effective_type(e) != 0 and not static_death_art(e)) or source_path(e).contains("/struct/"): return false
 	if kit_member(e,screen): return false
 	var key := model_key(e)
 	return key != "wall" and sprite_drawn(key)
+
+func static_death_art(e: Dictionary) -> bool:
+	if bool(e.get("runtime_created",false)) or int(e.get("editor_num",e.get("index",0))) <= 0: return false
+	if int(e.get("brain",0)) != 0 or float(e.get("hitpoints",0)) != 0.0 or not str(e.get("script","")).is_empty(): return false
+	var display: Vector2i = display_frame(e)
+	var sequence: Dictionary = host.sequences.get(str(display.x),{})
+	if sequence.get("frames",[]).size() != 1: return false
+	var path := str(host._frame(display.x,display.y).get("path","")).to_lower()
+	return path.contains("/people/") and path.get_file().begins_with("death-")
 
 # Keys drawn as their sprite (see BUILT). Outdoor walls are the stone-wall sprites; a room's
 # walls stay boxes.
@@ -955,6 +964,16 @@ func make_entity(e: Dictionary, id: int, parent: Node3D, collision: bool = true,
 		return node
 	if paints_ground(e,screen):
 		node.set_meta("ground_painted",true) # painted into the ground (paint_background)
+		if static_death_art(e):
+			# The prone editor picture already belongs to the floor texture. Keep
+			# its source rectangle for framing, without another upright actor.
+			var display: Vector2i = display_frame(e)
+			var frame: Dictionary = host._frame(display.x,display.y)
+			var image: Image = sprite_image(str(frame.get("path","")))
+			if image != null:
+				node.set_meta("floor_art_path",str(frame.get("path","")))
+				node.set_meta("floor_art_rect",Rect2(Vector2(-float(frame.get("dx",0)),-float(frame.get("dy",0)))*SCALE,Vector2(image.get_size())*SCALE))
+				node.set_meta("height",0.0)
 		if key == "bridge_deck": rails.add_deck(node,e,id,collision,screen) # its railing stands on it; rays hit it
 		return node
 	if key == "castle":

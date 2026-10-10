@@ -17,6 +17,8 @@ var compass_label: Label
 var toast_timer: Timer
 var dialogue_mode := false
 var dialogue_layout_key := Vector4.INF
+var speech_request := 0
+var pending_speech: Dictionary = {}
 var page := "title"
 var text_scale := 1.0
 var menu_theme: Theme
@@ -280,7 +282,7 @@ func _vine(path: String) -> TextureRect:
 	return vine
 
 func _process(_delta: float) -> void:
-	if modal and page == "dialogue": _fit_dialogue_panel()
+	if page == "dialogue": _fit_dialogue_panel()
 	panel_underlay.visible = panel.visible and page != "title"
 	if panel.visible:
 		panel_underlay.position = panel.position
@@ -296,7 +298,7 @@ func _process(_delta: float) -> void:
 		# UI help expires in real time even when a heavy scene renders slowly.
 		var remaining := maxf(0.0, float(gameplay_hint_deadline_msec - Time.get_ticks_msec()) / 1000.0)
 		hint_backing.modulate.a = minf(1.0, remaining) if gameplay_hint_used else 1.0
-		hint_backing.visible = hint_backing.modulate.a > 0.0
+		hint_backing.visible = hint_backing.modulate.a > 0.0 and not hint.text.is_empty()
 		status_dock.set_context_hints_visible(hint_backing.visible)
 	# A solid plaque keeps control instructions readable against every scene.
 	var available := root.size.x - 40
@@ -409,6 +411,10 @@ func _uses_gameplay_control(event: InputEvent) -> bool:
 
 func _update_hint() -> void:
 	if not is_instance_valid(hint): return
+	if page == "dialogue" and not dialogue_mode:
+		# Timed speech shares the card; gameplay help must not cover its name.
+		hint.text = ""
+		return
 	if modal:
 		if page == "loading":
 			hint.text = "Loading Stonebrook…"
@@ -568,19 +574,72 @@ func show_hud(stats: Dictionary) -> void:
 	health_bar.value = clampf(life / life_max * 100.0, 0.0, 100.0)
 	mana_bar.value = clampf(mana / mana_max * 100.0, 0.0, 100.0)
 	hud.text = "DINK   •   Health %d / %d   •   Level %d   •   Gold %d\n%s" % [life,life_max,stats.get("level",1),stats.get("gold",0),stats.get("location", "Stonebrook")]
-	var weapon := str(stats.get("weapon", stats.get("weapon_name", "")))
-	if not weapon.is_empty(): hud.text += "\nWeapon: " + weapon
 	compass_label.text = str(stats.get("location", ""))
 	_update_hint()
 
-func show_dialogue(text: String, speaker: String = "Dink") -> void:
+func show_dialogue(text: String, speaker: String = "Dink", blocking: bool = true) -> void:
+	if not blocking and modal:
+		# Latest ambient line wins; a modal request always owns its card.
+		pending_speech = {"text":text,"speaker":speaker,"expires":Time.get_ticks_msec()+int(toast_timer.wait_time*1000)}
+		return
 	_clear(speaker, "dialogue")
-	dialogue_mode = true
+	speech_request += 1
+	var request := speech_request
+	dialogue_mode = blocking
 	_label(text)
-	dialogue_continue.custom_minimum_size.y = roundi(52.0 * text_scale)
-	dialogue_continue.show()
+	if blocking:
+		dialogue_continue.custom_minimum_size.y = roundi(52.0 * text_scale)
+		dialogue_continue.show()
+	else:
+		modal = false
+		root.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		overlay.hide()
+		_set_playing_visuals(true)
+		_expire_speech(request, page_serial)
 	_update_hint()
-	_grab_current_focus.call_deferred(dialogue_continue, page_serial)
+	if blocking: _grab_current_focus.call_deferred(dialogue_continue, page_serial)
+
+func _expire_speech(request: int, serial: int) -> void:
+	await get_tree().create_timer(toast_timer.wait_time).timeout
+	if request == speech_request and serial == page_serial and page == "dialogue" and not dialogue_mode:
+		close_menu()
+
+func _show_pending_speech() -> void:
+	if modal or pending_speech.is_empty(): return
+	var line := pending_speech
+	pending_speech = {}
+	if int(line.expires) > Time.get_ticks_msec(): show_dialogue(str(line.text), str(line.speaker), false)
+
+func prepare_dialogue_layout() -> bool:
+	var serial := page_serial
+	panel.hide(); panel_underlay.hide(); vines_left.hide(); vines_right.hide()
+	for _i in 3:
+		await get_tree().process_frame
+		if serial != page_serial or page != "dialogue": return false
+		_fit_dialogue_panel()
+	# These are the decorations' actual future positions, even while hidden.
+	panel_underlay.position = panel.position
+	panel_underlay.size = panel.size
+	vines_left.position = panel.position + Vector2(-65, 0)
+	vines_left.size = Vector2(80, 140)
+	vines_right.position = panel.position + Vector2(panel.size.x-15, 0)
+	vines_right.size = vines_left.size
+	return true
+
+func speech_safe_rect() -> Rect2:
+	var viewport := get_viewport().get_visible_rect()
+	var top := panel.get_global_rect().position.y
+	for decoration in [panel_underlay, vines_left, vines_right]:
+		top = minf(top, decoration.get_global_rect().position.y)
+	var margin := float(column.get_theme_constant("separation"))
+	return Rect2(viewport.position+Vector2(margin,margin), Vector2(maxf(0,viewport.size.x-2*margin),maxf(0,top-viewport.position.y-2*margin)))
+
+func reveal_dialogue() -> void:
+	if page != "dialogue": return
+	panel.show(); panel_underlay.show(); vines_left.show(); vines_right.show()
+	# Initial deferred focus can run while prepare_dialogue_layout hides the
+	# panel. Restore it only after the measured card becomes visible.
+	if dialogue_mode: _grab_current_focus.call_deferred(dialogue_continue, page_serial)
 
 func _continue_dialogue() -> void:
 	hide_dialogue()
@@ -609,6 +668,8 @@ func hide_dialogue() -> void:
 	dialogue_mode = false
 
 func close_menu() -> void:
+	page_serial += 1
+	speech_request += 1
 	modal = false
 	root.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	panel.hide()
@@ -618,6 +679,16 @@ func close_menu() -> void:
 	_set_playing_visuals(true)
 	_update_hint()
 	_sync_feedback()
+	_show_pending_speech.call_deferred()
+
+func cancel_speech() -> void:
+	var was_blocking := dialogue_mode
+	pending_speech = {}
+	speech_request += 1
+	if page == "dialogue":
+		close_menu()
+		dialogue_mode = false
+	if was_blocking: dialogue_finished.emit(-1)
 
 func request_back() -> void:
 	if dialogue_mode or page in ["title", "loading"]: return
@@ -648,8 +719,19 @@ func _sync_feedback() -> void:
 
 func show_inventory(items: Array, magic_items: Array) -> void:
 	_clear("Your equipment", "inventory")
+	var equipped_names: Array[String] = []
+	for key in ["weapon_item", "spell_item"]:
+		var item: Variant = equipment_stats.get(key, {})
+		var name := "None"
+		if item is Dictionary:
+			name = str(item.get("name", "")).strip_edges()
+			if name.is_empty():
+				var script := str(item.get("script", "")).strip_edges()
+				name = script.trim_prefix("item-").replace("-", " ").capitalize() if not script.is_empty() else "None"
+		equipped_names.append(name)
+	heading.text = "Equipped: %s (weapon)  ·  %s (spell)" % equipped_names
 	_label("Choose a filled slot to equip it. E marks equipped items.", 18)
-	equipment_name.text = "Select a weapon, item or spell."
+	equipment_name.text = "Selected: Choose a weapon, item or spell."
 	equipment_name.add_theme_font_size_override("font_size", roundi(22.0 * text_scale))
 	equipment_name.show()
 	var chest = preload("res://scripts/dink_equipment_chest.gd").new()
@@ -666,7 +748,7 @@ func show_inventory(items: Array, magic_items: Array) -> void:
 	_focus()
 
 func _describe_equipment(text: String, label: Label) -> void:
-	label.text = text
+	label.text = "Selected: " + text
 
 func show_journal(text: String) -> void:
 	_clear("Adventure journal", "journal")

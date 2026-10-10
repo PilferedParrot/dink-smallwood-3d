@@ -33,6 +33,7 @@ func _run() -> void:
 	check(not path.is_empty(),"Actual F9 writes a rendered local report")
 	if not path.is_empty():
 		var report: Dictionary=JSON.parse_string(FileAccess.get_file_as_string(path))
+		check(str(report.build.version) == "0.3.2", "The runtime report identifies the RC4 release candidate as 0.3.2")
 		check(report.snapshot.screen==439 and absf(float(report.snapshot.player.y)-at.y)<.01,"Captured source state matches the stopped player: %s vs %s" % [report.snapshot.player,at])
 		check(report.build.fps_script_sha256.length()==64 and report.build.renderer_script_sha256.length()==64,"Source or compiled shipped scripts are fingerprinted")
 		var image:=Image.load_from_file(path.get_base_dir().path_join(report.screenshot))

@@ -23,13 +23,10 @@ const ART_HEALTH_VALUE_RECT := Rect2(284, 9, 253, 23)
 const ICON_WEAPON_RECT := Rect2(147, 10, 63, 55)
 const ICON_SPELL_RECT := Rect2(550, 10, 63, 55)
 const COLOR_TEXT := Color("f1d99a")
-const COLOR_SHADOW := Color(0.025, 0.025, 0.025, 0.94)
 const COLOR_HEALTH_BG := Color(0.08, 0.055, 0.045, 0.92)
 const COLOR_HEALTH := Color("a94f42")
-const COLOR_TAG_BG := Color(0.025, 0.035, 0.04, 1.0)
 
 var _text_scale := 1.0
-var _context_hints_visible := true
 var _stats: Dictionary = {}
 var _sequence_frames: Dictionary = {}
 var _weapon_texture: Texture2D
@@ -81,11 +78,10 @@ func set_text_scale(value: float) -> void:
 	_text_scale = clampf(value, 0.75, 1.8)
 	queue_redraw()
 
-func set_context_hints_visible(value: bool) -> void:
-	if _context_hints_visible == value:
-		return
-	_context_hints_visible = value
-	queue_redraw()
+func set_context_hints_visible(_value: bool) -> void:
+	# The game UI still calls this for control hints. Equipment appears in the
+	# original icon slots, independent of whether those hints are visible.
+	pass
 
 func item_texture(item: Dictionary) -> Texture2D:
 	return _texture_for_item(item, str(item.get("script", "")) in ["item-fb", "item-acd", "item-ice", "item-hel"])
@@ -179,52 +175,12 @@ func _draw() -> void:
 
 	_draw_item_icon(_weapon_texture, x, ICON_WEAPON_RECT, scale_factor)
 	_draw_item_icon(_spell_texture, x, ICON_SPELL_RECT, scale_factor)
-	if _context_hints_visible:
-		_draw_tag(font, _item_label(_stats.get("weapon_item", {}), "weapon"), x + 178.5 * scale_factor, _dock_y - 8 * scale_factor, fs, scale_factor)
-		_draw_tag(font, _spell_label(), x + 581.5 * scale_factor, _dock_y - 8 * scale_factor, fs, scale_factor)
-	elif _spell_label() != "No spell":
-		_draw_value(font, _spell_readiness(), Rect2(520, -24, 120, 22), fs, HORIZONTAL_ALIGNMENT_CENTER)
 
 func _draw_item_icon(texture: Texture2D, origin_x: float, source_rect: Rect2, scale_factor: float) -> void:
 	if texture == null:
 		return
 	var target := Rect2(Vector2(origin_x, _dock_y) + source_rect.position * scale_factor, source_rect.size * scale_factor)
 	draw_texture_rect(texture, target, false)
-
-func _item_label(value: Variant, default_kind: String) -> String:
-	if value is Dictionary and not str(value.get("name", "")).strip_edges().is_empty():
-		return str(value.get("name", ""))
-	if value is Dictionary and not str(value.get("script", "")).is_empty():
-		return str(value.get("script", "")).trim_prefix("item-").capitalize()
-	return "No weapon" if default_kind == "weapon" else "No spell"
-
-func _spell_label() -> String:
-	var spell: Variant = _stats.get("spell_item", {})
-	if not spell is Dictionary or str(spell.get("script", "")).is_empty():
-		return "No spell"
-	return _item_label(spell, "spell") + "  ·  " + _spell_readiness()
-
-func _spell_readiness() -> String:
-	var cost := maxi(0, int(_stats.get("magic_cost", 0)))
-	if cost <= 0:
-		return "Recharging"
-	var magic_level := clampi(int(_stats.get("magic_level", 0)), 0, cost)
-	if magic_level < cost:
-		return "Recharging %d%%" % roundi(100.0 * float(magic_level) / float(cost))
-	return "Ready"
-
-func _draw_tag(font: Font, label: String, center_x: float, baseline_y: float, font_size: int, scale_factor: float) -> void:
-	var text_width := font.get_string_size(label, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size).x
-	var pad := 7.0 * scale_factor
-	var width := minf(text_width + pad * 2.0, 174.0 * scale_factor)
-	var height := maxf(20.0 * scale_factor, font.get_height(font_size) + 10.0 * scale_factor)
-	var tag_rect := Rect2(center_x - width * 0.5, baseline_y - height, width, height)
-	draw_rect(tag_rect, COLOR_TAG_BG)
-	var shown := label
-	while font.get_string_size(shown, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size).x > width - pad * 2.0 and shown.length() > 4:
-		shown = shown.left(shown.length() - 2) + "…"
-	var text_x := center_x - font.get_string_size(shown, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size).x * 0.5
-	_draw_text(font, shown, text_x, baseline_y - 5.0 * scale_factor, font_size, COLOR_TEXT, Vector2.ONE * maxf(1.0, scale_factor))
 
 func _draw_value(font: Font, text: String, source_rect: Rect2, font_size: int, alignment: HorizontalAlignment = HORIZONTAL_ALIGNMENT_LEFT) -> void:
 	var origin := Vector2((size.x - _dock_width) * 0.5, _dock_y)
@@ -243,7 +199,3 @@ func _draw_value(font: Font, text: String, source_rect: Rect2, font_size: int, a
 	# concealing any of the original artwork behind a rectangular value chip.
 	draw_string_outline(font, position, text, HORIZONTAL_ALIGNMENT_LEFT, -1, fitted_size, outline, Color.BLACK)
 	draw_string(font, position, text, HORIZONTAL_ALIGNMENT_LEFT, -1, fitted_size, COLOR_TEXT)
-
-func _draw_text(font: Font, text: String, x: float, baseline: float, font_size: int, color: Color, shadow_offset: Vector2) -> void:
-	draw_string(font, Vector2(x + shadow_offset.x, baseline + shadow_offset.y), text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size, COLOR_SHADOW)
-	draw_string(font, Vector2(x, baseline), text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size, color)

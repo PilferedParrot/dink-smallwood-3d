@@ -185,6 +185,7 @@ func load_map(number: int, run_scripts: bool = true) -> void:
 	_startup_random_active = false
 	_startup_random_cut_tasks.clear()
 	generation += 1
+	if is_instance_valid(ui) and ui.has_method("cancel_speech"): ui.cancel_speech()
 	changing = true
 	locked = false
 	current_screen = number
@@ -1009,6 +1010,9 @@ func _record_dialogue(line: String, speaker_name: String = "") -> void:
 	if dialogue_log.size() > 100: dialogue_log.pop_front()
 	if journal_log.size() > 100: journal_log.pop_front()
 
+func _show_nonblocking_speech(line: String, _speaker: int, _context: Dictionary) -> void:
+	ui.notify(line)
+
 func _script_move_destination(_id: int, _dir: int, destination: float) -> float:
 	return destination
 
@@ -1091,8 +1095,8 @@ func dink_call(command: String, args: Array, context: Dictionary) -> Variant:
 			await _dialogue(str(a),int(b) if cmd != "say_stop_xy" else 0,context)
 		"say", "say_xy":
 			var line := _interpolate(a,context)
-			ui.notify(line)
 			var speaker_id := int(b) if cmd == "say" else 0
+			_show_nonblocking_speech(line, speaker_id, context)
 			if speaker_id == 1:
 				_record_dialogue(line, "Dink")
 			elif has_method("_fps_speaker_name"):
@@ -1298,7 +1302,6 @@ func _equip(index: int, magic: bool) -> void:
 	var script := str(list[index].script)
 	if not vm._procedure_code(script,"arm").is_empty(): await vm.run(script,"arm",1)
 	ui.close_menu()
-	ui.notify("Equipped "+_item_name(script))
 
 func _load_sound_slots() -> void:
 	# Start.c establishes the original numbered sound registry.

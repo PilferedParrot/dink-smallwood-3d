@@ -7,6 +7,7 @@ const SCALE: float = preload("res://scripts/fp_world.gd").SCALE # metres per sou
 const EYE_HEIGHT := 1.65
 const PROJECTILE := preload("res://scripts/fps_projectile.gd")
 const BUG_RECORDER := preload("res://scripts/bug_report_recorder.gd")
+const GRIEF_CAMERA_EXPERIMENT := false # Bounded scene-camera trial failed its rendered gate.
 
 var fp_world
 var bug_recorder := BUG_RECORDER.new()
@@ -27,10 +28,23 @@ var fps_hit_timer := 0.0
 # A dialogue camera may look from a nearby clear spot, but it never moves Dink.
 # These are reset as soon as the individual line closes.
 var fps_dialogue_camera_active := false
+var fps_dialogue_camera_owned := false
 var fps_dialogue_camera_position := Vector3.ZERO
 var fps_dialogue_restore_yaw := 0.0
 var fps_dialogue_restore_pitch := 0.0
 var fps_dialogue_subject := 0
+var fps_dialogue_screen := -1
+var fps_dialogue_owner_generation := -1
+var fps_dialogue_finished_generation := -1
+var fps_dialogue_busy_generation := -1
+var fps_dialogue_used_rects: Dictionary = {}
+var fps_dialogue_alpha_images: Dictionary = {} # rendered Texture2D instance -> Image
+var fps_dialogue_opaque_pixels: Dictionary = {} # source path / texture + alpha threshold -> pixel centers
+var fps_dialogue_last_grief_position := Vector3.INF
+var fps_dialogue_last_grief_screen := -1
+var fps_dialogue_frame_valid := true
+var fps_dialogue_frame_failure := ""
+var fps_dialogue_rejections: Dictionary = {}
 
 func _ready() -> void:
 	# The renderer must exist before base _ready reaches load_map(), whose virtual
@@ -422,6 +436,10 @@ func _apply_settings() -> void:
 	if is_instance_valid(ui) and is_instance_valid(ui.root): ui.set_text_scale(float(settings.text_scale))
 	_sync_fps_camera()
 
+func _show_nonblocking_speech(line: String, speaker: int, context: Dictionary) -> void:
+	var identity := speaker if speaker != 0 else int(context.get("sprite_id", 0))
+	ui.show_dialogue(line, _fps_speaker_name(identity, context), false)
+
 func _fps_update_controller_look(delta: float) -> void:
 	if ui.modal: return
 	var aim := Input.get_vector("look_left", "look_right", "look_up", "look_down", _fps_controller_deadzone())
@@ -662,6 +680,7 @@ func _dialogue(text: String, speaker: int, context: Dictionary) -> void:
 		await get_tree().process_frame
 	if expected != generation: return
 	dialogue_busy = true
+	fps_dialogue_busy_generation = expected
 	var line := _interpolate(text, context)
 	var displayed_speaker := speaker
 	if displayed_speaker == 0: displayed_speaker = int(context.get("sprite_id", 0))
@@ -672,127 +691,439 @@ func _dialogue(text: String, speaker: int, context: Dictionary) -> void:
 	else:
 		var facing_visual: Node3D = null
 		if displayed_speaker != 1 and entities.has(displayed_speaker):
-			_fps_frame_speaker(displayed_speaker)
 			facing_visual = visuals.get(displayed_speaker)
 			if is_instance_valid(facing_visual):
 				facing_visual.set_meta("face_camera", true)
 				_update_visual(displayed_speaker)
-		elif displayed_speaker == 1: _fps_grief_dialogue_camera(context)
 		ui.show_dialogue(line, speaker_name)
-		# Hide a held model immediately, including the first rendered dialogue frame.
+		var layout_ready: bool = await ui.prepare_dialogue_layout()
+		if expected != generation or not is_instance_valid(ui) or not layout_ready:
+			if is_instance_valid(facing_visual): facing_visual.remove_meta("face_camera")
+			_fps_restore_dialogue_camera(expected)
+			if fps_dialogue_busy_generation == expected: dialogue_busy = false
+			return
+		var safe: Rect2 = ui.speech_safe_rect()
+		fps_dialogue_frame_valid = true
+		fps_dialogue_frame_failure = ""
+		fps_dialogue_rejections.clear()
+		if displayed_speaker != 1 and entities.has(displayed_speaker):
+			fps_dialogue_frame_valid = _fps_frame_speaker(displayed_speaker, safe)
+			if not fps_dialogue_frame_valid: fps_dialogue_frame_failure = "actor %d has no clear full-body view above the card" % displayed_speaker
+		elif displayed_speaker == 1 and GRIEF_CAMERA_EXPERIMENT:
+			if str(context.get("script", "")).to_lower() == "s1-h1-s" and current_screen == 1 and int(vm.globals.get("story", 0)) == 3:
+				fps_dialogue_frame_valid = _fps_grief_dialogue_camera(context, safe)
+				if not fps_dialogue_frame_valid: fps_dialogue_frame_failure = "grief room has no clear source-derived scene view above the card"
+		if not fps_dialogue_frame_valid:
+			push_warning("Dialogue framing: %s (screen %d, reduced motion %s, probes %s)" % [fps_dialogue_frame_failure, current_screen, settings.get("reduced_motion", false), fps_dialogue_rejections])
+		# Commit the camera before the same, already measured card is shown.
+		fps_dialogue_finished_generation = -1
+		var finished_callback: Callable = Callable(self, "_fps_dialogue_finished").bind(expected)
+		ui.dialogue_finished.connect(finished_callback, Object.CONNECT_ONE_SHOT)
+		ui.reveal_dialogue()
 		_fps_update_viewmodel(0.0)
-		await ui.dialogue_finished
+		while expected == generation and fps_dialogue_finished_generation != expected:
+			await get_tree().process_frame
+		if is_instance_valid(ui) and ui.dialogue_finished.is_connected(finished_callback):
+			ui.dialogue_finished.disconnect(finished_callback)
 		if is_instance_valid(facing_visual): facing_visual.remove_meta("face_camera")
-		_fps_restore_dialogue_camera()
-	dialogue_busy = false
+		_fps_restore_dialogue_camera(expected)
+	if fps_dialogue_busy_generation == expected: dialogue_busy = false
 
-func _fps_frame_speaker(speaker: int) -> void:
-	if not entities.has(1) or not entities.has(speaker): return
-	_fps_restore_dialogue_camera()
-	if _fps_mother_dialogue_camera(speaker): return
-	var offset := _position2(speaker) - _position2(1)
-	if offset.length_squared() > 0.01:
-		fps_yaw = atan2(-offset.x, -offset.y)
-		var visual: Node3D = visuals.get(speaker)
-		var head_height := float(visual.get_meta("height", 1.8)) * 0.85 if is_instance_valid(visual) else EYE_HEIGHT
-		fps_pitch = clampf(atan2(head_height - EYE_HEIGHT - fps_jump_height, offset.length() * SCALE), -1.2, 1.2)
-		_sync_fps_camera()
+func _fps_dialogue_finished(_choice: int, expected_generation: int) -> void:
+	fps_dialogue_finished_generation = expected_generation
 
-func _fps_mother_dialogue_camera(speaker: int) -> bool:
-	# The first return-home conversation starts at the doorway while Mother is
-	# behind furniture. Find a real, unobstructed view inside this one room.
-	if bool(settings.get("reduced_motion", false)) or current_screen != 1 or str(entities[speaker].get("script", "")).to_lower() != "s1-h1-m" or int(vm.globals.get("story", 0)) != 2:
+func _fps_frame_speaker(speaker: int, safe: Rect2) -> bool:
+	if not entities.has(1) or not entities.has(speaker): return false
+	var visual: Node3D = visuals.get(speaker)
+	if not is_instance_valid(visual) or not visual.visible: return false
+	return _fps_frame_subject(visual, speaker, safe, false)
+
+func _fps_grief_dialogue_camera(context: Dictionary, safe: Rect2) -> bool:
+	if not GRIEF_CAMERA_EXPERIMENT: return false
+	if current_screen != 1 or str(context.get("script", "")).to_lower() != "s1-h1-s" or int(vm.globals.get("story", 0)) != 3:
 		return false
-	var target_visual: Node3D = visuals.get(speaker)
-	if not is_instance_valid(target_visual): return false
-	# A ray to her collider can still leave Mother hidden behind the table or the
-	# dialogue panel, so Story 2 always uses a tested in-room framing.
-	var target := target_visual.global_position + Vector3.UP * minf(EYE_HEIGHT, float(target_visual.get_meta("height", 1.8)) * 0.65)
-	# The room's north-west side has an open aisle. Test several positions rather
-	# than relying on a particular imported wall size or Mother's movement tick.
-	for source_offset in [Vector2(-64, 72), Vector2(-78, 20), Vector2(-40, 96), Vector2(-92, -28), Vector2(35, 90), Vector2(20, -70), Vector2(40, -60)]:
-		var source2: Vector2 = _position2(speaker) + source_offset
-		var source := Vector3((source2.x - 320.0) * SCALE, EYE_HEIGHT, (source2.y - 200.0) * SCALE)
-		if not _fps_camera_point_clear(source): continue
-		var query := PhysicsRayQueryParameters3D.create(source, target, 3)
-		var hit := get_world_3d().direct_space_state.intersect_ray(query)
-		if hit.is_empty(): continue
-		var collider: Object = hit.get("collider")
-		if collider == null or int(collider.get_meta("entity_id", 0)) != speaker: continue
-		fps_dialogue_restore_yaw = fps_yaw
-		fps_dialogue_restore_pitch = fps_pitch
-		fps_dialogue_camera_position = source
-		fps_dialogue_camera_active = true
-		var offset := target - source
-		fps_yaw = atan2(-offset.x, -offset.z)
-		fps_pitch = clampf(atan2(offset.y, Vector2(offset.x, offset.z).length()), -1.2, 1.2)
-		_sync_fps_camera()
-		return true
+	# The source script removes Mother at story 3. Her original editor location
+	# remains an honest anchor for this empty room; never synthesize an actor.
+	var anchor: Vector2 = Vector2.INF
+	for e in world.screens[str(current_screen)].get("sprites", []):
+		if int(e.get("index", -1)) == 26 and str(e.get("script", "")).to_lower() == "s1-h1-m":
+			anchor = Vector2(float(e.get("x", 0)), float(e.get("y", 0)))
+			break
+	if anchor == Vector2.INF: return false
+	var nearest: float = INF
+	var actor: int = 0
+	for id in visuals:
+		if int(id) == 1 or not entities.has(id): continue
+		var visual: Node3D = visuals[id]
+		if not is_instance_valid(visual) or not visual.visible or not bool(visual.get_meta("actor", false)): continue
+		# Vision 1 also has a static Mom/death art sprite (editor 34). It is
+		# scenery, not a living speaker or a substitute for removed editor 26.
+		var candidate: Dictionary = entities[int(id)]
+		if int(candidate.get("brain", 0)) == 0 or int(candidate.get("hitpoints", 0)) <= 0: continue
+		var distance: float = _position2(int(id)).distance_squared_to(anchor)
+		if distance < nearest:
+			nearest = distance
+			actor = int(id)
+	if actor != 0 and _fps_frame_subject(visuals[actor], actor, safe, true): return true
+	# The authored vision-1 Mom/death picture at editor 34 is the primary
+	# subject when no living actor speaks. It is already present in the source
+	# scene, near editor 26's now empty position.
+	for id in visuals:
+		if not entities.has(id) or int(entities[id].get("editor_num", -1)) != 34: continue
+		var death_art: Node3D = visuals[id]
+		if is_instance_valid(death_art) and death_art.visible:
+			return _fps_frame_subject(death_art, int(id), safe, true)
 	return false
 
-func _fps_grief_dialogue_camera(context: Dictionary) -> bool:
-	# S1-H1-S keeps Dink frozen in the original room while he grieves. The
-	# doorway view points into a wall, so hold a clear in-room view on the actual
-	# fireplace/flame model without changing Dink's source coordinates.
-	if bool(settings.get("reduced_motion", false)) or current_screen != 1:
+func _fps_frame_subject(visual: Node3D, subject: int, safe: Rect2, scene: bool) -> bool:
+	return _fps_frame_points(_fps_visible_points(visual, camera.global_position), subject, safe, scene)
+
+func _fps_frame_points(points: Array[Vector3], subject: int, safe: Rect2, scene: bool) -> bool:
+	if points.is_empty() or not safe.has_area() or not is_instance_valid(camera): return false
+	_fps_restore_dialogue_camera()
+	_fps_own_dialogue_camera()
+	var target: Vector3 = _fps_points_center(points)
+	var eye: Vector3 = camera.global_position
+	if scene and fps_dialogue_last_grief_screen == current_screen and fps_dialogue_last_grief_position != Vector3.INF:
+		if _fps_try_dialogue_position(fps_dialogue_last_grief_position, points, target, subject, safe, scene): return true
+	if _fps_try_dialogue_position(eye, points, target, subject, safe, scene): return true
+	if bool(settings.get("reduced_motion", false)):
+		_fps_restore_dialogue_camera()
 		return false
-	if str(context.get("script", "")).to_lower() != "s1-h1-s" or int(vm.globals.get("story", 0)) != 3:
+	var away: Vector2 = Vector2(eye.x - target.x, eye.z - target.z)
+	if away.length_squared() < 0.04:
+		away = Vector2(-camera.global_transform.basis.z.x, -camera.global_transform.basis.z.z)
+	if away.length_squared() < 0.04: away = Vector2.RIGHT
+	away = away.normalized()
+	# A lower bound comes from the art's world span and the camera FOV. The
+	# player's distance is unrelated: a doorway ray can be blocked while a
+	# closer room position is the best valid shot.
+	var start_distance: float = _fps_min_dialogue_distance(points, safe)
+	for scale in [1.0, 1.25, 1.5, 2.0, 2.5, 3.0, 4.0, 5.0]:
+		var distance: float = start_distance * float(scale)
+		for degrees in [0.0, -20.0, 20.0, -40.0, 40.0, -65.0, 65.0, -90.0, 90.0, 180.0]:
+			var direction: Vector2 = away.rotated(deg_to_rad(float(degrees)))
+			var source: Vector3 = Vector3(target.x + direction.x * distance, EYE_HEIGHT, target.z + direction.y * distance)
+			if _fps_try_dialogue_position(source, points, target, subject, safe, scene):
+				# Tighten the first valid distance with the same projection and
+				# collision tests. This keeps close conversations close.
+				var best: Vector3 = source
+				var near_distance: float = camera.near*2.0
+				var far_distance: float = distance
+				for step in 6:
+					var middle: float = (near_distance+far_distance)*0.5
+					var trial: Vector3 = Vector3(target.x+direction.x*middle, EYE_HEIGHT, target.z+direction.y*middle)
+					if _fps_try_dialogue_position(trial, points, target, subject, safe, scene):
+						best = trial
+						far_distance = middle
+					else: near_distance = middle
+				return _fps_try_dialogue_position(best, points, target, subject, safe, scene)
+	_fps_restore_dialogue_camera()
+	return false
+
+func _fps_min_dialogue_distance(points: Array[Vector3], safe: Rect2) -> float:
+	var low: Vector3 = points[0]
+	var high: Vector3 = points[0]
+	for point in points:
+		low = low.min(point)
+		high = high.max(point)
+	var viewport_size: Vector2 = get_viewport().get_visible_rect().size
+	var tan_v: float = tan(deg_to_rad(camera.fov)*0.5)
+	var tan_h: float = tan_v*viewport_size.x/viewport_size.y
+	var art_width: float = Vector2(high.x-low.x, high.z-low.z).length()
+	var art_height: float = high.y-low.y
+	var width_distance: float = art_width / maxf(0.01, 2.0*tan_h*safe.size.x/viewport_size.x)
+	var height_distance: float = art_height / maxf(0.01, 2.0*tan_v*safe.size.y/viewport_size.y)
+	return maxf(0.5, maxf(width_distance, height_distance)) + art_width*0.5 + camera.near
+
+func _fps_own_dialogue_camera() -> void:
+	if fps_dialogue_camera_owned: return
+	fps_dialogue_restore_yaw = fps_yaw
+	fps_dialogue_restore_pitch = fps_pitch
+	fps_dialogue_screen = current_screen
+	fps_dialogue_owner_generation = generation
+	fps_dialogue_camera_owned = true
+
+func _fps_try_dialogue_position(source: Vector3, points: Array[Vector3], target: Vector3, subject: int, safe: Rect2, scene: bool) -> bool:
+	if fps_dialogue_screen != current_screen: return _fps_reject_dialogue_position("map")
+	if not _fps_camera_point_clear(source): return _fps_reject_dialogue_position("room")
+	var flat: Vector2 = Vector2(target.x-source.x, target.z-source.z)
+	if flat.length_squared() < 0.04: return _fps_reject_dialogue_position("near")
+	fps_dialogue_camera_position = source
+	fps_dialogue_camera_active = true
+	fps_yaw = atan2(-flat.x, -flat.y)
+	var viewport_size: Vector2 = get_viewport().get_visible_rect().size
+	var fovy: float = deg_to_rad(camera.fov)
+	var focal: float = viewport_size.y / (2.0 * tan(fovy * 0.5))
+	var desired_up: float = atan2(viewport_size.y * 0.5 - safe.get_center().y, focal)
+	fps_pitch = clampf(atan2(target.y-source.y, flat.length()) - desired_up, -1.2, 1.2)
+	_sync_fps_camera()
+	if subject != 0 and entities.has(subject): _update_visual(subject)
+	var candidate_points: Array[Vector3] = points
+	if subject != 0 and visuals.has(subject): candidate_points = _fps_visible_points(visuals[subject], source)
+	var bounds: Rect2 = _fps_projected_bounds(candidate_points)
+	if not bounds.has_area() or not safe.encloses(bounds): return _fps_reject_dialogue_position("bounds")
+	if not _fps_subject_rays_clear(source, _fps_points_center(candidate_points), candidate_points, subject, scene): return _fps_reject_dialogue_position("rays")
+	if _fps_effect_in_front(candidate_points, source, subject): return _fps_reject_dialogue_position("effect")
+	fps_dialogue_subject = subject
+	if scene:
+		fps_dialogue_last_grief_position = source
+		fps_dialogue_last_grief_screen = current_screen
+	return true
+
+func _fps_reject_dialogue_position(reason: String) -> bool:
+	fps_dialogue_rejections[reason] = int(fps_dialogue_rejections.get(reason, 0)) + 1
+	return false
+
+func _fps_visible_points(node: Node3D, source: Vector3) -> Array[Vector3]:
+	var points: Array[Vector3] = []
+	if not is_instance_valid(node): return points
+	if node.has_meta("floor_art_rect"):
+		var floor_rect: Rect2 = node.get_meta("floor_art_rect")
+		for x in [floor_rect.position.x,floor_rect.end.x]:
+			for z in [floor_rect.position.y,floor_rect.end.y]:
+				points.append(node.global_transform*Vector3(float(x),0.0,float(z)))
+		return points
+	var nodes: Array[Node] = [node]
+	while not nodes.is_empty():
+		var child: Node = nodes.pop_back()
+		if child != node and (not child is Node3D or not (child as Node3D).visible): continue
+		if child is Sprite3D:
+			var sprite: Sprite3D = child as Sprite3D
+			if "shadow" in str(sprite.name).to_lower() or sprite.texture == null: continue
+			var texture_id: int = sprite.texture.get_instance_id()
+			if not fps_dialogue_used_rects.has(texture_id):
+				var image: Image = sprite.texture.get_image()
+				fps_dialogue_used_rects[texture_id] = image.get_used_rect() if image != null else Rect2i()
+			var used: Rect2i = fps_dialogue_used_rects[texture_id]
+			if used.has_area():
+				var width: float = float(sprite.texture.get_width())
+				var height: float = float(sprite.texture.get_height())
+				var width_scale: float = sprite.global_transform.basis.x.length()
+				var height_scale: float = sprite.global_transform.basis.y.length()
+				var right: Vector3 = sprite.global_transform.basis.x.normalized()
+				if sprite.billboard == BaseMaterial3D.BILLBOARD_FIXED_Y:
+					var toward: Vector2 = Vector2(source.x-sprite.global_position.x, source.z-sprite.global_position.z).normalized()
+					right = Vector3(toward.y, 0.0, -toward.x)
+				for x in [float(used.position.x), float(used.end.x)]:
+					for y in [float(used.position.y), float(used.end.y)]:
+						var horizontal: float = (float(x)-width*0.5+sprite.offset.x)*sprite.pixel_size*width_scale
+						var vertical: float = (height*0.5-float(y)+sprite.offset.y)*sprite.pixel_size*height_scale
+						points.append(sprite.global_position + right*horizontal + sprite.global_transform.basis.y.normalized()*vertical)
+			continue
+		if child is MeshInstance3D:
+			var mesh: MeshInstance3D = child as MeshInstance3D
+			var box: AABB = mesh.get_aabb()
+			for x in [box.position.x, box.end.x]:
+				for y in [box.position.y, box.end.y]:
+					for z in [box.position.z, box.end.z]: points.append(mesh.global_transform * Vector3(x,y,z))
+		for next in child.get_children():
+			if next is Node3D and str(next.name) not in ["HitBody", "ShadowTwin"]: nodes.append(next)
+	return points
+
+func _fps_points_center(points: Array[Vector3]) -> Vector3:
+	var low: Vector3 = points[0]
+	var high: Vector3 = points[0]
+	for point in points:
+		low = low.min(point)
+		high = high.max(point)
+	return (low+high)*0.5
+
+func _fps_projected_bounds(points: Array[Vector3]) -> Rect2:
+	if points.is_empty(): return Rect2()
+	var low: Vector2 = Vector2(INF, INF)
+	var high: Vector2 = Vector2(-INF, -INF)
+	for point in points:
+		var depth: float = -camera.global_transform.basis.z.dot(point-camera.global_position)
+		if camera.is_position_behind(point) or depth <= camera.near+0.01: return Rect2()
+		var projected: Vector2 = camera.unproject_position(point)
+		low = low.min(projected)
+		high = high.max(projected)
+	return Rect2(low, high-low)
+
+func _fps_subject_rays_clear(source: Vector3, target: Vector3, points: Array[Vector3], subject: int, scene: bool) -> bool:
+	var low_y: float = target.y
+	var high_y: float = target.y
+	for point in points:
+		low_y = minf(low_y, point.y)
+		high_y = maxf(high_y, point.y)
+	for height in [0.35, 0.75]:
+		var aim: Vector3 = Vector3(target.x, lerpf(low_y, high_y, float(height)), target.z)
+		var hit: Dictionary = get_world_3d().direct_space_state.intersect_ray(PhysicsRayQueryParameters3D.create(source, aim, 3))
+		if hit.is_empty(): continue
+		var collider: Object = hit.get("collider")
+		if subject != 0 and collider != null and int(collider.get_meta("entity_id", 0)) == subject: continue
+		var hit_position: Vector3 = hit.get("position", source)
+		# A floor-painted subject has no actor body; a ray ending on the actual
+		# floor at its target is clear, unlike a hit somewhere in front of it.
+		if scene and hit_position.distance_to(aim) <= camera.near: continue
 		return false
-	if fps_dialogue_camera_active: return true
-	var player := _position2(1)
-	# Prefer viewpoints behind Dink that include the hearth, then test alternate
-	# room positions against the real 3D collision scene. A fireplace has a
-	# collision body; source flame sprites intentionally do not, so their clear
-	# ray correctly ends with no collision.
-	var source2_candidates: Array[Vector2] = [player + Vector2(-72, -28), player + Vector2(72, -28), player + Vector2(-64, 36), player + Vector2(64, 36), player + Vector2(0, -72)]
-	var subjects: Array[int] = []
-	# The indoor hearth is the most meaningful subject. Only fall back to source
-	# fire sprites when that original fixture has no fireplace.
-	for key in ["fireplace", "flame"]:
-		for id in visuals:
-			var visual: Node3D = visuals[id]
-			if is_instance_valid(visual) and str(visual.get_meta("model_key", "")) == key:
-				subjects.append(int(id))
-	for subject in subjects:
-		var subject_visual: Node3D = visuals.get(subject)
-		var model_key := str(subject_visual.get_meta("model_key", ""))
-		var subject_height := float(subject_visual.get_meta("height", 1.8))
-		var target := subject_visual.global_position + Vector3.UP * minf(1.35, maxf(0.55, subject_height * 0.55))
-		var subject2 := _position2(subject)
-		var candidates := source2_candidates.duplicate()
-		candidates.append_array([subject2 + Vector2(-50, 42), subject2 + Vector2(50, 42), subject2 + Vector2(-50, -42), subject2 + Vector2(50, -42)])
-		for source2 in candidates:
-			var source := Vector3((source2.x - 320.0) * SCALE, EYE_HEIGHT, (source2.y - 200.0) * SCALE)
-			if not _fps_camera_point_clear(source): continue
-			var query := PhysicsRayQueryParameters3D.create(source, target, 3)
-			var hit := get_world_3d().direct_space_state.intersect_ray(query)
-			var reaches_subject := hit.is_empty() if model_key == "flame" else false
-			if model_key == "fireplace" and not hit.is_empty():
-				var collider: Object = hit.get("collider")
-				reaches_subject = collider != null and int(collider.get_meta("entity_id", 0)) == subject
-			if not reaches_subject: continue
-			fps_dialogue_restore_yaw = fps_yaw
-			fps_dialogue_restore_pitch = fps_pitch
-			fps_dialogue_camera_position = source
-			fps_dialogue_subject = subject
-			fps_dialogue_camera_active = true
-			var offset := target - source
-			fps_yaw = atan2(-offset.x, -offset.z)
-			fps_pitch = clampf(atan2(offset.y, Vector2(offset.x, offset.z).length()), -1.2, 1.2)
-			_sync_fps_camera()
-			return true
+	return true
+
+func _fps_effect_in_front(subject_points: Array[Vector3], source: Vector3, subject: int) -> bool:
+	var samples: Array[Vector3] = _fps_dialogue_subject_samples(subject_points, source, subject)
+	if samples.is_empty(): return true # no tested visible subject pixels; never certify a clear shot
+	for id in visuals:
+		if int(id) == subject: continue
+		var visual: Node3D = visuals[id]
+		if not is_instance_valid(visual) or not visual.visible: continue
+		if str(visual.get_meta("model_key", "")) not in ["flame", "effect"]: continue
+		if bool(visual.get_meta("ground_painted", false)): continue
+		var sprites: Array[Sprite3D] = _fps_dialogue_sprites(visual)
+		if sprites.is_empty():
+			if not _fps_visible_points(visual, source).is_empty(): return true # visible effect has no testable alpha plane
+			continue
+		for sprite in sprites:
+			if _fps_effect_sprite_blocks(sprite, source, samples): return true
+	return false
+
+# A painted source sprite is sampled at every visible texel center, transformed
+# through the exact floor rectangle used by the renderer. Standing sprites use
+# their current cleaned texture and billboard basis. Imported mesh subjects have
+# no alpha texture: their visible mesh-box corners and center are the bounded
+# geometric fallback, so the physical ray gate remains important for them.
+func _fps_dialogue_subject_samples(bounds: Array[Vector3], source: Vector3, subject: int) -> Array[Vector3]:
+	if subject == 0 or not visuals.has(subject): return _fps_mesh_subject_samples(bounds)
+	var visual: Node3D = visuals[subject]
+	if not is_instance_valid(visual): return []
+	if visual.has_meta("floor_art_rect"):
+		var path: String = str(visual.get_meta("floor_art_path", ""))
+		if path.is_empty() and entities.has(subject): path = fp_world.frame_path(entities[subject])
+		var image: Image = fp_world.sprite_image(path) if not path.is_empty() else null
+		if image == null: return []
+		var rect: Rect2 = visual.get_meta("floor_art_rect")
+		var floor_points: Array[Vector3] = []
+		var step_x: float = rect.size.x / maxf(1.0, float(image.get_width()))
+		var step_z: float = rect.size.y / maxf(1.0, float(image.get_height()))
+		for pixel in _fps_dialogue_opaque_pixels(image, "floor:"+path, 0.5):
+			var local: Vector3 = Vector3(rect.position.x + (float(pixel.x)+0.5)*step_x, 0.0,
+				rect.position.y + (float(pixel.y)+0.5)*step_z)
+			floor_points.append(visual.global_transform*local)
+		return floor_points
+	var sprite_points: Array[Vector3] = []
+	var sprites: Array[Sprite3D] = _fps_dialogue_sprites(visual)
+	for sprite in sprites:
+		var image: Image = _fps_dialogue_sprite_image(sprite)
+		if image == null: continue
+		var basis: Dictionary = _fps_dialogue_sprite_plane(sprite, source)
+		var right: Vector3 = basis["right"]
+		var up: Vector3 = basis["up"]
+		var display_size: Vector2 = basis["size"]
+		var region: Vector2 = basis["region"]
+		var pixel_width: float = float(basis["pixel_width"])
+		var pixel_height: float = float(basis["pixel_height"])
+		for pixel in _fps_dialogue_opaque_pixels(image, "texture:%d" % sprite.texture.get_instance_id(), _fps_dialogue_alpha_threshold(sprite)):
+			var u: float = float(pixel.x)-region.x
+			var v: float = float(pixel.y)-region.y
+			if u < 0.0 or u >= display_size.x or v < 0.0 or v >= display_size.y: continue
+			if sprite.flip_h: u = display_size.x-1.0-u
+			if sprite.flip_v: v = display_size.y-1.0-v
+			var horizontal: float = (u+0.5-display_size.x*0.5+sprite.offset.x)*pixel_width
+			var vertical: float = (display_size.y*0.5-(v+0.5)+sprite.offset.y)*pixel_height
+			sprite_points.append(sprite.global_position+right*horizontal+up*vertical)
+	if not sprites.is_empty(): return sprite_points
+	return _fps_mesh_subject_samples(bounds)
+
+func _fps_mesh_subject_samples(bounds: Array[Vector3]) -> Array[Vector3]:
+	var samples: Array[Vector3] = bounds.duplicate()
+	if not bounds.is_empty(): samples.append(_fps_points_center(bounds))
+	return samples
+
+func _fps_dialogue_sprites(node: Node3D) -> Array[Sprite3D]:
+	var sprites: Array[Sprite3D] = []
+	var pending: Array[Node] = [node]
+	while not pending.is_empty():
+		var current: Node = pending.pop_back()
+		if current != node and current is Node3D and not (current as Node3D).visible: continue
+		if current is Sprite3D and str(current.name) != "ShadowTwin": sprites.append(current as Sprite3D)
+		for child in current.get_children(): pending.append(child)
+	return sprites
+
+func _fps_dialogue_sprite_image(sprite: Sprite3D) -> Image:
+	if sprite.texture == null: return null
+	var key: int = sprite.texture.get_instance_id()
+	if not fps_dialogue_alpha_images.has(key): fps_dialogue_alpha_images[key] = sprite.texture.get_image()
+	return fps_dialogue_alpha_images[key]
+
+func _fps_dialogue_alpha_threshold(sprite: Sprite3D) -> float:
+	return sprite.alpha_scissor_threshold if sprite.alpha_cut == SpriteBase3D.ALPHA_CUT_DISCARD else 0.0
+
+func _fps_dialogue_opaque_pixels(image: Image, key: String, threshold: float) -> Array[Vector2i]:
+	var signature: String = "%s:%.5f" % [key, threshold]
+	if fps_dialogue_opaque_pixels.has(signature): return fps_dialogue_opaque_pixels[signature]
+	var pixels: Array[Vector2i] = []
+	for y in image.get_height():
+		for x in image.get_width():
+			if image.get_pixel(x,y).a > threshold: pixels.append(Vector2i(x,y))
+	fps_dialogue_opaque_pixels[signature] = pixels
+	return pixels
+
+func _fps_dialogue_sprite_plane(sprite: Sprite3D, source: Vector3) -> Dictionary:
+	var right: Vector3 = sprite.global_transform.basis.x.normalized()
+	var up: Vector3 = sprite.global_transform.basis.y.normalized()
+	if sprite.billboard == BaseMaterial3D.BILLBOARD_FIXED_Y:
+		var toward: Vector2 = Vector2(source.x-sprite.global_position.x, source.z-sprite.global_position.z).normalized()
+		right = Vector3(toward.y,0.0,-toward.x)
+	elif sprite.billboard == BaseMaterial3D.BILLBOARD_ENABLED:
+		right = camera.global_transform.basis.x.normalized()
+		up = camera.global_transform.basis.y.normalized()
+	var display_size: Vector2 = sprite.region_rect.size if sprite.region_enabled else Vector2(sprite.texture.get_size())
+	var region: Vector2 = sprite.region_rect.position if sprite.region_enabled else Vector2.ZERO
+	return {"right":right,"up":up,"size":display_size,"region":region,
+		"pixel_width":sprite.pixel_size*sprite.global_transform.basis.x.length(),
+		"pixel_height":sprite.pixel_size*sprite.global_transform.basis.y.length()}
+
+func _fps_effect_sprite_blocks(sprite: Sprite3D, source: Vector3, subject_samples: Array[Vector3]) -> bool:
+	var image: Image = _fps_dialogue_sprite_image(sprite)
+	if image == null: return false
+	var plane: Dictionary = _fps_dialogue_sprite_plane(sprite, source)
+	var right: Vector3 = plane["right"]
+	var up: Vector3 = plane["up"]
+	var normal: Vector3 = right.cross(up)
+	var display_size: Vector2 = plane["size"]
+	var region: Vector2 = plane["region"]
+	var pixel_width: float = float(plane["pixel_width"])
+	var pixel_height: float = float(plane["pixel_height"])
+	if normal.length_squared() < 0.000001 or pixel_width <= 0.0 or pixel_height <= 0.0: return false
+	var threshold: float = _fps_dialogue_alpha_threshold(sprite)
+	for target in subject_samples:
+		var ray: Vector3 = target-source
+		var denominator: float = normal.dot(ray)
+		if absf(denominator) < 0.000001: continue
+		var fraction: float = normal.dot(sprite.global_position-source)/denominator
+		if fraction <= 0.000001 or fraction >= 0.999999: continue
+		var intersection: Vector3 = source+ray*fraction
+		var depth: float = -camera.global_transform.basis.z.dot(intersection-source)
+		if depth <= camera.near: continue # clipped geometry cannot hide the subject
+		var local: Vector3 = intersection-sprite.global_position
+		var u: float = local.dot(right)/pixel_width + display_size.x*0.5 - sprite.offset.x
+		var v: float = display_size.y*0.5 + sprite.offset.y - local.dot(up)/pixel_height
+		if u < 0.0 or u >= display_size.x or v < 0.0 or v >= display_size.y: continue
+		var pixel_x: int = int(floor(display_size.x-1.0-u)) if sprite.flip_h else int(floor(u))
+		var pixel_y: int = int(floor(display_size.y-1.0-v)) if sprite.flip_v else int(floor(v))
+		pixel_x += int(region.x)
+		pixel_y += int(region.y)
+		if pixel_x < 0 or pixel_x >= image.get_width() or pixel_y < 0 or pixel_y >= image.get_height(): continue
+		if image.get_pixel(pixel_x,pixel_y).a > threshold: return true
 	return false
 
 func _fps_camera_point_clear(point: Vector3) -> bool:
+	var source := Vector2(point.x / SCALE + 320.0, point.z / SCALE + 200.0)
+	if source.x < 20.0 or source.x >= 620.0 or source.y < 0.0 or source.y >= 400.0: return false
+	if _tile_blocked(source): return false
 	var query := PhysicsPointQueryParameters3D.new()
 	query.position = point
 	query.collision_mask = 3
 	return get_world_3d().direct_space_state.intersect_point(query, 1).is_empty()
 
-func _fps_restore_dialogue_camera() -> void:
-	if not fps_dialogue_camera_active: return
+func _fps_restore_dialogue_camera(expected_generation: int = -1) -> void:
+	if not fps_dialogue_camera_owned: return
+	if expected_generation != -1 and expected_generation != fps_dialogue_owner_generation: return
+	fps_dialogue_camera_owned = false
 	fps_dialogue_camera_active = false
 	fps_dialogue_subject = 0
+	fps_dialogue_screen = -1
+	fps_dialogue_owner_generation = -1
 	fps_yaw = fps_dialogue_restore_yaw
 	fps_pitch = fps_dialogue_restore_pitch
 	_sync_fps_camera()
