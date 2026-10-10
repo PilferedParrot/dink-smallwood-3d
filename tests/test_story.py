@@ -105,7 +105,7 @@ def test_installed_campaign_compiles_without_unsupported_code():
     assert '2become1' not in spice['scripts']['spice']['procedures']
 
 
-def test_dink_vm_regressions():
+def test_dink_vm_regressions(tmp_path):
     root = Path(__file__).parents[1]
     candidates = [
         os.environ.get('GODOT'),
@@ -117,8 +117,9 @@ def test_dink_vm_regressions():
     if godot is None:
         return
     completed = subprocess.run(
-        [godot, '--headless', '--path', str(root / 'game'), '--script', str(root / 'tests' / 'vm_test.gd')],
+        [godot, '--headless', '--audio-driver', 'Dummy', '--path', str(root / 'game'), '--script', str(root / 'tests' / 'vm_test.gd')],
         cwd=root,
+        env=dict(os.environ, XDG_DATA_HOME=str(tmp_path/'data'), XDG_CONFIG_HOME=str(tmp_path/'config'), XDG_CACHE_HOME=str(tmp_path/'cache')),
         text=True,
         capture_output=True,
         timeout=30,

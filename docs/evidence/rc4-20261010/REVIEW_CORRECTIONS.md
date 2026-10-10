@@ -34,3 +34,36 @@ all-effect/union extension is unexecuted; do not report it as a successful check
 Earlier evidence remains in `tmp/grief-ray-diagnosis.log`,
 `tmp/grief-alpha-diagnosis.log`, and the failed rendered frame under
 `tmp/grief-review-source`. Normal gameplay never enables the grief experiment.
+
+## Verification fixture migrations
+
+The first full run completed169passed/4failed in1222.69s. Its four failures
+were outdated harness expectations, not discarded assertions:
+
+- Map response expected a toast; de5015d presents original nonblocking `say` in
+  the shared card. The migrated test requires the exact original line, Dink
+  identity, nonmodal/no-Continue semantics and retains all ownership/menu/input
+  checks.
+- Mother camera was checked after one frame; de5015d measures three layout frames.
+  A bounded revealed-card wait retains physical rays, distinct temporary eye,
+  unchanged player coordinates and exact camera restoration/cancellation checks.
+- The pigpen check assumed immediate fence contact after crossing. f98c39d keeps
+  continuous position and remaining distance. Actual W approaches the fence;
+  further north must still move less than0.01px and remain on407. Back/strafe,
+  unchanged save/load and absence of landing recovery checks remain.
+- Opening route called `_transitions()` without origin, incompatible with
+  4fd2b4f's outward-only portal and9ffd2bc's fitted coordinates. The route now drives
+  actual keys toward the source-derived live portal, retaining earned feed and
+  actual439exit assertions. Its first driver attempt failed at a prop corner:
+  it retried one obstructed axis. The corrected driver measures input resolution,
+  uses the square-lattice nearest-point bound for waypoints and tries the other
+  needed axis; source collision is never bypassed. The corrected route passed in
+  12.61s.
+
+The affected group passed7/8 initially, then the corrected route passed separately.
+Four older wrappers now set isolated XDG paths and Dummy audio explicitly. The
+early adventure test had temporarily written/removed its named diagnostic save
+in the default profile; player save slots/settings were not its targets. We had
+relied on existing harness isolation without auditing every wrapper. Both causes
+and the corrected per-test containment are recorded rather than claiming those
+first checks were fully isolated.

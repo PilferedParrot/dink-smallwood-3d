@@ -13,10 +13,12 @@ GODOT = os.environ.get("GODOT") or shutil.which("godot") or shutil.which("godot4
 pytestmark = pytest.mark.skipif(not Path(GODOT).is_file(), reason="Godot unavailable; set GODOT")
 
 
-def test_first_person_renderer_traverses_all_imported_screens():
+def test_first_person_renderer_traverses_all_imported_screens(tmp_path):
+    env = dict(os.environ, XDG_DATA_HOME=str(tmp_path/'data'), XDG_CONFIG_HOME=str(tmp_path/'config'), XDG_CACHE_HOME=str(tmp_path/'cache'))
     result = subprocess.run(
-        [str(GODOT), "--headless", "--path", "game", "--script", str(ROOT / "tests/fps_world_test.gd")],
+        [str(GODOT), "--headless", "--audio-driver", "Dummy", "--path", "game", "--script", str(ROOT / "tests/fps_world_test.gd")],
         cwd=ROOT,
+        env=env,
         capture_output=True,
         text=True,
         timeout=180,

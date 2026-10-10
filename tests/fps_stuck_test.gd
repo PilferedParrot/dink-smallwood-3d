@@ -39,10 +39,13 @@ func _run() -> void:
 	# A normal adjacent landing remains held by the intentional north fence while
 	# retaining back and strafe movement.
 	await _enter_pig_farm(320)
+	# Continuous crossing preserves remaining distance; reaching the new screen
+	# does not place Dink directly against its fence. Approach it through input.
+	await _hold(KEY_W,32)
 	var fence_pos: Vector2 = game._position2(1)
 	var north_before: Vector2 = fence_pos
 	await _hold(KEY_W,4)
-	check(game._position2(1).distance_to(north_before) < 0.01, "Pigpen fence still blocks north movement")
+	check(game.current_screen == 407 and game._position2(1).distance_to(north_before) < 0.01, "Pigpen fence still blocks north movement after approach: %s -> %s" % [north_before,game._position2(1)])
 	for key in [KEY_S,KEY_A,KEY_D]:
 		game.entities[1]["x"] = fence_pos.x; game.entities[1]["y"] = fence_pos.y; game._sync_fps_camera()
 		var before: Vector2 = game._position2(1)
@@ -75,9 +78,11 @@ func _enter_pig_farm(x: float) -> void:
 func _hold(key: int, frames: int) -> void:
 	var down := InputEventKey.new(); down.physical_keycode = key; down.pressed = true
 	Input.parse_input_event(down)
+	Input.flush_buffered_events()
 	for _i in frames: await physics_frame
 	var up := InputEventKey.new(); up.physical_keycode = key; up.pressed = false
 	Input.parse_input_event(up)
+	Input.flush_buffered_events()
 	await physics_frame
 
 func check(condition: bool, message: String) -> void:

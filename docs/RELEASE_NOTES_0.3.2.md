@@ -26,6 +26,8 @@ from the selected slot. Reports identify this candidate as 0.3.2.
   mappings remain work in progress. Broken-barrel debris remains flat art.
 - Reduced-motion dialogue keeps the eye position; some obstructed speakers may
   have no complete view above the card from that position.
+- Timed speech leaves gameplay running, but its bottom card can cover the upper
+  status bar until the line expires.
 - F9 replay begins from the reported final state and does not reconstruct pending
   scripts or rewind the previous ten seconds.
 

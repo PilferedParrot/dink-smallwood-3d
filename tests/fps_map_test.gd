@@ -43,7 +43,10 @@ func _run() -> void:
 	# Explicit ownership fixture: input still runs the original BUTTON6 script.
 	game.vm.globals["s2-map"] = 0
 	await key(KEY_M)
-	check(not game.ui.modal and game.ui.toast.text == "I don't own a map yet.", "M before the invitation uses the original missing-map response")
+	var missing_map_line := false
+	for child in game.ui.column.get_children():
+		if child is Label and child.text == "I don't own a map yet.": missing_map_line = true
+	check(not game.ui.modal and game.ui.heading.text == "Dink" and missing_map_line and not game.ui.dialogue_continue.visible, "M before the invitation uses the original nonblocking missing-map response in the shared speech card")
 	game.vm.globals["s2-map"] = 1
 	game.entities[1]["frozen"] = true
 	await key(KEY_M)

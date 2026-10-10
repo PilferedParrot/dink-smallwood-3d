@@ -50,7 +50,7 @@ func _run() -> void:
 		var player_camera: Vector3 = game.camera.position
 		game.test_mode = false
 		game._dialogue("some AlkTree nuts, I think they're in season.", mother, {"sprite_id":mother})
-		await process_frame
+		await _revealed_line()
 		check(game.fps_dialogue_camera_active, "Blocked Story 2 Mother line uses a temporary clear room camera")
 		check(not game.camera.position.is_equal_approx(player_camera), "Temporary Mother camera does not move Dink's player camera position")
 		var dialogue_camera: Vector3 = game.camera.position
@@ -73,7 +73,7 @@ func _run() -> void:
 		game._update_visual(mother)
 		game._sync_fps_camera()
 		game._dialogue("Mother checks the original room position.", mother, {"sprite_id":mother})
-		await process_frame
+		await _revealed_line()
 		check(game.fps_dialogue_camera_active, "Original Mother x=202 placement uses a temporary clear camera")
 		check(game._fps_ray_reaches(mother), "Original Mother x=202 temporary camera has a physical ray")
 		if not capture_path.is_empty():
@@ -90,7 +90,7 @@ func _run() -> void:
 		# A transition to title/reset runs no world physics, so that early exit
 		# must release a temporary viewpoint even if UI cancellation is silent.
 		game._dialogue("Mother checks the map transition.", mother, {"sprite_id":mother})
-		await process_frame
+		await _revealed_line()
 		check(game.fps_dialogue_camera_active, "Second Mother line starts a temporary camera before title/reset")
 		game.playing = false
 		game._physics_process(0.016)
@@ -101,7 +101,7 @@ func _run() -> void:
 		game.playing = true
 		# Map teardown must likewise never leave a detached cinematic camera active.
 		game._dialogue("Mother checks the map transition.", mother, {"sprite_id":mother})
-		await process_frame
+		await _revealed_line()
 		check(game.fps_dialogue_camera_active, "Third Mother line starts a temporary camera before map cancellation")
 		game.load_map(439, false)
 		await process_frame
@@ -112,3 +112,9 @@ func _run() -> void:
 	game.queue_free()
 	await process_frame
 	quit(0 if failures.is_empty() else 1)
+
+func _revealed_line() -> void:
+	for i in 12:
+		await process_frame
+		if game.ui.page == "dialogue" and game.ui.panel.visible: return
+	check(false,"Mother line reveals its measured card before camera assertions")
