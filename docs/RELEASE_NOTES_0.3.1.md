@@ -18,7 +18,7 @@ who played it.
   contrast is much higher, sliders show their values, toggles say On or Off, and the
   control hints fade after first use (F1 shows them again).
 - **North-south bridges have standing railings**, and the drawbridge chains are iron links.
-- **Fixes**: walking east from Dink's yard area (screen 376 into 377) no longer traps you
+- **Fixes**: walking east from screen 376 into 377 near its south edge no longer traps you
   against a tree; grain bags by the inn no longer merge into one shape; the round table
   is round; a chimney no longer disappears into the wall.
 
