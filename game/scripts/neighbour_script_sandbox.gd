@@ -114,7 +114,7 @@ func _create(args: Array) -> int:
 	_created_count += 1
 	var brain := int(args[2]) if args.size() > 2 else 0
 	var seq := int(args[3]) if args.size() > 3 else 0
-	entities[id] = {"x": float(args[0]) if args.size() > 0 else 0.0, "y": float(args[1]) if args.size() > 1 else 0.0, "brain": brain, "pseq": seq, "pframe": int(args[4]) if args.size() > 4 else 1, "seq": seq if brain in [5, 6, 7] else 0, "frame": 1, "active": 1, "hard": 1, "size": 100, "speed": 1, "dir": 2, "anim_time": 0.0, "script": "", "editor_num": 0, "_arrival_id": "created:%d" % _created_count}
+	entities[id] = {"x": float(args[0]) if args.size() > 0 else 0.0, "y": float(args[1]) if args.size() > 1 else 0.0, "brain": brain, "pseq": seq, "pframe": int(args[4]) if args.size() > 4 else 1, "seq": seq if brain in [5, 6, 7] else 0, "frame": 1, "active": 1, "hard": 1, "size": 100, "speed": 1, "dir": 2, "anim_time": 0.0, "script": "", "editor_num": 0, "runtime_created": true, "_arrival_id": "created:%d" % _created_count}
 	return id
 
 func dink_call(command: String, args: Array, context: Dictionary) -> Variant:

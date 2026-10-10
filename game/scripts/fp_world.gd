@@ -259,7 +259,10 @@ func stack_rows(path: String) -> Array:
 	return out
 
 func static_scenery(e: Dictionary) -> bool:
-	return int(e.get("type",1)) == 1 and str(e.get("script","")).is_empty() and int(e.get("brain",0)) == 0 and absf(float(e.get("size",100))-100.0) < 0.5
+	# create_sprite builds its visual before sp_script attaches behavior. Such
+	# an actor can start beyond the screen and walk in; it is never an editor
+	# seam copy whose pixels may be discarded permanently at construction.
+	return not e.get("runtime_created",false) and int(e.get("type",1)) == 1 and str(e.get("script","")).is_empty() and int(e.get("brain",0)) == 0 and absf(float(e.get("size",100))-100.0) < 0.5
 
 # [[row0 or -1 if the art is one part, row1, foot row, shown], ...] for e on screen n (seam_parts' comment above).
 func seam_parts(e: Dictionary, n: int) -> Array:

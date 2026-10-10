@@ -1105,7 +1105,7 @@ func dink_call(command: String, args: Array, context: Dictionary) -> Variant:
 		"create_sprite":
 			var id := next_entity
 			next_entity += 1
-			entities[id] = {"x":float(a),"y":float(b),"brain":int(c),"pseq":int(d),"pframe":int(args[4]) if args.size()>4 else 1,"seq":0,"frame":1,"active":1,"hard":1,"size":100,"speed":1,"dir":2,"anim_time":0.0,"script":"","editor_num":0}
+			entities[id] = {"x":float(a),"y":float(b),"brain":int(c),"pseq":int(d),"pframe":int(args[4]) if args.size()>4 else 1,"seq":0,"frame":1,"active":1,"hard":1,"size":100,"speed":1,"dir":2,"anim_time":0.0,"script":"","editor_num":0,"runtime_created":true}
 			if int(c) in [5,6,7]: entities[id]["seq"] = int(d)
 			_create_visual(id)
 			return id
