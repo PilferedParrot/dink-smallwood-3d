@@ -1848,8 +1848,8 @@ is on2c14740; it excludes these row8 changes.
 
 ## RC2: the review round's fixes — October 8 (Opus 5.5 lead; Sonnet 5.5 units; GPT-6.1 Sol units)
 
-A blind four-lens review of RC1 (`/home/chris/dink-review-rc1/review/FINDINGS.md`: 97 findings, none blocking play) and
-GPT-6.1 Sol's 570-screen original-camera probe (`/home/chris/dink-row6-sol-20261008/docs/evidence/rc1-gate-20261008/`) found
+A blind four-lens review of RC1 (97 findings, none blocking play; its files are kept locally, not in this repository) and
+GPT-6.1 Sol's 570-screen original-camera probe (kept locally) found
 what RC2 fixes:
 - **The round table is round:** its ground circle was built at the picture's foreshortened depth; the vertices now stand at
   true ground depth (depth = width) on legs square on the ground (Sonnet unit, `interior_solids.gd` MB.zk).
