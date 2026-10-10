@@ -552,8 +552,48 @@ func _fps_attack() -> void:
 		_fps_launch_projectile(false)
 		return
 	if weapon not in ["item-fst", "item-sw1", "item-sw2", "item-sw3"]: return
-	var victim := _fps_aim_target(28.0 if weapon == "item-fst" else 43.0, 0.60)
+	var victim := _fps_melee_target()
 	if victim != 0: _fps_projectile_hit(victim, 1, maxi(1, int(vm.globals.get("strength", 3))))
+
+# FreeDink run_through_tag_list expands the TARGET frame's hardbox, then
+# tests the attacker's position. 28 was its lateral extension, never a
+# center-to-center radius. Keep FPS aim and visibility while using that reach.
+func _fps_melee_hit_rect(target: Dictionary, direction: int, attack_range: int) -> Rect2:
+	var box := _hard_rect(target)
+	var left := box.position.x-5.0
+	var right := box.end.x+5.0
+	var top := box.position.y-5.0
+	var bottom := box.end.y+10.0
+	var amount := 28 if attack_range == 0 else attack_range
+	var amount_y := 36 if attack_range == 0 else attack_range+int(attack_range/6)
+	var side := 10+int(attack_range/8)
+	match direction:
+		6: left -= amount; top -= side; bottom += side
+		4: right += amount; top -= side; bottom += side
+		2: top -= amount_y; left -= side; right += side
+		8: bottom += amount_y; left -= 10; right += 10
+	return Rect2(Vector2(left,top),Vector2(right-left,bottom-top))
+
+func _fps_melee_target() -> int:
+	var player: Dictionary = entities[1]
+	var origin := _position2(1)
+	var fwd3 := -camera.global_transform.basis.z
+	var forward := Vector2(fwd3.x,fwd3.z).normalized()
+	var direction := _cardinal(int(player.get("dir",2)))
+	var attack_range := maxi(0,int(player.get("range",0)))
+	var best := 0
+	var nearest := INF
+	for id in entities:
+		if int(id) == 1 or not _fps_targetable(int(id),origin): continue
+		var offset := _position2(int(id))-origin
+		if offset.length_squared() < 0.0001 or offset.normalized().dot(forward) < 0.60: continue
+		var hit_box := _fps_melee_hit_rect(entities[id],direction,attack_range)
+		if origin.x < hit_box.position.x or origin.x > hit_box.end.x or origin.y < hit_box.position.y or origin.y > hit_box.end.y: continue
+		if offset.length_squared() < nearest and _fps_ray_reaches(int(id)):
+			nearest = offset.length_squared()
+			best = int(id)
+	return best
+
 
 func _dialogue(text: String, speaker: int, context: Dictionary) -> void:
 	var expected := generation

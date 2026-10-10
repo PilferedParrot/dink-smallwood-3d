@@ -12,8 +12,8 @@ Tests:
   - the map's chains agree with the reading of which rows are depth: on screen 731 the island's column starts at the top
     fence's post, on 407 the column's first post stands on the corner piece's.
   - sweep (headless: screens 407, 439 and 441 loaded as the game loads them, the island's 731 at story layer 1): every
-    fence entity stands as a solid fence, no card, no entity keeps a Sprite3D; the ray body is on the source's hardbox, as it
-    was, and absent on the hard=1 openings; no two posts of a scene stand within 6 px (a chain's shared post is one post); every
+    fence entity stands as a solid fence, no card, no entity keeps a Sprite3D; the ray body uses the fitted triangles
+    and is absent on the hard=1 openings; no two posts of a scene stand within 6 px (a chain's shared post is one post); every
     post is the module's size and height; the rails meet posts (the bars' ends not on a post are the free ends and clipped ends).
   - render (xvfb, Dummy audio, no Wayland: never the desktop): 407's north fence seen from its own axis is not a sliver: its own
     pixels (entity hidden against shown, shadows off) are hundreds where a fixed card gives next to none; the same fence seen from
@@ -203,7 +203,7 @@ def swept(tmp_path_factory):
 
 
 @godot_needed
-def test_every_fence_entity_stands_solid_with_the_source_body_and_no_card(swept):
+def test_every_fence_entity_stands_solid_with_a_fitted_ray_body_and_no_card(swept):
     seen = collections.Counter()
     for fence, posts, bars in swept:
         assert fence, "the sweep saw no fence"
@@ -219,10 +219,10 @@ def test_every_fence_entity_stands_solid_with_the_source_body_and_no_card(swept)
             if int(f["hard"]) != 0:
                 assert f["hit"] == "none", f  # a hard=1 piece is an opening: no body, as it was
             else:
-                layer, size = f["hit"].split("/")
-                sx, sz = (float(v) for v in size.split(","))
+                layer, shape = f["hit"].split("/")
                 bx, bz = (float(v) for v in f["box"].split(","))
-                assert layer == "1" and abs(sx - bx) < 0.01 and abs(sz - bz) < 0.01, f  # on the source's hardbox
+                assert layer == "1" and shape.startswith("mesh:") and int(shape[5:]) > 0, f
+                assert bx >= 0.2 and bz >= 0.2, f  # source movement hardbox is still present
     assert {"fence-01.png", "fence-04.png", "fence-02.png", "fence-03.png", "fence-05.png", "fence-06.png", "isle-07.png", "isle-08.png"} <= set(seen), seen
 
 

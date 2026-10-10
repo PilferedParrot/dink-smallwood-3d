@@ -3,7 +3,7 @@ extends SceneTree
 # tests/test_fps_fences.py (all through fp_world.gd and scripts/fence_solid.gd as the game builds a scene):
 #
 #   --sweep   (headless) the scenes in --screens=a,b,c (with --vision=N for the story layer) loaded as the game loads them:
-#             "FENCE screen index file kind=solid|card|none hit=layer/shapes|none": every entity of a fence art (lands/Fence,
+#             "FENCE screen index file kind=solid|card|none hit=layer/mesh:triangles|none": every entity of a fence art (lands/Fence,
 #             isle-07, isle-08), what stands for it. "POST world_x world_z w d h": every post box built in the scene
 #             (world px of its centre, its extent in px), read from the Posts meshes' vertices (36 per box); "BAR ax az bx bz":
 #             the end centres of every bar (world px), from the Rails meshes (36 vertices per box: the last two faces are its ends).
@@ -111,8 +111,11 @@ func _sweep(number: int, vision: int) -> void:
 		var body := node.get_node_or_null("HitBody")
 		var hit := "none"
 		if body is StaticBody3D:
-			var box: BoxShape3D = ((body as StaticBody3D).get_child(0) as CollisionShape3D).shape as BoxShape3D
-			hit = "%d/%.3f,%.3f" % [(body as StaticBody3D).collision_layer, box.size.x, box.size.z]
+			var shape: Shape3D = ((body as StaticBody3D).get_child(0) as CollisionShape3D).shape
+			if shape is ConcavePolygonShape3D:
+				hit = "%d/mesh:%d" % [(body as StaticBody3D).collision_layer, int((shape as ConcavePolygonShape3D).get_faces().size() / 3)]
+			else:
+				hit = "%d/%s" % [(body as StaticBody3D).collision_layer, shape.get_class()]
 		var rect: Rect2 = fw.hard_rect(e)
 		var why := "-"
 		if node.has_meta("seam_hidden"): why = "seam"

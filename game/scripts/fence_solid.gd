@@ -14,7 +14,7 @@ extends RefCounted
 # rails that meet it end on it: the registry below holds the posts of the scene, by where they stand in the world. Where two
 # bars lie along one line at one height (one segment on two screens, two column pieces the map overlaps) the part already
 # standing is not built again. The rope ties at the joints are boxes a little wider than the post (the "Ties" mesh). The
-# collision is the source's (game.gd): the body on the hardbox this keeps is only for rays, as the card it replaces had.
+# collision is the source's (game.gd): the body on the fitted mesh is only for rays.
 const SCALE := 0.025
 const MERGE := 6.0 # px: posts this close in the world are one post (a chain's segments stand 1-5 px apart; posts of one fence stand 35 or more apart)
 
@@ -211,7 +211,7 @@ func _uncovered(a: Vector2, b: Vector2, ha: float, hb: float, u0: float, u1: flo
 	if u1*length > at+4.0: out.append([at/length,u1])
 	return out
 
-# Stand the fence of entity e (screen `screen`) in `node`: its posts and bars, and the body for rays on its hardbox. Returns
+# Stand the fence of entity e (screen `screen`) in `node`: its posts and bars, and the body for rays on those parts. Returns
 # false when there is nothing to stand (the caller keeps its card).
 func add(node: Node3D, e: Dictionary, id: int, key: String, collision: bool, screen: int) -> bool:
 	var path: String = world.frame_path(e)
@@ -328,10 +328,14 @@ func add(node: Node3D, e: Dictionary, id: int, key: String, collision: bool, scr
 				var uvc := _corners_rail_span(aa,ab,ha,hb,td,th,s0,s1)
 				_box(tool_rails,geo,uvc)
 				spans += 1
+	var ray_faces := PackedVector3Array()
 	for pair in [[tool_posts,"Posts",built],[tool_rails,"Rails",spans],[tool_ties,"Ties",ties]]:
 		if int(pair[2]) == 0: continue
 		var tool: SurfaceTool = pair[0]
 		var mesh := tool.commit()
+		# The same node-local triangles draw the part and stop rays. This includes clipped
+		# spans, merged posts, rail overhangs and ties without a second geometry fit.
+		ray_faces.append_array(mesh.get_faces())
 		var instance := MeshInstance3D.new()
 		instance.name = str(pair[1])
 		instance.mesh = mesh
@@ -344,7 +348,7 @@ func add(node: Node3D, e: Dictionary, id: int, key: String, collision: bool, scr
 	node.set_meta("solid_fence",true)
 	holder.set_meta("posts_built",built)
 	holder.set_meta("bars_built",spans)
-	_hit_body(node,e,id,key,collision,height)
+	_hit_body(node,e,id,key,collision,ray_faces)
 	return true
 
 # The heights of the joints on post i: the bottoms of the rails that end on it, rails within 4.5 px of height one joint
@@ -396,21 +400,20 @@ func _scaled(corners: Array, hot: Vector2, f: float) -> Array:
 		out.append(Vector3((q.x-hot.x)*SCALE*f,q.y*SCALE*f,(q.z-hot.y)*SCALE*f))
 	return out
 
-# The body rays hit (aim, projectiles): on the source's hardbox, as the card's was (fp_world add_billboard).
-func _hit_body(node: Node3D, e: Dictionary, id: int, key: String, collision: bool, height: float) -> void:
+# The body rays hit (aim, projectiles): exactly the visible fitted triangles.
+# Source hardboxes continue to control walking in game.gd.
+func _hit_body(node: Node3D, e: Dictionary, id: int, key: String, collision: bool, faces: PackedVector3Array) -> void:
 	var passable := key == "fence" and int(e.get("hard",0)) != 0
-	if not collision or passable or e.get("warp") != null: return
+	if not collision or passable or e.get("warp") != null or faces.is_empty(): return
 	var body := StaticBody3D.new()
 	body.name = "HitBody"
 	body.set_meta("entity_id",id)
 	body.collision_layer = 2 if not str(e.get("script","")).is_empty() else 1
 	body.collision_mask = 0
 	var shape := CollisionShape3D.new()
-	var box := BoxShape3D.new()
-	var rect: Rect2 = world.hard_rect(e)
-	box.size = Vector3(maxf(0.2,rect.size.x*SCALE),height,maxf(0.2,rect.size.y*SCALE))
-	shape.position = world.point(rect.get_center().x,rect.get_center().y)-node.position
-	shape.position.y = height*0.5
-	shape.shape = box
+	var mesh_shape := ConcavePolygonShape3D.new()
+	mesh_shape.backface_collision = true
+	mesh_shape.set_faces(faces)
+	shape.shape = mesh_shape
 	body.add_child(shape)
 	node.add_child(body)
