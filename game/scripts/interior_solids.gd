@@ -816,6 +816,31 @@ func portal_rect(screen: int, editor_num: int) -> Rect2:
 			return Rect2(float(ex.x0), float(ex.zinner), float(ex.x1) - float(ex.x0), 1.0)
 	return Rect2()
 
+# The original projected its near wall's height into rows between the room-side plane and the illustrated base. A live player
+# restored or scripted into that old corridor occupies the room side of the door at the ordinary player clearance distance.
+# Only the player's live coordinate changes; the source warp, scripts, walls and other entities retain their coordinates.
+# Values already on the room side are unchanged, so a saved adapted position is idempotent on reload.
+func map_player_door_position(screen: int, position: Vector2, clearance: float) -> Vector2:
+	if not walls_fitted(screen): return position
+	for ex in exits(screen):
+		if position.x >= float(ex.x0) and position.x <= float(ex.x1) \
+				and position.y >= float(ex.zinner) and position.y <= float(ex.original_base):
+			return Vector2(position.x, float(ex.zinner) - clearance)
+	return position
+
+func _door_ray_body(mesh: Mesh) -> StaticBody3D:
+	var body := StaticBody3D.new()
+	body.name = "HitBody"
+	body.collision_layer = 1
+	body.collision_mask = 0
+	var shape := CollisionShape3D.new()
+	var surface := ConcavePolygonShape3D.new()
+	surface.backface_collision = true
+	surface.set_faces(mesh.get_faces())
+	shape.shape = surface
+	body.add_child(shape)
+	return body
+
 func add_doors(screen: int, parent: Node3D) -> void:
 	var fit := fit_of(DOOR)
 	if fit.is_empty() or not walls_fitted(screen): return
@@ -846,6 +871,7 @@ func add_doors(screen: int, parent: Node3D) -> void:
 		door.name = "ExitDoor"
 		door.mesh = mb.mesh()
 		door.set_surface_override_material(0, material(DOOR))
+		door.add_child(_door_ray_body(door.mesh))
 		parent.add_child(door)
 		# the wall above the door: the room's stone at its own scale, from the door's top to the ceiling
 		var sb := MB.new()
@@ -864,6 +890,7 @@ func add_doors(screen: int, parent: Node3D) -> void:
 		lintel.name = "ExitLintel"
 		lintel.mesh = sb.mesh()
 		lintel.set_surface_override_material(0, material(stone, true, true))
+		lintel.add_child(_door_ray_body(lintel.mesh))
 		parent.add_child(lintel)
 		parent.set_meta("exit_door", true)
 

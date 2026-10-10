@@ -171,6 +171,7 @@ func _warp_trigger_rect(e: Dictionary) -> Rect2:
 
 func _warp_approaching(e: Dictionary, pos: Vector2, scripted: bool, from: Vector2) -> bool:
 	if not e.get("fps_portal",false): return super._warp_approaching(e,pos,scripted,from)
+	if locked or changing or int(entities[1].get("nocontrol", 0)) != 0: return false
 	# Original inbound scripts land behind the near wall and walk north into
 	# the room. Crossing the new door plane inward must not bounce them out.
 	return from != Vector2.INF and pos.y > from.y
@@ -181,8 +182,27 @@ func _update_visual(id: int) -> void:
 	else:
 		super._update_visual(id)
 
+func _script_move_destination(id: int, dir: int, destination: float) -> float:
+	if id != 1 or dir not in [2, 8] or fp_world == null: return super._script_move_destination(id, dir, destination)
+	var position: Vector2 = _position2(1)
+	return fp_world.solids.map_player_door_position(current_screen, Vector2(position.x, destination), float(FOOTPRINT_GROW)).y
+
+func _after_script_position_set(id: int, key: String) -> void:
+	if id != 1 or key not in ["x", "y"] or fp_world == null: return
+	# DinkC can set player_map before sp_x/sp_y and load_screen. In that case the setter describes the destination map,
+	# not the current room (s2-bar sends Dink to outdoor screen 498 this way).
+	var target := int(vm.globals.get("player_map", current_screen))
+	if not world.screens.has(str(target)): return
+	var live: Vector2 = fp_world.solids.map_player_door_position(target, _position2(1), float(FOOTPRINT_GROW))
+	entities[1]["x"] = live.x
+	entities[1]["y"] = live.y
+
 func load_map(number: int, run_scripts: bool = true) -> void:
 	_fps_restore_dialogue_camera()
+	if fp_world != null and entities.has(1) and world.screens.has(str(number)):
+		var live: Vector2 = fp_world.solids.map_player_door_position(number, _position2(1), float(FOOTPRINT_GROW))
+		entities[1]["x"] = live.x
+		entities[1]["y"] = live.y
 	super.load_map(number, run_scripts)
 	if last_music.is_empty(): _play_music("104")
 	if fp_world != null and fp_world.has_method("refresh_neighbors"):
@@ -260,7 +280,48 @@ func _edge_destination(pos: Vector2) -> Dictionary:
 	elif pos.y >= 400: target += 32; pos.y -= 400.0
 	return {"screen":target,"position":pos}
 
+func _portal_can_warp(editor_num: int) -> bool:
+	if changing or not playing or ui.modal or locked or walk_off_screen or warp_cooldown > 0.0 or not entities.has(1): return false
+	var player: Dictionary = entities[1]
+	if bool(player.get("frozen", false)) or int(player.get("disabled", 0)) != 0 or int(player.get("nocontrol", 0)) != 0: return false
+	for id in entities:
+		if id == 1: continue
+		var e: Dictionary = entities[id]
+		if int(e.get("editor_num", 0)) == editor_num and bool(e.get("fps_portal", false)) and e.get("warp") != null \
+				and int(e.get("active", 1)) != 0 and world.screens.has(str(int(e.warp.get("map", 0)))):
+			return true
+	return false
+
+func _door_distance(ex: Dictionary, pos: Vector2) -> float:
+	var nearest_x := clampf(pos.x, float(ex.x0), float(ex.x1))
+	return Vector2(pos.x - nearest_x, pos.y - float(ex.zinner)).length()
+
+func _closed_door_blocks(ex: Dictionary, pos: Vector2, from: Vector2, clearance: float) -> bool:
+	var distance := _door_distance(ex, pos)
+	if from == Vector2.INF: return distance < clearance - 0.0001
+	var z := float(ex.zinner)
+	var dy := pos.y - from.y
+	if absf(dy) > 0.0001:
+		var t := (z - from.y) / dy
+		if t > 0.0001 and t < 0.9999:
+			var crossing_x := lerpf(from.x, pos.x, t)
+			if crossing_x >= float(ex.x0) - clearance and crossing_x <= float(ex.x1) + clearance: return true
+	if distance >= clearance - 0.0001: return false
+	var old_distance := _door_distance(ex, from)
+	# A player already touching the four-pixel clearance band may back out or slide along it. The boundary itself is free.
+	if old_distance < clearance and (from.y - z) * (pos.y - z) >= 0.0 \
+			and distance >= old_distance - 0.0001: return false
+	return true
+
+func _inactive_door_blocks(pos: Vector2, from: Vector2) -> bool:
+	if fp_world == null or not fp_world.interior or not fp_world.solids.walls_fitted(current_screen): return false
+	for ex in fp_world.solids.exits(current_screen):
+		if _portal_can_warp(int(ex.editor_num)): continue
+		if _closed_door_blocks(ex, pos, from, float(FOOTPRINT_GROW)): return true
+	return false
+
 func _blocked(pos: Vector2, mover: int, from: Vector2 = Vector2.INF) -> bool:
+	if mover == 1 and _inactive_door_blocks(pos, from): return true
 	if mover != 1 or (pos.x >= 20.0 and pos.x < 620.0 and pos.y >= 0.0 and pos.y < 400.0):
 		return super._blocked(pos,mover,from)
 	var destination := _edge_destination(pos)

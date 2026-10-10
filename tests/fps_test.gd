@@ -73,14 +73,28 @@ func _run() -> void:
 	game.ui.close_menu()
 	game._fps_update_mouse_mode()
 
-	# The original house exit is just outside the source map's bottom edge.
+	# Approach the fitted exit from the room side through actual input.
 	game.vm.cancel_all()
-	game.load_map(1, false)
 	game.entities[1].x = 325.0
-	game.entities[1].y = 398.0
+	game.entities[1].y = 330.0
+	game.load_map(1, false)
 	game.warp_cooldown = 0.0
-	game._transitions()
-	check(game.current_screen == 439, "Home door at the original y=398 exit reaches screen 439")
+	game.fps_yaw = 0.0
+	game._sync_fps_camera()
+	var exit_input := InputEventKey.new()
+	exit_input.physical_keycode = KEY_S
+	exit_input.pressed = true
+	Input.parse_input_event(exit_input)
+	Input.flush_buffered_events()
+	for _i in 24:
+		await physics_frame
+		if game.current_screen == 439: break
+	exit_input = InputEventKey.new()
+	exit_input.physical_keycode = KEY_S
+	exit_input.pressed = false
+	Input.parse_input_event(exit_input)
+	Input.flush_buffered_events()
+	check(game.current_screen == 439, "Southward input through the home doorway reaches screen 439")
 
 	# Outdoor screens retain neighboring terrain in the same 3D scene.
 	game.vm.cancel_all()

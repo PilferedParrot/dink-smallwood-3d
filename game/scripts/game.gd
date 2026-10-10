@@ -1009,8 +1009,15 @@ func _record_dialogue(line: String, speaker_name: String = "") -> void:
 	if dialogue_log.size() > 100: dialogue_log.pop_front()
 	if journal_log.size() > 100: journal_log.pop_front()
 
+func _script_move_destination(_id: int, _dir: int, destination: float) -> float:
+	return destination
+
+func _after_script_position_set(_id: int, _key: String) -> void:
+	pass
+
 func _script_move(id: int, dir: int, destination: float, speed: float) -> void:
 	if not entities.has(id): return
+	var live_destination := _script_move_destination(id, dir, destination)
 	var expected := generation
 	var e: Dictionary = entities[id]
 	var token := int(e.get("move_token",0))+1
@@ -1020,7 +1027,7 @@ func _script_move(id: int, dir: int, destination: float, speed: float) -> void:
 	var axis := "y" if dir in [2,8] else "x"
 	var elapsed := 0.0
 	while entities.has(id) and generation == expected and int(e.move_token) == token:
-		var gap := destination-float(e.get(axis,0))
+		var gap := live_destination-float(e.get(axis,0))
 		if absf(gap)<1: break
 		await get_tree().physics_frame
 		if ui.modal and not ui.dialogue_mode: continue
@@ -1029,7 +1036,7 @@ func _script_move(id: int, dir: int, destination: float, speed: float) -> void:
 		if elapsed>60: break
 		var old_value := float(e.get(axis,0))
 		var from_position := _position2(id)
-		e[axis] = move_toward(old_value,destination,maxf(1,speed)*25*delta)
+		e[axis] = move_toward(old_value,live_destination,maxf(1,speed)*25*delta)
 		if dir in [1,3,7,9]:
 			e["y"] = float(e.get("y",0))+absf(float(e[axis])-old_value)*(1 if dir in [1,3] else -1)
 		_set_animation(id,int(e.get("base_walk",0))+dir)
@@ -1057,6 +1064,7 @@ func dink_call(command: String, args: Array, context: Dictionary) -> Variant:
 		# script's touch procedure. Runtime pickups such as S1-NUT require it.
 		if args.size()>1 and (int(b) != -1 or cmd == "sp_touch_damage"):
 			entities[id][key] = b
+			if key in ["x", "y"]: _after_script_position_set(id, key)
 			if key == "seq":
 				entities[id]["frame"] = 1
 				entities[id]["anim_time"] = 0.0
