@@ -9,7 +9,7 @@ def test_original_runtime_nut_touch_trigger(tmp_path):
     for kind in ("DATA", "CONFIG", "CACHE"):
         env[f"XDG_{kind}_HOME"] = str(tmp_path / kind.lower())
     result = subprocess.run(
-        [find_godot(), "--headless", "--path", str(ROOT / "game"),
+        [find_godot(), "--headless", "--audio-driver", "Dummy", "--path", str(ROOT / "game"),
          "--script", str(ROOT / "tests/nut_pickup_test.gd")],
         cwd=ROOT, env=env, capture_output=True, text=True, timeout=25,
     )

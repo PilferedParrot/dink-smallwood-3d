@@ -274,11 +274,16 @@ func static_scenery(e: Dictionary) -> bool:
 	# create_sprite builds its visual before sp_script attaches behavior. Such
 	# an actor can start beyond the screen and walk in; it is never an editor
 	# seam copy whose pixels may be discarded permanently at construction.
-	var trim_ground := int(e.get("type",1)) == 0 and int(e.get("pseq",e.get("seq",0))) == 32 and int(e.get("pframe",e.get("frame",1))) in [9,10]
+	var trim_ground := int(e.get("type",1)) == 0 and int(e.get("pseq",e.get("seq",0))) == 32 and int(e.get("pframe",e.get("frame",1))) in [8,9,10]
 	return not e.get("runtime_created",false) and (int(e.get("type",1)) == 1 or trim_ground) and str(e.get("script","")).is_empty() and int(e.get("brain",0)) == 0 and absf(float(e.get("size",100))-100.0) < 0.5
 
 # [[row0 or -1 if the art is one part, row1, foot row, shown], ...] for e on screen n (seam_parts' comment above).
 func seam_parts(e: Dictionary, n: int) -> Array:
+	# Tree-08's four crowns share rows but have distinct source-x regions and
+	# physical feet. Its dedicated owner test preserves 5x5 seam fallbacks.
+	if source_firs != null and source_firs.handles(e) \
+			and int(e.get("pframe",e.get("frame",0))) == 8:
+		return source_firs.parts(e,n)
 	var path := frame_path(e)
 	var rows := stack_rows(path)
 	if rows.size() <= 1: rows = [[-1,0,0]]

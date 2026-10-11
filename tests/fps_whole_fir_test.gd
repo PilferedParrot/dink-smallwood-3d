@@ -1,6 +1,6 @@
 extends SceneTree
 # Logic-only fixture. It runs fp_world's real seam_parts ownership for every
-# mapped tree-09/10 source and inspects each constructed complete sprite.
+# mapped tree-08/09/10 source and inspects each constructed complete sprite.
 
 const FP = preload("res://scripts/fp_world.gd")
 const SOURCE_FIR = preload("res://scripts/source_fir.gd")
@@ -41,6 +41,7 @@ func _run() -> void:
 	world.host = host
 	world.props = FakeProps.new()
 	var fir := SOURCE_FIR.new(world)
+	world.source_firs = fir
 	check(not fir.fit.is_empty(), "fir fit loads")
 	if fir.fit.is_empty():
 		print("WHOLE FIR FAIL no fit")
@@ -50,11 +51,12 @@ func _run() -> void:
 	var shown := 0
 	var block_changed := 0
 	var types := {0: 0, 1: 0}
+	var strip_shown := {0: 0, 1: 0}
 	for sn in host.world["screens"]:
 		var screen := int(sn)
 		if bool(host.world["screens"][sn].get("indoor", false)): continue
 		for e in host.world["screens"][sn].get("sprites", []):
-			if int(e.get("seq", 0)) != 32 or int(e.get("frame", 0)) not in [9, 10]: continue
+			if int(e.get("seq", 0)) != 32 or int(e.get("frame", 0)) not in [8, 9, 10]: continue
 			if int(e.get("vision", 0)) != 0 or int(e.get("brain", 0)) != 0 or not str(e.get("script", "")).is_empty(): continue
 			if absf(float(e.get("size", 100)) - 100.0) >= 0.5: continue
 			tested += 1
@@ -78,6 +80,8 @@ func _run() -> void:
 			for k in parts.size():
 				if not bool(parts[k][3]): continue
 				expected += 1
+				if int(e.get("frame",0)) == 8:
+					strip_shown[kind] = int(strip_shown[kind])+1
 				var holder := parent.get_node_or_null("WholeFir_%d" % k) as Node3D
 				check(holder != null, "missing whole fir screen %d editor %d part %d" % [screen, e["index"], k])
 				if holder != null: _check_fir(holder, e, parts[k], k, screen, kind == 1, fir.fit)
@@ -105,8 +109,78 @@ func _run() -> void:
 				check(local_parent.get_child_count() == local_count,
 					"single-screen block unexpected part count %d:%d" % [screen, e["index"]])
 				local_parent.free()
-	check(tested == 123 and types[1] == 116 and types[0] == 7,
+	check(tested == 163 and types[1] == 154 and types[0] == 9,
 		"source census %d placements, type1 %d, type0 %d" % [tested, types[1], types[0]])
+	var control_count := 0
+	for sn in host.world["screens"]:
+		if bool(host.world["screens"][sn].get("indoor",false)): continue
+		for e in host.world["screens"][sn].get("sprites",[]):
+			if int(e.get("seq",0)) == 32 and int(e.get("frame",0)) in [1,2,3,4,5,6,7,11,12,13]:
+				control_count += 1
+				check(not fir.handles(e),"whole broadleaf/dead/stump tree control unchanged")
+	check(control_count > 600,"whole-tree source controls inventoried")
+	var strip_a: Dictionary = host.world["screens"]["280"]["sprites"][0]
+	var strip_b: Dictionary = host.world["screens"]["280"]["sprites"][1]
+	var boundary_a: Array = world.seam_parts(strip_a,280)
+	var boundary_b: Array = world.seam_parts(strip_b,280)
+	check(boundary_a.size() == 4 and boundary_b.size() == 4 and bool(boundary_a[3][3])
+		and not bool(boundary_b[0][3]),
+		"periodic tree-08 border crown has one source owner on screen280")
+	var afoot: Array = fir.fit["source_parts"]["assets/graphics/lands/Trees/tree-08.png"][3]["source_foot_in_full_art_px"]
+	var bfoot: Array = fir.fit["source_parts"]["assets/graphics/lands/Trees/tree-08.png"][0]["source_foot_in_full_art_px"]
+	check(absf(float(strip_a.x)+float(afoot[0])-float(strip_b.x)-float(bfoot[0])) < 0.001
+		and absf(float(afoot[1])-float(bfoot[1])) < 0.001,
+		"periodic border parts share the same physical whole-fir foot")
+	var strip_sources: Array = []
+	var full_flags: Dictionary = {}
+	for sn in host.world["screens"]:
+		if bool(host.world["screens"][sn].get("indoor",false)): continue
+		for e in host.world["screens"][sn].get("sprites",[]):
+			if int(e.get("seq",0)) != 32 or int(e.get("frame",0)) != 8 or not fir.handles(e): continue
+			strip_sources.append([int(sn),e])
+			var flags: Array = world.seam_parts(e,int(sn))
+			for k in flags.size(): full_flags["%d:%d:%d" % [int(sn),int(e["index"]),k]] = bool(flags[k][3])
+	var scene_union := {}
+	var fallback := 0
+	var contexts := 0
+	for sn in host.world["screens"]:
+		var center := int(sn)
+		if bool(host.world["screens"][sn].get("indoor",false)): continue
+		contexts += 1
+		var col := (center-1)%32
+		var block: Dictionary = {center:true}
+		for dz in range(-2,3):
+			for dx in range(-2,3):
+				if dx == 0 and dz == 0: continue
+				if col+dx < 0 or col+dx >= 32: continue
+				var neighbor := center+dx+32*dz
+				if host.world["screens"].has(str(neighbor)) and not world.is_inside(neighbor): block[neighbor] = true
+		world.scene_block = block
+		var roots: Array[Vector2] = []
+		for source in strip_sources:
+			var source_screen: int = source[0]
+			if not block.has(source_screen): continue
+			var e: Dictionary = source[1]
+			var flags: Array = world.seam_parts(e,source_screen)
+			check(flags.size() == 4,"real 5x5 block has four tree-08 crowns")
+			var d: Dictionary = host._frame(32,8)
+			var fitted: Array = fir.fit["source_parts"][str(d["path"])]
+			for k in flags.size():
+				if not bool(flags[k][3]): continue
+				var foot: Array = fitted[k]["source_foot_in_full_art_px"]
+				var at: Vector2 = world.screen_origin(source_screen)+Vector2(
+					float(e["x"])-float(d["dx"])+float(foot[0]),
+					float(e["y"])-float(d["dy"])+float(foot[1]))
+				for other in roots:
+					check(absf(other.x-at.x) > 3.0 or absf(other.y-at.y) > 3.0,
+						"duplicate complete tree-08 crown in 5x5 center%d" % center)
+				roots.append(at)
+				var label := "%d:%d:%d" % [source_screen,int(e["index"]),k]
+				scene_union[label] = true
+				if not bool(full_flags[label]): fallback += 1
+	world.scene_block.clear()
+	check(contexts == 570 and strip_sources.size() == 40 and fallback > 0,
+		"native outdoor scene blocks and boundary fallbacks %d/%d/%d" % [contexts,strip_sources.size(),fallback])
 	check(block_changed > 0, "scene_block ownership did not alter any shown source parts")
 	# The seam decision can change with scene_block. Never bake these flags
 	# into the fit; all four pairs of flags must construct all or none per part.
@@ -129,7 +203,7 @@ func _run() -> void:
 			"reusable uniform scale")
 	direct_parent.free()
 	if failures.is_empty():
-		print("WHOLE FIR PASS placements=%d type1=%d type0=%d shown=%d block_changed=%d" % [tested, types[1], types[0], shown, block_changed])
+		print("WHOLE FIR PASS placements=%d type1=%d type0=%d shown=%d strip_type1=%d strip_type0=%d block_changed=%d scene_union=%d fallback=%d" % [tested, types[1], types[0], shown, strip_shown[1], strip_shown[0], block_changed, scene_union.size(), fallback])
 		quit(0)
 	else:
 		for failure in failures: print("WHOLE FIR FAIL ", failure)
@@ -154,6 +228,8 @@ func _check_fir(holder: Node3D, e: Dictionary, part: Array, k: int,
 	var sp := holder.get_node_or_null("Model") as Sprite3D
 	check(sp != null, "one complete sprite")
 	if sp == null: return
+	check(sp.material_override == null,
+		"complete fir has no side-flip shader screen %d editor %d part %d" % [screen,e["index"],k])
 	check(sp.texture.get_size() == Vector2(128, 188) and not sp.region_enabled and not sp.flip_h and not sp.flip_v,
 		"full source image screen %d editor %d part %d" % [screen, e["index"], k])
 	check(sp.billboard == BaseMaterial3D.BILLBOARD_FIXED_Y,
@@ -167,6 +243,8 @@ func _check_fir(holder: Node3D, e: Dictionary, part: Array, k: int,
 	check(twin != null and twin.cast_shadow == GeometryInstance3D.SHADOW_CASTING_SETTING_SHADOWS_ONLY
 		and twin.texture == sp.texture and twin.pixel_size == sp.pixel_size,
 		"shadow twin screen %d editor %d part %d" % [screen, e["index"], k])
+	check(twin != null and twin.material_override == null,
+		"complete fir shadow has no side-flip shader screen %d editor %d part %d" % [screen,e["index"],k])
 	check((holder.get_node_or_null("HitBody") != null) == collides,
 		"ray body screen %d editor %d part %d" % [screen, e["index"], k])
 
@@ -174,7 +252,7 @@ func _collect(node: Node, whole: Array, old_parts: Array) -> void:
 	if node.get_meta("whole_fir", false): whole.append(node)
 	if node is Sprite3D:
 		var path := str(node.get_meta("path", ""))
-		if ("tree-09.png#" in path or "tree-10.png#" in path): old_parts.append(node)
+		if ("tree-08.png" in path or "tree-09.png#" in path or "tree-10.png#" in path): old_parts.append(node)
 	for child in node.get_children(): _collect(child, whole, old_parts)
 
 func _live_scene() -> void:
@@ -201,6 +279,19 @@ func _live_scene() -> void:
 		var sp := node.get_node_or_null("Model") as Sprite3D
 		check(sp != null and sp.texture.get_size() == Vector2(128, 188), "live source fir lacks whole image")
 	check(target, "375 editor 1 lower source part missing as a whole fir from screen 439")
+	game.load_map(768,false)
+	await process_frame
+	await physics_frame
+	whole.clear()
+	old_parts.clear()
+	_collect(game.scene_root,whole,old_parts)
+	check(old_parts.is_empty(),"source tree-08 partial cards remain on screen768")
+	var eight_parts := {}
+	for node in whole:
+		var provenance: Dictionary = node.get_meta("source_provenance",{})
+		if int(provenance.get("screen",-1)) == 768 and int(provenance.get("index",-1)) == 2:
+			eight_parts[int(provenance.get("part",-1))] = true
+	check(eight_parts.size() == 4,"screen768 editor2 shows four complete source crowns")
 	game.queue_free()
 	await process_frame
 	await process_frame

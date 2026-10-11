@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import importlib.util
+import hashlib
 import json
 import os
 import shutil
@@ -47,7 +48,7 @@ def native_inventory(tmp_path_factory):
     tmp_path = tmp_path_factory.mktemp("fir-native")
     path = tmp_path / "native.json"
     output = run_godot(tmp_path, "res://../tools/rc5_fir_collision_inventory.gd", f"--out={path}")
-    assert "placements=123 parts=246 shown=165 unsupported=92 invalid=1" in output
+    assert "placements=163 parts=406 shown=312 unsupported=227 invalid=3" in output
     return path
 
 
@@ -59,13 +60,21 @@ def test_compiled_fit_rebuilds_from_native_baseline(native_inventory):
     world = json.loads((ROOT / "game/data/world.json").read_text())["screens"]
     sequences = json.loads((ROOT / "game/data/sequences.json").read_text())["sequences"]
     assert compiled == module.compile_fit(inventory, source_fit, world, sequences,native_inventory)
-    assert compiled["counts"] == {"source_placements": 123, "source_parts": 246,
-                                  "shown_union": 165, "authorized_roots": 92,
-                                  "skipped_invalid": 1, "screen_entries": 104,
-                                  "screens_touched": 50, "multi_screen_roots": 12}
+    assert compiled["counts"] == {"source_placements": 163, "source_parts": 406,
+                                  "shown_union": 312, "authorized_roots": 227,
+                                  "skipped_invalid": 3, "screen_entries": 291,
+                                  "screens_touched": 58, "multi_screen_roots": 56}
     assert compiled["template"]["hardbox_relative_to_measured_foot_xyxy"] == [-50.5, -31, 43.5, 5]
-    assert len({r["id"] for r in compiled["rectangles"]}) == 92
-    assert compiled["skipped_invalid"][0]["normalized_foot"]["screen"] == 798
+    assert len({r["id"] for r in compiled["rectangles"]}) == 227
+    assert {(r["source"]["source_frame"], r["normalized_foot"]["screen"])
+            for r in compiled["skipped_invalid"]} == {(8, 289), (8, 737), (10, 798)}
+    assert Counter(r["source"]["source_frame"] for r in compiled["rectangles"]) == {8: 135, 9: 49, 10: 43}
+    # The 9/10 source feet and rectangles precede this class extension. Their
+    # ordered source records must remain exactly the same, not merely equal in count.
+    old = [r for r in compiled["rectangles"] if r["source"]["source_frame"] in (9, 10)]
+    assert hashlib.sha256(json.dumps(old, sort_keys=True, separators=(",", ":")).encode()).hexdigest() == (
+        "967fd001265bc251c672497eee9176e113896d42da07093982bead4b5708652e"
+    )
     assert all(r["baseline_blocked"] is False for r in compiled["rectangles"])
     assert all(r["full_world_shown"] or r["scene5x5_shown_centers"] for r in compiled["rectangles"])
     for name, digest in compiled["source_sha256"].items():
@@ -75,8 +84,8 @@ def test_compiled_fit_rebuilds_from_native_baseline(native_inventory):
         )
         assert module.sha(path) == digest, name
     membership = Counter(entry["id"] for entries in compiled["by_screen"].values() for entry in entries)
-    assert sum(membership.values()) == 104
-    assert sum(count > 1 for count in membership.values()) == 12
+    assert sum(membership.values()) == 291
+    assert sum(count > 1 for count in membership.values()) == 56
 
 
 def test_screen_index_includes_corners_without_row_wrap():
@@ -90,12 +99,23 @@ def test_screen_index_includes_corners_without_row_wrap():
 
 def test_native_inventory_uses_source_collision_baseline(native_inventory):
     fresh = json.loads(native_inventory.read_text())
-    assert fresh["counts"]["valid_unsupported"] == 92
-    assert fresh["counts"]["source_parts"] == 246
+    assert fresh["counts"]["valid_unsupported"] == 227
+    assert fresh["counts"]["source_parts"] == 406
+    assert Counter(p["source_frame"] for p in fresh["parts"]) == {8: 160, 9: 130, 10: 116}
+    assert len({(p["source_screen"], p["source_list_index"]) for p in fresh["parts"]
+                if p["source_frame"] == 8}) == 40
+    frame8 = [p for p in fresh["parts"] if p["source_frame"] == 8]
+    assert sum(p["full_world_shown"] for p in frame8) == 139
+    assert sum(bool(p["full_world_shown"] or p["scene5x5_shown_centers"]) for p in frame8) == 147
+    assert sum(p["normalized_foot"]["valid_outdoor_neighbor"] and not p["baseline_blocked"]
+               for p in frame8 if p["full_world_shown"] or p["scene5x5_shown_centers"]) == 135
+    # Every authored frame-8 collage contributes four distinct apex-derived feet.
+    per_source = Counter((p["source_screen"], p["source_list_index"]) for p in frame8)
+    assert set(per_source.values()) == {4}
     candidates = [p for p in fresh["parts"] if p["full_world_shown"] or p["scene5x5_shown_centers"]]
-    assert sum(p["normalized_foot"]["valid_outdoor_neighbor"] and not p["baseline_blocked"] for p in candidates) == 92
+    assert sum(p["normalized_foot"]["valid_outdoor_neighbor"] and not p["baseline_blocked"] for p in candidates) == 227
 
 
 def test_runtime_rectangles_and_escape_band(tmp_path: Path):
     output = run_godot(tmp_path, "res://../tests/fps_fir_collision_test.gd")
-    assert "FIR COLLISION PASS roots=92 touched_screens=50 cross_screen=12" in output
+    assert "FIR COLLISION PASS roots=227 touched_screens=58 cross_screen=56" in output

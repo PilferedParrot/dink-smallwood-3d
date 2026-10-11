@@ -205,6 +205,13 @@ def _expected_reading(include_castle=True, castle_shift=(0, 0)):
             d = frame(s)
             if s.get("vision", 0) != 0 or s["type"] in (0, 2) or not d:
                 continue
+            # Static partial fir sources are rebuilt as complete objects;
+            # their cards and shadows have no depth/side-flip shader. The
+            # whole-fir class fixture tests that retirement independently.
+            if (int(s.get("seq", 0)) == 32 and int(s.get("frame", 0)) in (8, 9, 10)
+                    and not s.get("script") and int(s.get("brain", 0)) == 0
+                    and abs(float(s.get("size", 100)) - 100.0) < 0.5):
+                continue
             path = d["path"]
             if "/struct/" in path.lower() or "/fence/" in path.lower():
                 continue
@@ -306,7 +313,7 @@ def test_the_games_flags_equal_an_independent_reading_of_the_map(expected, tmp_p
     # (734, 249, 327), a stack of crates, and (504, 369, 115), a barrel over the inn's block, left this list: a prop is a solid now, moved clear of the walls (fp_world push_out_of_houses),
         # not a card shifted in depth.
         # The kit cases (tenth pass): grass under the pieces of a kit building on 506.
-    for place, sign in [((251, 153, 374), -1), ((496, 608, 235), 1), ((506, 103, 393), 1)]:
+    for place, sign in [((496, 608, 235), 1), ((506, 103, 393), 1)]:
         assert place in flagged and flagged[place] * sign > 0, (place, flagged.get(place))
     # Both signs, and screens where nothing is flagged, are in the sample.
     assert any(v > 0 for v in flagged.values()) and any(v < 0 for v in flagged.values())

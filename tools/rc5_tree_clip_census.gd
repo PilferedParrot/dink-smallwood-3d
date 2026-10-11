@@ -77,6 +77,11 @@ func _gather_sources() -> void:
 			var parts: Array = world.stack_rows(path)
 			if parts.size() <= 1: parts = [[-1, 0, 0]]
 			var whole := bool(world.source_firs.handles(e))
+			if whole:
+				parts = []
+				for source_part in world.source_firs.fit.get("source_parts",{}).get(path,[]):
+					var rows: Array = source_part["rows"]
+					parts.append([int(rows[0]),int(rows[1]),int(rows[1])-1])
 			var ground := bool(world.paints_ground(e, n))
 			var center_lists := []
 			for _part in parts: center_lists.append([])

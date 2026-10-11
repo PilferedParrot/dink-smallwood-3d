@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import argparse
 import collections
+import gzip
 import hashlib
 import json
 from pathlib import Path
@@ -91,7 +92,7 @@ def classification(row: dict, source: dict) -> tuple[str, list[str]]:
     if row.get("native_on_surface"):
         reasons.append("surface placement; ground-plane inference requires per-scene check")
     if dispatch == "whole_source_fir":
-        return "partial_source_art_rebuilt_as_whole_fir", reasons + ["shared SourceFir.at_foot replaces shown frame-9/10 parts"]
+        return "partial_source_art_rebuilt_as_whole_fir", reasons + ["shared SourceFir.at_foot replaces the shown partial source crowns"]
     if frame == 8:
         return "source_truncated_crown_and_generic_ground_intersection", reasons + [
             "source PNG visibly ends several independent crowns at left/right/bottom",
@@ -107,12 +108,13 @@ def classification(row: dict, source: dict) -> tuple[str, list[str]]:
     return "whole_tree_no_measured_crown_cut", reasons
 
 
-def build(native_path: Path = NATIVE) -> dict:
+def build(native_path: Path = NATIVE, prior_census_path: Path = ROOT / "docs/rc5/tree-clip-census-8b70efa.json.gz") -> dict:
     native = json.loads(native_path.read_text())
     world_data = json.loads((ROOT / "game/data/world.json").read_text())
-    prior_support_path = ROOT / "tmp/rc5-fir-support/native.json"
-    prior_probe_path = ROOT / "tmp/rc5-fir-support/probe.gd"
-    prior_support = json.loads(prior_support_path.read_text())
+    prior_bytes = prior_census_path.read_bytes()
+    if prior_census_path.suffix == ".gz":
+        prior_bytes = gzip.decompress(prior_bytes)
+    prior_instrument = json.loads(prior_bytes)["prior_123_246_instrument"]
     seqdoc = json.loads((ROOT / "game/data/sequences.json").read_text())
     frames = seqdoc["sequences"]["32"]["frames"]
     source = {str(i): frame_evidence(frame) for i, frame in enumerate(frames, 1)}
@@ -153,7 +155,7 @@ def build(native_path: Path = NATIVE) -> dict:
                                                         "source_xy": list(xy), "owners": owners})
     rebuilt_parts_shown = sum(sum(bool(centers) for centers in row["shown_centers_by_part"])
                               for row in native["placements"] if row["frame"] in (9, 10))
-    if rebuilt_parts_shown != int(prior_support["counts"]["scene5x5_any_shown_parts"]):
+    if rebuilt_parts_shown != int(prior_instrument["scene5x5_shown_parts_crosscheck"]):
         raise ValueError("native whole-fir part visibility disagrees with the prior independent 9/10 inventory")
     for row in native["placements"]:
         frame = str(row["frame"])
@@ -232,11 +234,10 @@ def build(native_path: Path = NATIVE) -> dict:
                               "sequences.json": sha(ROOT / "game/data/sequences.json"),
                               "fp_world.gd": sha(ROOT / "game/scripts/fp_world.gd"),
                               "source_fir.gd": sha(ROOT / "game/scripts/source_fir.gd"),
-                              "prior_fir_support_probe.gd": sha(prior_probe_path),
-                              "prior_fir_support_native.json": sha(prior_support_path),
+                              "archived_initial_census": sha(prior_census_path),
                               "native.json": sha(native_path)},
-            "prior_123_246_instrument": {"source_placements": int(prior_support["counts"]["placements"]),
-                                        "source_parts": int(prior_support["counts"]["source_parts"]),
+            "prior_123_246_instrument": {"source_placements": int(prior_instrument["source_placements"]),
+                                        "source_parts": int(prior_instrument["source_parts"]),
                                         "scene5x5_shown_parts_crosscheck": rebuilt_parts_shown,
                                         "source_filter": "probe.gd accepts only seq32 frames9/10; frame8 excluded before census"},
             "scope": "outdoor 5x5 native seam-flag potential visibility, all seq32 1..13 and any renderer tree-family dispatch; own authored vision layers evaluated separately",
@@ -263,14 +264,14 @@ def summary(result: dict) -> str:
              f"Outdoor screens: {c['outdoor_screens']}; source tree placements: {c['source_tree_placements']}; native seam-flag eligible standing placements in their own authored visions: {c['shown_standing_source_placements']} ({c['shown_vision0_placements']} vision0, {c['shown_alternate_vision_placements']} alternate vision).",
              f"Source tree-08 collage: {frame8['image_size_px'][0]}x{frame8['image_size_px'][1]}, hotspot row {frame8['hotspot_px'][1]}, nonblack border pixels {frame8['edge_nonblack_px']}; {frame8['nonblack_below_generic_ground_px']} nonblack and {frame8['green_dominant_below_generic_ground_px']} green-dominant pixels below its generic ground anchor. Its hotspot row alone contributes {frame8['nonblack_at_hotspot_row_px']} pixels: pixel centres at row69 are already below ground.",
              f"Confirmed source-truncated frame-8 standing placements: {c['frame8_truncated_standing_placements']} on {c['frame8_affected_source_screens']} source screens; potentially included by native seam flags in {c['frame8_affected_scene_centers']} 5x5 scene centers ({c['frame8_scene_appearances']} owner appearances, not assembled-scene visual proof).",
-             f"Affected source screens: {affected}. Screen 768 editor 2 is in this set.",
+             f"Affected source screens still dispatched as partial generic cards: {affected}.",
              f"Standing placements by source frame: {dict(sorted(by_frame.items()))}.",
-             f"Tree-08 generic quad bottoms are 0.65m below ground in native geometry; on-surface moves {c['frame8_on_surface']}, shader depth-shift cases {c['frame8_depth_shader_shift']} (rendered effect unverified).",
-             f"Visible generic region crops: {c['generic_region_crops_shown']}. Frames 9/10 use whole SourceFir pieces; frame-8 does not. Earlier {result['prior_123_246_instrument']['source_placements']}/{result['prior_123_246_instrument']['source_parts']} census filtered only frames 9/10, excluding frame 8 by construction.",
+             f"Tree-08 on-surface moves {c['frame8_on_surface']}, shader depth-shift cases {c['frame8_depth_shader_shift']} (rendered effect unverified). Generic frame-8 cards in the archived initial RC5 census had quad bottoms 0.65m below ground.",
+             f"Visible generic region crops: {c['generic_region_crops_shown']}. Earlier {result['prior_123_246_instrument']['source_placements']}/{result['prior_123_246_instrument']['source_parts']} census filtered only frames 9/10, excluding frame 8 by construction.",
              f"Other source tree dispatch sequences: {c['other_tree_dispatch_sequence_placements']}; shown scripted source placements: {c['shown_scripted_source_placements']}; shown alternate-vision placements: {c['shown_alternate_vision_placements']}; shown trees missing native geometry sample: {c['shown_without_native_geometry_sample']}.",
              f"Neighbor backdrop source dedup check: {c['frame8_neighbor_dedup_source_collisions']} authored same-screen dead_tree:x:y collisions involving frame8; dynamic neighbor state remains a limit.",
              f"Zero rows preserved: {c['source_screen_zero_tree_rows']} source screens without tree placements; {c['scene_center_zero_standing_rows']} scene centers without standing trees.",
-             "Technical cause: tree-08 is a source collage cut at multiple crown boundaries; the generic card also puts its bottom 26 source pixels beneath the ground. The image is dispatched as one billboard, so it cannot reconstruct those crowns.",
+             "Technical cause in the initial RC5: tree-08 is a source collage cut at multiple crown boundaries; its generic card also put its bottom 26 source pixels beneath ground. One generic billboard could not reconstruct those crowns.",
              "Why we made it: the earlier 123/246 part census and SourceFir selector were scoped to frames 9/10. They did not test whether other tree frames were self-contained or whether their generic hotspots placed foliage below ground.",
              f"Tree-01/02 have small green-dominant below-hotspot counts ({result['frames']['1']['green_dominant_below_generic_ground_px']}/{result['frames']['2']['green_dominant_below_generic_ground_px']} source pixels); they are colour-proxy ground intersections, not a certified visible half-crown. Other whole frames' edge contacts read as natural fronds or remain inconclusive.",
              "Headless geometry says where opaque source art and sprite quads stand; it does not prove 3D occlusion or what a particular eye camera sees. Source image tree-08 was visually inspected on disk; no game render performed."]
@@ -282,8 +283,37 @@ def main() -> None:
     parser.add_argument("--native", type=Path, default=NATIVE)
     parser.add_argument("--out", type=Path, default=OUT)
     parser.add_argument("--summary", type=Path, default=SUMMARY)
+    parser.add_argument("--prior-census", type=Path, default=ROOT / "docs/rc5/tree-clip-census-8b70efa.json.gz",
+                        help="Archived initial census JSON or gzip; 9/10 visibility cross-check")
+    parser.add_argument("--require-complete-firs", action="store_true",
+                        help="Fail if any shown frame8/9/10 remains a partial generic card")
+    parser.add_argument("--controls-native", type=Path,
+                        help="Archived native census; require unchanged whole-tree/dead/stump controls")
     args = parser.parse_args()
-    result = build(args.native)
+    result = build(args.native, args.prior_census)
+    if args.require_complete_firs:
+        partial = [p for p in result["placements"] if p["frame"] in (8, 9, 10)
+                   and any(p["shown_centers_by_part"]) and p["dispatch"] != "whole_source_fir"]
+        if partial:
+            raise ValueError(f"shown partial fir source owners remain: {partial[:3]}")
+        malformed = [p for p in result["placements"] if p["dispatch"] == "whole_source_fir"
+                     and any(p["shown_centers_by_part"])
+                     and any(g["path"] != "assets/graphics/lands/Trees/tree-01.png"
+                             or g["region_enabled"] for g in p["native_geometry"])]
+        if malformed:
+            raise ValueError(f"incomplete replacement texture/region: {malformed[:3]}")
+        result["complete_fir_class_gate"] = "PASS_ZERO_SHOWN_PARTIAL_FIR_OWNERS"
+    if args.controls_native:
+        old = json.loads(args.controls_native.read_text())
+        def controls(native):
+            return {(p["source_screen"], p["editor_index"]): p
+                    for p in native["placements"] if p["frame"] not in (8, 9, 10)}
+        before, after = controls(old), controls(json.loads(args.native.read_text()))
+        if before != after:
+            changed = [key for key in before.keys() | after.keys() if before.get(key) != after.get(key)]
+            raise ValueError(f"natural-contact controls changed: {changed[:20]}")
+        result["unchanged_natural_controls"] = {"placements": len(before),
+            "archived_native_sha256": sha(args.controls_native), "status": "PASS_EXACT_NATIVE_RECORD_EQUALITY"}
     args.out.parent.mkdir(parents=True, exist_ok=True)
     args.out.write_text(json.dumps(result, separators=(",", ":")) + "\n")
     args.summary.write_text(summary(result))

@@ -2053,3 +2053,52 @@ Current own-body ray screening finds a witness for all 579 standing records. Act
 The packed game passes real W, E and two Enter choices from south and north approaches, writes an isolated adventure.json through the original savebot script, and restores the saved position on load. Screenshots show the choice menu. Setup explicitly skips normal campaign progression and screen startup. The first post-fix packed run saved successfully but left test_mode on, automatically selecting choices and failing menu assertions; that was a harness oversight, corrected by disabling test_mode before real interaction. Known crown-entry remains visible in the south frame and is not cleared by the save result.
 
 The final full run passed193 tests and exposed two obsolete harness contracts: metadata without a collider counted as a hit surface, and every source sprite surface had to be a billboard. The corrected hit fixture requires an owned body and rejects stale/bodyless metadata. The renderer traversal admits fixed cards only when actual built-wall mesh vertices establish a parallel plane within2mm and containing face bounds; moving each real poster10cm off its wall or rotating its normal fails. Rerunning exactly both failed cases passes2/2; all195 current test cases are covered. The rendered251 depth-order and wrong-rule controls pass after relocating the obstructed camera. Production did not change during these fixture corrections. Exhaustive movement:570 screens,1,108,213 walkable integer edge samples,1,023,814 crossings,84,399 rejected moves,1,278,296 interior samples, zero zero-motion traps.
+
+
+## RC 5: all confirmed fir trims, including frame8 (2026-10-11)
+
+The first RC 5 reconstructed frames 9/10 but left frame8 as one generic billboard. The blind review caught its common flat crown cut on 768. The physical cause was a source 200×95 px collage of cropped upper fir foliage, anchored at the generic hotspot rather than physical feet. Why we made it: we accepted the earlier 9/10-only census as the class definition, an oversight that stopped diagnosis before checking all 13 tree frames. Sparse border fronds on complete trees are not missing structure; a border-pixel rule would have introduced a second incorrect heuristic.
+
+Frame 8's two middle apexes and periodic left/right apex supply four source crown owners. The fit transfers frame1's measured apex-to-foot offset to those apexes, at uniform source scale 1.0; missing roots are inferred, not measured in the cropped bitmap. Source-x windows and the actual 5×5 scene block choose each crown's owner, including fallback copies. Every retained crown uses the same complete original frame1 sprite and shadow constructor. The 40 frame8 placements add 160 candidate parts;147 part IDs appear in some real scene, with zero duplicate displayed roots within 3 px. Frames 9/10 keep their original feet, scales and 92 ordered collision records exactly. The all-frame native census reports zero shown partial fir owners and exact equality of 706 natural tree/dead-tree/stump control records. The live class test fails against the frozen initial RC 5 pack and passes on the expanded build.
+
+Original-picture overlays for 208,251 and 768, including their neighbors, put the sampled inferred feet on painted forest tile art. Most of that art is walkable in the original collision masks. The 135 valid unsupported frame8 roots therefore receive the original frame1 hardbox plus the existing 4 px escape rule, under the same native visibility gate. This intentionally changes the original's movement inside painted forest: a completed standing fir is something the player can bump into. It does not enlarge collision to the crown proxy or enable the held forest layout proposal. Three roots with indoor/absent destinations are listed and excluded from new collision; no gate failure is hidden by dropping or clipping a valid root.
+
+The independent mask matches 599,070 native FPS queries. Relative to RC 4,652,057 previously reachable pixels become occupied and 577,863 surviving free pixels become disconnected in 21 per-screen components. The additional frame8 collision accounts for 331,586 newly occupied pixels relative to initial RC 5. Static content/arrival checks find only unscripted tree origins/hardboxes and forest edge cells in the disconnected areas, with no items, scripts, actual touch triggers, warps or literal story arrivals. The lead accepted these forest-only cutoffs on 2026-10-11; the exact components remain recorded below. All 817 previously positive static interaction ranges retain candidates; all static/story landings retain their prior status. Native current-code dispatch has 576 witnesses in both topology states, three exhaustively dominated targets in both, and zero lost-all results; all 16,023 negative cells per state are visited. This is static authored availability, not campaign or arbitrary-save certification.
+
+| Screen | Surviving free pixels cut off | Source bounds `[x 0,y 0,x 1,y 1)` |
+|---|---:|---|
+| 218 | 57,674 | `[195, 90, 395, 400]` |
+| 238 | 8,230 | `[495, 204, 620, 300]` |
+| 239 | 337 | `[20, 190, 87, 196]` |
+| 239 | 12,036 | `[20, 250, 295, 308]` |
+| 241 | 98 | `[71, 139, 88, 146]` |
+| 250 | 18,460 | `[195, 0, 420, 96]` |
+| 282 | 13,286 | `[395, 187, 620, 258]` |
+| 283 | 81 | `[71, 90, 87, 96]` |
+| 283 | 13,518 | `[20, 187, 245, 258]` |
+| 283 | 21,753 | `[395, 290, 620, 400]` |
+| 284 | 23,226 | `[20, 290, 245, 400]` |
+| 315 | 84,060 | `[395, 0, 620, 400]` |
+| 316 | 84,808 | `[20, 0, 245, 400]` |
+| 347 | 84,060 | `[395, 0, 620, 400]` |
+| 348 | 84,234 | `[20, 0, 245, 400]` |
+| 379 | 18,446 | `[395, 0, 620, 96]` |
+| 380 | 18,460 | `[20, 0, 245, 96]` |
+| 735 | 15,686 | `[395, 175, 620, 258]` |
+| 736 | 15,974 | `[20, 175, 245, 258]` |
+| 768 | 1,872 | `[220, 102, 259, 150]` |
+| 768 | 1,564 | `[386, 104, 420, 150]` |
+
+
+Full native results and the natural-control comparison are retained in `docs/rc 5/tree-native-expanded.json.gz` and `tree-census-expanded.json.gz`; topology, content, dispatch, movement and packed evidence are in `tmp/rc 5-d 2-expanded/`. Natural crown-entry and terrain/source-hardness disagreements remain open as documented above. The disabled forest proposal stays held pending the lead's later decision.
+
+## RC 5: native tests contain the player's profile (2026-10-11)
+
+Small import/export or test probes that inherited the session environment could write short logs into the player's Godot profile and rotate real logs. The physical cause was missing default XDG containment. Why we made it: the runner relied on every individual fixture setting its own directories, an integration oversight; explicit isolation in most tests did not cover the class. A session-wide autouse fixture now supplies disposable data, configuration and cache directories to every native subprocess, while individual save fixtures may still override them. Every headless test also states Dummy audio explicitly.
+
+The native inherited-environment probe checks the engine's actual user-data directory. It passes with the shared fixture; with the fixture disabled it fails before launching Godot, so the red check cannot itself rotate a player's log. All 11 profile/audio focused checks pass. Export and capture wrappers independently set isolated XDG directories. Player-log metadata is checked separately without reading or modifying player contents. This fixes later test runs; it does not claim to recover already rotated logs.
+
+
+Expanded validation: the full run passed 190 and failed six in 1825.61s. Five failures were fixture contracts still expecting the retired tree08 depth shader; a retained authored tree04 now exercises the original side-flip bounds and wrong-rule controls, and every completed fir/shadow is checked for no side-flip shader. Both old-pop faults remain effective (275/396px against ordinary35/45px); built transitions remain within the unchanged1.5× bound. The sixth failure was a180s door timeout during our capture freeze (spawn21:07:15UTC, deadline21:10:15UTC). That was a harness error: process suspension did not pause Python's wall-clock deadline; we misapplied it as a pause for a timed suite. No door or timeout change was needed. The unchanged isolated door check passes, and the requested batch of all six cases passes6/6 in324.10s without suspension. All197 current cases are covered by the190 full-run passes, six reruns and new profile probe; no single197-pass process is claimed.
+
+The expanded exhaustive walker covers570 screens,1,105,262 walkable integer edge samples,1,020,882 crossings,84,380 rejections and1,274,749 interior samples with zero zero-motion traps. Both final packed save approaches pass actual input and reload. Qualified packed captures are catalogued separately from builder findings. Player-log metadata remained unchanged through the contained tests and captures; no restoration of previously rotated logs is claimed.

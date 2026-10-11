@@ -10,7 +10,7 @@ def test_original_map_ownership_and_keyboard_menu_inputs(tmp_path):
     env = {**os.environ, **{f"XDG_{key}_HOME": str(tmp_path / key.lower())
                             for key in ("DATA", "CONFIG", "CACHE")}}
     result = subprocess.run(
-        [GODOT, "--headless", "--path", "game", "--script", str(ROOT / "tests/fps_map_test.gd")],
+        [GODOT, "--headless", "--audio-driver", "Dummy", "--path", "game", "--script", str(ROOT / "tests/fps_map_test.gd")],
         cwd=ROOT, env=env, capture_output=True, text=True, timeout=35,
     )
     assert result.returncode == 0, result.stdout + result.stderr

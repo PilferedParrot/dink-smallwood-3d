@@ -1,18 +1,18 @@
 """The side flip at a wall's plane (docs/DIRECTION.md, "The side flip, walked"; the eleventh-pass unit U5).
 
 A billboard near a fitted house's wall is drawn over the house or under it by which side of the wall's plane the camera
-stands on (fp_world.gd DEPTH_SHADER). Turned in one step, a patch of canopy appears over the cabin's east wall in one
-frame (251's tree-08, walking round it at 230 px: 3,872 px at 206.0 -> 206.25 degrees, 2,504 at 27.0 -> 27.25). The
+stands on (fp_world.gd DEPTH_SHADER). The retained source screen 496 editor 1 tree-04 at (608,235), also covered by
+the trees' under-home-07 pixel test, exercises this rule after tree-08 became an indivisible complete fir. The
 shader now turns it pixel by pixel over a narrow band either side of the plane (SIDE_BLEND reaches, a screen-door
 cross-fade), and everywhere beyond the band the picture is the old one bit for bit. Two tests, through
 tests/fps_sideflip_test.gd, rendered under xvfb with the Dummy audio driver and no Wayland:
 
   - the walk: the sprite's picture changes by no more than 1.5 x the walk's ordinary step at each of the two
     crossings. Controls that go red: the old code (--k=0, the side turned at the plane) shows its pop.
-  - the rails: cameras on 251 at least the band away from every plane (the trees pass's sheet cameras, among them the one 0.43
+  - the rails: cameras on 496 at least the band away from every plane (including one 0.43
     reach from the plane that the rejected blend over the whole reach would spoil) render byte-identical to the old
     code's; a camera inside the band differs (the control that the band acts); the wide blend (--k=1) differs at the
-    sheet camera (the cut comes back).
+    outside-band view (the cut comes back).
 """
 import hashlib
 import os
@@ -41,8 +41,10 @@ def _run(args, tmp_path, timeout=900):
         pytest.skip("xvfb-run unavailable")
     env = {k: v for k, v in os.environ.items() if k != "WAYLAND_DISPLAY"}
     env.update({"XDG_CONFIG_HOME": str(tmp_path / "xdg-config"), "XDG_DATA_HOME": str(tmp_path / "xdg-data"),
-                "XDG_CACHE_HOME": str(tmp_path / "xdg-cache")})
-    command = ["xvfb-run", "-a", "-s", "-screen 0 1280x720x24", GODOT, "--resolution", "960x540", "--audio-driver", "Dummy",
+                "XDG_CACHE_HOME": str(tmp_path / "xdg-cache"), "OMP_NUM_THREADS": "1",
+                "OPENBLAS_NUM_THREADS": "1", "MKL_NUM_THREADS": "1", "LP_NUM_THREADS": "4",
+                "LIBGL_ALWAYS_SOFTWARE": "1", "GALLIUM_DRIVER": "llvmpipe"})
+    command = ["nice", "-n", "10", "xvfb-run", "-a", "-s", "-screen 0 1280x720x24", GODOT, "--resolution", "960x540", "--audio-driver", "Dummy",
                "--path", "game", "--script", str(ROOT / "tests/fps_sideflip_test.gd"), "--"] + args
     result = subprocess.run(command, cwd=ROOT, env=env, capture_output=True, text=True, timeout=timeout, check=False)
     assert "SCRIPT ERROR" not in result.stderr + result.stdout, (result.stdout + result.stderr)[-3000:]
@@ -51,8 +53,8 @@ def _run(args, tmp_path, timeout=900):
 
 
 def _walk(tmp_path, first, last, k=None):
-    """[(angle, tree px, popped px, e in reaches)] of a walk round 251's tree-08 at 230 px, 0.25 degree steps."""
-    args = ["--mode=walk", f"--from={first}", f"--to={last}", "--step=0.25"] + ([] if k is None else [f"--k={k}"])
+    """[(angle, tree px, popped px, e in reaches)] around source 496 tree-04 at 130 px."""
+    args = ["--mode=walk", f"--from={first}", f"--to={last}", "--step=0.25", "--radius=130"] + ([] if k is None else [f"--k={k}"])
     rows = []
     for line in _run(args, tmp_path).splitlines():
         if line.startswith("TREE "):
@@ -62,11 +64,9 @@ def _walk(tmp_path, first, last, k=None):
     return rows[1:]  # the first has no previous step
 
 
-# The rule's wall point and normal put 251's cabin tree on the plane at 27.2 and 206.0 degrees. At 27 degrees the old
-# code's pop (2,504 px) came mostly from the strips of tree-09/10 standing whole beside the tree; since they stand as
-# separate trees at their own feet (M3, U7: fp_world.seam_parts) the old code's step there is 931 px against an
-# ordinary 715, so only the 206 degree crossing still carries the "old code pops" control.
-@pytest.mark.parametrize("first,last,pops", [(198, 214, True), (19, 35, False)])
+# At radius 130 the wall-plane crossings are near 10.4 and 271.8 degrees;
+# both retain a measured old-k=0 pop and a bounded screen-door transition.
+@pytest.mark.parametrize("first,last,pops", [(260, 284, True), (0, 21, True)])
 def test_the_flip_is_spread_over_the_band_and_the_old_code_pops(tmp_path, first, last, pops):
     band = _band()
     built = _walk(tmp_path / "built", first, last)
@@ -87,30 +87,28 @@ def test_the_flip_is_spread_over_the_band_and_the_old_code_pops(tmp_path, first,
             assert b[1:3] == o[1:3], (b, o)
 
 
-# The cameras, all on 251 (the cabin and its tree-08, the unit's case): the trees pass's three sheet cameras there
-# (tools/trees_sheet.py CASES), four more round the cabin, a ring of eight round the tree at 130 and at 230 px, and "band-*"
-# standing inside the band (the tree at 230 px at 206.0 and 207.0 degrees, looking at it). Other screens render a little
-# differently from one run to the next (animated sprites, two states about even under load: 376, 404, 440, 734), so a
-# byte-for-byte rail cannot stand on them; the unit's survey of 119 cameras on 12 screens is in tmp/U5-report.md.
+# Screen 496's retained tree-04 has a rendered under/over control in
+# fps_trees_test.gd. The first three views map those source-497 cameras to
+# screen-496 coordinates. The radial views cover both sides of its wall plane.
 def _views():
     import math
 
     views = []
-    for i, (x, y, yaw) in enumerate([(61, 466, -0.79), (153, 504, 0.0), (153, 74, 3.14)]):
-        views.append({"name": f"sheet-251-{i}", "screen": 251, "x": x, "y": y, "yaw": yaw, "pitch": -0.05})
-    for i, (x, y, yaw) in enumerate([(153, 520, 0.0), (260, 500, 0.25), (153, 74, 3.14), (-59, 162, -2.36)]):
-        views.append({"name": f"cabin-251-{i}", "screen": 251, "x": x, "y": y, "yaw": yaw, "pitch": -0.05})
+    for i, (x, y, yaw) in enumerate([(660, 430, -0.1), (720, 480, 0.3), (608, -65, 3.14)]):
+        views.append({"name": f"home-496-{i}", "screen": 496, "x": x, "y": y, "yaw": yaw, "pitch": -0.05})
+    for i, (x, y, yaw) in enumerate([(600, 465, -0.035), (608, 465, 0.0), (540, 455, -0.297), (382, 235, -1.571)]):
+        views.append({"name": f"side-496-{i}", "screen": 496, "x": x, "y": y, "yaw": yaw, "pitch": -0.05})
     for radius in (130, 230):
         for deg in range(0, 360, 45):
             r = math.radians(deg)
             yaw = (math.pi / 2 + r + math.pi) % (2 * math.pi) - math.pi
-            views.append({"name": f"ring-251-{radius}-{deg:03d}", "screen": 251, "x": 153 + radius * math.cos(r),
-                          "y": 374 - radius * math.sin(r), "yaw": yaw, "pitch": -0.06})
-    for deg in (206.0, 207.0):
+            views.append({"name": f"ring-496-{radius}-{deg:03d}", "screen": 496, "x": 608 + radius * math.cos(r),
+                          "y": 235 - radius * math.sin(r), "yaw": yaw, "pitch": -0.06})
+    for deg in (252.5, 253.0):
         r = math.radians(deg)
         yaw = (math.pi / 2 + r + math.pi) % (2 * math.pi) - math.pi
-        views.append({"name": f"band-251-{int(deg)}", "screen": 251, "x": 153 + 230 * math.cos(r),
-                      "y": 374 - 230 * math.sin(r), "yaw": yaw, "pitch": -0.06})
+        views.append({"name": f"band-496-{deg}", "screen": 496, "x": 608 + 230 * math.cos(r),
+                      "y": 235 - 230 * math.sin(r), "yaw": yaw, "pitch": -0.06})
     return views
 
 
@@ -134,7 +132,7 @@ def test_cameras_beyond_the_band_get_the_old_picture_and_the_controls_go_red(tmp
     _, old_again = _render(tmp_path / "old-again", views_file, k=0)
     _, wide = _render(tmp_path / "wide", views_file, k=1)
     assert set(near) == set(built) == set(old) == set(old_again) == set(wide) and len(near) > 20
-    # 251 renders the same twice (the unit's walks: 0 px of noise over hundreds of renders); a view that does not is dropped,
+    # A view that does not render the same twice is dropped,
     # and the test fails below if too few remain.
     steady = [n for n in near if old[n] == old_again[n]]
     beyond = [n for n in steady if near[n] >= band + 0.01]
@@ -142,9 +140,9 @@ def test_cameras_beyond_the_band_get_the_old_picture_and_the_controls_go_red(tmp
     assert len(beyond) > 18 and inside, (len(steady), len(beyond), inside)
     # The rail: every steady camera at least the band from every flagged plane renders the old picture, byte for byte.
     assert [n for n in beyond if built[n] != old[n]] == []
-    # The sheet's first camera on 251 stands 0.43 reach from the plane: outside the band, and a steady view.
-    assert "sheet-251-0" in beyond and 0.40 < near["sheet-251-0"] < 0.46
+    # The south view at (600,465) stands 0.43 reach from the tree's wall plane.
+    assert "side-496-0" in beyond and 0.40 < near["side-496-0"] < 0.46
     # Control: a camera inside the band is not the old picture (the cross-fade acts) ...
     assert any(built[n] != old[n] for n in inside), inside
-    # ... and the wide blend (the one the October 1 section rejected) spoils the sheet camera: the cut returns.
-    assert wide["sheet-251-0"] != old["sheet-251-0"]
+    # ... and the rejected wide blend spoils a steady outside-band view.
+    assert wide["side-496-0"] != old["side-496-0"]

@@ -12,7 +12,7 @@ def test_pig_farm_transition_walkable_from_source_collision(tmp_path):
     env["XDG_DATA_HOME"] = str(tmp_path / "data")
     env["XDG_CONFIG_HOME"] = str(tmp_path / "config")
     result = subprocess.run(
-        [GODOT, "--headless", "--path", "game", "--script", str(ROOT / "tests" / "fps_stuck_test.gd")],
+        [GODOT, "--headless", "--audio-driver", "Dummy", "--path", "game", "--script", str(ROOT / "tests" / "fps_stuck_test.gd")],
         cwd=ROOT,
         env=env,
         text=True,

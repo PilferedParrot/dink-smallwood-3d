@@ -11,7 +11,9 @@ screen and the screen holding the foot (across one seam or diagonally) places th
 the same coordinates along them (exactly) with a part whose foot lies inside its own screen (else both stay: a crossing pair). Only static scenery is considered, as copy and as partner: type 1, no script, brain 0, size 100.
 Then a shown part is not built when a shown part of the same art and vision has its foot within 3 px on both axes and
 ranks first: a copy whose foot lies in its own screen, then (screen, index, part). Two copies that close are one object
-(amendment 2, docs/DIRECTION.md M3). Billboards only: fences, structures and castle pieces are fixed cards.
+(amendment 2, docs/DIRECTION.md M3). Tree-08 is a horizontal four-crown strip: two top-row apexes and one periodic
+left/right boundary apex derive four source parts using the original complete tree's apex-to-foot offset. Billboards
+only: fences, structures and castle pieces are fixed cards.
 Verdict (2026-10-02, Opus 5.5): written for U7; prints the counts the pre-registration names.
 """
 from __future__ import annotations
@@ -22,6 +24,7 @@ from PIL import Image
 
 ROOT = Path(__file__).resolve().parents[1]
 _alpha = {}
+TREE08 = 'assets/graphics/lands/Trees/tree-08.png'
 
 
 def alpha(path):
@@ -47,6 +50,33 @@ def parts(path):
     return out
 
 
+def tree08_crowns():
+    """Independently derive x-crowns from original strip and full fir apexes."""
+    strip = np.asarray(Image.open(ROOT / 'game' / TREE08).convert('RGBA'))
+    whole = np.asarray(Image.open(ROOT / 'game/assets/graphics/lands/Trees/tree-01.png').convert('RGBA'))
+    source = (strip[:, :, 3] > 127) & (strip[:, :, :3].astype(np.int32).sum(2) >= 11)
+    template = (whole[:, :, 3] > 127) & (whole[:, :, :3].astype(np.int32).sum(2) >= 11)
+    assert source.shape == (95, 200)
+    top = np.flatnonzero(source[0])
+    assert top.tolist() == [37, 38, 39, 40, 41, 120, 121, 122, 123, 124, 125]
+    edge_y = next(y for y in range(95) if source[y, 0] or source[y, 199])
+    assert edge_y == 12 and np.flatnonzero(source[edge_y, :20]).tolist() == [0, 1, 2]
+    assert np.flatnonzero(source[edge_y, 180:]).tolist() == [19]
+    template_apex = float(np.flatnonzero(template[0]).mean() + 0.5)
+    template_bottom = np.flatnonzero(template.any(1))[-1]
+    foot = float(np.flatnonzero(template[template_bottom]).mean() + 0.5)
+    assert (template_apex, foot, template_bottom + 1) == (81.0, 83.5, 176)
+    # The right-edge x=199 pixel and left-edge x=0..2 form one apex under
+    # 200px source repetition. The other two top-row runs are full apexes.
+    apexes = [(1.0, edge_y), (float(top[:5].mean() + 0.5), 0),
+              (float(top[5:].mean() + 0.5), 0), (201.0, edge_y)]
+    mid = [round((apexes[i][0] + apexes[i+1][0]) / 2) for i in range(3)]
+    windows = list(zip([0, *mid], [*mid, 200]))
+    assert windows == [(0, 20), (20, 81), (81, 162), (162, 200)]
+    return source, [(apexes[k][0] + foot-template_apex, apexes[k][1] + template_bottom + 1,
+                     int(apexes[k][1]), 95, windows[k][0], windows[k][1]) for k in range(4)]
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('--json')
@@ -65,8 +95,34 @@ def main():
             f = q['frames'][int(e['frame']) - 1]
             a = alpha(f['path'])
             L.append(dict(e=e, p=f['path'], dx=f['dx'], dy=f['dy'], W=a.shape[1], H=a.shape[0],
-                          static=(e['type'] == 1 or (e['type'] == 0 and int(e['seq']) == 32 and int(e['frame']) in (9,10))) and not e.get('script') and int(e.get('brain', 0)) == 0 and int(e.get('size', 100)) == 100))
+                          static=(e['type'] == 1 or (e['type'] == 0 and int(e['seq']) == 32 and int(e['frame']) in (8,9,10))) and not e.get('script') and int(e.get('brain', 0)) == 0 and int(e.get('size', 100)) == 100))
         placed[int(n)] = L
+
+    strip_drawn, crown_parts = tree08_crowns()
+    tree08 = {}
+    for n, L in placed.items():
+        ox, oy = ((n-1)%32)*600-20, ((n-1)//32)*400
+        for q in L:
+            if not q['static'] or q['p'] != TREE08: continue
+            e = q['e']; left, top = int(e['x']-q['dx']), int(e['y']-q['dy'])
+            for k, (fx, fy, y0, y1, x0, x1) in enumerate(crown_parts):
+                ys, xs = np.nonzero(strip_drawn[y0:y1,x0:x1])
+                xx, yy = xs+x0+left, ys+y0+top
+                visible = bool(((xx>=20)&(xx<620)&(yy>=0)&(yy<400)).any())
+                local_foot = (float(e['x']-q['dx']+fx),float(e['y']-q['dy']+fy))
+                outside = not (20<=local_foot[0]<620 and 0<=local_foot[1]<400)
+                tree08[(n,int(e['index']),k)] = {'visible':visible,
+                    'root':(local_foot[0]+ox,local_foot[1]+oy),
+                    'rank':(outside,n,int(e['index']),k),
+                    'vision':int(e.get('vision',0))}
+    for key,item in tree08.items():
+        if not item['visible']:continue
+        for other_key,other in tree08.items():
+            if other_key == key or not other['visible'] or other['vision'] != item['vision']:continue
+            if abs(other['root'][0]-item['root'][0])<=3 and abs(other['root'][1]-item['root'][1])<=3 \
+                    and other['rank']<item['rank']:
+                item['better'] = True
+                break
 
     def crosses(q, side):
         t, l = q['e']['y'] - q['dy'], q['e']['x'] - q['dx']
@@ -106,6 +162,17 @@ def main():
         for q in L:
             e = q['e']
             if not q['static']:
+                continue
+            if q['p'] == TREE08:
+                for k in range(4):
+                    candidate = tree08[(n,int(e['index']),k)]
+                    rec = (n,int(e['index']),k,*candidate['root'],q['p'])
+                    if not candidate['visible']:
+                        hidden.append(rec+('invisible',));count['hidden: no drawn pixel in its screen'] += 1
+                    elif candidate.get('better',False):
+                        hidden.append(rec+('coincident',));count['hidden: coincident copy'] += 1
+                    else:
+                        built.append(rec+(candidate['vision'],candidate['rank']));count['built'] += 1
                 continue
             for k, (r0, r1, foot) in enumerate(parts(q['p'])):
                 fx, fz = e['x'], e['y'] - q['dy'] + foot if len(parts(q['p'])) > 1 else e['y']

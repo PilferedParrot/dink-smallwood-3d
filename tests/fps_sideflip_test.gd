@@ -3,10 +3,11 @@ extends SceneTree
 # A sprite near a fitted house is drawn over the house or under it by which side of the wall's plane the camera
 # stands on (fp_world.gd depth_rule, DEPTH_SHADER). Modes walk and views are run by tests/test_fps_sideflip.py; list is for finding cases:
 #
-#   --mode=walk  --from=A --to=B --step=S   Walk the camera round 251's tree-08 (the cabin's; --screen=N --sprite=X,Y --radius=R
-#       for another) at 230 px, angle A..B degrees
-#       (the angle as the camera's offset from the tree, east = 0, north = 90: the crossing of the cabin's south wall's
-#       plane is at 27.2 and 206.0), looking at the tree. At each angle two frames, with the tree and with it hidden
+#   --mode=walk  --from=A --to=B --step=S   Walk the camera round the retained
+#       tree-04 on source screen 496 (editor 1; --screen=N --sprite=X,Y --radius=R
+#       for another) at 130 px, angle A..B degrees
+#       (the angle as the camera's offset from the tree, east = 0, north = 90: its
+#       home-07 wall plane crossings are near 10.4 and 271.8), looking at the tree. At each angle two frames, with the tree and with it hidden
 #       (the light's shadows off, the sprite's own pixels only); T = the pixels the tree changes. Prints
 #           "TREE angle pixels popped"   popped = |T(angle) xor T(previous angle)|: the tree's picture's change in one
 #       step, the motion of its edges and a flip alike. A flip is a step far over the walk's ordinary steps.
@@ -23,13 +24,14 @@ extends SceneTree
 #       as before, 1 is a blend over the whole reach (the rejected one); no --k: as built (fp_world.gd SIDE_BLEND).
 #   Each TREE line ends with e, the camera's distance from the sprite's wall plane in the sprite's reaches (+ on the original
 #   camera's side): the side turns over |e| < K.
-# Verdict: written 2026-10-02 (Sonnet 5.5 subagent, unit U5). Works: it measured the 251 pop (3,872 px at 206.0 -> 206.25 degrees,
-# 2,504 at 27.0 -> 27.25), the failed depth ramp and the screen-door that replaced it. A walk of 129 angles takes under a minute.
+# The original 251 tree-08 fixture was completed as an indivisible whole fir,
+# so it intentionally no longer receives this generic depth shader. The
+# retained tree-04 exercises the same shader class and wall-side transition.
 const GAME = preload("res://scripts/fps_game.gd")
 const EPS := 3 # max channel difference counted as a changed pixel
-var screen_n := 251
-var tree_at := Vector2(153, 374) # 251's tree-08, the cabin's
-var radius := 230.0
+var screen_n := 496
+var tree_at := Vector2(608, 235) # source screen 496 editor 1, tree-04 by home-07
+var radius := 130.0
 
 var game
 
@@ -95,8 +97,8 @@ func _changed(a: Image, b: Image) -> PackedByteArray:
 
 func _run() -> void:
 	var mode := "walk"
-	var from := 190.0
-	var to := 222.0
+	var from := 260.0
+	var to := 284.0
 	var step := 0.25
 	var k := -1.0
 	var out_dir := ""

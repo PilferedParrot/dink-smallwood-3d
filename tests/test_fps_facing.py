@@ -12,7 +12,7 @@ def test_actors_turn_with_the_camera_and_a_speaker_faces_you(tmp_path):
     env["XDG_DATA_HOME"] = str(tmp_path / "data")
     env["XDG_CONFIG_HOME"] = str(tmp_path / "config")
     result = subprocess.run(
-        [GODOT, "--headless", "--path", "game", "--script", str(ROOT / "tests" / "fps_facing_test.gd")],
+        [GODOT, "--headless", "--audio-driver", "Dummy", "--path", "game", "--script", str(ROOT / "tests" / "fps_facing_test.gd")],
         cwd=ROOT,
         env=env,
         text=True,

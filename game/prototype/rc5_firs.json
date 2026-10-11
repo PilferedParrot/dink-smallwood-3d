@@ -1,6 +1,6 @@
 {
   "schema": "rc5-whole-fir-fit-1",
-  "method": "alpha>127 and RGB sum>=11; lowest row mean pixel center; crown height from nonblack y span",
+  "method": "alpha>127 and RGB sum>=11; 9/10 bottom-row foot and crown-height scale unchanged; 8 feet inferred from measured periodic/top apexes plus original whole-fir apex-to-foot offset",
   "world_units_per_source_px": 0.025,
   "template": {
     "path": "assets/graphics/lands/Trees/tree-01.png",
@@ -138,12 +138,176 @@
         ],
         "uniform_scale": 1.0056818181818181
       }
+    ],
+    "assets/graphics/lands/Trees/tree-08.png": [
+      {
+        "rows": [
+          12,
+          95
+        ],
+        "source_window_x_px": [
+          0,
+          20
+        ],
+        "source_apex_px": [
+          1.0,
+          12.0
+        ],
+        "source_foot_in_full_art_px": [
+          3.5,
+          188.0
+        ],
+        "uniform_scale": 1.0,
+        "source_visible_bbox_px": [
+          0,
+          12,
+          20,
+          95
+        ],
+        "source_visible_nonblack_pixels": 1282,
+        "foot_below_picture_bottom_px": 93.0
+      },
+      {
+        "rows": [
+          0,
+          95
+        ],
+        "source_window_x_px": [
+          20,
+          81
+        ],
+        "source_apex_px": [
+          39.5,
+          0.0
+        ],
+        "source_foot_in_full_art_px": [
+          42.0,
+          176.0
+        ],
+        "uniform_scale": 1.0,
+        "source_visible_bbox_px": [
+          20,
+          0,
+          81,
+          95
+        ],
+        "source_visible_nonblack_pixels": 3102,
+        "foot_below_picture_bottom_px": 81.0
+      },
+      {
+        "rows": [
+          0,
+          95
+        ],
+        "source_window_x_px": [
+          81,
+          162
+        ],
+        "source_apex_px": [
+          123.0,
+          0.0
+        ],
+        "source_foot_in_full_art_px": [
+          125.5,
+          176.0
+        ],
+        "uniform_scale": 1.0,
+        "source_visible_bbox_px": [
+          81,
+          0,
+          161,
+          95
+        ],
+        "source_visible_nonblack_pixels": 3665,
+        "foot_below_picture_bottom_px": 81.0
+      },
+      {
+        "rows": [
+          12,
+          95
+        ],
+        "source_window_x_px": [
+          162,
+          200
+        ],
+        "source_apex_px": [
+          201.0,
+          12.0
+        ],
+        "source_foot_in_full_art_px": [
+          203.5,
+          188.0
+        ],
+        "uniform_scale": 1.0,
+        "source_visible_bbox_px": [
+          165,
+          12,
+          200,
+          95
+        ],
+        "source_visible_nonblack_pixels": 1299,
+        "foot_below_picture_bottom_px": 93.0
+      }
     ]
+  },
+  "source08_apex_evidence": {
+    "image_size_px": [
+      200,
+      95
+    ],
+    "template_top_apex_x_px": 81.0,
+    "template_apex_to_foot_px": [
+      2.5,
+      176.0
+    ],
+    "source_top_apex_runs_px": [
+      [
+        37,
+        42
+      ],
+      [
+        120,
+        126
+      ]
+    ],
+    "periodic_edge_first_row": 12,
+    "periodic_edge_apex_pixel_centers_px": [
+      -0.5,
+      0.5,
+      1.5,
+      2.5
+    ],
+    "source_apexes_px": [
+      [
+        1.0,
+        12.0
+      ],
+      [
+        39.5,
+        0.0
+      ],
+      [
+        123.0,
+        0.0
+      ],
+      [
+        201.0,
+        12.0
+      ]
+    ],
+    "partition_midplanes_x_px": [
+      20,
+      81,
+      162
+    ],
+    "scale_basis": "source and original template apexes are 5-6 pixels wide at source pixel resolution; retain one source pixel per template pixel, no anisotropic fit",
+    "foot_basis": "original seq32/frame1 measured nonblack foot minus its top-row apex center; strip bottom row is a cut line, not a root"
   },
   "source_sha256": {
     "sequences.json": "d2411618230e43d13edb1e9b58fa54211317486b862614127ca0d999a9ccc0de",
     "assets/graphics/lands/Trees/tree-09.png": "d77655e660a44cdf4f0883a6873fa7a993ca938fe56d7d2f6982589a4f82f6fd",
     "assets/graphics/lands/Trees/tree-10.png": "7525e39c21ffc8248d5e1a852595784f629e62c30f18dc704498542cff0e5795",
+    "assets/graphics/lands/Trees/tree-08.png": "8de27a4c38ef3f86262e21a22493535eea7ed806862ce7f77587a9e36cf066c9",
     "assets/graphics/lands/Trees/tree-01.png": "902baa3735027ee91bac9ecff0f43be6f9acffdd66270fd2aa9ef67932e63260"
   }
 }

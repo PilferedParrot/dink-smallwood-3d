@@ -15,7 +15,7 @@ def test_story_two_mother_dialogue_uses_and_restores_clear_camera(tmp_path):
     env["XDG_CONFIG_HOME"] = str(tmp_path / "config")
     env["XDG_CACHE_HOME"] = str(tmp_path / "cache")
     result = subprocess.run(
-        [GODOT, "--headless", "--path", "game", "--script", str(ROOT / "tests/fps_mother_visibility_test.gd")],
+        [GODOT, "--headless", "--audio-driver", "Dummy", "--path", "game", "--script", str(ROOT / "tests/fps_mother_visibility_test.gd")],
         cwd=ROOT, env=env, capture_output=True, text=True, timeout=30,
     )
     assert result.returncode == 0, result.stdout + result.stderr

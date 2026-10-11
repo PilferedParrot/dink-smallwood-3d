@@ -12,7 +12,7 @@ def test_hard_one_fence_gate_is_walkable_but_hard_zero_fence_stays_solid(tmp_pat
     env["XDG_DATA_HOME"] = str(tmp_path / "data")
     env["XDG_CONFIG_HOME"] = str(tmp_path / "config")
     result = subprocess.run(
-        [GODOT, "--headless", "--path", "game", "--script", str(ROOT / "tests" / "fps_gate_test.gd")],
+        [GODOT, "--headless", "--audio-driver", "Dummy", "--path", "game", "--script", str(ROOT / "tests" / "fps_gate_test.gd")],
         cwd=ROOT,
         env=env,
         text=True,

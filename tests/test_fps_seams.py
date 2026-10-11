@@ -7,7 +7,7 @@ drew every copy whole and stood each strip as one card: the far tree floated, se
 Two tests, through tests/fps_seams_test.gd, headless:
   - classification: every billboard part of every outdoor screen is built exactly when the independent reading
     (tools/seam_objects.py, written from the art's pixels and the map, not from the game) says it is.
-  - scenes: on 376 and 251, loaded as the game loads them, no tree part floats or sinks (its lowest drawn pixel is on
+  - scenes: on 376, 251 and 768, loaded as the game loads them, no tree part floats or sinks (its lowest drawn pixel is on
     the ground within 2 px), no two drawn parts of one art have their feet within 3 px, and a seam
     copy at the 5x5 block's edge whose partner screen is not built still stands (251: 314's tree-09).
 """
@@ -29,8 +29,9 @@ pytestmark = pytest.mark.skipif(not Path(GODOT).is_file(), reason="Godot unavail
 
 def _godot(args, tmp_path, timeout=900):
     env = {k: v for k, v in os.environ.items() if k != "WAYLAND_DISPLAY"}
-    env.update({"XDG_CONFIG_HOME": str(tmp_path / "c"), "XDG_DATA_HOME": str(tmp_path / "d"), "XDG_CACHE_HOME": str(tmp_path / "k")})
-    r = subprocess.run([GODOT, "--headless", "--audio-driver", "Dummy", "--path", str(ROOT / "game"), "--script",
+    env.update({"XDG_CONFIG_HOME": str(tmp_path / "c"), "XDG_DATA_HOME": str(tmp_path / "d"), "XDG_CACHE_HOME": str(tmp_path / "k"),
+                "OMP_NUM_THREADS": "1", "OPENBLAS_NUM_THREADS": "1", "MKL_NUM_THREADS": "1", "LP_NUM_THREADS": "4"})
+    r = subprocess.run(["nice", "-n", "10", GODOT, "--headless", "--audio-driver", "Dummy", "--path", str(ROOT / "game"), "--script",
                         str(ROOT / "tests/fps_seams_test.gd"), "--"] + args, cwd=ROOT, env=env, capture_output=True, text=True,
                        timeout=timeout, check=False)
     assert "SCRIPT ERROR" not in r.stderr and "FPS SEAMS DONE" in r.stdout, (r.stdout[-2000:], r.stderr[-3000:])
@@ -59,13 +60,15 @@ def test_every_billboard_part_is_built_as_the_independent_reading_says(tmp_path)
     assert parts[(251, 2, 0)][0] is False and parts[(283, 5, 1)][0] is True  # 251's strip over its edge: 283's tree
 
 
-@pytest.mark.parametrize("screen", [376, 251, 319, 451])
+@pytest.mark.parametrize("screen", [376, 251, 319, 451, 768])
 def test_trees_stand_on_the_ground_once(tmp_path, screen):
     drawn = [l.split() for l in _godot(["--scene=%d" % screen], tmp_path).splitlines() if l.startswith("DRAWN ")]
     assert len(drawn) >= (1 if screen == 451 else 6), len(drawn)  # 451 sees one tree: its tree-04 (419 places a copy 2 px off)
-    floating = [d for d in drawn if abs(float(d[4])) > 2.0 and ("tree-09" in d[5] or "tree-10" in d[5])]
-    assert not floating, "%d tree-09/10 parts off the ground: %s" % (len(floating), floating[:6])
-    assert all(len(d)>6 and d[6].endswith("tree-01.png") for d in drawn if "tree-09" in d[5] or "tree-10" in d[5]), "source trims must draw the whole original fir"
+    floating = [d for d in drawn if abs(float(d[4])) > 2.0
+                and any(f"tree-{frame}" in d[5] for frame in ("08", "09", "10"))]
+    assert not floating, "%d tree-08/09/10 parts off the ground: %s" % (len(floating), floating[:6])
+    assert all(len(d)>6 and d[6].endswith("tree-01.png") for d in drawn
+               if any(f"tree-{frame}" in d[5] for frame in ("08", "09", "10"))), "source trims must draw the whole original fir"
     # One object per world point: no two drawn parts of one art with their feet within 3 px on both axes (two such
     # copies z-fight, the winner following the draw order: 451's tree-04 and 419's, 2 px apart; amendment 2).
     doubled = [(a, b) for i, a in enumerate(drawn) for b in drawn[i + 1:]
@@ -81,3 +84,6 @@ def test_trees_stand_on_the_ground_once(tmp_path, screen):
     if screen == 251:
         assert any(d[5].endswith("tree-09.png#200-377") and abs(float(d[2]) - 15220.5) <= 2 and abs(float(d[3]) - 4094) <= 2
                    for d in drawn), "314's tree-09 at the block's edge is missing"
+    if screen == 768:
+        crowns = [d for d in drawn if "tree-08.png#" in d[5]]
+        assert len(crowns) >= 4, "screen768 tree-08 source crowns missing"

@@ -27,6 +27,12 @@ def source_id(p: dict) -> str:
     return f"{p['source_screen']}:{p['source_list_index']}:{p['part']}"
 
 
+def source_provenance(p: dict) -> dict:
+    keys = ("source_screen", "source_list_index", "source_editor_index", "source_type",
+            "source_frame", "source_path", "part", "rows", "source_window_x_px", "source_apex_px")
+    return {key: p[key] for key in keys if key in p}
+
+
 def touched_screens(rect: list[float], world: dict) -> list[int]:
     """Every outdoor playfield with a nonempty intersection with rect+4px."""
     x0, y0, x1, y1 = rect
@@ -45,8 +51,16 @@ def touched_screens(rect: list[float], world: dict) -> list[int]:
 def compile_fit(inventory: dict, fit: dict, world: dict, sequences: dict, inventory_path: Path = INVENTORY) -> dict:
     counts = inventory["counts"]
     assert inventory["schema"] == "rc5-fir-collision-native-inventory-1"
-    assert (counts["placements"], counts["source_parts"], counts["shown_union"],
-            counts["valid_unsupported"], counts["invalid_unsupported"]) == (123, 246, 165, 92, 1)
+    parts = inventory["parts"]
+    assert len(parts) == counts["source_parts"]
+    source_entities = {(p["source_screen"], p["source_list_index"]) for p in parts}
+    assert len(source_entities) == counts["placements"]
+    assert {p["source_frame"] for p in parts} == {8, 9, 10}
+    shown = [p for p in parts if p["full_world_shown"] or p["scene5x5_shown_centers"]]
+    assert len(shown) == counts["shown_union"]
+    assert sum(not p["normalized_foot"]["valid_outdoor_neighbor"] for p in shown) == counts["invalid_unsupported"]
+    assert sum(p["normalized_foot"]["valid_outdoor_neighbor"] and not p["baseline_blocked"]
+               for p in shown) == counts["valid_unsupported"]
     assert fit["schema"] == "rc5-whole-fir-fit-1"
     template = fit["template"]
     assert (template["seq"], template["frame"]) == (32, 1)
@@ -62,7 +76,7 @@ def compile_fit(inventory: dict, fit: dict, world: dict, sequences: dict, invent
 
     records = []
     skipped = []
-    for part in inventory["parts"]:
+    for part in parts:
         if not part["full_world_shown"] and not part["scene5x5_shown_centers"]:
             continue
         source_path = part["source_path"]
@@ -70,10 +84,11 @@ def compile_fit(inventory: dict, fit: dict, world: dict, sequences: dict, invent
         assert part["rows"] == source_part["rows"]
         assert part["source_foot_in_full_art_px"] == source_part["source_foot_in_full_art_px"]
         assert abs(part["uniform_scale"] - source_part["uniform_scale"]) < 1e-10
+        if "source_window_x_px" in source_part:
+            assert part["source_window_x_px"] == source_part["source_window_x_px"]
+            assert part["source_apex_px"] == source_part["source_apex_px"]
         if not part["normalized_foot"]["valid_outdoor_neighbor"]:
-            skipped.append({"source": {key: part[key] for key in (
-                "source_screen", "source_list_index", "source_editor_index", "source_type",
-                "source_frame", "source_path", "part", "rows")},
+            skipped.append({"source": source_provenance(part),
                 "global_foot_xy": part["global_foot_xy"],
                 "normalized_foot": part["normalized_foot"],
                 "reason": "destination screen absent or indoor"})
@@ -87,9 +102,7 @@ def compile_fit(inventory: dict, fit: dict, world: dict, sequences: dict, invent
         assert rect[0] < root_x < rect[2] and rect[1] < root_y < rect[3]
         records.append({
             "id": source_id(part),
-            "source": {key: part[key] for key in (
-                "source_screen", "source_list_index", "source_editor_index", "source_type",
-                "source_frame", "source_path", "part", "rows")},
+            "source": source_provenance(part),
             "source_foot_in_full_art_px": part["source_foot_in_full_art_px"],
             "global_foot_xy": part["global_foot_xy"],
             "destination_screen": part["normalized_foot"]["screen"],
@@ -100,8 +113,8 @@ def compile_fit(inventory: dict, fit: dict, world: dict, sequences: dict, invent
             "scene5x5_shown_centers": part["scene5x5_shown_centers"],
             "baseline_blocked": False,
         })
-    assert len(records) == 92, len(records)
-    assert len(skipped) == 1 and skipped[0]["normalized_foot"]["screen"] == 798
+    assert len(records) == counts["valid_unsupported"], len(records)
+    assert len(skipped) == counts["invalid_unsupported"], len(skipped)
 
     # Keep each source record, even when rectangles overlap. The runtime OR is
     # the union; retaining every record preserves why each body was authorized.
@@ -118,6 +131,16 @@ def compile_fit(inventory: dict, fit: dict, world: dict, sequences: dict, invent
             })
             touched[record["id"]] += 1
     assert all(touched[r["id"]] >= 1 for r in records)
+    source_files = {
+        "world.json": ROOT / "game/data/world.json",
+        "sequences.json": ROOT / "game/data/sequences.json",
+        "footprints.json": ROOT / "game/data/footprints.json",
+        "rc5_firs.json": FIT,
+        "native_inventory.json": inventory_path,
+        template["path"]: ROOT / "game" / template["path"],
+    }
+    for source_path in fit["source_parts"]:
+        source_files[source_path] = ROOT / "game" / source_path
     return {
         "schema": "rc5-fir-collision-fit-1",
         "selection": "shown in full world or a real 5x5 scene block; valid outdoor foot; native RC4 baseline _blocked false",
@@ -128,22 +151,15 @@ def compile_fit(inventory: dict, fit: dict, world: dict, sequences: dict, invent
                      "hardbox_relative_to_measured_foot_xyxy": rel,
                      "crown_height_px": template["crown_height_px"]},
         "band_px": 4.0,
-        "counts": {"source_placements": 123, "source_parts": 246,
-                   "shown_union": 165, "authorized_roots": 92,
-                   "skipped_invalid": 1, "screen_entries": sum(map(len, by_screen.values())),
+        "counts": {"source_placements": counts["placements"], "source_parts": counts["source_parts"],
+                   "shown_union": counts["shown_union"], "authorized_roots": len(records),
+                   "skipped_invalid": len(skipped), "screen_entries": sum(map(len, by_screen.values())),
                    "screens_touched": len(by_screen),
                    "multi_screen_roots": sum(v > 1 for v in touched.values())},
         "rectangles": records,
         "by_screen": by_screen,
         "skipped_invalid": skipped,
-        "source_sha256": {name: sha(path) for name, path in {
-            "world.json": ROOT / "game/data/world.json",
-            "sequences.json": ROOT / "game/data/sequences.json",
-            "footprints.json": ROOT / "game/data/footprints.json",
-            "rc5_firs.json": FIT,
-            "native_inventory.json": inventory_path,
-            template["path"]: ROOT / "game" / template["path"],
-        }.items()},
+        "source_sha256": {name: sha(path) for name, path in source_files.items()},
     }
 
 

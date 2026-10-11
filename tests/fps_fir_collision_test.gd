@@ -17,15 +17,19 @@ func _run() -> void:
 		quit(1)
 		return
 	var counts: Dictionary = fir.data["counts"]
-	check(int(counts["source_placements"]) == 123 and int(counts["source_parts"]) == 246,
+	check(int(counts["source_placements"]) == 163 and int(counts["source_parts"]) == 406,
 		"source census")
-	check(int(counts["shown_union"]) == 165 and int(counts["authorized_roots"]) == 92,
+	check(int(counts["shown_union"]) == 312 and int(counts["authorized_roots"]) == 227,
 		"native selected roots")
-	check(int(counts["skipped_invalid"]) == 1 and int(fir.data["skipped_invalid"][0]["normalized_foot"]["screen"]) == 798,
-		"absent 798 skipped")
+	var invalid: Array = fir.data["skipped_invalid"]
+	check(int(counts["skipped_invalid"]) == 3 and invalid.size() == 3 and
+		int(invalid[0]["normalized_foot"]["screen"]) == 289 and
+		int(invalid[1]["normalized_foot"]["screen"]) == 737 and
+		int(invalid[2]["normalized_foot"]["screen"]) == 798,
+		"absent destination roots skipped")
 	check(fir.data["template"]["hardbox_relative_to_measured_foot_xyxy"] == [-50.5, -31.0, 43.5, 5.0],
 		"original frame1 hardbox relative to actual foot")
-	check(int(counts["multi_screen_roots"]) == 12, "cross-screen roots")
+	check(int(counts["multi_screen_roots"]) == 56, "cross-screen roots")
 	var seen: Dictionary = {}
 	for record in fir.data["rectangles"]:
 		var id := str(record["id"])
@@ -34,7 +38,8 @@ func _run() -> void:
 		var source: Dictionary = record["source"]
 		check(id == "%d:%d:%d" % [int(source["source_screen"]),
 			int(source["source_list_index"]), int(source["part"])], "provenance %s" % id)
-		check(str(source["source_path"]).ends_with("tree-09.png") or
+		check(str(source["source_path"]).ends_with("tree-08.png") or
+			str(source["source_path"]).ends_with("tree-09.png") or
 			str(source["source_path"]).ends_with("tree-10.png"), "source art %s" % id)
 		var xyxy: Array = record["rect_global_xyxy"]
 		var foot: Array = record["global_foot_xy"]
@@ -52,7 +57,7 @@ func _run() -> void:
 		if shown_here:
 			check(fir.blocked(Vector2(float(local[0]), float(local[1])), Vector2.INF, screen),
 				"physical root blocked %s" % id)
-	check(seen.size() == 92, "92 distinct source records")
+	check(seen.size() == 227, "227 distinct source records")
 	# This old test used a distant seam fallback and would have certified an
 	# invisible permanent body. Keep its negative ownership control explicitly.
 	check(fir.rectangles(237).any(func(entry):return entry.id=="237:0:1"),"edge fallback remains solid in the scene that shows it")

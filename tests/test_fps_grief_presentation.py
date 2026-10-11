@@ -14,7 +14,7 @@ def test_story_three_grief_camera_and_aftermath_labels(tmp_path):
     env["XDG_CONFIG_HOME"] = str(tmp_path / "config")
     env["XDG_CACHE_HOME"] = str(tmp_path / "cache")
     command = [
-        GODOT, "--headless", "--path", "game", "--script",
+        GODOT, "--headless", "--audio-driver", "Dummy", "--path", "game", "--script",
         str(ROOT / "tests/fps_grief_presentation_test.gd"),
         "--",
         "--capture=" + str(capture),

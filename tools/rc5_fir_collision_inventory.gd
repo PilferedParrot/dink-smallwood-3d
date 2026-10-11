@@ -51,7 +51,7 @@ func _run() -> void:
 		var sprites: Array = game.world.screens[sn].get("sprites", [])
 		for list_index in sprites.size():
 			var source: Dictionary = sprites[list_index]
-			if int(source.get("seq", 0)) != 32 or int(source.get("frame", 0)) not in [9, 10]: continue
+			if int(source.get("seq", 0)) != 32 or int(source.get("frame", 0)) not in [8, 9, 10]: continue
 			if int(source.get("type", 1)) not in [0, 1] or int(source.get("vision", 0)) != 0: continue
 			if int(source.get("brain", 0)) != 0 or not str(source.get("script", "")).is_empty(): continue
 			if absf(float(source.get("size", 100)) - 100.0) >= 0.5: continue
@@ -62,8 +62,9 @@ func _run() -> void:
 			var path := str(d.get("path", ""))
 			var fitted: Array = fit.get("source_parts", {}).get(path, [])
 			var shown: Array = fp.seam_parts(e, n)
-			if fitted.size() != 2 or shown.size() != 2:
-				push_error("Missing two-part fit/seam at %d:%d" % [n, list_index])
+			if fitted.is_empty() or shown.size() != fitted.size():
+				push_error("Missing matching source-part fit/seam at %d:%d frame %d: %d versus %d" %
+					[n, list_index, frame, fitted.size(), shown.size()])
 				quit(2)
 				return
 			var item := {"screen": n, "list_index": list_index,
@@ -73,6 +74,11 @@ func _run() -> void:
 			placements.append(item)
 			for k in fitted.size():
 				var source_part: Dictionary = fitted[k]
+				var rows: Array = source_part["rows"]
+				if int(shown[k][0]) != int(rows[0]) or int(shown[k][1]) != int(rows[1]):
+					push_error("Source-part order mismatch at %d:%d frame %d part %d" % [n, list_index, frame, k])
+					quit(2)
+					return
 				var source_foot: Array = source_part["source_foot_in_full_art_px"]
 				var local := Vector2(float(e.x) - float(d.get("dx", 0)) + float(source_foot[0]),
 					float(e.y) - float(d.get("dy", 0)) + float(source_foot[1]))
@@ -88,6 +94,9 @@ func _run() -> void:
 					"global_foot_xy": [global.x, global.y], "normalized_foot": normalized,
 					"full_world_shown": bool(shown[k][3]), "scene5x5_shown_centers": [],
 					"baseline_blocked": false}
+				if source_part.has("source_window_x_px"):
+					part["source_window_x_px"] = source_part["source_window_x_px"]
+					part["source_apex_px"] = source_part["source_apex_px"]
 				item.part_indices.append(parts.size())
 				parts.append(part)
 	for center_text in game.world.screens:
