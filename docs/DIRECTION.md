@@ -2102,3 +2102,47 @@ The native inherited-environment probe checks the engine's actual user-data dire
 Expanded validation: the full run passed 190 and failed six in 1825.61s. Five failures were fixture contracts still expecting the retired tree08 depth shader; a retained authored tree04 now exercises the original side-flip bounds and wrong-rule controls, and every completed fir/shadow is checked for no side-flip shader. Both old-pop faults remain effective (275/396px against ordinary35/45px); built transitions remain within the unchanged1.5× bound. The sixth failure was a180s door timeout during our capture freeze (spawn21:07:15UTC, deadline21:10:15UTC). That was a harness error: process suspension did not pause Python's wall-clock deadline; we misapplied it as a pause for a timed suite. No door or timeout change was needed. The unchanged isolated door check passes, and the requested batch of all six cases passes6/6 in324.10s without suspension. All197 current cases are covered by the190 full-run passes, six reruns and new profile probe; no single197-pass process is claimed.
 
 The expanded exhaustive walker covers570 screens,1,105,262 walkable integer edge samples,1,020,882 crossings,84,380 rejections and1,274,749 interior samples with zero zero-motion traps. Both final packed save approaches pass actual input and reload. Qualified packed captures are catalogued separately from builder findings. Player-log metadata remained unchanged through the contained tests and captures; no restoration of previously rotated logs is claimed.
+
+## RC5: disabled forest picture fixture on 144/375 (2026-10-11)
+
+The bounded prototype adds nine whole original firs on 144 and five on 375, using
+the shared `SourceFir.at_foot` constructor and shadow twin. Roots may occupy any
+raw source-hard pixel in a forest-connected component, including hard grass;
+every new root also passes the current native hardness query. No production
+caller enables the prototype, and its explicit build flag defaults to false.
+No collision, source entity or interaction method changes.
+
+New roots stay at least 40.326790102858425 source pixels from existing/completed
+firs and other new roots. This is tree08's smallest measured nearest-neighbor
+apex distance; the atlas's four foreground tips have a larger spacing even
+under their measurement uncertainty. The actual fit minima are 41.039615px
+on 144 and 41.439715px on 375. This fixes the held coverage fitter's nearly
+coincident trees: its coverage objective omitted tree spacing, an oversight
+that treated a sufficient coverage metric as sufficient visual construction.
+The final all-frame inventory supplies existing roots, including frame8.
+
+| Screen | Hard-edge pixels | Before gaps at47 /43px | After gaps at47 /43px | Added firs /on hard grass |
+|---|---:|---:|---:|---:|
+|144|1545|857 /970|0 /0|9 /6|
+|375|590|413 /443|0 /0|5 /3|
+
+These are 2D source-foot disc proxies, not rendered occlusion or 3D crown-volume
+proof. Existing generic tree01 cards retain their metadata hotspot, distinct
+from the measured source foot. Eye poses require current static reachability,
+native freedom from hardness and clearance beyond scaled 47px discs plus 20px.
+
+The packed native gate finds identical 240,000-cell collision masks per screen
+in both variants, unchanged physics-body counts, zero traps over 2003/2306
+walkable 10px grid points and 1900/1961 walkable 1px edge points, and identical
+ordered melee target streams over 16024/18448 camera headings. No scripted
+talk targets are authored on these screens; talk dispatch remains empty.
+All 16 W/A/S/D cases per screen match through actual input mapping. This is a
+static editor-layer fixture, not campaign or saved-state certification.
+
+Variant A retains painted forest ground; B ports RC4's exact forest-pixel
+`replacement_ground` and grass donors with the same firs. Four eye views and
+the orthographic source-camera view per screen are compared with the frozen
+RC5 pack in `tmp/rc5-forest-preview/`. Reproduction and limitations are in
+`docs/rc5/forest-preview.md`; frames and poses belong in its artifact ledger,
+with builder findings separate. Chris decides the picture; no release,
+installation or public push is authorized by this fixture.
