@@ -74,9 +74,14 @@ func _drawn(screen: int) -> void:
 				break
 		if low < 0: continue
 		var pos := s.global_position
+		var source: Dictionary = s.get_parent().get_meta("source_provenance",{})
+		var template_path := ""
+		if not source.is_empty():
+			template_path = path
+			path = "%s#%d-%d" % [str(source.path),int(source.source_rows[0]),int(source.source_rows[1])]
 		# A sprite's local +y is up: the bottom edge of texel row r is offset.y + h/2 - r - 1 pixels above the node.
 		var foot_px := pos.y / s.pixel_size + s.offset.y + img.get_height() / 2.0 - float(low) - 1.0
-		print("DRAWN %d %.1f %.1f %.1f %s" % [screen, pos.x / fw.SCALE + origin.x + 320.0, pos.z / fw.SCALE + origin.y + 200.0, foot_px, path])
+		print("DRAWN %d %.1f %.1f %.1f %s %s" % [screen, pos.x / fw.SCALE + origin.x + 320.0, pos.z / fw.SCALE + origin.y + 200.0, foot_px, path,template_path])
 
 # Not part of a scene being freed (a scene built before this one, still in the tree until its queue_free runs).
 func _live(node: Node) -> bool:

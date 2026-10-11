@@ -13,6 +13,9 @@ const CASTLE_DOORS := preload("res://scripts/castle_doors.gd")
 const INTERIOR_SOLIDS := preload("res://scripts/interior_solids.gd")
 const FENCE_SOLID := preload("res://scripts/fence_solid.gd")
 const PROPS := preload("res://scripts/prop_solids.gd")
+const SOURCE_FIR := preload("res://scripts/source_fir.gd")
+const SOURCE_INTERACTION_BODY := preload("res://scripts/source_interaction_body.gd")
+const MOUNTED_POSTERS := preload("res://scripts/mounted_posters.gd")
 # Models that stand in for a sprite, sized to it; the rest keep their own sizes (or their hardbox).
 # Not "crate": it stands in for anything scripted or unknown (tools leaning on walls, sacks), and a
 # cube as tall as a leaning rake is a wall.
@@ -40,6 +43,10 @@ var solids # interior_solids.gd: the house interior's walls, door, table, beds a
 var castle_doors # castle_doors.gd: the wall panel and lowered drawbridge built on fitted castle faces
 var fences # fence_solid.gd: the rail fences' posts and rails, solid
 var props # prop_solids.gd: the small props (barrels, sacks, pies, crates ...) as solids from their own sprites
+var source_firs # whole original firs complete the source forest's lateral trim art
+var stone_walls # shared source-fitted wall geometry and FPS floor contract
+var source_interaction_body
+var mounted_posters
 var fitted_built: Dictionary = {} # world position key -> the node holding it (null: reserved), this scene
 var plan_key := "" # scene, screen and story layer the plan below was gathered for
 var plan_claimed: Dictionary = {} # "screen:index" -> true: sprites a fitted house draws (itself, its parts)
@@ -86,6 +93,11 @@ func setup(game) -> void:
 	fences = FENCE_SOLID.new()
 	fences.setup(self)
 	props = PROPS.new(buildings,SCALE)
+	source_firs = SOURCE_FIR.new(self)
+	source_interaction_body = SOURCE_INTERACTION_BODY.new(self)
+	mounted_posters = MOUNTED_POSTERS.new(self)
+	stone_walls = host.stone_walls
+	stone_walls.fp_world = self
 
 func point(x: float, y: float) -> Vector3:
 	return Vector3((x-320.0)*SCALE,0,(y-200.0)*SCALE)
@@ -262,7 +274,8 @@ func static_scenery(e: Dictionary) -> bool:
 	# create_sprite builds its visual before sp_script attaches behavior. Such
 	# an actor can start beyond the screen and walk in; it is never an editor
 	# seam copy whose pixels may be discarded permanently at construction.
-	return not e.get("runtime_created",false) and int(e.get("type",1)) == 1 and str(e.get("script","")).is_empty() and int(e.get("brain",0)) == 0 and absf(float(e.get("size",100))-100.0) < 0.5
+	var trim_ground := int(e.get("type",1)) == 0 and int(e.get("pseq",e.get("seq",0))) == 32 and int(e.get("pframe",e.get("frame",1))) in [9,10]
+	return not e.get("runtime_created",false) and (int(e.get("type",1)) == 1 or trim_ground) and str(e.get("script","")).is_empty() and int(e.get("brain",0)) == 0 and absf(float(e.get("size",100))-100.0) < 0.5
 
 # [[row0 or -1 if the art is one part, row1, foot row, shown], ...] for e on screen n (seam_parts' comment above).
 func seam_parts(e: Dictionary, n: int) -> Array:
@@ -421,6 +434,7 @@ func build_ground(screen: Dictionary) -> void:
 	structural_seen.clear()
 	fitted_built.clear()
 	fences.reset()
+	stone_walls.reset()
 	neighbour_actors.clear()
 	neighbour_states.clear()
 	# The current screen's own buildings carry its story state; a neighbour showing the
@@ -624,6 +638,7 @@ func paint_background(sprites: Array, img: Image) -> void:
 
 # Whether a sprite is a background sprite painted into its screen's ground (paint_background).
 func paints_ground(e: Dictionary, screen: int) -> bool:
+	if source_firs != null and source_firs.handles(e): return false
 	if model_key(e) == "bridge_deck": return true # whatever its type: the map draws a deck as an upright sprite
 	if (effective_type(e) != 0 and not static_death_art(e)) or source_path(e).contains("/struct/"): return false
 	if kit_member(e,screen): return false
@@ -979,6 +994,10 @@ func make_entity(e: Dictionary, id: int, parent: Node3D, collision: bool = true,
 	if key == "castle":
 		add_castle_piece(node,e,id,screen,collision)
 		return node
+	if not interior and stone_walls.owns(e,screen):
+		stone_walls.add(node,e,screen,id,collision)
+		node.set_meta("height",float(stone_walls.data.shared_height_px)*SCALE)
+		return node
 	if key == "hut" and hut_fitted(e):
 		add_hut(node,e,id,collision)
 		return node
@@ -991,6 +1010,9 @@ func make_entity(e: Dictionary, id: int, parent: Node3D, collision: bool = true,
 	if sprite_drawn(key):
 		# Seam copies and stacked art (seam_parts): one billboard per object part the original shows standing here.
 		var parts := seam_parts(e,screen)
+		if not interior and source_firs.handles(e):
+			source_firs.add(node,e,parts,screen,id,collision)
+			return node
 		if parts.size() == 1 and bool(parts[0][3]) and int(parts[0][0]) < 0:
 			add_billboard(node,e,id,key,collision,screen)
 			return node
@@ -1089,6 +1111,7 @@ func make_entity(e: Dictionary, id: int, parent: Node3D, collision: bool = true,
 		shape.position.y = height*0.5
 		body.add_child(shape)
 		node.add_child(body)
+	source_interaction_body.add(node,e,id,key,collision)
 	return node
 
 func create_visual(id: int) -> void:
@@ -1146,14 +1169,16 @@ func update_visual(id: int) -> void:
 		return
 	var visible: bool = int(e.get("active",1)) != 0 and int(e.get("nodraw",0)) == 0 and int(e.get("disabled",0)) == 0 and (int(e.get("type",1)) != 2 or node.get_meta("hard_wall",false))
 	node.visible = visible
-	var body: StaticBody3D = node.get_node_or_null("HitBody")
-	if body: body.collision_layer = (2 if node.get_meta("actor",false) or not str(e.get("script","")).is_empty() else 1) if visible and not e.get("dead",false) else 0
-	if not visible: return
 	var key: String = node.get_meta("model_key","")
 	if node.has_meta("surface_position"):
 		node.position = node.get_meta("surface_position")
 	elif key not in ["wall","cottage","inn","tower","fence"]:
 		node.position = point(float(e.get("x",320)),float(e.get("y",200)))
+	source_interaction_body.add(node,e,id,key,true)
+	var body: StaticBody3D = node.get_node_or_null("HitBody")
+	if body and not body.get_meta("source_image_hardbox",false):
+		body.collision_layer = (2 if node.get_meta("actor",false) or not str(e.get("script","")).is_empty() else 1) if visible and not e.get("dead",false) else 0
+	if not visible: return
 	if node.has_meta("prop_path"):
 		update_prop(node,e,id)
 		return
@@ -1965,6 +1990,7 @@ func add_billboard(node: Node3D, e: Dictionary, id: int, key: String, collision:
 	if not sp.has_meta("static"):
 		place_on_surface(node,sp,e,d,screen)
 		set_sprite_texture(sp,path,texture,d)
+	if interior and mounted_posters.add(node,sp,e,id,screen,collision): return
 	if interior and not sp.has_meta("static"):
 		# A sprite drawn inside a fitted body's opening (the fire in the hearth) is the back of that recess (interior_solids.gd recess_seat).
 		var seat: Dictionary = solids.recess_seat(e,texture.get_size(),screen)
@@ -1990,7 +2016,9 @@ func add_billboard(node: Node3D, e: Dictionary, id: int, key: String, collision:
 	if actor: update_billboard(sp,e)
 	var passable_fence := key == "fence" and int(e.get("hard",0)) != 0
 	if not collision or passable_fence or e.get("warp") != null: return
-	if key in ["grass","flowers","mushroom","effect","feed_grains","flame","burn_scar","hole","arrow"]: return
+	if key in ["grass","flowers","mushroom","effect","feed_grains","flame","burn_scar","hole","arrow"]:
+		source_interaction_body.add(node,e,id,key,collision)
+		return
 	var body := StaticBody3D.new()
 	body.name = "HitBody"
 	body.set_meta("entity_id",id)

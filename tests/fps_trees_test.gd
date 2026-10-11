@@ -37,7 +37,11 @@ const EPS := 3 # max channel difference counted as a changed pixel (0..255)
 # and cameras [x, y, yaw, pitch] in the loaded screen's source pixels. "rail": no target.
 const CASES := [
 	{"name": "251 tree-08 over the cabin", "screen": 251, "target": [251, 153, 374], "kind": "over",
-		"cams": [[153, 520, 0.0, -0.05, "over"], [260, 500, 0.25, -0.05, "over"], [153, 74, 3.14, -0.05, "under"], [-59, 162, -2.36, -0.05, "under"]]},
+		# RC5 completes neighbor283 editor5 part1 at scene foot(240.5,493).
+		# The old second eye(260,500) sat near that displayed fir's crown and saw
+		# zero target pixels even with houses hidden. Keep every pixel and wrong-
+		# rule assertion, but approach from the clear west side of the same cabin.
+		"cams": [[153, 520, 0.0, -0.05, "over"], [100, 520, -0.3482, -0.05, "over"], [153, 74, 3.14, -0.05, "under"], [-59, 162, -2.36, -0.05, "under"]]},
 	# (M3, U7: one object per seam.) The tenth pass's "528 tree-04 over home-07" (528 at x 752) is gone: no drawn pixel of
 	# it lies in 528 and 529 places no copy, so the original never draws it and the game no longer builds it. 497's tree-04
 	# is placed on 497 at x 8 (its foot in 496) and on 496 at x 608, one world point: 496's copy is the object.

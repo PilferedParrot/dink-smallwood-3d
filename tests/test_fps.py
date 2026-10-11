@@ -20,7 +20,7 @@ def _isolated_env(tmp_path):
 
 def test_first_person_campaign_integration(tmp_path):
     result = subprocess.run(
-        [str(GODOT), "--headless", "--path", "game", "--script", str(ROOT / "tests/fps_test.gd")],
+        [str(GODOT), "--headless", "--audio-driver", "Dummy", "--path", "game", "--script", str(ROOT / "tests/fps_test.gd")],
         cwd=ROOT,
         env=_isolated_env(tmp_path),
         capture_output=True,
@@ -33,7 +33,7 @@ def test_first_person_campaign_integration(tmp_path):
 
 def test_first_person_controller_regressions(tmp_path):
     result = subprocess.run(
-        [str(GODOT), "--headless", "--path", "game", "--script", str(ROOT / "tests" / "fps_controller_test.gd")],
+        [str(GODOT), "--headless", "--audio-driver", "Dummy", "--path", "game", "--script", str(ROOT / "tests" / "fps_controller_test.gd")],
         cwd=ROOT,
         env=_isolated_env(tmp_path),
         capture_output=True,

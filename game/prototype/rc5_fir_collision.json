@@ -1,0 +1,6385 @@
+{
+  "schema": "rc5-fir-collision-fit-1",
+  "selection": "shown in full world or a real 5x5 scene block; valid outdoor foot; native RC4 baseline _blocked false",
+  "movement": "original Rect2 grow(4) band; moving within band allowed away/parallel unless entering body",
+  "template": {
+    "path": "assets/graphics/lands/Trees/tree-01.png",
+    "seq": 32,
+    "frame": 1,
+    "source_foot_px": [
+      83.5,
+      176
+    ],
+    "hardbox_from_original_frame_px": [
+      -48,
+      -13,
+      46,
+      23
+    ],
+    "hardbox_relative_to_measured_foot_xyxy": [
+      -50.5,
+      -31.0,
+      43.5,
+      5.0
+    ],
+    "crown_height_px": 176
+  },
+  "band_px": 4.0,
+  "counts": {
+    "source_placements": 123,
+    "source_parts": 246,
+    "shown_union": 165,
+    "authorized_roots": 92,
+    "skipped_invalid": 1,
+    "screen_entries": 104,
+    "screens_touched": 50,
+    "multi_screen_roots": 12
+  },
+  "rectangles": [
+    {
+      "id": "144:0:0",
+      "source": {
+        "source_screen": 144,
+        "source_list_index": 0,
+        "source_editor_index": 1,
+        "source_type": 1,
+        "source_frame": 9,
+        "source_path": "assets/graphics/lands/Trees/tree-09.png",
+        "part": 0,
+        "rows": [
+          0.0,
+          177.0
+        ]
+      },
+      "source_foot_in_full_art_px": [
+        20.5,
+        176.0
+      ],
+      "global_foot_xy": [
+        9220.5,
+        1693.0
+      ],
+      "destination_screen": 144,
+      "destination_local_foot_xy": [
+        240.5,
+        93.0
+      ],
+      "uniform_scale": 1.0,
+      "rect_global_xyxy": [
+        9170.0,
+        1662.0,
+        9264.0,
+        1698.0
+      ],
+      "full_world_shown": true,
+      "scene5x5_shown_centers": [
+        78,
+        79,
+        80,
+        81,
+        82,
+        110,
+        111,
+        112,
+        113,
+        114,
+        143,
+        144,
+        145,
+        176,
+        177,
+        178,
+        208,
+        209,
+        210
+      ],
+      "baseline_blocked": false
+    },
+    {
+      "id": "144:1:0",
+      "source": {
+        "source_screen": 144,
+        "source_list_index": 1,
+        "source_editor_index": 2,
+        "source_type": 1,
+        "source_frame": 9,
+        "source_path": "assets/graphics/lands/Trees/tree-09.png",
+        "part": 0,
+        "rows": [
+          0.0,
+          177.0
+        ]
+      },
+      "source_foot_in_full_art_px": [
+        20.5,
+        176.0
+      ],
+      "global_foot_xy": [
+        9220.5,
+        2094.0
+      ],
+      "destination_screen": 176,
+      "destination_local_foot_xy": [
+        240.5,
+        94.0
+      ],
+      "uniform_scale": 1.0,
+      "rect_global_xyxy": [
+        9170.0,
+        2063.0,
+        9264.0,
+        2099.0
+      ],
+      "full_world_shown": false,
+      "scene5x5_shown_centers": [
+        78,
+        79,
+        80,
+        81,
+        82
+      ],
+      "baseline_blocked": false
+    },
+    {
+      "id": "144:4:0",
+      "source": {
+        "source_screen": 144,
+        "source_list_index": 4,
+        "source_editor_index": 5,
+        "source_type": 1,
+        "source_frame": 10,
+        "source_path": "assets/graphics/lands/Trees/tree-10.png",
+        "part": 0,
+        "rows": [
+          0.0,
+          178.0
+        ]
+      },
+      "source_foot_in_full_art_px": [
+        41.5,
+        177.0
+      ],
+      "global_foot_xy": [
+        9393.5,
+        2094.0
+      ],
+      "destination_screen": 176,
+      "destination_local_foot_xy": [
+        413.5,
+        94.0
+      ],
+      "uniform_scale": 1.00568181818182,
+      "rect_global_xyxy": [
+        9342.713068181818,
+        2062.8238636363635,
+        9437.24715909091,
+        2099.028409090909
+      ],
+      "full_world_shown": false,
+      "scene5x5_shown_centers": [
+        78,
+        79,
+        80,
+        81,
+        82
+      ],
+      "baseline_blocked": false
+    },
+    {
+      "id": "176:0:0",
+      "source": {
+        "source_screen": 176,
+        "source_list_index": 0,
+        "source_editor_index": 1,
+        "source_type": 1,
+        "source_frame": 9,
+        "source_path": "assets/graphics/lands/Trees/tree-09.png",
+        "part": 0,
+        "rows": [
+          0.0,
+          177.0
+        ]
+      },
+      "source_foot_in_full_art_px": [
+        20.5,
+        176.0
+      ],
+      "global_foot_xy": [
+        9220.5,
+        2093.0
+      ],
+      "destination_screen": 176,
+      "destination_local_foot_xy": [
+        240.5,
+        93.0
+      ],
+      "uniform_scale": 1.0,
+      "rect_global_xyxy": [
+        9170.0,
+        2062.0,
+        9264.0,
+        2098.0
+      ],
+      "full_world_shown": true,
+      "scene5x5_shown_centers": [
+        110,
+        111,
+        112,
+        113,
+        114,
+        143,
+        144,
+        145,
+        176,
+        177,
+        178,
+        208,
+        209,
+        210,
+        238,
+        239,
+        240,
+        241,
+        242
+      ],
+      "baseline_blocked": false
+    },
+    {
+      "id": "176:0:1",
+      "source": {
+        "source_screen": 176,
+        "source_list_index": 0,
+        "source_editor_index": 1,
+        "source_type": 1,
+        "source_frame": 9,
+        "source_path": "assets/graphics/lands/Trees/tree-09.png",
+        "part": 1,
+        "rows": [
+          200.0,
+          377.0
+        ]
+      },
+      "source_foot_in_full_art_px": [
+        20.5,
+        376.0
+      ],
+      "global_foot_xy": [
+        9220.5,
+        2293.0
+      ],
+      "destination_screen": 176,
+      "destination_local_foot_xy": [
+        240.5,
+        293.0
+      ],
+      "uniform_scale": 1.0,
+      "rect_global_xyxy": [
+        9170.0,
+        2262.0,
+        9264.0,
+        2298.0
+      ],
+      "full_world_shown": true,
+      "scene5x5_shown_centers": [
+        110,
+        111,
+        112,
+        113,
+        114,
+        143,
+        144,
+        145,
+        176,
+        177,
+        178,
+        208,
+        209,
+        210,
+        238,
+        239,
+        240,
+        241,
+        242
+      ],
+      "baseline_blocked": false
+    },
+    {
+      "id": "176:1:0",
+      "source": {
+        "source_screen": 176,
+        "source_list_index": 1,
+        "source_editor_index": 2,
+        "source_type": 1,
+        "source_frame": 9,
+        "source_path": "assets/graphics/lands/Trees/tree-09.png",
+        "part": 0,
+        "rows": [
+          0.0,
+          177.0
+        ]
+      },
+      "source_foot_in_full_art_px": [
+        20.5,
+        176.0
+      ],
+      "global_foot_xy": [
+        9220.5,
+        2494.0
+      ],
+      "destination_screen": 208,
+      "destination_local_foot_xy": [
+        240.5,
+        94.0
+      ],
+      "uniform_scale": 1.0,
+      "rect_global_xyxy": [
+        9170.0,
+        2463.0,
+        9264.0,
+        2499.0
+      ],
+      "full_world_shown": false,
+      "scene5x5_shown_centers": [
+        110,
+        111,
+        112,
+        113,
+        114
+      ],
+      "baseline_blocked": false
+    },
+    {
+      "id": "176:2:0",
+      "source": {
+        "source_screen": 176,
+        "source_list_index": 2,
+        "source_editor_index": 3,
+        "source_type": 1,
+        "source_frame": 10,
+        "source_path": "assets/graphics/lands/Trees/tree-10.png",
+        "part": 0,
+        "rows": [
+          0.0,
+          178.0
+        ]
+      },
+      "source_foot_in_full_art_px": [
+        41.5,
+        177.0
+      ],
+      "global_foot_xy": [
+        9394.5,
+        2094.0
+      ],
+      "destination_screen": 176,
+      "destination_local_foot_xy": [
+        414.5,
+        94.0
+      ],
+      "uniform_scale": 1.00568181818182,
+      "rect_global_xyxy": [
+        9343.713068181818,
+        2062.8238636363635,
+        9438.24715909091,
+        2099.028409090909
+      ],
+      "full_world_shown": true,
+      "scene5x5_shown_centers": [
+        110,
+        111,
+        112,
+        113,
+        114,
+        143,
+        144,
+        145,
+        176,
+        177,
+        178,
+        208,
+        209,
+        210,
+        238,
+        239,
+        240,
+        241,
+        242
+      ],
+      "baseline_blocked": false
+    },
+    {
+      "id": "176:2:1",
+      "source": {
+        "source_screen": 176,
+        "source_list_index": 2,
+        "source_editor_index": 3,
+        "source_type": 1,
+        "source_frame": 10,
+        "source_path": "assets/graphics/lands/Trees/tree-10.png",
+        "part": 1,
+        "rows": [
+          200.0,
+          378.0
+        ]
+      },
+      "source_foot_in_full_art_px": [
+        41.5,
+        377.0
+      ],
+      "global_foot_xy": [
+        9394.5,
+        2294.0
+      ],
+      "destination_screen": 176,
+      "destination_local_foot_xy": [
+        414.5,
+        294.0
+      ],
+      "uniform_scale": 1.00568181818182,
+      "rect_global_xyxy": [
+        9343.713068181818,
+        2262.8238636363635,
+        9438.24715909091,
+        2299.028409090909
+      ],
+      "full_world_shown": true,
+      "scene5x5_shown_centers": [
+        110,
+        111,
+        112,
+        113,
+        114,
+        143,
+        144,
+        145,
+        176,
+        177,
+        178,
+        208,
+        209,
+        210,
+        238,
+        239,
+        240,
+        241,
+        242
+      ],
+      "baseline_blocked": false
+    },
+    {
+      "id": "176:3:0",
+      "source": {
+        "source_screen": 176,
+        "source_list_index": 3,
+        "source_editor_index": 4,
+        "source_type": 1,
+        "source_frame": 10,
+        "source_path": "assets/graphics/lands/Trees/tree-10.png",
+        "part": 0,
+        "rows": [
+          0.0,
+          178.0
+        ]
+      },
+      "source_foot_in_full_art_px": [
+        41.5,
+        177.0
+      ],
+      "global_foot_xy": [
+        9392.5,
+        2494.0
+      ],
+      "destination_screen": 208,
+      "destination_local_foot_xy": [
+        412.5,
+        94.0
+      ],
+      "uniform_scale": 1.00568181818182,
+      "rect_global_xyxy": [
+        9341.713068181818,
+        2462.8238636363635,
+        9436.24715909091,
+        2499.028409090909
+      ],
+      "full_world_shown": false,
+      "scene5x5_shown_centers": [
+        110,
+        111,
+        112,
+        113,
+        114
+      ],
+      "baseline_blocked": false
+    },
+    {
+      "id": "186:1:0",
+      "source": {
+        "source_screen": 186,
+        "source_list_index": 1,
+        "source_editor_index": 2,
+        "source_type": 1,
+        "source_frame": 9,
+        "source_path": "assets/graphics/lands/Trees/tree-09.png",
+        "part": 0,
+        "rows": [
+          0.0,
+          177.0
+        ]
+      },
+      "source_foot_in_full_art_px": [
+        20.5,
+        176.0
+      ],
+      "global_foot_xy": [
+        15420.5,
+        2493.0
+      ],
+      "destination_screen": 218,
+      "destination_local_foot_xy": [
+        440.5,
+        93.0
+      ],
+      "uniform_scale": 1.0,
+      "rect_global_xyxy": [
+        15370.0,
+        2462.0,
+        15464.0,
+        2498.0
+      ],
+      "full_world_shown": false,
+      "scene5x5_shown_centers": [
+        120,
+        121,
+        122,
+        123,
+        124
+      ],
+      "baseline_blocked": false
+    },
+    {
+      "id": "186:2:0",
+      "source": {
+        "source_screen": 186,
+        "source_list_index": 2,
+        "source_editor_index": 3,
+        "source_type": 1,
+        "source_frame": 10,
+        "source_path": "assets/graphics/lands/Trees/tree-10.png",
+        "part": 0,
+        "rows": [
+          0.0,
+          178.0
+        ]
+      },
+      "source_foot_in_full_art_px": [
+        41.5,
+        177.0
+      ],
+      "global_foot_xy": [
+        15192.5,
+        2494.0
+      ],
+      "destination_screen": 218,
+      "destination_local_foot_xy": [
+        212.5,
+        94.0
+      ],
+      "uniform_scale": 1.00568181818182,
+      "rect_global_xyxy": [
+        15141.713068181818,
+        2462.8238636363635,
+        15236.24715909091,
+        2499.028409090909
+      ],
+      "full_world_shown": false,
+      "scene5x5_shown_centers": [
+        120,
+        121,
+        122,
+        123,
+        124
+      ],
+      "baseline_blocked": false
+    },
+    {
+      "id": "188:0:0",
+      "source": {
+        "source_screen": 188,
+        "source_list_index": 0,
+        "source_editor_index": 1,
+        "source_type": 1,
+        "source_frame": 10,
+        "source_path": "assets/graphics/lands/Trees/tree-10.png",
+        "part": 0,
+        "rows": [
+          0.0,
+          178.0
+        ]
+      },
+      "source_foot_in_full_art_px": [
+        41.5,
+        177.0
+      ],
+      "global_foot_xy": [
+        16592.5,
+        2144.0
+      ],
+      "destination_screen": 188,
+      "destination_local_foot_xy": [
+        412.5,
+        144.0
+      ],
+      "uniform_scale": 1.00568181818182,
+      "rect_global_xyxy": [
+        16541.71306818182,
+        2112.8238636363635,
+        16636.247159090908,
+        2149.028409090909
+      ],
+      "full_world_shown": true,
+      "scene5x5_shown_centers": [
+        122,
+        123,
+        124,
+        125,
+        126,
+        154,
+        155,
+        156,
+        157,
+        158,
+        186,
+        187,
+        188,
+        189,
+        190,
+        218,
+        219,
+        220,
+        221,
+        222,
+        250,
+        251,
+        252,
+        253,
+        254
+      ],
+      "baseline_blocked": false
+    },
+    {
+      "id": "208:0:0",
+      "source": {
+        "source_screen": 208,
+        "source_list_index": 0,
+        "source_editor_index": 1,
+        "source_type": 1,
+        "source_frame": 10,
+        "source_path": "assets/graphics/lands/Trees/tree-10.png",
+        "part": 0,
+        "rows": [
+          0.0,
+          178.0
+        ]
+      },
+      "source_foot_in_full_art_px": [
+        41.5,
+        177.0
+      ],
+      "global_foot_xy": [
+        9394.5,
+        2495.0
+      ],
+      "destination_screen": 208,
+      "destination_local_foot_xy": [
+        414.5,
+        95.0
+      ],
+      "uniform_scale": 1.00568181818182,
+      "rect_global_xyxy": [
+        9343.713068181818,
+        2463.8238636363635,
+        9438.24715909091,
+        2500.028409090909
+      ],
+      "full_world_shown": true,
+      "scene5x5_shown_centers": [
+        143,
+        144,
+        145,
+        176,
+        177,
+        178,
+        208,
+        209,
+        210,
+        238,
+        239,
+        240,
+        241,
+        242,
+        270,
+        271,
+        272,
+        273,
+        274
+      ],
+      "baseline_blocked": false
+    },
+    {
+      "id": "208:0:1",
+      "source": {
+        "source_screen": 208,
+        "source_list_index": 0,
+        "source_editor_index": 1,
+        "source_type": 1,
+        "source_frame": 10,
+        "source_path": "assets/graphics/lands/Trees/tree-10.png",
+        "part": 1,
+        "rows": [
+          200.0,
+          378.0
+        ]
+      },
+      "source_foot_in_full_art_px": [
+        41.5,
+        377.0
+      ],
+      "global_foot_xy": [
+        9394.5,
+        2695.0
+      ],
+      "destination_screen": 208,
+      "destination_local_foot_xy": [
+        414.5,
+        295.0
+      ],
+      "uniform_scale": 1.00568181818182,
+      "rect_global_xyxy": [
+        9343.713068181818,
+        2663.8238636363635,
+        9438.24715909091,
+        2700.028409090909
+      ],
+      "full_world_shown": true,
+      "scene5x5_shown_centers": [
+        143,
+        144,
+        145,
+        176,
+        177,
+        178,
+        208,
+        209,
+        210,
+        238,
+        239,
+        240,
+        241,
+        242,
+        270,
+        271,
+        272,
+        273,
+        274
+      ],
+      "baseline_blocked": false
+    },
+    {
+      "id": "208:3:0",
+      "source": {
+        "source_screen": 208,
+        "source_list_index": 3,
+        "source_editor_index": 4,
+        "source_type": 1,
+        "source_frame": 9,
+        "source_path": "assets/graphics/lands/Trees/tree-09.png",
+        "part": 0,
+        "rows": [
+          0.0,
+          177.0
+        ]
+      },
+      "source_foot_in_full_art_px": [
+        20.5,
+        176.0
+      ],
+      "global_foot_xy": [
+        9220.5,
+        2493.0
+      ],
+      "destination_screen": 208,
+      "destination_local_foot_xy": [
+        240.5,
+        93.0
+      ],
+      "uniform_scale": 1.0,
+      "rect_global_xyxy": [
+        9170.0,
+        2462.0,
+        9264.0,
+        2498.0
+      ],
+      "full_world_shown": true,
+      "scene5x5_shown_centers": [
+        143,
+        144,
+        145,
+        176,
+        177,
+        178,
+        208,
+        209,
+        210,
+        238,
+        239,
+        240,
+        241,
+        242,
+        270,
+        271,
+        272,
+        273,
+        274
+      ],
+      "baseline_blocked": false
+    },
+    {
+      "id": "208:3:1",
+      "source": {
+        "source_screen": 208,
+        "source_list_index": 3,
+        "source_editor_index": 4,
+        "source_type": 1,
+        "source_frame": 9,
+        "source_path": "assets/graphics/lands/Trees/tree-09.png",
+        "part": 1,
+        "rows": [
+          200.0,
+          377.0
+        ]
+      },
+      "source_foot_in_full_art_px": [
+        20.5,
+        376.0
+      ],
+      "global_foot_xy": [
+        9220.5,
+        2693.0
+      ],
+      "destination_screen": 208,
+      "destination_local_foot_xy": [
+        240.5,
+        293.0
+      ],
+      "uniform_scale": 1.0,
+      "rect_global_xyxy": [
+        9170.0,
+        2662.0,
+        9264.0,
+        2698.0
+      ],
+      "full_world_shown": true,
+      "scene5x5_shown_centers": [
+        143,
+        144,
+        145,
+        176,
+        177,
+        178,
+        208,
+        209,
+        210,
+        238,
+        239,
+        240,
+        241,
+        242,
+        270,
+        271,
+        272,
+        273,
+        274
+      ],
+      "baseline_blocked": false
+    },
+    {
+      "id": "218:3:1",
+      "source": {
+        "source_screen": 218,
+        "source_list_index": 3,
+        "source_editor_index": 4,
+        "source_type": 1,
+        "source_frame": 9,
+        "source_path": "assets/graphics/lands/Trees/tree-09.png",
+        "part": 1,
+        "rows": [
+          200.0,
+          377.0
+        ]
+      },
+      "source_foot_in_full_art_px": [
+        20.5,
+        376.0
+      ],
+      "global_foot_xy": [
+        15419.5,
+        2493.0
+      ],
+      "destination_screen": 218,
+      "destination_local_foot_xy": [
+        439.5,
+        93.0
+      ],
+      "uniform_scale": 1.0,
+      "rect_global_xyxy": [
+        15369.0,
+        2462.0,
+        15463.0,
+        2498.0
+      ],
+      "full_world_shown": true,
+      "scene5x5_shown_centers": [
+        152,
+        153,
+        154,
+        155,
+        156,
+        184,
+        185,
+        186,
+        187,
+        188,
+        216,
+        217,
+        218,
+        219,
+        220,
+        248,
+        249,
+        250,
+        251,
+        252,
+        280,
+        281,
+        282,
+        283,
+        284
+      ],
+      "baseline_blocked": false
+    },
+    {
+      "id": "218:4:0",
+      "source": {
+        "source_screen": 218,
+        "source_list_index": 4,
+        "source_editor_index": 5,
+        "source_type": 1,
+        "source_frame": 10,
+        "source_path": "assets/graphics/lands/Trees/tree-10.png",
+        "part": 0,
+        "rows": [
+          0.0,
+          178.0
+        ]
+      },
+      "source_foot_in_full_art_px": [
+        41.5,
+        177.0
+      ],
+      "global_foot_xy": [
+        15192.5,
+        2494.0
+      ],
+      "destination_screen": 218,
+      "destination_local_foot_xy": [
+        212.5,
+        94.0
+      ],
+      "uniform_scale": 1.00568181818182,
+      "rect_global_xyxy": [
+        15141.713068181818,
+        2462.8238636363635,
+        15236.24715909091,
+        2499.028409090909
+      ],
+      "full_world_shown": true,
+      "scene5x5_shown_centers": [
+        152,
+        153,
+        154,
+        155,
+        156,
+        184,
+        185,
+        186,
+        187,
+        188,
+        216,
+        217,
+        218,
+        219,
+        220,
+        248,
+        249,
+        250,
+        251,
+        252,
+        280,
+        281,
+        282,
+        283,
+        284
+      ],
+      "baseline_blocked": false
+    },
+    {
+      "id": "218:4:1",
+      "source": {
+        "source_screen": 218,
+        "source_list_index": 4,
+        "source_editor_index": 5,
+        "source_type": 1,
+        "source_frame": 10,
+        "source_path": "assets/graphics/lands/Trees/tree-10.png",
+        "part": 1,
+        "rows": [
+          200.0,
+          378.0
+        ]
+      },
+      "source_foot_in_full_art_px": [
+        41.5,
+        377.0
+      ],
+      "global_foot_xy": [
+        15192.5,
+        2694.0
+      ],
+      "destination_screen": 218,
+      "destination_local_foot_xy": [
+        212.5,
+        294.0
+      ],
+      "uniform_scale": 1.00568181818182,
+      "rect_global_xyxy": [
+        15141.713068181818,
+        2662.8238636363635,
+        15236.24715909091,
+        2699.028409090909
+      ],
+      "full_world_shown": true,
+      "scene5x5_shown_centers": [
+        152,
+        153,
+        154,
+        155,
+        156,
+        184,
+        185,
+        186,
+        187,
+        188,
+        216,
+        217,
+        218,
+        219,
+        220,
+        248,
+        249,
+        250,
+        251,
+        252,
+        280,
+        281,
+        282,
+        283,
+        284
+      ],
+      "baseline_blocked": false
+    },
+    {
+      "id": "220:0:1",
+      "source": {
+        "source_screen": 220,
+        "source_list_index": 0,
+        "source_editor_index": 1,
+        "source_type": 1,
+        "source_frame": 10,
+        "source_path": "assets/graphics/lands/Trees/tree-10.png",
+        "part": 1,
+        "rows": [
+          200.0,
+          378.0
+        ]
+      },
+      "source_foot_in_full_art_px": [
+        41.5,
+        377.0
+      ],
+      "global_foot_xy": [
+        16592.5,
+        2944.0
+      ],
+      "destination_screen": 252,
+      "destination_local_foot_xy": [
+        412.5,
+        144.0
+      ],
+      "uniform_scale": 1.00568181818182,
+      "rect_global_xyxy": [
+        16541.71306818182,
+        2912.8238636363635,
+        16636.247159090908,
+        2949.028409090909
+      ],
+      "full_world_shown": false,
+      "scene5x5_shown_centers": [
+        154,
+        155,
+        156,
+        157,
+        158
+      ],
+      "baseline_blocked": false
+    },
+    {
+      "id": "237:0:1",
+      "source": {
+        "source_screen": 237,
+        "source_list_index": 0,
+        "source_editor_index": 1,
+        "source_type": 1,
+        "source_frame": 9,
+        "source_path": "assets/graphics/lands/Trees/tree-09.png",
+        "part": 1,
+        "rows": [
+          200.0,
+          377.0
+        ]
+      },
+      "source_foot_in_full_art_px": [
+        20.5,
+        376.0
+      ],
+      "global_foot_xy": [
+        7420.5,
+        3193.0
+      ],
+      "destination_screen": 237,
+      "destination_local_foot_xy": [
+        240.5,
+        393.0
+      ],
+      "uniform_scale": 1.0,
+      "rect_global_xyxy": [
+        7370.0,
+        3162.0,
+        7464.0,
+        3198.0
+      ],
+      "full_world_shown": true,
+      "scene5x5_shown_centers": [
+        237,
+        238,
+        239,
+        269,
+        270,
+        271,
+        299,
+        301,
+        302,
+        303
+      ],
+      "baseline_blocked": false
+    },
+    {
+      "id": "238:0:1",
+      "source": {
+        "source_screen": 238,
+        "source_list_index": 0,
+        "source_editor_index": 1,
+        "source_type": 1,
+        "source_frame": 9,
+        "source_path": "assets/graphics/lands/Trees/tree-09.png",
+        "part": 1,
+        "rows": [
+          200.0,
+          377.0
+        ]
+      },
+      "source_foot_in_full_art_px": [
+        20.5,
+        376.0
+      ],
+      "global_foot_xy": [
+        7920.5,
+        3293.0
+      ],
+      "destination_screen": 270,
+      "destination_local_foot_xy": [
+        140.5,
+        93.0
+      ],
+      "uniform_scale": 1.0,
+      "rect_global_xyxy": [
+        7870.0,
+        3262.0,
+        7964.0,
+        3298.0
+      ],
+      "full_world_shown": true,
+      "scene5x5_shown_centers": [
+        176,
+        208,
+        237,
+        238,
+        239,
+        240,
+        269,
+        270,
+        271,
+        272,
+        301,
+        302,
+        303,
+        304
+      ],
+      "baseline_blocked": false
+    },
+    {
+      "id": "238:2:1",
+      "source": {
+        "source_screen": 238,
+        "source_list_index": 2,
+        "source_editor_index": 3,
+        "source_type": 1,
+        "source_frame": 10,
+        "source_path": "assets/graphics/lands/Trees/tree-10.png",
+        "part": 1,
+        "rows": [
+          200.0,
+          378.0
+        ]
+      },
+      "source_foot_in_full_art_px": [
+        41.5,
+        377.0
+      ],
+      "global_foot_xy": [
+        8292.5,
+        2994.0
+      ],
+      "destination_screen": 238,
+      "destination_local_foot_xy": [
+        512.5,
+        194.0
+      ],
+      "uniform_scale": 1.00568181818182,
+      "rect_global_xyxy": [
+        8241.713068181818,
+        2962.8238636363635,
+        8336.24715909091,
+        2999.028409090909
+      ],
+      "full_world_shown": true,
+      "scene5x5_shown_centers": [
+        176,
+        208,
+        237,
+        238,
+        239,
+        240,
+        269,
+        270,
+        271,
+        272,
+        301,
+        302,
+        303,
+        304
+      ],
+      "baseline_blocked": false
+    },
+    {
+      "id": "239:0:0",
+      "source": {
+        "source_screen": 239,
+        "source_list_index": 0,
+        "source_editor_index": 1,
+        "source_type": 1,
+        "source_frame": 10,
+        "source_path": "assets/graphics/lands/Trees/tree-10.png",
+        "part": 0,
+        "rows": [
+          0.0,
+          178.0
+        ]
+      },
+      "source_foot_in_full_art_px": [
+        41.5,
+        177.0
+      ],
+      "global_foot_xy": [
+        8792.5,
+        3194.0
+      ],
+      "destination_screen": 239,
+      "destination_local_foot_xy": [
+        412.5,
+        394.0
+      ],
+      "uniform_scale": 1.00568181818182,
+      "rect_global_xyxy": [
+        8741.713068181818,
+        3162.8238636363635,
+        8836.24715909091,
+        3199.028409090909
+      ],
+      "full_world_shown": true,
+      "scene5x5_shown_centers": [
+        176,
+        177,
+        208,
+        209,
+        237,
+        238,
+        239,
+        240,
+        241,
+        269,
+        270,
+        271,
+        272,
+        273,
+        301,
+        302,
+        303,
+        304,
+        305
+      ],
+      "baseline_blocked": false
+    },
+    {
+      "id": "239:1:0",
+      "source": {
+        "source_screen": 239,
+        "source_list_index": 1,
+        "source_editor_index": 2,
+        "source_type": 1,
+        "source_frame": 9,
+        "source_path": "assets/graphics/lands/Trees/tree-09.png",
+        "part": 0,
+        "rows": [
+          0.0,
+          177.0
+        ]
+      },
+      "source_foot_in_full_art_px": [
+        20.5,
+        176.0
+      ],
+      "global_foot_xy": [
+        8669.5,
+        3143.0
+      ],
+      "destination_screen": 239,
+      "destination_local_foot_xy": [
+        289.5,
+        343.0
+      ],
+      "uniform_scale": 1.0,
+      "rect_global_xyxy": [
+        8619.0,
+        3112.0,
+        8713.0,
+        3148.0
+      ],
+      "full_world_shown": true,
+      "scene5x5_shown_centers": [
+        176,
+        177,
+        208,
+        209,
+        237,
+        238,
+        239,
+        240,
+        241,
+        269,
+        270,
+        271,
+        272,
+        273,
+        301,
+        302,
+        303,
+        304,
+        305
+      ],
+      "baseline_blocked": false
+    },
+    {
+      "id": "253:1:0",
+      "source": {
+        "source_screen": 253,
+        "source_list_index": 1,
+        "source_editor_index": 2,
+        "source_type": 1,
+        "source_frame": 10,
+        "source_path": "assets/graphics/lands/Trees/tree-10.png",
+        "part": 0,
+        "rows": [
+          0.0,
+          178.0
+        ]
+      },
+      "source_foot_in_full_art_px": [
+        41.5,
+        177.0
+      ],
+      "global_foot_xy": [
+        17192.5,
+        2994.0
+      ],
+      "destination_screen": 253,
+      "destination_local_foot_xy": [
+        412.5,
+        194.0
+      ],
+      "uniform_scale": 1.00568181818182,
+      "rect_global_xyxy": [
+        17141.71306818182,
+        2962.8238636363635,
+        17236.247159090908,
+        2999.028409090909
+      ],
+      "full_world_shown": true,
+      "scene5x5_shown_centers": [
+        187,
+        188,
+        189,
+        190,
+        191,
+        219,
+        220,
+        221,
+        222,
+        223,
+        251,
+        252,
+        253,
+        254,
+        255,
+        283,
+        284,
+        285,
+        286,
+        287,
+        315,
+        316,
+        317,
+        318,
+        319
+      ],
+      "baseline_blocked": false
+    },
+    {
+      "id": "253:2:1",
+      "source": {
+        "source_screen": 253,
+        "source_list_index": 2,
+        "source_editor_index": 3,
+        "source_type": 0,
+        "source_frame": 9,
+        "source_path": "assets/graphics/lands/Trees/tree-09.png",
+        "part": 1,
+        "rows": [
+          200.0,
+          377.0
+        ]
+      },
+      "source_foot_in_full_art_px": [
+        20.5,
+        376.0
+      ],
+      "global_foot_xy": [
+        17020.5,
+        2819.0
+      ],
+      "destination_screen": 253,
+      "destination_local_foot_xy": [
+        240.5,
+        19.0
+      ],
+      "uniform_scale": 1.0,
+      "rect_global_xyxy": [
+        16970.0,
+        2788.0,
+        17064.0,
+        2824.0
+      ],
+      "full_world_shown": true,
+      "scene5x5_shown_centers": [
+        187,
+        188,
+        189,
+        190,
+        191,
+        219,
+        220,
+        221,
+        222,
+        223,
+        251,
+        252,
+        253,
+        254,
+        255,
+        283,
+        284,
+        285,
+        286,
+        287,
+        315,
+        316,
+        317,
+        318,
+        319
+      ],
+      "baseline_blocked": false
+    },
+    {
+      "id": "269:0:0",
+      "source": {
+        "source_screen": 269,
+        "source_list_index": 0,
+        "source_editor_index": 1,
+        "source_type": 1,
+        "source_frame": 9,
+        "source_path": "assets/graphics/lands/Trees/tree-09.png",
+        "part": 0,
+        "rows": [
+          0.0,
+          177.0
+        ]
+      },
+      "source_foot_in_full_art_px": [
+        20.5,
+        176.0
+      ],
+      "global_foot_xy": [
+        7420.5,
+        3543.0
+      ],
+      "destination_screen": 269,
+      "destination_local_foot_xy": [
+        240.5,
+        343.0
+      ],
+      "uniform_scale": 1.0,
+      "rect_global_xyxy": [
+        7370.0,
+        3512.0,
+        7464.0,
+        3548.0
+      ],
+      "full_world_shown": true,
+      "scene5x5_shown_centers": [
+        237,
+        238,
+        239,
+        269,
+        270,
+        271,
+        299,
+        301,
+        302,
+        303,
+        333,
+        334,
+        335
+      ],
+      "baseline_blocked": false
+    },
+    {
+      "id": "269:0:1",
+      "source": {
+        "source_screen": 269,
+        "source_list_index": 0,
+        "source_editor_index": 1,
+        "source_type": 1,
+        "source_frame": 9,
+        "source_path": "assets/graphics/lands/Trees/tree-09.png",
+        "part": 1,
+        "rows": [
+          200.0,
+          377.0
+        ]
+      },
+      "source_foot_in_full_art_px": [
+        20.5,
+        376.0
+      ],
+      "global_foot_xy": [
+        7420.5,
+        3743.0
+      ],
+      "destination_screen": 301,
+      "destination_local_foot_xy": [
+        240.5,
+        143.0
+      ],
+      "uniform_scale": 1.0,
+      "rect_global_xyxy": [
+        7370.0,
+        3712.0,
+        7464.0,
+        3748.0
+      ],
+      "full_world_shown": true,
+      "scene5x5_shown_centers": [
+        237,
+        238,
+        239,
+        269,
+        270,
+        271,
+        299,
+        301,
+        302,
+        303,
+        333,
+        334,
+        335
+      ],
+      "baseline_blocked": false
+    },
+    {
+      "id": "271:0:1",
+      "source": {
+        "source_screen": 271,
+        "source_list_index": 0,
+        "source_editor_index": 1,
+        "source_type": 1,
+        "source_frame": 10,
+        "source_path": "assets/graphics/lands/Trees/tree-10.png",
+        "part": 1,
+        "rows": [
+          200.0,
+          378.0
+        ]
+      },
+      "source_foot_in_full_art_px": [
+        41.5,
+        377.0
+      ],
+      "global_foot_xy": [
+        8792.5,
+        3744.0
+      ],
+      "destination_screen": 303,
+      "destination_local_foot_xy": [
+        412.5,
+        144.0
+      ],
+      "uniform_scale": 1.00568181818182,
+      "rect_global_xyxy": [
+        8741.713068181818,
+        3712.8238636363635,
+        8836.24715909091,
+        3749.028409090909
+      ],
+      "full_world_shown": false,
+      "scene5x5_shown_centers": [
+        208,
+        209
+      ],
+      "baseline_blocked": false
+    },
+    {
+      "id": "273:2:0",
+      "source": {
+        "source_screen": 273,
+        "source_list_index": 2,
+        "source_editor_index": 3,
+        "source_type": 1,
+        "source_frame": 9,
+        "source_path": "assets/graphics/lands/Trees/tree-09.png",
+        "part": 0,
+        "rows": [
+          0.0,
+          177.0
+        ]
+      },
+      "source_foot_in_full_art_px": [
+        20.5,
+        176.0
+      ],
+      "global_foot_xy": [
+        9820.5,
+        3393.0
+      ],
+      "destination_screen": 273,
+      "destination_local_foot_xy": [
+        240.5,
+        193.0
+      ],
+      "uniform_scale": 1.0,
+      "rect_global_xyxy": [
+        9770.0,
+        3362.0,
+        9864.0,
+        3398.0
+      ],
+      "full_world_shown": true,
+      "scene5x5_shown_centers": [
+        208,
+        209,
+        210,
+        211,
+        239,
+        240,
+        241,
+        242,
+        243,
+        271,
+        272,
+        273,
+        274,
+        275,
+        303,
+        304,
+        305,
+        306,
+        307,
+        335,
+        336,
+        337,
+        338,
+        339
+      ],
+      "baseline_blocked": false
+    },
+    {
+      "id": "273:2:1",
+      "source": {
+        "source_screen": 273,
+        "source_list_index": 2,
+        "source_editor_index": 3,
+        "source_type": 1,
+        "source_frame": 9,
+        "source_path": "assets/graphics/lands/Trees/tree-09.png",
+        "part": 1,
+        "rows": [
+          200.0,
+          377.0
+        ]
+      },
+      "source_foot_in_full_art_px": [
+        20.5,
+        376.0
+      ],
+      "global_foot_xy": [
+        9820.5,
+        3593.0
+      ],
+      "destination_screen": 273,
+      "destination_local_foot_xy": [
+        240.5,
+        393.0
+      ],
+      "uniform_scale": 1.0,
+      "rect_global_xyxy": [
+        9770.0,
+        3562.0,
+        9864.0,
+        3598.0
+      ],
+      "full_world_shown": true,
+      "scene5x5_shown_centers": [
+        208,
+        209,
+        210,
+        211,
+        239,
+        240,
+        241,
+        242,
+        243,
+        271,
+        272,
+        273,
+        274,
+        275,
+        303,
+        304,
+        305,
+        306,
+        307,
+        335,
+        336,
+        337,
+        338,
+        339
+      ],
+      "baseline_blocked": false
+    },
+    {
+      "id": "279:0:0",
+      "source": {
+        "source_screen": 279,
+        "source_list_index": 0,
+        "source_editor_index": 1,
+        "source_type": 1,
+        "source_frame": 10,
+        "source_path": "assets/graphics/lands/Trees/tree-10.png",
+        "part": 0,
+        "rows": [
+          0.0,
+          178.0
+        ]
+      },
+      "source_foot_in_full_art_px": [
+        41.5,
+        177.0
+      ],
+      "global_foot_xy": [
+        13392.5,
+        3494.0
+      ],
+      "destination_screen": 279,
+      "destination_local_foot_xy": [
+        212.5,
+        294.0
+      ],
+      "uniform_scale": 1.00568181818182,
+      "rect_global_xyxy": [
+        13341.713068181818,
+        3462.8238636363635,
+        13436.24715909091,
+        3499.028409090909
+      ],
+      "full_world_shown": true,
+      "scene5x5_shown_centers": [
+        213,
+        214,
+        215,
+        216,
+        217,
+        245,
+        246,
+        247,
+        248,
+        249,
+        277,
+        278,
+        279,
+        280,
+        281,
+        309,
+        310,
+        311,
+        312,
+        313,
+        341,
+        342,
+        343,
+        344,
+        345
+      ],
+      "baseline_blocked": false
+    },
+    {
+      "id": "279:0:1",
+      "source": {
+        "source_screen": 279,
+        "source_list_index": 0,
+        "source_editor_index": 1,
+        "source_type": 1,
+        "source_frame": 10,
+        "source_path": "assets/graphics/lands/Trees/tree-10.png",
+        "part": 1,
+        "rows": [
+          200.0,
+          378.0
+        ]
+      },
+      "source_foot_in_full_art_px": [
+        41.5,
+        377.0
+      ],
+      "global_foot_xy": [
+        13392.5,
+        3694.0
+      ],
+      "destination_screen": 311,
+      "destination_local_foot_xy": [
+        212.5,
+        94.0
+      ],
+      "uniform_scale": 1.00568181818182,
+      "rect_global_xyxy": [
+        13341.713068181818,
+        3662.8238636363635,
+        13436.24715909091,
+        3699.028409090909
+      ],
+      "full_world_shown": false,
+      "scene5x5_shown_centers": [
+        213,
+        214,
+        215,
+        216,
+        217
+      ],
+      "baseline_blocked": false
+    },
+    {
+      "id": "282:2:0",
+      "source": {
+        "source_screen": 282,
+        "source_list_index": 2,
+        "source_editor_index": 3,
+        "source_type": 1,
+        "source_frame": 10,
+        "source_path": "assets/graphics/lands/Trees/tree-10.png",
+        "part": 0,
+        "rows": [
+          0.0,
+          178.0
+        ]
+      },
+      "source_foot_in_full_art_px": [
+        41.5,
+        177.0
+      ],
+      "global_foot_xy": [
+        15392.5,
+        3494.0
+      ],
+      "destination_screen": 282,
+      "destination_local_foot_xy": [
+        412.5,
+        294.0
+      ],
+      "uniform_scale": 1.00568181818182,
+      "rect_global_xyxy": [
+        15341.713068181818,
+        3462.8238636363635,
+        15436.24715909091,
+        3499.028409090909
+      ],
+      "full_world_shown": true,
+      "scene5x5_shown_centers": [
+        216,
+        217,
+        218,
+        219,
+        220,
+        248,
+        249,
+        250,
+        251,
+        252,
+        280,
+        281,
+        282,
+        283,
+        284,
+        312,
+        313,
+        314,
+        315,
+        316,
+        344,
+        345,
+        346,
+        347,
+        348
+      ],
+      "baseline_blocked": false
+    },
+    {
+      "id": "282:2:1",
+      "source": {
+        "source_screen": 282,
+        "source_list_index": 2,
+        "source_editor_index": 3,
+        "source_type": 1,
+        "source_frame": 10,
+        "source_path": "assets/graphics/lands/Trees/tree-10.png",
+        "part": 1,
+        "rows": [
+          200.0,
+          378.0
+        ]
+      },
+      "source_foot_in_full_art_px": [
+        41.5,
+        377.0
+      ],
+      "global_foot_xy": [
+        15392.5,
+        3694.0
+      ],
+      "destination_screen": 314,
+      "destination_local_foot_xy": [
+        412.5,
+        94.0
+      ],
+      "uniform_scale": 1.00568181818182,
+      "rect_global_xyxy": [
+        15341.713068181818,
+        3662.8238636363635,
+        15436.24715909091,
+        3699.028409090909
+      ],
+      "full_world_shown": true,
+      "scene5x5_shown_centers": [
+        216,
+        217,
+        218,
+        219,
+        220,
+        248,
+        249,
+        250,
+        251,
+        252,
+        280,
+        281,
+        282,
+        283,
+        284,
+        312,
+        313,
+        314,
+        315,
+        316,
+        344,
+        345,
+        346,
+        347,
+        348
+      ],
+      "baseline_blocked": false
+    },
+    {
+      "id": "282:3:0",
+      "source": {
+        "source_screen": 282,
+        "source_list_index": 3,
+        "source_editor_index": 4,
+        "source_type": 1,
+        "source_frame": 9,
+        "source_path": "assets/graphics/lands/Trees/tree-09.png",
+        "part": 0,
+        "rows": [
+          0.0,
+          177.0
+        ]
+      },
+      "source_foot_in_full_art_px": [
+        20.5,
+        176.0
+      ],
+      "global_foot_xy": [
+        15220.5,
+        3493.0
+      ],
+      "destination_screen": 282,
+      "destination_local_foot_xy": [
+        240.5,
+        293.0
+      ],
+      "uniform_scale": 1.0,
+      "rect_global_xyxy": [
+        15170.0,
+        3462.0,
+        15264.0,
+        3498.0
+      ],
+      "full_world_shown": true,
+      "scene5x5_shown_centers": [
+        216,
+        217,
+        218,
+        219,
+        220,
+        248,
+        249,
+        250,
+        251,
+        252,
+        280,
+        281,
+        282,
+        283,
+        284,
+        312,
+        313,
+        314,
+        315,
+        316,
+        344,
+        345,
+        346,
+        347,
+        348
+      ],
+      "baseline_blocked": false
+    },
+    {
+      "id": "282:3:1",
+      "source": {
+        "source_screen": 282,
+        "source_list_index": 3,
+        "source_editor_index": 4,
+        "source_type": 1,
+        "source_frame": 9,
+        "source_path": "assets/graphics/lands/Trees/tree-09.png",
+        "part": 1,
+        "rows": [
+          200.0,
+          377.0
+        ]
+      },
+      "source_foot_in_full_art_px": [
+        20.5,
+        376.0
+      ],
+      "global_foot_xy": [
+        15220.5,
+        3693.0
+      ],
+      "destination_screen": 314,
+      "destination_local_foot_xy": [
+        240.5,
+        93.0
+      ],
+      "uniform_scale": 1.0,
+      "rect_global_xyxy": [
+        15170.0,
+        3662.0,
+        15264.0,
+        3698.0
+      ],
+      "full_world_shown": true,
+      "scene5x5_shown_centers": [
+        216,
+        217,
+        218,
+        219,
+        220,
+        248,
+        249,
+        250,
+        251,
+        252,
+        280,
+        281,
+        282,
+        283,
+        284,
+        312,
+        313,
+        314,
+        315,
+        316,
+        344,
+        345,
+        346,
+        347,
+        348
+      ],
+      "baseline_blocked": false
+    },
+    {
+      "id": "283:0:0",
+      "source": {
+        "source_screen": 283,
+        "source_list_index": 0,
+        "source_editor_index": 1,
+        "source_type": 1,
+        "source_frame": 9,
+        "source_path": "assets/graphics/lands/Trees/tree-09.png",
+        "part": 0,
+        "rows": [
+          0.0,
+          177.0
+        ]
+      },
+      "source_foot_in_full_art_px": [
+        20.5,
+        176.0
+      ],
+      "global_foot_xy": [
+        15820.5,
+        3493.0
+      ],
+      "destination_screen": 283,
+      "destination_local_foot_xy": [
+        240.5,
+        293.0
+      ],
+      "uniform_scale": 1.0,
+      "rect_global_xyxy": [
+        15770.0,
+        3462.0,
+        15864.0,
+        3498.0
+      ],
+      "full_world_shown": true,
+      "scene5x5_shown_centers": [
+        217,
+        218,
+        219,
+        220,
+        221,
+        249,
+        250,
+        251,
+        252,
+        253,
+        281,
+        282,
+        283,
+        284,
+        285,
+        313,
+        314,
+        315,
+        316,
+        317,
+        345,
+        346,
+        347,
+        348,
+        349
+      ],
+      "baseline_blocked": false
+    },
+    {
+      "id": "283:2:0",
+      "source": {
+        "source_screen": 283,
+        "source_list_index": 2,
+        "source_editor_index": 3,
+        "source_type": 1,
+        "source_frame": 10,
+        "source_path": "assets/graphics/lands/Trees/tree-10.png",
+        "part": 0,
+        "rows": [
+          0.0,
+          178.0
+        ]
+      },
+      "source_foot_in_full_art_px": [
+        41.5,
+        177.0
+      ],
+      "global_foot_xy": [
+        15992.5,
+        3495.0
+      ],
+      "destination_screen": 283,
+      "destination_local_foot_xy": [
+        412.5,
+        295.0
+      ],
+      "uniform_scale": 1.00568181818182,
+      "rect_global_xyxy": [
+        15941.713068181818,
+        3463.8238636363635,
+        16036.24715909091,
+        3500.028409090909
+      ],
+      "full_world_shown": true,
+      "scene5x5_shown_centers": [
+        217,
+        218,
+        219,
+        220,
+        221,
+        249,
+        250,
+        251,
+        252,
+        253,
+        281,
+        282,
+        283,
+        284,
+        285,
+        313,
+        314,
+        315,
+        316,
+        317,
+        345,
+        346,
+        347,
+        348,
+        349
+      ],
+      "baseline_blocked": false
+    },
+    {
+      "id": "283:2:1",
+      "source": {
+        "source_screen": 283,
+        "source_list_index": 2,
+        "source_editor_index": 3,
+        "source_type": 1,
+        "source_frame": 10,
+        "source_path": "assets/graphics/lands/Trees/tree-10.png",
+        "part": 1,
+        "rows": [
+          200.0,
+          378.0
+        ]
+      },
+      "source_foot_in_full_art_px": [
+        41.5,
+        377.0
+      ],
+      "global_foot_xy": [
+        15992.5,
+        3695.0
+      ],
+      "destination_screen": 315,
+      "destination_local_foot_xy": [
+        412.5,
+        95.0
+      ],
+      "uniform_scale": 1.00568181818182,
+      "rect_global_xyxy": [
+        15941.713068181818,
+        3663.8238636363635,
+        16036.24715909091,
+        3700.028409090909
+      ],
+      "full_world_shown": false,
+      "scene5x5_shown_centers": [
+        217,
+        218,
+        219,
+        220,
+        221
+      ],
+      "baseline_blocked": false
+    },
+    {
+      "id": "284:1:0",
+      "source": {
+        "source_screen": 284,
+        "source_list_index": 1,
+        "source_editor_index": 2,
+        "source_type": 0,
+        "source_frame": 9,
+        "source_path": "assets/graphics/lands/Trees/tree-09.png",
+        "part": 0,
+        "rows": [
+          0.0,
+          177.0
+        ]
+      },
+      "source_foot_in_full_art_px": [
+        20.5,
+        176.0
+      ],
+      "global_foot_xy": [
+        16420.5,
+        3493.0
+      ],
+      "destination_screen": 284,
+      "destination_local_foot_xy": [
+        240.5,
+        293.0
+      ],
+      "uniform_scale": 1.0,
+      "rect_global_xyxy": [
+        16370.0,
+        3462.0,
+        16464.0,
+        3498.0
+      ],
+      "full_world_shown": true,
+      "scene5x5_shown_centers": [
+        218,
+        219,
+        220,
+        221,
+        222,
+        250,
+        251,
+        252,
+        253,
+        254,
+        282,
+        283,
+        284,
+        285,
+        286,
+        314,
+        315,
+        316,
+        317,
+        318,
+        346,
+        347,
+        348,
+        349,
+        350
+      ],
+      "baseline_blocked": false
+    },
+    {
+      "id": "284:1:1",
+      "source": {
+        "source_screen": 284,
+        "source_list_index": 1,
+        "source_editor_index": 2,
+        "source_type": 0,
+        "source_frame": 9,
+        "source_path": "assets/graphics/lands/Trees/tree-09.png",
+        "part": 1,
+        "rows": [
+          200.0,
+          377.0
+        ]
+      },
+      "source_foot_in_full_art_px": [
+        20.5,
+        376.0
+      ],
+      "global_foot_xy": [
+        16420.5,
+        3693.0
+      ],
+      "destination_screen": 316,
+      "destination_local_foot_xy": [
+        240.5,
+        93.0
+      ],
+      "uniform_scale": 1.0,
+      "rect_global_xyxy": [
+        16370.0,
+        3662.0,
+        16464.0,
+        3698.0
+      ],
+      "full_world_shown": false,
+      "scene5x5_shown_centers": [
+        218,
+        219,
+        220,
+        221,
+        222
+      ],
+      "baseline_blocked": false
+    },
+    {
+      "id": "301:0:1",
+      "source": {
+        "source_screen": 301,
+        "source_list_index": 0,
+        "source_editor_index": 1,
+        "source_type": 1,
+        "source_frame": 9,
+        "source_path": "assets/graphics/lands/Trees/tree-09.png",
+        "part": 1,
+        "rows": [
+          200.0,
+          377.0
+        ]
+      },
+      "source_foot_in_full_art_px": [
+        20.5,
+        376.0
+      ],
+      "global_foot_xy": [
+        7420.5,
+        3993.0
+      ],
+      "destination_screen": 301,
+      "destination_local_foot_xy": [
+        240.5,
+        393.0
+      ],
+      "uniform_scale": 1.0,
+      "rect_global_xyxy": [
+        7370.0,
+        3962.0,
+        7464.0,
+        3998.0
+      ],
+      "full_world_shown": true,
+      "scene5x5_shown_centers": [
+        237,
+        238,
+        239,
+        269,
+        270,
+        271,
+        299,
+        301,
+        302,
+        303,
+        333,
+        334,
+        335,
+        363,
+        364,
+        365,
+        366,
+        367
+      ],
+      "baseline_blocked": false
+    },
+    {
+      "id": "303:0:0",
+      "source": {
+        "source_screen": 303,
+        "source_list_index": 0,
+        "source_editor_index": 1,
+        "source_type": 1,
+        "source_frame": 10,
+        "source_path": "assets/graphics/lands/Trees/tree-10.png",
+        "part": 0,
+        "rows": [
+          0.0,
+          178.0
+        ]
+      },
+      "source_foot_in_full_art_px": [
+        41.5,
+        177.0
+      ],
+      "global_foot_xy": [
+        8592.5,
+        3993.0
+      ],
+      "destination_screen": 303,
+      "destination_local_foot_xy": [
+        212.5,
+        393.0
+      ],
+      "uniform_scale": 1.00568181818182,
+      "rect_global_xyxy": [
+        8541.713068181818,
+        3961.8238636363635,
+        8636.24715909091,
+        3998.028409090909
+      ],
+      "full_world_shown": true,
+      "scene5x5_shown_centers": [
+        237,
+        238,
+        239,
+        240,
+        241,
+        269,
+        270,
+        271,
+        272,
+        273,
+        301,
+        302,
+        303,
+        304,
+        305,
+        333,
+        334,
+        335,
+        336,
+        337,
+        365,
+        366,
+        367,
+        368,
+        369
+      ],
+      "baseline_blocked": false
+    },
+    {
+      "id": "305:1:0",
+      "source": {
+        "source_screen": 305,
+        "source_list_index": 1,
+        "source_editor_index": 3,
+        "source_type": 1,
+        "source_frame": 9,
+        "source_path": "assets/graphics/lands/Trees/tree-09.png",
+        "part": 0,
+        "rows": [
+          0.0,
+          177.0
+        ]
+      },
+      "source_foot_in_full_art_px": [
+        20.5,
+        176.0
+      ],
+      "global_foot_xy": [
+        9820.5,
+        3793.0
+      ],
+      "destination_screen": 305,
+      "destination_local_foot_xy": [
+        240.5,
+        193.0
+      ],
+      "uniform_scale": 1.0,
+      "rect_global_xyxy": [
+        9770.0,
+        3762.0,
+        9864.0,
+        3798.0
+      ],
+      "full_world_shown": true,
+      "scene5x5_shown_centers": [
+        239,
+        240,
+        241,
+        242,
+        243,
+        271,
+        272,
+        273,
+        274,
+        275,
+        303,
+        304,
+        305,
+        306,
+        307,
+        335,
+        336,
+        337,
+        338,
+        339,
+        367,
+        368,
+        369,
+        370,
+        371
+      ],
+      "baseline_blocked": false
+    },
+    {
+      "id": "305:1:1",
+      "source": {
+        "source_screen": 305,
+        "source_list_index": 1,
+        "source_editor_index": 3,
+        "source_type": 1,
+        "source_frame": 9,
+        "source_path": "assets/graphics/lands/Trees/tree-09.png",
+        "part": 1,
+        "rows": [
+          200.0,
+          377.0
+        ]
+      },
+      "source_foot_in_full_art_px": [
+        20.5,
+        376.0
+      ],
+      "global_foot_xy": [
+        9820.5,
+        3993.0
+      ],
+      "destination_screen": 305,
+      "destination_local_foot_xy": [
+        240.5,
+        393.0
+      ],
+      "uniform_scale": 1.0,
+      "rect_global_xyxy": [
+        9770.0,
+        3962.0,
+        9864.0,
+        3998.0
+      ],
+      "full_world_shown": true,
+      "scene5x5_shown_centers": [
+        239,
+        240,
+        241,
+        242,
+        243,
+        271,
+        272,
+        273,
+        274,
+        275,
+        303,
+        304,
+        305,
+        306,
+        307,
+        335,
+        336,
+        337,
+        338,
+        339,
+        367,
+        368,
+        369,
+        370,
+        371
+      ],
+      "baseline_blocked": false
+    },
+    {
+      "id": "311:0:0",
+      "source": {
+        "source_screen": 311,
+        "source_list_index": 0,
+        "source_editor_index": 1,
+        "source_type": 1,
+        "source_frame": 10,
+        "source_path": "assets/graphics/lands/Trees/tree-10.png",
+        "part": 0,
+        "rows": [
+          0.0,
+          178.0
+        ]
+      },
+      "source_foot_in_full_art_px": [
+        41.5,
+        177.0
+      ],
+      "global_foot_xy": [
+        13392.5,
+        4095.0
+      ],
+      "destination_screen": 343,
+      "destination_local_foot_xy": [
+        212.5,
+        95.0
+      ],
+      "uniform_scale": 1.00568181818182,
+      "rect_global_xyxy": [
+        13341.713068181818,
+        4063.8238636363635,
+        13436.24715909091,
+        4100.028409090909
+      ],
+      "full_world_shown": false,
+      "scene5x5_shown_centers": [
+        245,
+        246,
+        247,
+        248,
+        249
+      ],
+      "baseline_blocked": false
+    },
+    {
+      "id": "311:1:1",
+      "source": {
+        "source_screen": 311,
+        "source_list_index": 1,
+        "source_editor_index": 2,
+        "source_type": 1,
+        "source_frame": 10,
+        "source_path": "assets/graphics/lands/Trees/tree-10.png",
+        "part": 1,
+        "rows": [
+          200.0,
+          378.0
+        ]
+      },
+      "source_foot_in_full_art_px": [
+        41.5,
+        377.0
+      ],
+      "global_foot_xy": [
+        13392.5,
+        3694.0
+      ],
+      "destination_screen": 311,
+      "destination_local_foot_xy": [
+        212.5,
+        94.0
+      ],
+      "uniform_scale": 1.00568181818182,
+      "rect_global_xyxy": [
+        13341.713068181818,
+        3662.8238636363635,
+        13436.24715909091,
+        3699.028409090909
+      ],
+      "full_world_shown": true,
+      "scene5x5_shown_centers": [
+        245,
+        246,
+        247,
+        248,
+        249,
+        277,
+        278,
+        279,
+        280,
+        281,
+        309,
+        310,
+        311,
+        312,
+        313,
+        341,
+        342,
+        343,
+        344,
+        345,
+        373,
+        374,
+        375,
+        376,
+        377
+      ],
+      "baseline_blocked": false
+    },
+    {
+      "id": "311:4:1",
+      "source": {
+        "source_screen": 311,
+        "source_list_index": 4,
+        "source_editor_index": 5,
+        "source_type": 1,
+        "source_frame": 10,
+        "source_path": "assets/graphics/lands/Trees/tree-10.png",
+        "part": 1,
+        "rows": [
+          200.0,
+          378.0
+        ]
+      },
+      "source_foot_in_full_art_px": [
+        41.5,
+        377.0
+      ],
+      "global_foot_xy": [
+        13393.5,
+        3894.0
+      ],
+      "destination_screen": 311,
+      "destination_local_foot_xy": [
+        213.5,
+        294.0
+      ],
+      "uniform_scale": 1.00568181818182,
+      "rect_global_xyxy": [
+        13342.713068181818,
+        3862.8238636363635,
+        13437.24715909091,
+        3899.028409090909
+      ],
+      "full_world_shown": true,
+      "scene5x5_shown_centers": [
+        245,
+        246,
+        247,
+        248,
+        249,
+        277,
+        278,
+        279,
+        280,
+        281,
+        309,
+        310,
+        311,
+        312,
+        313,
+        341,
+        342,
+        343,
+        344,
+        345,
+        373,
+        374,
+        375,
+        376,
+        377
+      ],
+      "baseline_blocked": false
+    },
+    {
+      "id": "314:0:0",
+      "source": {
+        "source_screen": 314,
+        "source_list_index": 0,
+        "source_editor_index": 1,
+        "source_type": 1,
+        "source_frame": 9,
+        "source_path": "assets/graphics/lands/Trees/tree-09.png",
+        "part": 0,
+        "rows": [
+          0.0,
+          177.0
+        ]
+      },
+      "source_foot_in_full_art_px": [
+        20.5,
+        176.0
+      ],
+      "global_foot_xy": [
+        15220.5,
+        3893.0
+      ],
+      "destination_screen": 314,
+      "destination_local_foot_xy": [
+        240.5,
+        293.0
+      ],
+      "uniform_scale": 1.0,
+      "rect_global_xyxy": [
+        15170.0,
+        3862.0,
+        15264.0,
+        3898.0
+      ],
+      "full_world_shown": true,
+      "scene5x5_shown_centers": [
+        248,
+        249,
+        250,
+        251,
+        252,
+        280,
+        281,
+        282,
+        283,
+        284,
+        312,
+        313,
+        314,
+        315,
+        316,
+        344,
+        345,
+        346,
+        347,
+        348,
+        376,
+        377,
+        378,
+        379,
+        380
+      ],
+      "baseline_blocked": false
+    },
+    {
+      "id": "314:0:1",
+      "source": {
+        "source_screen": 314,
+        "source_list_index": 0,
+        "source_editor_index": 1,
+        "source_type": 1,
+        "source_frame": 9,
+        "source_path": "assets/graphics/lands/Trees/tree-09.png",
+        "part": 1,
+        "rows": [
+          200.0,
+          377.0
+        ]
+      },
+      "source_foot_in_full_art_px": [
+        20.5,
+        376.0
+      ],
+      "global_foot_xy": [
+        15220.5,
+        4093.0
+      ],
+      "destination_screen": 346,
+      "destination_local_foot_xy": [
+        240.5,
+        93.0
+      ],
+      "uniform_scale": 1.0,
+      "rect_global_xyxy": [
+        15170.0,
+        4062.0,
+        15264.0,
+        4098.0
+      ],
+      "full_world_shown": false,
+      "scene5x5_shown_centers": [
+        248,
+        249,
+        250,
+        251,
+        252
+      ],
+      "baseline_blocked": false
+    },
+    {
+      "id": "315:0:0",
+      "source": {
+        "source_screen": 315,
+        "source_list_index": 0,
+        "source_editor_index": 1,
+        "source_type": 1,
+        "source_frame": 10,
+        "source_path": "assets/graphics/lands/Trees/tree-10.png",
+        "part": 0,
+        "rows": [
+          0.0,
+          178.0
+        ]
+      },
+      "source_foot_in_full_art_px": [
+        41.5,
+        177.0
+      ],
+      "global_foot_xy": [
+        15992.5,
+        3893.0
+      ],
+      "destination_screen": 315,
+      "destination_local_foot_xy": [
+        412.5,
+        293.0
+      ],
+      "uniform_scale": 1.00568181818182,
+      "rect_global_xyxy": [
+        15941.713068181818,
+        3861.8238636363635,
+        16036.24715909091,
+        3898.028409090909
+      ],
+      "full_world_shown": true,
+      "scene5x5_shown_centers": [
+        249,
+        250,
+        251,
+        252,
+        253,
+        281,
+        282,
+        283,
+        284,
+        285,
+        313,
+        314,
+        315,
+        316,
+        317,
+        345,
+        346,
+        347,
+        348,
+        349,
+        377,
+        378,
+        379,
+        380,
+        381
+      ],
+      "baseline_blocked": false
+    },
+    {
+      "id": "315:0:1",
+      "source": {
+        "source_screen": 315,
+        "source_list_index": 0,
+        "source_editor_index": 1,
+        "source_type": 1,
+        "source_frame": 10,
+        "source_path": "assets/graphics/lands/Trees/tree-10.png",
+        "part": 1,
+        "rows": [
+          200.0,
+          378.0
+        ]
+      },
+      "source_foot_in_full_art_px": [
+        41.5,
+        377.0
+      ],
+      "global_foot_xy": [
+        15992.5,
+        4093.0
+      ],
+      "destination_screen": 347,
+      "destination_local_foot_xy": [
+        412.5,
+        93.0
+      ],
+      "uniform_scale": 1.00568181818182,
+      "rect_global_xyxy": [
+        15941.713068181818,
+        4061.8238636363635,
+        16036.24715909091,
+        4098.028409090909
+      ],
+      "full_world_shown": false,
+      "scene5x5_shown_centers": [
+        249,
+        250,
+        251,
+        252,
+        253
+      ],
+      "baseline_blocked": false
+    },
+    {
+      "id": "315:1:1",
+      "source": {
+        "source_screen": 315,
+        "source_list_index": 1,
+        "source_editor_index": 2,
+        "source_type": 1,
+        "source_frame": 10,
+        "source_path": "assets/graphics/lands/Trees/tree-10.png",
+        "part": 1,
+        "rows": [
+          200.0,
+          378.0
+        ]
+      },
+      "source_foot_in_full_art_px": [
+        41.5,
+        377.0
+      ],
+      "global_foot_xy": [
+        15992.5,
+        3693.0
+      ],
+      "destination_screen": 315,
+      "destination_local_foot_xy": [
+        412.5,
+        93.0
+      ],
+      "uniform_scale": 1.00568181818182,
+      "rect_global_xyxy": [
+        15941.713068181818,
+        3661.8238636363635,
+        16036.24715909091,
+        3698.028409090909
+      ],
+      "full_world_shown": true,
+      "scene5x5_shown_centers": [
+        249,
+        250,
+        251,
+        252,
+        253,
+        281,
+        282,
+        283,
+        284,
+        285,
+        313,
+        314,
+        315,
+        316,
+        317,
+        345,
+        346,
+        347,
+        348,
+        349,
+        377,
+        378,
+        379,
+        380,
+        381
+      ],
+      "baseline_blocked": false
+    },
+    {
+      "id": "316:0:1",
+      "source": {
+        "source_screen": 316,
+        "source_list_index": 0,
+        "source_editor_index": 1,
+        "source_type": 0,
+        "source_frame": 9,
+        "source_path": "assets/graphics/lands/Trees/tree-09.png",
+        "part": 1,
+        "rows": [
+          200.0,
+          377.0
+        ]
+      },
+      "source_foot_in_full_art_px": [
+        20.5,
+        376.0
+      ],
+      "global_foot_xy": [
+        16420.5,
+        3693.0
+      ],
+      "destination_screen": 316,
+      "destination_local_foot_xy": [
+        240.5,
+        93.0
+      ],
+      "uniform_scale": 1.0,
+      "rect_global_xyxy": [
+        16370.0,
+        3662.0,
+        16464.0,
+        3698.0
+      ],
+      "full_world_shown": true,
+      "scene5x5_shown_centers": [
+        250,
+        251,
+        252,
+        253,
+        254,
+        282,
+        283,
+        284,
+        285,
+        286,
+        314,
+        315,
+        316,
+        317,
+        318,
+        346,
+        347,
+        348,
+        349,
+        350,
+        378,
+        379,
+        380,
+        381,
+        382
+      ],
+      "baseline_blocked": false
+    },
+    {
+      "id": "316:1:0",
+      "source": {
+        "source_screen": 316,
+        "source_list_index": 1,
+        "source_editor_index": 2,
+        "source_type": 0,
+        "source_frame": 9,
+        "source_path": "assets/graphics/lands/Trees/tree-09.png",
+        "part": 0,
+        "rows": [
+          0.0,
+          177.0
+        ]
+      },
+      "source_foot_in_full_art_px": [
+        20.5,
+        176.0
+      ],
+      "global_foot_xy": [
+        16420.5,
+        3893.0
+      ],
+      "destination_screen": 316,
+      "destination_local_foot_xy": [
+        240.5,
+        293.0
+      ],
+      "uniform_scale": 1.0,
+      "rect_global_xyxy": [
+        16370.0,
+        3862.0,
+        16464.0,
+        3898.0
+      ],
+      "full_world_shown": true,
+      "scene5x5_shown_centers": [
+        250,
+        251,
+        252,
+        253,
+        254,
+        282,
+        283,
+        284,
+        285,
+        286,
+        314,
+        315,
+        316,
+        317,
+        318,
+        346,
+        347,
+        348,
+        349,
+        350,
+        378,
+        379,
+        380,
+        381,
+        382
+      ],
+      "baseline_blocked": false
+    },
+    {
+      "id": "316:1:1",
+      "source": {
+        "source_screen": 316,
+        "source_list_index": 1,
+        "source_editor_index": 2,
+        "source_type": 0,
+        "source_frame": 9,
+        "source_path": "assets/graphics/lands/Trees/tree-09.png",
+        "part": 1,
+        "rows": [
+          200.0,
+          377.0
+        ]
+      },
+      "source_foot_in_full_art_px": [
+        20.5,
+        376.0
+      ],
+      "global_foot_xy": [
+        16420.5,
+        4093.0
+      ],
+      "destination_screen": 348,
+      "destination_local_foot_xy": [
+        240.5,
+        93.0
+      ],
+      "uniform_scale": 1.0,
+      "rect_global_xyxy": [
+        16370.0,
+        4062.0,
+        16464.0,
+        4098.0
+      ],
+      "full_world_shown": false,
+      "scene5x5_shown_centers": [
+        250,
+        251,
+        252,
+        253,
+        254
+      ],
+      "baseline_blocked": false
+    },
+    {
+      "id": "334:0:0",
+      "source": {
+        "source_screen": 334,
+        "source_list_index": 0,
+        "source_editor_index": 1,
+        "source_type": 1,
+        "source_frame": 9,
+        "source_path": "assets/graphics/lands/Trees/tree-09.png",
+        "part": 0,
+        "rows": [
+          0.0,
+          177.0
+        ]
+      },
+      "source_foot_in_full_art_px": [
+        20.5,
+        176.0
+      ],
+      "global_foot_xy": [
+        8020.5,
+        4393.0
+      ],
+      "destination_screen": 334,
+      "destination_local_foot_xy": [
+        240.5,
+        393.0
+      ],
+      "uniform_scale": 1.0,
+      "rect_global_xyxy": [
+        7970.0,
+        4362.0,
+        8064.0,
+        4398.0
+      ],
+      "full_world_shown": true,
+      "scene5x5_shown_centers": [
+        269,
+        270,
+        271,
+        272,
+        301,
+        302,
+        303,
+        304,
+        333,
+        334,
+        335,
+        336,
+        364,
+        365,
+        366,
+        367,
+        368,
+        396,
+        397,
+        398,
+        399,
+        400
+      ],
+      "baseline_blocked": false
+    },
+    {
+      "id": "334:2:0",
+      "source": {
+        "source_screen": 334,
+        "source_list_index": 2,
+        "source_editor_index": 3,
+        "source_type": 1,
+        "source_frame": 10,
+        "source_path": "assets/graphics/lands/Trees/tree-10.png",
+        "part": 0,
+        "rows": [
+          0.0,
+          178.0
+        ]
+      },
+      "source_foot_in_full_art_px": [
+        41.5,
+        177.0
+      ],
+      "global_foot_xy": [
+        8192.5,
+        4394.0
+      ],
+      "destination_screen": 334,
+      "destination_local_foot_xy": [
+        412.5,
+        394.0
+      ],
+      "uniform_scale": 1.00568181818182,
+      "rect_global_xyxy": [
+        8141.713068181818,
+        4362.823863636364,
+        8236.24715909091,
+        4399.028409090909
+      ],
+      "full_world_shown": true,
+      "scene5x5_shown_centers": [
+        269,
+        270,
+        271,
+        272,
+        301,
+        302,
+        303,
+        304,
+        333,
+        334,
+        335,
+        336,
+        364,
+        365,
+        366,
+        367,
+        368,
+        396,
+        397,
+        398,
+        399,
+        400
+      ],
+      "baseline_blocked": false
+    },
+    {
+      "id": "335:0:0",
+      "source": {
+        "source_screen": 335,
+        "source_list_index": 0,
+        "source_editor_index": 1,
+        "source_type": 1,
+        "source_frame": 9,
+        "source_path": "assets/graphics/lands/Trees/tree-09.png",
+        "part": 0,
+        "rows": [
+          0.0,
+          177.0
+        ]
+      },
+      "source_foot_in_full_art_px": [
+        20.5,
+        176.0
+      ],
+      "global_foot_xy": [
+        8820.5,
+        4393.0
+      ],
+      "destination_screen": 335,
+      "destination_local_foot_xy": [
+        440.5,
+        393.0
+      ],
+      "uniform_scale": 1.0,
+      "rect_global_xyxy": [
+        8770.0,
+        4362.0,
+        8864.0,
+        4398.0
+      ],
+      "full_world_shown": true,
+      "scene5x5_shown_centers": [
+        269,
+        270,
+        271,
+        272,
+        273,
+        301,
+        302,
+        303,
+        304,
+        305,
+        333,
+        334,
+        335,
+        336,
+        337,
+        365,
+        366,
+        367,
+        368,
+        369,
+        397,
+        398,
+        399,
+        400,
+        401
+      ],
+      "baseline_blocked": false
+    },
+    {
+      "id": "343:0:0",
+      "source": {
+        "source_screen": 343,
+        "source_list_index": 0,
+        "source_editor_index": 1,
+        "source_type": 1,
+        "source_frame": 10,
+        "source_path": "assets/graphics/lands/Trees/tree-10.png",
+        "part": 0,
+        "rows": [
+          0.0,
+          178.0
+        ]
+      },
+      "source_foot_in_full_art_px": [
+        41.5,
+        177.0
+      ],
+      "global_foot_xy": [
+        13592.5,
+        4495.0
+      ],
+      "destination_screen": 375,
+      "destination_local_foot_xy": [
+        412.5,
+        95.0
+      ],
+      "uniform_scale": 1.00568181818182,
+      "rect_global_xyxy": [
+        13541.713068181818,
+        4463.823863636364,
+        13636.24715909091,
+        4500.028409090909
+      ],
+      "full_world_shown": false,
+      "scene5x5_shown_centers": [
+        277,
+        278,
+        279,
+        280,
+        281
+      ],
+      "baseline_blocked": false
+    },
+    {
+      "id": "343:1:0",
+      "source": {
+        "source_screen": 343,
+        "source_list_index": 1,
+        "source_editor_index": 2,
+        "source_type": 1,
+        "source_frame": 10,
+        "source_path": "assets/graphics/lands/Trees/tree-10.png",
+        "part": 0,
+        "rows": [
+          0.0,
+          178.0
+        ]
+      },
+      "source_foot_in_full_art_px": [
+        41.5,
+        177.0
+      ],
+      "global_foot_xy": [
+        13392.5,
+        4095.0
+      ],
+      "destination_screen": 343,
+      "destination_local_foot_xy": [
+        212.5,
+        95.0
+      ],
+      "uniform_scale": 1.00568181818182,
+      "rect_global_xyxy": [
+        13341.713068181818,
+        4063.8238636363635,
+        13436.24715909091,
+        4100.028409090909
+      ],
+      "full_world_shown": true,
+      "scene5x5_shown_centers": [
+        277,
+        278,
+        279,
+        280,
+        281,
+        309,
+        310,
+        311,
+        312,
+        313,
+        341,
+        342,
+        343,
+        344,
+        345,
+        373,
+        374,
+        375,
+        376,
+        377,
+        405,
+        406,
+        407,
+        408,
+        409
+      ],
+      "baseline_blocked": false
+    },
+    {
+      "id": "344:1:0",
+      "source": {
+        "source_screen": 344,
+        "source_list_index": 1,
+        "source_editor_index": 2,
+        "source_type": 1,
+        "source_frame": 9,
+        "source_path": "assets/graphics/lands/Trees/tree-09.png",
+        "part": 0,
+        "rows": [
+          0.0,
+          177.0
+        ]
+      },
+      "source_foot_in_full_art_px": [
+        20.5,
+        176.0
+      ],
+      "global_foot_xy": [
+        14020.5,
+        4393.0
+      ],
+      "destination_screen": 344,
+      "destination_local_foot_xy": [
+        240.5,
+        393.0
+      ],
+      "uniform_scale": 1.0,
+      "rect_global_xyxy": [
+        13970.0,
+        4362.0,
+        14064.0,
+        4398.0
+      ],
+      "full_world_shown": true,
+      "scene5x5_shown_centers": [
+        278,
+        279,
+        280,
+        281,
+        282,
+        310,
+        311,
+        312,
+        313,
+        314,
+        342,
+        343,
+        344,
+        345,
+        346,
+        374,
+        375,
+        376,
+        377,
+        378,
+        406,
+        407,
+        408,
+        409,
+        410
+      ],
+      "baseline_blocked": false
+    },
+    {
+      "id": "344:2:0",
+      "source": {
+        "source_screen": 344,
+        "source_list_index": 2,
+        "source_editor_index": 3,
+        "source_type": 1,
+        "source_frame": 10,
+        "source_path": "assets/graphics/lands/Trees/tree-10.png",
+        "part": 0,
+        "rows": [
+          0.0,
+          178.0
+        ]
+      },
+      "source_foot_in_full_art_px": [
+        41.5,
+        177.0
+      ],
+      "global_foot_xy": [
+        14192.5,
+        4394.0
+      ],
+      "destination_screen": 344,
+      "destination_local_foot_xy": [
+        412.5,
+        394.0
+      ],
+      "uniform_scale": 1.00568181818182,
+      "rect_global_xyxy": [
+        14141.713068181818,
+        4362.823863636364,
+        14236.24715909091,
+        4399.028409090909
+      ],
+      "full_world_shown": true,
+      "scene5x5_shown_centers": [
+        278,
+        279,
+        280,
+        281,
+        282,
+        310,
+        311,
+        312,
+        313,
+        314,
+        342,
+        343,
+        344,
+        345,
+        346,
+        374,
+        375,
+        376,
+        377,
+        378,
+        406,
+        407,
+        408,
+        409,
+        410
+      ],
+      "baseline_blocked": false
+    },
+    {
+      "id": "346:0:1",
+      "source": {
+        "source_screen": 346,
+        "source_list_index": 0,
+        "source_editor_index": 1,
+        "source_type": 1,
+        "source_frame": 9,
+        "source_path": "assets/graphics/lands/Trees/tree-09.png",
+        "part": 1,
+        "rows": [
+          200.0,
+          377.0
+        ]
+      },
+      "source_foot_in_full_art_px": [
+        20.5,
+        376.0
+      ],
+      "global_foot_xy": [
+        15220.5,
+        4093.0
+      ],
+      "destination_screen": 346,
+      "destination_local_foot_xy": [
+        240.5,
+        93.0
+      ],
+      "uniform_scale": 1.0,
+      "rect_global_xyxy": [
+        15170.0,
+        4062.0,
+        15264.0,
+        4098.0
+      ],
+      "full_world_shown": true,
+      "scene5x5_shown_centers": [
+        280,
+        281,
+        282,
+        283,
+        284,
+        312,
+        313,
+        314,
+        315,
+        316,
+        344,
+        345,
+        346,
+        347,
+        348,
+        376,
+        377,
+        378,
+        379,
+        380,
+        408,
+        409,
+        410,
+        411,
+        412
+      ],
+      "baseline_blocked": false
+    },
+    {
+      "id": "346:1:0",
+      "source": {
+        "source_screen": 346,
+        "source_list_index": 1,
+        "source_editor_index": 2,
+        "source_type": 1,
+        "source_frame": 9,
+        "source_path": "assets/graphics/lands/Trees/tree-09.png",
+        "part": 0,
+        "rows": [
+          0.0,
+          177.0
+        ]
+      },
+      "source_foot_in_full_art_px": [
+        20.5,
+        176.0
+      ],
+      "global_foot_xy": [
+        15220.5,
+        4293.0
+      ],
+      "destination_screen": 346,
+      "destination_local_foot_xy": [
+        240.5,
+        293.0
+      ],
+      "uniform_scale": 1.0,
+      "rect_global_xyxy": [
+        15170.0,
+        4262.0,
+        15264.0,
+        4298.0
+      ],
+      "full_world_shown": true,
+      "scene5x5_shown_centers": [
+        280,
+        281,
+        282,
+        283,
+        284,
+        312,
+        313,
+        314,
+        315,
+        316,
+        344,
+        345,
+        346,
+        347,
+        348,
+        376,
+        377,
+        378,
+        379,
+        380,
+        408,
+        409,
+        410,
+        411,
+        412
+      ],
+      "baseline_blocked": false
+    },
+    {
+      "id": "346:1:1",
+      "source": {
+        "source_screen": 346,
+        "source_list_index": 1,
+        "source_editor_index": 2,
+        "source_type": 1,
+        "source_frame": 9,
+        "source_path": "assets/graphics/lands/Trees/tree-09.png",
+        "part": 1,
+        "rows": [
+          200.0,
+          377.0
+        ]
+      },
+      "source_foot_in_full_art_px": [
+        20.5,
+        376.0
+      ],
+      "global_foot_xy": [
+        15220.5,
+        4493.0
+      ],
+      "destination_screen": 378,
+      "destination_local_foot_xy": [
+        240.5,
+        93.0
+      ],
+      "uniform_scale": 1.0,
+      "rect_global_xyxy": [
+        15170.0,
+        4462.0,
+        15264.0,
+        4498.0
+      ],
+      "full_world_shown": false,
+      "scene5x5_shown_centers": [
+        280,
+        281,
+        282,
+        283,
+        284
+      ],
+      "baseline_blocked": false
+    },
+    {
+      "id": "347:0:0",
+      "source": {
+        "source_screen": 347,
+        "source_list_index": 0,
+        "source_editor_index": 1,
+        "source_type": 1,
+        "source_frame": 10,
+        "source_path": "assets/graphics/lands/Trees/tree-10.png",
+        "part": 0,
+        "rows": [
+          0.0,
+          178.0
+        ]
+      },
+      "source_foot_in_full_art_px": [
+        41.5,
+        177.0
+      ],
+      "global_foot_xy": [
+        15992.5,
+        4293.0
+      ],
+      "destination_screen": 347,
+      "destination_local_foot_xy": [
+        412.5,
+        293.0
+      ],
+      "uniform_scale": 1.00568181818182,
+      "rect_global_xyxy": [
+        15941.713068181818,
+        4261.823863636364,
+        16036.24715909091,
+        4298.028409090909
+      ],
+      "full_world_shown": true,
+      "scene5x5_shown_centers": [
+        281,
+        282,
+        283,
+        284,
+        285,
+        313,
+        314,
+        315,
+        316,
+        317,
+        345,
+        346,
+        347,
+        348,
+        349,
+        377,
+        378,
+        379,
+        380,
+        381,
+        409,
+        410,
+        411,
+        412,
+        413
+      ],
+      "baseline_blocked": false
+    },
+    {
+      "id": "347:1:1",
+      "source": {
+        "source_screen": 347,
+        "source_list_index": 1,
+        "source_editor_index": 2,
+        "source_type": 1,
+        "source_frame": 10,
+        "source_path": "assets/graphics/lands/Trees/tree-10.png",
+        "part": 1,
+        "rows": [
+          200.0,
+          378.0
+        ]
+      },
+      "source_foot_in_full_art_px": [
+        41.5,
+        377.0
+      ],
+      "global_foot_xy": [
+        15992.5,
+        4093.0
+      ],
+      "destination_screen": 347,
+      "destination_local_foot_xy": [
+        412.5,
+        93.0
+      ],
+      "uniform_scale": 1.00568181818182,
+      "rect_global_xyxy": [
+        15941.713068181818,
+        4061.8238636363635,
+        16036.24715909091,
+        4098.028409090909
+      ],
+      "full_world_shown": true,
+      "scene5x5_shown_centers": [
+        281,
+        282,
+        283,
+        284,
+        285,
+        313,
+        314,
+        315,
+        316,
+        317,
+        345,
+        346,
+        347,
+        348,
+        349,
+        377,
+        378,
+        379,
+        380,
+        381,
+        409,
+        410,
+        411,
+        412,
+        413
+      ],
+      "baseline_blocked": false
+    },
+    {
+      "id": "348:0:0",
+      "source": {
+        "source_screen": 348,
+        "source_list_index": 0,
+        "source_editor_index": 1,
+        "source_type": 1,
+        "source_frame": 9,
+        "source_path": "assets/graphics/lands/Trees/tree-09.png",
+        "part": 0,
+        "rows": [
+          0.0,
+          177.0
+        ]
+      },
+      "source_foot_in_full_art_px": [
+        20.5,
+        176.0
+      ],
+      "global_foot_xy": [
+        16420.5,
+        4093.0
+      ],
+      "destination_screen": 348,
+      "destination_local_foot_xy": [
+        240.5,
+        93.0
+      ],
+      "uniform_scale": 1.0,
+      "rect_global_xyxy": [
+        16370.0,
+        4062.0,
+        16464.0,
+        4098.0
+      ],
+      "full_world_shown": true,
+      "scene5x5_shown_centers": [
+        282,
+        283,
+        284,
+        285,
+        286,
+        314,
+        315,
+        316,
+        317,
+        318,
+        346,
+        347,
+        348,
+        349,
+        350,
+        378,
+        379,
+        380,
+        381,
+        382,
+        410,
+        411,
+        412,
+        413,
+        414
+      ],
+      "baseline_blocked": false
+    },
+    {
+      "id": "348:0:1",
+      "source": {
+        "source_screen": 348,
+        "source_list_index": 0,
+        "source_editor_index": 1,
+        "source_type": 1,
+        "source_frame": 9,
+        "source_path": "assets/graphics/lands/Trees/tree-09.png",
+        "part": 1,
+        "rows": [
+          200.0,
+          377.0
+        ]
+      },
+      "source_foot_in_full_art_px": [
+        20.5,
+        376.0
+      ],
+      "global_foot_xy": [
+        16420.5,
+        4293.0
+      ],
+      "destination_screen": 348,
+      "destination_local_foot_xy": [
+        240.5,
+        293.0
+      ],
+      "uniform_scale": 1.0,
+      "rect_global_xyxy": [
+        16370.0,
+        4262.0,
+        16464.0,
+        4298.0
+      ],
+      "full_world_shown": true,
+      "scene5x5_shown_centers": [
+        282,
+        283,
+        284,
+        285,
+        286,
+        314,
+        315,
+        316,
+        317,
+        318,
+        346,
+        347,
+        348,
+        349,
+        350,
+        378,
+        379,
+        380,
+        381,
+        382,
+        410,
+        411,
+        412,
+        413,
+        414
+      ],
+      "baseline_blocked": false
+    },
+    {
+      "id": "363:0:0",
+      "source": {
+        "source_screen": 363,
+        "source_list_index": 0,
+        "source_editor_index": 2,
+        "source_type": 1,
+        "source_frame": 9,
+        "source_path": "assets/graphics/lands/Trees/tree-09.png",
+        "part": 0,
+        "rows": [
+          0.0,
+          177.0
+        ]
+      },
+      "source_foot_in_full_art_px": [
+        20.5,
+        176.0
+      ],
+      "global_foot_xy": [
+        6220.5,
+        4893.0
+      ],
+      "destination_screen": 395,
+      "destination_local_foot_xy": [
+        240.5,
+        93.0
+      ],
+      "uniform_scale": 1.0,
+      "rect_global_xyxy": [
+        6170.0,
+        4862.0,
+        6264.0,
+        4898.0
+      ],
+      "full_world_shown": false,
+      "scene5x5_shown_centers": [
+        298,
+        299,
+        301
+      ],
+      "baseline_blocked": false
+    },
+    {
+      "id": "364:0:0",
+      "source": {
+        "source_screen": 364,
+        "source_list_index": 0,
+        "source_editor_index": 1,
+        "source_type": 1,
+        "source_frame": 9,
+        "source_path": "assets/graphics/lands/Trees/tree-09.png",
+        "part": 0,
+        "rows": [
+          0.0,
+          177.0
+        ]
+      },
+      "source_foot_in_full_art_px": [
+        20.5,
+        176.0
+      ],
+      "global_foot_xy": [
+        6820.5,
+        4493.0
+      ],
+      "destination_screen": 364,
+      "destination_local_foot_xy": [
+        240.5,
+        93.0
+      ],
+      "uniform_scale": 1.0,
+      "rect_global_xyxy": [
+        6770.0,
+        4462.0,
+        6864.0,
+        4498.0
+      ],
+      "full_world_shown": true,
+      "scene5x5_shown_centers": [
+        298,
+        299,
+        301,
+        302,
+        333,
+        334,
+        363,
+        364,
+        365,
+        366,
+        395,
+        396,
+        397,
+        398,
+        426,
+        427,
+        428,
+        429,
+        430
+      ],
+      "baseline_blocked": false
+    },
+    {
+      "id": "365:0:0",
+      "source": {
+        "source_screen": 365,
+        "source_list_index": 0,
+        "source_editor_index": 1,
+        "source_type": 1,
+        "source_frame": 10,
+        "source_path": "assets/graphics/lands/Trees/tree-10.png",
+        "part": 0,
+        "rows": [
+          0.0,
+          178.0
+        ]
+      },
+      "source_foot_in_full_art_px": [
+        41.5,
+        177.0
+      ],
+      "global_foot_xy": [
+        7592.5,
+        4494.0
+      ],
+      "destination_screen": 365,
+      "destination_local_foot_xy": [
+        412.5,
+        94.0
+      ],
+      "uniform_scale": 1.00568181818182,
+      "rect_global_xyxy": [
+        7541.713068181818,
+        4462.823863636364,
+        7636.247159090909,
+        4499.028409090909
+      ],
+      "full_world_shown": true,
+      "scene5x5_shown_centers": [
+        299,
+        301,
+        302,
+        303,
+        333,
+        334,
+        335,
+        363,
+        364,
+        365,
+        366,
+        367,
+        395,
+        396,
+        397,
+        398,
+        399,
+        427,
+        428,
+        429,
+        430,
+        431
+      ],
+      "baseline_blocked": false
+    },
+    {
+      "id": "378:1:1",
+      "source": {
+        "source_screen": 378,
+        "source_list_index": 1,
+        "source_editor_index": 2,
+        "source_type": 1,
+        "source_frame": 9,
+        "source_path": "assets/graphics/lands/Trees/tree-09.png",
+        "part": 1,
+        "rows": [
+          200.0,
+          377.0
+        ]
+      },
+      "source_foot_in_full_art_px": [
+        20.5,
+        376.0
+      ],
+      "global_foot_xy": [
+        15220.5,
+        4543.0
+      ],
+      "destination_screen": 378,
+      "destination_local_foot_xy": [
+        240.5,
+        143.0
+      ],
+      "uniform_scale": 1.0,
+      "rect_global_xyxy": [
+        15170.0,
+        4512.0,
+        15264.0,
+        4548.0
+      ],
+      "full_world_shown": true,
+      "scene5x5_shown_centers": [
+        312,
+        313,
+        314,
+        315,
+        316,
+        344,
+        345,
+        346,
+        347,
+        348,
+        376,
+        377,
+        378,
+        379,
+        380,
+        408,
+        409,
+        410,
+        411,
+        412,
+        440,
+        441,
+        442,
+        443,
+        444
+      ],
+      "baseline_blocked": false
+    },
+    {
+      "id": "395:0:0",
+      "source": {
+        "source_screen": 395,
+        "source_list_index": 0,
+        "source_editor_index": 1,
+        "source_type": 1,
+        "source_frame": 9,
+        "source_path": "assets/graphics/lands/Trees/tree-09.png",
+        "part": 0,
+        "rows": [
+          0.0,
+          177.0
+        ]
+      },
+      "source_foot_in_full_art_px": [
+        20.5,
+        176.0
+      ],
+      "global_foot_xy": [
+        6220.5,
+        4893.0
+      ],
+      "destination_screen": 395,
+      "destination_local_foot_xy": [
+        240.5,
+        93.0
+      ],
+      "uniform_scale": 1.0,
+      "rect_global_xyxy": [
+        6170.0,
+        4862.0,
+        6264.0,
+        4898.0
+      ],
+      "full_world_shown": true,
+      "scene5x5_shown_centers": [
+        333,
+        363,
+        364,
+        365,
+        395,
+        396,
+        397,
+        425,
+        426,
+        427,
+        428,
+        429,
+        457,
+        458,
+        459,
+        460,
+        461
+      ],
+      "baseline_blocked": false
+    },
+    {
+      "id": "395:0:1",
+      "source": {
+        "source_screen": 395,
+        "source_list_index": 0,
+        "source_editor_index": 1,
+        "source_type": 1,
+        "source_frame": 9,
+        "source_path": "assets/graphics/lands/Trees/tree-09.png",
+        "part": 1,
+        "rows": [
+          200.0,
+          377.0
+        ]
+      },
+      "source_foot_in_full_art_px": [
+        20.5,
+        376.0
+      ],
+      "global_foot_xy": [
+        6220.5,
+        5093.0
+      ],
+      "destination_screen": 395,
+      "destination_local_foot_xy": [
+        240.5,
+        293.0
+      ],
+      "uniform_scale": 1.0,
+      "rect_global_xyxy": [
+        6170.0,
+        5062.0,
+        6264.0,
+        5098.0
+      ],
+      "full_world_shown": true,
+      "scene5x5_shown_centers": [
+        333,
+        363,
+        364,
+        365,
+        395,
+        396,
+        397,
+        425,
+        426,
+        427,
+        428,
+        429,
+        457,
+        458,
+        459,
+        460,
+        461
+      ],
+      "baseline_blocked": false
+    },
+    {
+      "id": "395:1:0",
+      "source": {
+        "source_screen": 395,
+        "source_list_index": 1,
+        "source_editor_index": 2,
+        "source_type": 1,
+        "source_frame": 9,
+        "source_path": "assets/graphics/lands/Trees/tree-09.png",
+        "part": 0,
+        "rows": [
+          0.0,
+          177.0
+        ]
+      },
+      "source_foot_in_full_art_px": [
+        20.5,
+        176.0
+      ],
+      "global_foot_xy": [
+        6220.5,
+        5293.0
+      ],
+      "destination_screen": 427,
+      "destination_local_foot_xy": [
+        240.5,
+        93.0
+      ],
+      "uniform_scale": 1.0,
+      "rect_global_xyxy": [
+        6170.0,
+        5262.0,
+        6264.0,
+        5298.0
+      ],
+      "full_world_shown": false,
+      "scene5x5_shown_centers": [
+        333
+      ],
+      "baseline_blocked": false
+    },
+    {
+      "id": "427:1:1",
+      "source": {
+        "source_screen": 427,
+        "source_list_index": 1,
+        "source_editor_index": 2,
+        "source_type": 1,
+        "source_frame": 9,
+        "source_path": "assets/graphics/lands/Trees/tree-09.png",
+        "part": 1,
+        "rows": [
+          200.0,
+          377.0
+        ]
+      },
+      "source_foot_in_full_art_px": [
+        20.5,
+        376.0
+      ],
+      "global_foot_xy": [
+        6220.5,
+        5293.0
+      ],
+      "destination_screen": 427,
+      "destination_local_foot_xy": [
+        240.5,
+        93.0
+      ],
+      "uniform_scale": 1.0,
+      "rect_global_xyxy": [
+        6170.0,
+        5262.0,
+        6264.0,
+        5298.0
+      ],
+      "full_world_shown": true,
+      "scene5x5_shown_centers": [
+        363,
+        364,
+        365,
+        395,
+        396,
+        397,
+        425,
+        426,
+        427,
+        428,
+        429,
+        457,
+        458,
+        459,
+        460,
+        461,
+        489,
+        490,
+        491,
+        492,
+        493
+      ],
+      "baseline_blocked": false
+    },
+    {
+      "id": "560:0:0",
+      "source": {
+        "source_screen": 560,
+        "source_list_index": 0,
+        "source_editor_index": 1,
+        "source_type": 1,
+        "source_frame": 10,
+        "source_path": "assets/graphics/lands/Trees/tree-10.png",
+        "part": 0,
+        "rows": [
+          0.0,
+          178.0
+        ]
+      },
+      "source_foot_in_full_art_px": [
+        41.5,
+        177.0
+      ],
+      "global_foot_xy": [
+        9092.5,
+        6994.0
+      ],
+      "destination_screen": 560,
+      "destination_local_foot_xy": [
+        112.5,
+        194.0
+      ],
+      "uniform_scale": 1.00568181818182,
+      "rect_global_xyxy": [
+        9041.713068181818,
+        6962.823863636364,
+        9136.24715909091,
+        6999.028409090909
+      ],
+      "full_world_shown": true,
+      "scene5x5_shown_centers": [
+        494,
+        495,
+        496,
+        497,
+        498,
+        526,
+        527,
+        528,
+        529,
+        530,
+        558,
+        559,
+        560,
+        561,
+        562,
+        590,
+        591,
+        592,
+        593,
+        594,
+        622,
+        623,
+        624,
+        625,
+        626
+      ],
+      "baseline_blocked": false
+    },
+    {
+      "id": "560:1:0",
+      "source": {
+        "source_screen": 560,
+        "source_list_index": 1,
+        "source_editor_index": 2,
+        "source_type": 1,
+        "source_frame": 9,
+        "source_path": "assets/graphics/lands/Trees/tree-09.png",
+        "part": 0,
+        "rows": [
+          0.0,
+          177.0
+        ]
+      },
+      "source_foot_in_full_art_px": [
+        20.5,
+        176.0
+      ],
+      "global_foot_xy": [
+        9320.5,
+        6993.0
+      ],
+      "destination_screen": 560,
+      "destination_local_foot_xy": [
+        340.5,
+        193.0
+      ],
+      "uniform_scale": 1.0,
+      "rect_global_xyxy": [
+        9270.0,
+        6962.0,
+        9364.0,
+        6998.0
+      ],
+      "full_world_shown": true,
+      "scene5x5_shown_centers": [
+        494,
+        495,
+        496,
+        497,
+        498,
+        526,
+        527,
+        528,
+        529,
+        530,
+        558,
+        559,
+        560,
+        561,
+        562,
+        590,
+        591,
+        592,
+        593,
+        594,
+        622,
+        623,
+        624,
+        625,
+        626
+      ],
+      "baseline_blocked": false
+    },
+    {
+      "id": "735:1:0",
+      "source": {
+        "source_screen": 735,
+        "source_list_index": 1,
+        "source_editor_index": 2,
+        "source_type": 1,
+        "source_frame": 10,
+        "source_path": "assets/graphics/lands/Trees/tree-10.png",
+        "part": 0,
+        "rows": [
+          0.0,
+          178.0
+        ]
+      },
+      "source_foot_in_full_art_px": [
+        41.5,
+        177.0
+      ],
+      "global_foot_xy": [
+        18392.5,
+        9095.0
+      ],
+      "destination_screen": 735,
+      "destination_local_foot_xy": [
+        412.5,
+        295.0
+      ],
+      "uniform_scale": 1.00568181818182,
+      "rect_global_xyxy": [
+        18341.71306818182,
+        9063.823863636364,
+        18436.247159090908,
+        9100.02840909091
+      ],
+      "full_world_shown": true,
+      "scene5x5_shown_centers": [
+        669,
+        670,
+        671,
+        672,
+        701,
+        702,
+        703,
+        704,
+        733,
+        734,
+        735,
+        736,
+        765,
+        766,
+        767,
+        768
+      ],
+      "baseline_blocked": false
+    },
+    {
+      "id": "735:1:1",
+      "source": {
+        "source_screen": 735,
+        "source_list_index": 1,
+        "source_editor_index": 2,
+        "source_type": 1,
+        "source_frame": 10,
+        "source_path": "assets/graphics/lands/Trees/tree-10.png",
+        "part": 1,
+        "rows": [
+          200.0,
+          378.0
+        ]
+      },
+      "source_foot_in_full_art_px": [
+        41.5,
+        377.0
+      ],
+      "global_foot_xy": [
+        18392.5,
+        9295.0
+      ],
+      "destination_screen": 767,
+      "destination_local_foot_xy": [
+        412.5,
+        95.0
+      ],
+      "uniform_scale": 1.00568181818182,
+      "rect_global_xyxy": [
+        18341.71306818182,
+        9263.823863636364,
+        18436.247159090908,
+        9300.02840909091
+      ],
+      "full_world_shown": false,
+      "scene5x5_shown_centers": [
+        669,
+        670,
+        671,
+        672
+      ],
+      "baseline_blocked": false
+    },
+    {
+      "id": "736:2:0",
+      "source": {
+        "source_screen": 736,
+        "source_list_index": 2,
+        "source_editor_index": 3,
+        "source_type": 1,
+        "source_frame": 9,
+        "source_path": "assets/graphics/lands/Trees/tree-09.png",
+        "part": 0,
+        "rows": [
+          0.0,
+          177.0
+        ]
+      },
+      "source_foot_in_full_art_px": [
+        20.5,
+        176.0
+      ],
+      "global_foot_xy": [
+        18820.5,
+        9093.0
+      ],
+      "destination_screen": 736,
+      "destination_local_foot_xy": [
+        240.5,
+        293.0
+      ],
+      "uniform_scale": 1.0,
+      "rect_global_xyxy": [
+        18770.0,
+        9062.0,
+        18864.0,
+        9098.0
+      ],
+      "full_world_shown": true,
+      "scene5x5_shown_centers": [
+        670,
+        671,
+        672,
+        702,
+        703,
+        704,
+        734,
+        735,
+        736,
+        766,
+        767,
+        768
+      ],
+      "baseline_blocked": false
+    },
+    {
+      "id": "736:2:1",
+      "source": {
+        "source_screen": 736,
+        "source_list_index": 2,
+        "source_editor_index": 3,
+        "source_type": 1,
+        "source_frame": 9,
+        "source_path": "assets/graphics/lands/Trees/tree-09.png",
+        "part": 1,
+        "rows": [
+          200.0,
+          377.0
+        ]
+      },
+      "source_foot_in_full_art_px": [
+        20.5,
+        376.0
+      ],
+      "global_foot_xy": [
+        18820.5,
+        9293.0
+      ],
+      "destination_screen": 768,
+      "destination_local_foot_xy": [
+        240.5,
+        93.0
+      ],
+      "uniform_scale": 1.0,
+      "rect_global_xyxy": [
+        18770.0,
+        9262.0,
+        18864.0,
+        9298.0
+      ],
+      "full_world_shown": false,
+      "scene5x5_shown_centers": [
+        670,
+        671,
+        672
+      ],
+      "baseline_blocked": false
+    },
+    {
+      "id": "736:3:0",
+      "source": {
+        "source_screen": 736,
+        "source_list_index": 3,
+        "source_editor_index": 4,
+        "source_type": 1,
+        "source_frame": 10,
+        "source_path": "assets/graphics/lands/Trees/tree-10.png",
+        "part": 0,
+        "rows": [
+          0.0,
+          178.0
+        ]
+      },
+      "source_foot_in_full_art_px": [
+        41.5,
+        177.0
+      ],
+      "global_foot_xy": [
+        18992.5,
+        9094.0
+      ],
+      "destination_screen": 736,
+      "destination_local_foot_xy": [
+        412.5,
+        294.0
+      ],
+      "uniform_scale": 1.00568181818182,
+      "rect_global_xyxy": [
+        18941.71306818182,
+        9062.823863636364,
+        19036.247159090908,
+        9099.02840909091
+      ],
+      "full_world_shown": true,
+      "scene5x5_shown_centers": [
+        670,
+        671,
+        672,
+        702,
+        703,
+        704,
+        734,
+        735,
+        736,
+        766,
+        767,
+        768
+      ],
+      "baseline_blocked": false
+    },
+    {
+      "id": "736:3:1",
+      "source": {
+        "source_screen": 736,
+        "source_list_index": 3,
+        "source_editor_index": 4,
+        "source_type": 1,
+        "source_frame": 10,
+        "source_path": "assets/graphics/lands/Trees/tree-10.png",
+        "part": 1,
+        "rows": [
+          200.0,
+          378.0
+        ]
+      },
+      "source_foot_in_full_art_px": [
+        41.5,
+        377.0
+      ],
+      "global_foot_xy": [
+        18992.5,
+        9294.0
+      ],
+      "destination_screen": 768,
+      "destination_local_foot_xy": [
+        412.5,
+        94.0
+      ],
+      "uniform_scale": 1.00568181818182,
+      "rect_global_xyxy": [
+        18941.71306818182,
+        9262.823863636364,
+        19036.247159090908,
+        9299.02840909091
+      ],
+      "full_world_shown": false,
+      "scene5x5_shown_centers": [
+        670,
+        671,
+        672
+      ],
+      "baseline_blocked": false
+    },
+    {
+      "id": "766:0:0",
+      "source": {
+        "source_screen": 766,
+        "source_list_index": 0,
+        "source_editor_index": 1,
+        "source_type": 1,
+        "source_frame": 10,
+        "source_path": "assets/graphics/lands/Trees/tree-10.png",
+        "part": 0,
+        "rows": [
+          0.0,
+          178.0
+        ]
+      },
+      "source_foot_in_full_art_px": [
+        41.5,
+        177.0
+      ],
+      "global_foot_xy": [
+        17792.5,
+        9495.0
+      ],
+      "destination_screen": 766,
+      "destination_local_foot_xy": [
+        412.5,
+        295.0
+      ],
+      "uniform_scale": 1.00568181818182,
+      "rect_global_xyxy": [
+        17741.71306818182,
+        9463.823863636364,
+        17836.247159090908,
+        9500.02840909091
+      ],
+      "full_world_shown": true,
+      "scene5x5_shown_centers": [
+        700,
+        701,
+        702,
+        703,
+        704,
+        732,
+        733,
+        734,
+        735,
+        736,
+        764,
+        765,
+        766,
+        767,
+        768
+      ],
+      "baseline_blocked": false
+    },
+    {
+      "id": "767:0:1",
+      "source": {
+        "source_screen": 767,
+        "source_list_index": 0,
+        "source_editor_index": 1,
+        "source_type": 1,
+        "source_frame": 10,
+        "source_path": "assets/graphics/lands/Trees/tree-10.png",
+        "part": 1,
+        "rows": [
+          200.0,
+          378.0
+        ]
+      },
+      "source_foot_in_full_art_px": [
+        41.5,
+        377.0
+      ],
+      "global_foot_xy": [
+        18392.5,
+        9295.0
+      ],
+      "destination_screen": 767,
+      "destination_local_foot_xy": [
+        412.5,
+        95.0
+      ],
+      "uniform_scale": 1.00568181818182,
+      "rect_global_xyxy": [
+        18341.71306818182,
+        9263.823863636364,
+        18436.247159090908,
+        9300.02840909091
+      ],
+      "full_world_shown": true,
+      "scene5x5_shown_centers": [
+        701,
+        702,
+        703,
+        704,
+        733,
+        734,
+        735,
+        736,
+        765,
+        766,
+        767,
+        768
+      ],
+      "baseline_blocked": false
+    },
+    {
+      "id": "768:0:1",
+      "source": {
+        "source_screen": 768,
+        "source_list_index": 0,
+        "source_editor_index": 1,
+        "source_type": 1,
+        "source_frame": 9,
+        "source_path": "assets/graphics/lands/Trees/tree-09.png",
+        "part": 1,
+        "rows": [
+          200.0,
+          377.0
+        ]
+      },
+      "source_foot_in_full_art_px": [
+        20.5,
+        376.0
+      ],
+      "global_foot_xy": [
+        18820.5,
+        9293.0
+      ],
+      "destination_screen": 768,
+      "destination_local_foot_xy": [
+        240.5,
+        93.0
+      ],
+      "uniform_scale": 1.0,
+      "rect_global_xyxy": [
+        18770.0,
+        9262.0,
+        18864.0,
+        9298.0
+      ],
+      "full_world_shown": true,
+      "scene5x5_shown_centers": [
+        702,
+        703,
+        704,
+        734,
+        735,
+        736,
+        766,
+        767,
+        768
+      ],
+      "baseline_blocked": false
+    },
+    {
+      "id": "768:2:1",
+      "source": {
+        "source_screen": 768,
+        "source_list_index": 2,
+        "source_editor_index": 3,
+        "source_type": 1,
+        "source_frame": 10,
+        "source_path": "assets/graphics/lands/Trees/tree-10.png",
+        "part": 1,
+        "rows": [
+          200.0,
+          378.0
+        ]
+      },
+      "source_foot_in_full_art_px": [
+        41.5,
+        377.0
+      ],
+      "global_foot_xy": [
+        18992.5,
+        9294.0
+      ],
+      "destination_screen": 768,
+      "destination_local_foot_xy": [
+        412.5,
+        94.0
+      ],
+      "uniform_scale": 1.00568181818182,
+      "rect_global_xyxy": [
+        18941.71306818182,
+        9262.823863636364,
+        19036.247159090908,
+        9299.02840909091
+      ],
+      "full_world_shown": true,
+      "scene5x5_shown_centers": [
+        702,
+        703,
+        704,
+        734,
+        735,
+        736,
+        766,
+        767,
+        768
+      ],
+      "baseline_blocked": false
+    }
+  ],
+  "by_screen": {
+    "144": [
+      {
+        "id": "144:0:0",
+        "rect_local_xyxy": [
+          190.0,
+          62.0,
+          284.0,
+          98.0
+        ]
+      }
+    ],
+    "176": [
+      {
+        "id": "144:1:0",
+        "rect_local_xyxy": [
+          190.0,
+          63.0,
+          284.0,
+          99.0
+        ]
+      },
+      {
+        "id": "144:4:0",
+        "rect_local_xyxy": [
+          362.713068181818,
+          62.82386363636351,
+          457.2471590909099,
+          99.02840909090901
+        ]
+      },
+      {
+        "id": "176:0:0",
+        "rect_local_xyxy": [
+          190.0,
+          62.0,
+          284.0,
+          98.0
+        ]
+      },
+      {
+        "id": "176:0:1",
+        "rect_local_xyxy": [
+          190.0,
+          262.0,
+          284.0,
+          298.0
+        ]
+      },
+      {
+        "id": "176:2:0",
+        "rect_local_xyxy": [
+          363.713068181818,
+          62.82386363636351,
+          458.2471590909099,
+          99.02840909090901
+        ]
+      },
+      {
+        "id": "176:2:1",
+        "rect_local_xyxy": [
+          363.713068181818,
+          262.8238636363635,
+          458.2471590909099,
+          299.028409090909
+        ]
+      }
+    ],
+    "208": [
+      {
+        "id": "176:1:0",
+        "rect_local_xyxy": [
+          190.0,
+          63.0,
+          284.0,
+          99.0
+        ]
+      },
+      {
+        "id": "176:3:0",
+        "rect_local_xyxy": [
+          361.713068181818,
+          62.82386363636351,
+          456.2471590909099,
+          99.02840909090901
+        ]
+      },
+      {
+        "id": "208:0:0",
+        "rect_local_xyxy": [
+          363.713068181818,
+          63.82386363636351,
+          458.2471590909099,
+          100.02840909090901
+        ]
+      },
+      {
+        "id": "208:0:1",
+        "rect_local_xyxy": [
+          363.713068181818,
+          263.8238636363635,
+          458.2471590909099,
+          300.028409090909
+        ]
+      },
+      {
+        "id": "208:3:0",
+        "rect_local_xyxy": [
+          190.0,
+          62.0,
+          284.0,
+          98.0
+        ]
+      },
+      {
+        "id": "208:3:1",
+        "rect_local_xyxy": [
+          190.0,
+          262.0,
+          284.0,
+          298.0
+        ]
+      }
+    ],
+    "218": [
+      {
+        "id": "186:1:0",
+        "rect_local_xyxy": [
+          390.0,
+          62.0,
+          484.0,
+          98.0
+        ]
+      },
+      {
+        "id": "186:2:0",
+        "rect_local_xyxy": [
+          161.71306818181802,
+          62.82386363636351,
+          256.2471590909099,
+          99.02840909090901
+        ]
+      },
+      {
+        "id": "218:3:1",
+        "rect_local_xyxy": [
+          389.0,
+          62.0,
+          483.0,
+          98.0
+        ]
+      },
+      {
+        "id": "218:4:0",
+        "rect_local_xyxy": [
+          161.71306818181802,
+          62.82386363636351,
+          256.2471590909099,
+          99.02840909090901
+        ]
+      },
+      {
+        "id": "218:4:1",
+        "rect_local_xyxy": [
+          161.71306818181802,
+          262.8238636363635,
+          256.2471590909099,
+          299.028409090909
+        ]
+      }
+    ],
+    "188": [
+      {
+        "id": "188:0:0",
+        "rect_local_xyxy": [
+          361.71306818181984,
+          112.82386363636351,
+          456.2471590909081,
+          149.028409090909
+        ]
+      }
+    ],
+    "252": [
+      {
+        "id": "220:0:1",
+        "rect_local_xyxy": [
+          361.71306818181984,
+          112.82386363636351,
+          456.2471590909081,
+          149.028409090909
+        ]
+      }
+    ],
+    "237": [
+      {
+        "id": "237:0:1",
+        "rect_local_xyxy": [
+          190.0,
+          362.0,
+          284.0,
+          398.0
+        ]
+      }
+    ],
+    "269": [
+      {
+        "id": "237:0:1",
+        "rect_local_xyxy": [
+          190.0,
+          -38.0,
+          284.0,
+          -2.0
+        ]
+      },
+      {
+        "id": "269:0:0",
+        "rect_local_xyxy": [
+          190.0,
+          312.0,
+          284.0,
+          348.0
+        ]
+      }
+    ],
+    "270": [
+      {
+        "id": "238:0:1",
+        "rect_local_xyxy": [
+          90.0,
+          62.0,
+          184.0,
+          98.0
+        ]
+      }
+    ],
+    "238": [
+      {
+        "id": "238:2:1",
+        "rect_local_xyxy": [
+          461.713068181818,
+          162.8238636363635,
+          556.2471590909099,
+          199.028409090909
+        ]
+      }
+    ],
+    "239": [
+      {
+        "id": "239:0:0",
+        "rect_local_xyxy": [
+          361.713068181818,
+          362.8238636363635,
+          456.2471590909099,
+          399.028409090909
+        ]
+      },
+      {
+        "id": "239:1:0",
+        "rect_local_xyxy": [
+          239.0,
+          312.0,
+          333.0,
+          348.0
+        ]
+      }
+    ],
+    "271": [
+      {
+        "id": "239:0:0",
+        "rect_local_xyxy": [
+          361.713068181818,
+          -37.17613636363649,
+          456.2471590909099,
+          -0.9715909090909918
+        ]
+      }
+    ],
+    "253": [
+      {
+        "id": "253:1:0",
+        "rect_local_xyxy": [
+          361.71306818181984,
+          162.8238636363635,
+          456.2471590909081,
+          199.028409090909
+        ]
+      },
+      {
+        "id": "253:2:1",
+        "rect_local_xyxy": [
+          190.0,
+          -12.0,
+          284.0,
+          24.0
+        ]
+      }
+    ],
+    "221": [
+      {
+        "id": "253:2:1",
+        "rect_local_xyxy": [
+          190.0,
+          388.0,
+          284.0,
+          424.0
+        ]
+      }
+    ],
+    "301": [
+      {
+        "id": "269:0:1",
+        "rect_local_xyxy": [
+          190.0,
+          112.0,
+          284.0,
+          148.0
+        ]
+      },
+      {
+        "id": "301:0:1",
+        "rect_local_xyxy": [
+          190.0,
+          362.0,
+          284.0,
+          398.0
+        ]
+      }
+    ],
+    "303": [
+      {
+        "id": "271:0:1",
+        "rect_local_xyxy": [
+          361.713068181818,
+          112.82386363636351,
+          456.2471590909099,
+          149.028409090909
+        ]
+      },
+      {
+        "id": "303:0:0",
+        "rect_local_xyxy": [
+          161.71306818181802,
+          361.8238636363635,
+          256.2471590909099,
+          398.028409090909
+        ]
+      }
+    ],
+    "273": [
+      {
+        "id": "273:2:0",
+        "rect_local_xyxy": [
+          190.0,
+          162.0,
+          284.0,
+          198.0
+        ]
+      },
+      {
+        "id": "273:2:1",
+        "rect_local_xyxy": [
+          190.0,
+          362.0,
+          284.0,
+          398.0
+        ]
+      }
+    ],
+    "305": [
+      {
+        "id": "273:2:1",
+        "rect_local_xyxy": [
+          190.0,
+          -38.0,
+          284.0,
+          -2.0
+        ]
+      },
+      {
+        "id": "305:1:0",
+        "rect_local_xyxy": [
+          190.0,
+          162.0,
+          284.0,
+          198.0
+        ]
+      },
+      {
+        "id": "305:1:1",
+        "rect_local_xyxy": [
+          190.0,
+          362.0,
+          284.0,
+          398.0
+        ]
+      }
+    ],
+    "279": [
+      {
+        "id": "279:0:0",
+        "rect_local_xyxy": [
+          161.71306818181802,
+          262.8238636363635,
+          256.2471590909099,
+          299.028409090909
+        ]
+      }
+    ],
+    "311": [
+      {
+        "id": "279:0:1",
+        "rect_local_xyxy": [
+          161.71306818181802,
+          62.82386363636351,
+          256.2471590909099,
+          99.02840909090901
+        ]
+      },
+      {
+        "id": "311:1:1",
+        "rect_local_xyxy": [
+          161.71306818181802,
+          62.82386363636351,
+          256.2471590909099,
+          99.02840909090901
+        ]
+      },
+      {
+        "id": "311:4:1",
+        "rect_local_xyxy": [
+          162.71306818181802,
+          262.8238636363635,
+          257.2471590909099,
+          299.028409090909
+        ]
+      }
+    ],
+    "282": [
+      {
+        "id": "282:2:0",
+        "rect_local_xyxy": [
+          361.713068181818,
+          262.8238636363635,
+          456.2471590909099,
+          299.028409090909
+        ]
+      },
+      {
+        "id": "282:3:0",
+        "rect_local_xyxy": [
+          190.0,
+          262.0,
+          284.0,
+          298.0
+        ]
+      }
+    ],
+    "314": [
+      {
+        "id": "282:2:1",
+        "rect_local_xyxy": [
+          361.713068181818,
+          62.82386363636351,
+          456.2471590909099,
+          99.02840909090901
+        ]
+      },
+      {
+        "id": "282:3:1",
+        "rect_local_xyxy": [
+          190.0,
+          62.0,
+          284.0,
+          98.0
+        ]
+      },
+      {
+        "id": "314:0:0",
+        "rect_local_xyxy": [
+          190.0,
+          262.0,
+          284.0,
+          298.0
+        ]
+      }
+    ],
+    "283": [
+      {
+        "id": "283:0:0",
+        "rect_local_xyxy": [
+          190.0,
+          262.0,
+          284.0,
+          298.0
+        ]
+      },
+      {
+        "id": "283:2:0",
+        "rect_local_xyxy": [
+          361.713068181818,
+          263.8238636363635,
+          456.2471590909099,
+          300.028409090909
+        ]
+      }
+    ],
+    "315": [
+      {
+        "id": "283:2:1",
+        "rect_local_xyxy": [
+          361.713068181818,
+          63.82386363636351,
+          456.2471590909099,
+          100.02840909090901
+        ]
+      },
+      {
+        "id": "315:0:0",
+        "rect_local_xyxy": [
+          361.713068181818,
+          261.8238636363635,
+          456.2471590909099,
+          298.028409090909
+        ]
+      },
+      {
+        "id": "315:1:1",
+        "rect_local_xyxy": [
+          361.713068181818,
+          61.82386363636351,
+          456.2471590909099,
+          98.02840909090901
+        ]
+      }
+    ],
+    "284": [
+      {
+        "id": "284:1:0",
+        "rect_local_xyxy": [
+          190.0,
+          262.0,
+          284.0,
+          298.0
+        ]
+      }
+    ],
+    "316": [
+      {
+        "id": "284:1:1",
+        "rect_local_xyxy": [
+          190.0,
+          62.0,
+          284.0,
+          98.0
+        ]
+      },
+      {
+        "id": "316:0:1",
+        "rect_local_xyxy": [
+          190.0,
+          62.0,
+          284.0,
+          98.0
+        ]
+      },
+      {
+        "id": "316:1:0",
+        "rect_local_xyxy": [
+          190.0,
+          262.0,
+          284.0,
+          298.0
+        ]
+      }
+    ],
+    "333": [
+      {
+        "id": "301:0:1",
+        "rect_local_xyxy": [
+          190.0,
+          -38.0,
+          284.0,
+          -2.0
+        ]
+      }
+    ],
+    "335": [
+      {
+        "id": "303:0:0",
+        "rect_local_xyxy": [
+          161.71306818181802,
+          -38.17613636363649,
+          256.2471590909099,
+          -1.9715909090909918
+        ]
+      },
+      {
+        "id": "335:0:0",
+        "rect_local_xyxy": [
+          390.0,
+          362.0,
+          484.0,
+          398.0
+        ]
+      }
+    ],
+    "337": [
+      {
+        "id": "305:1:1",
+        "rect_local_xyxy": [
+          190.0,
+          -38.0,
+          284.0,
+          -2.0
+        ]
+      }
+    ],
+    "343": [
+      {
+        "id": "311:0:0",
+        "rect_local_xyxy": [
+          161.71306818181802,
+          63.82386363636351,
+          256.2471590909099,
+          100.02840909090901
+        ]
+      },
+      {
+        "id": "343:1:0",
+        "rect_local_xyxy": [
+          161.71306818181802,
+          63.82386363636351,
+          256.2471590909099,
+          100.02840909090901
+        ]
+      }
+    ],
+    "346": [
+      {
+        "id": "314:0:1",
+        "rect_local_xyxy": [
+          190.0,
+          62.0,
+          284.0,
+          98.0
+        ]
+      },
+      {
+        "id": "346:0:1",
+        "rect_local_xyxy": [
+          190.0,
+          62.0,
+          284.0,
+          98.0
+        ]
+      },
+      {
+        "id": "346:1:0",
+        "rect_local_xyxy": [
+          190.0,
+          262.0,
+          284.0,
+          298.0
+        ]
+      }
+    ],
+    "347": [
+      {
+        "id": "315:0:1",
+        "rect_local_xyxy": [
+          361.713068181818,
+          61.82386363636351,
+          456.2471590909099,
+          98.02840909090901
+        ]
+      },
+      {
+        "id": "347:0:0",
+        "rect_local_xyxy": [
+          361.713068181818,
+          261.82386363636397,
+          456.2471590909099,
+          298.028409090909
+        ]
+      },
+      {
+        "id": "347:1:1",
+        "rect_local_xyxy": [
+          361.713068181818,
+          61.82386363636351,
+          456.2471590909099,
+          98.02840909090901
+        ]
+      }
+    ],
+    "348": [
+      {
+        "id": "316:1:1",
+        "rect_local_xyxy": [
+          190.0,
+          62.0,
+          284.0,
+          98.0
+        ]
+      },
+      {
+        "id": "348:0:0",
+        "rect_local_xyxy": [
+          190.0,
+          62.0,
+          284.0,
+          98.0
+        ]
+      },
+      {
+        "id": "348:0:1",
+        "rect_local_xyxy": [
+          190.0,
+          262.0,
+          284.0,
+          298.0
+        ]
+      }
+    ],
+    "334": [
+      {
+        "id": "334:0:0",
+        "rect_local_xyxy": [
+          190.0,
+          362.0,
+          284.0,
+          398.0
+        ]
+      },
+      {
+        "id": "334:2:0",
+        "rect_local_xyxy": [
+          361.713068181818,
+          362.82386363636397,
+          456.2471590909099,
+          399.028409090909
+        ]
+      }
+    ],
+    "366": [
+      {
+        "id": "334:0:0",
+        "rect_local_xyxy": [
+          190.0,
+          -38.0,
+          284.0,
+          -2.0
+        ]
+      },
+      {
+        "id": "334:2:0",
+        "rect_local_xyxy": [
+          361.713068181818,
+          -37.17613636363603,
+          456.2471590909099,
+          -0.9715909090909918
+        ]
+      }
+    ],
+    "367": [
+      {
+        "id": "335:0:0",
+        "rect_local_xyxy": [
+          390.0,
+          -38.0,
+          484.0,
+          -2.0
+        ]
+      }
+    ],
+    "375": [
+      {
+        "id": "343:0:0",
+        "rect_local_xyxy": [
+          361.713068181818,
+          63.82386363636397,
+          456.2471590909099,
+          100.02840909090901
+        ]
+      }
+    ],
+    "344": [
+      {
+        "id": "344:1:0",
+        "rect_local_xyxy": [
+          190.0,
+          362.0,
+          284.0,
+          398.0
+        ]
+      },
+      {
+        "id": "344:2:0",
+        "rect_local_xyxy": [
+          361.713068181818,
+          362.82386363636397,
+          456.2471590909099,
+          399.028409090909
+        ]
+      }
+    ],
+    "376": [
+      {
+        "id": "344:1:0",
+        "rect_local_xyxy": [
+          190.0,
+          -38.0,
+          284.0,
+          -2.0
+        ]
+      },
+      {
+        "id": "344:2:0",
+        "rect_local_xyxy": [
+          361.713068181818,
+          -37.17613636363603,
+          456.2471590909099,
+          -0.9715909090909918
+        ]
+      }
+    ],
+    "378": [
+      {
+        "id": "346:1:1",
+        "rect_local_xyxy": [
+          190.0,
+          62.0,
+          284.0,
+          98.0
+        ]
+      },
+      {
+        "id": "378:1:1",
+        "rect_local_xyxy": [
+          190.0,
+          112.0,
+          284.0,
+          148.0
+        ]
+      }
+    ],
+    "395": [
+      {
+        "id": "363:0:0",
+        "rect_local_xyxy": [
+          190.0,
+          62.0,
+          284.0,
+          98.0
+        ]
+      },
+      {
+        "id": "395:0:0",
+        "rect_local_xyxy": [
+          190.0,
+          62.0,
+          284.0,
+          98.0
+        ]
+      },
+      {
+        "id": "395:0:1",
+        "rect_local_xyxy": [
+          190.0,
+          262.0,
+          284.0,
+          298.0
+        ]
+      }
+    ],
+    "364": [
+      {
+        "id": "364:0:0",
+        "rect_local_xyxy": [
+          190.0,
+          62.0,
+          284.0,
+          98.0
+        ]
+      }
+    ],
+    "365": [
+      {
+        "id": "365:0:0",
+        "rect_local_xyxy": [
+          361.713068181818,
+          62.82386363636397,
+          456.247159090909,
+          99.02840909090901
+        ]
+      }
+    ],
+    "427": [
+      {
+        "id": "395:1:0",
+        "rect_local_xyxy": [
+          190.0,
+          62.0,
+          284.0,
+          98.0
+        ]
+      },
+      {
+        "id": "427:1:1",
+        "rect_local_xyxy": [
+          190.0,
+          62.0,
+          284.0,
+          98.0
+        ]
+      }
+    ],
+    "560": [
+      {
+        "id": "560:0:0",
+        "rect_local_xyxy": [
+          61.71306818181802,
+          162.82386363636397,
+          156.24715909090992,
+          199.028409090909
+        ]
+      },
+      {
+        "id": "560:1:0",
+        "rect_local_xyxy": [
+          290.0,
+          162.0,
+          384.0,
+          198.0
+        ]
+      }
+    ],
+    "735": [
+      {
+        "id": "735:1:0",
+        "rect_local_xyxy": [
+          361.71306818181984,
+          263.82386363636397,
+          456.2471590909081,
+          300.0284090909099
+        ]
+      }
+    ],
+    "767": [
+      {
+        "id": "735:1:1",
+        "rect_local_xyxy": [
+          361.71306818181984,
+          63.82386363636397,
+          456.2471590909081,
+          100.02840909090992
+        ]
+      },
+      {
+        "id": "767:0:1",
+        "rect_local_xyxy": [
+          361.71306818181984,
+          63.82386363636397,
+          456.2471590909081,
+          100.02840909090992
+        ]
+      }
+    ],
+    "736": [
+      {
+        "id": "736:2:0",
+        "rect_local_xyxy": [
+          190.0,
+          262.0,
+          284.0,
+          298.0
+        ]
+      },
+      {
+        "id": "736:3:0",
+        "rect_local_xyxy": [
+          361.71306818181984,
+          262.82386363636397,
+          456.2471590909081,
+          299.0284090909099
+        ]
+      }
+    ],
+    "768": [
+      {
+        "id": "736:2:1",
+        "rect_local_xyxy": [
+          190.0,
+          62.0,
+          284.0,
+          98.0
+        ]
+      },
+      {
+        "id": "736:3:1",
+        "rect_local_xyxy": [
+          361.71306818181984,
+          62.82386363636397,
+          456.2471590909081,
+          99.02840909090992
+        ]
+      },
+      {
+        "id": "768:0:1",
+        "rect_local_xyxy": [
+          190.0,
+          62.0,
+          284.0,
+          98.0
+        ]
+      },
+      {
+        "id": "768:2:1",
+        "rect_local_xyxy": [
+          361.71306818181984,
+          62.82386363636397,
+          456.2471590909081,
+          99.02840909090992
+        ]
+      }
+    ],
+    "766": [
+      {
+        "id": "766:0:0",
+        "rect_local_xyxy": [
+          361.71306818181984,
+          263.82386363636397,
+          456.2471590909081,
+          300.0284090909099
+        ]
+      }
+    ]
+  },
+  "skipped_invalid": [
+    {
+      "source": {
+        "source_screen": 766,
+        "source_list_index": 0,
+        "source_editor_index": 1,
+        "source_type": 1,
+        "source_frame": 10,
+        "source_path": "assets/graphics/lands/Trees/tree-10.png",
+        "part": 1,
+        "rows": [
+          200.0,
+          378.0
+        ]
+      },
+      "global_foot_xy": [
+        17792.5,
+        9695.0
+      ],
+      "normalized_foot": {
+        "global_xy": [
+          17792.5,
+          9695.0
+        ],
+        "local_xy": [
+          412.5,
+          95.0
+        ],
+        "screen": 798,
+        "valid_outdoor_neighbor": false
+      },
+      "reason": "destination screen absent or indoor"
+    }
+  ],
+  "source_sha256": {
+    "world.json": "3e643839d6c287f757d9a65ccd773f1d4313de645ab944c54700e1a88a011be1",
+    "sequences.json": "d2411618230e43d13edb1e9b58fa54211317486b862614127ca0d999a9ccc0de",
+    "footprints.json": "dfe1548b35112dc67dc39ff8e5f679b30a7548e23e6046022ff4e4073eab33a1",
+    "rc5_firs.json": "6372a98d50b0168b32b318fdcb49c9b5e7129795637016a07a40efbe184034e2",
+    "native_inventory.json": "a9d2430b7ed76ff88771d25e13f9d6e64cf9256af91ff44384e05f9685c11fe8",
+    "assets/graphics/lands/Trees/tree-01.png": "902baa3735027ee91bac9ecff0f43be6f9acffdd66270fd2aa9ef67932e63260"
+  }
+}

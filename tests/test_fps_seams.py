@@ -65,6 +65,7 @@ def test_trees_stand_on_the_ground_once(tmp_path, screen):
     assert len(drawn) >= (1 if screen == 451 else 6), len(drawn)  # 451 sees one tree: its tree-04 (419 places a copy 2 px off)
     floating = [d for d in drawn if abs(float(d[4])) > 2.0 and ("tree-09" in d[5] or "tree-10" in d[5])]
     assert not floating, "%d tree-09/10 parts off the ground: %s" % (len(floating), floating[:6])
+    assert all(len(d)>6 and d[6].endswith("tree-01.png") for d in drawn if "tree-09" in d[5] or "tree-10" in d[5]), "source trims must draw the whole original fir"
     # One object per world point: no two drawn parts of one art with their feet within 3 px on both axes (two such
     # copies z-fight, the winner following the draw order: 451's tree-04 and 419's, 2 px apart; amendment 2).
     doubled = [(a, b) for i, a in enumerate(drawn) for b in drawn[i + 1:]
@@ -78,5 +79,5 @@ def test_trees_stand_on_the_ground_once(tmp_path, screen):
         assert any(d[5].endswith("tree-02.png") and abs(float(d[2]) - 18642) <= 2 and abs(float(d[3]) - 3910) <= 2
                    for d in drawn), "320's tree-02 does not stand in 319's scene"
     if screen == 251:
-        assert any(d[5].endswith("tree-09.png#200-377") and abs(float(d[2]) - 15234) <= 2 and abs(float(d[3]) - 4093) <= 2
+        assert any(d[5].endswith("tree-09.png#200-377") and abs(float(d[2]) - 15220.5) <= 2 and abs(float(d[3]) - 4094) <= 2
                    for d in drawn), "314's tree-09 at the block's edge is missing"

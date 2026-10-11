@@ -65,7 +65,7 @@ def main():
             f = q['frames'][int(e['frame']) - 1]
             a = alpha(f['path'])
             L.append(dict(e=e, p=f['path'], dx=f['dx'], dy=f['dy'], W=a.shape[1], H=a.shape[0],
-                          static=e['type'] == 1 and not e.get('script') and int(e.get('brain', 0)) == 0 and int(e.get('size', 100)) == 100))
+                          static=(e['type'] == 1 or (e['type'] == 0 and int(e['seq']) == 32 and int(e['frame']) in (9,10))) and not e.get('script') and int(e.get('brain', 0)) == 0 and int(e.get('size', 100)) == 100))
         placed[int(n)] = L
 
     def crosses(q, side):

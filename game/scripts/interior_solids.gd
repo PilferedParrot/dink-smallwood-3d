@@ -332,18 +332,20 @@ func add_entity(node: Node3D, e: Dictionary, id: int, collision: bool, screen: i
 	node.add_child(model)
 	if collision:
 		if str(fit.kind) == "wall":
-			# a wall's body is its hard rectangle, a box (as the plaster box's was): a point query (the dialogue camera's) rejects a
-			# place inside it, which a concave body of faces cannot
-			var rect: Rect2 = world.hard_rect(e)
-			var h := room_height(screen) * S
+			# The ray box and rendered faces share one fitted prism. Source movement
+			# hardness remains the original hard rectangle in game.gd.
+			var wall: Dictionary = wall_prism(e, fit, screen)
+			var rect: Rect2 = wall["rect"]
+			var h := float(wall["height"]) * S
 			var body := StaticBody3D.new()
 			body.name = "HitBody"
 			body.set_meta("entity_id", id)
+			body.set_meta("wall_prism", wall)
 			body.collision_layer = 1
 			body.collision_mask = 0
 			var shape := CollisionShape3D.new()
 			var box := BoxShape3D.new()
-			box.size = Vector3(maxf(0.2, rect.size.x * S), h, maxf(0.2, rect.size.y * S))
+			box.size = Vector3(rect.size.x * S, h, rect.size.y * S)
 			shape.shape = box
 			shape.position = Vector3((rect.get_center().x - float(e.get("x", 0))) * S, h * 0.5, (rect.get_center().y - float(e.get("y", 0))) * S)
 			body.add_child(shape)
@@ -397,21 +399,34 @@ func room_height(screen: int) -> float:
 	heights[screen] = h
 	return h
 
+func wall_prism(e: Dictionary, fit: Dictionary, screen: int) -> Dictionary:
+	# The source hard rectangle starts the footprint. The wall picture's measured
+	# base row is its south face when that row falls inside the rectangle. This
+	# is the same source-camera face rule for every fitted wall, including piers.
+	var rect: Rect2 = world.hard_rect(e)
+	var h := room_height(screen)
+	if int(fit.get("cap", 0)) > 0:
+		var top_left_y := float(e.get("y", 0)) - hotspot(e).y
+		var art_front := top_left_y + float(fit.get("base", 0))
+		if art_front > rect.position.y + 2.0 and art_front < rect.end.y:
+			rect = Rect2(rect.position, Vector2(rect.size.x, art_front - rect.position.y))
+	if rect.size.x <= 0.0 or rect.size.y <= 0.0:
+		push_error("Fitted wall has an empty source prism")
+	return {"rect": rect, "height": h, "front": rect.end.y}
+
 func wall_surfaces(e: Dictionary, fit: Dictionary, path: String, o: Vector2, screen: int) -> Array:
 	var stone := room_stone(screen)
 	if stone.is_empty(): stone = path
 	var sfit := fit_of(stone)
-	var rect: Rect2 = world.hard_rect(e)
+	var wall: Dictionary = wall_prism(e, fit, screen)
+	var rect: Rect2 = wall["rect"]
 	var top_left := Vector2(float(e.get("x", 0)), float(e.get("y", 0))) - o # the sprite's top-left, screen px
 	var x0 := rect.position.x - top_left.x
 	var x1 := rect.end.x - top_left.x
 	var z0 := rect.position.y - top_left.y
 	var z1 := rect.end.y - top_left.y
 	var span: bool = int(fit.cap) > 0
-	var h := room_height(screen)
-	if span:
-		var art_front := float(fit.base)
-		if art_front > z0 + 2.0 and art_front < z1: z1 = art_front
+	var h := float(wall["height"])
 	var own := new_mb(path, fit, o)
 	var rock := new_mb(stone, sfit, o)
 	# The faces (south, seen; north, the same turned round): the sprite at its own place where it lies in the footprint, the room's

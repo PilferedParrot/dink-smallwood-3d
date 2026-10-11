@@ -52,13 +52,20 @@ func _run() -> void:
 	# an enemy cannot register a hit.
 	var target_id := 900
 	game.entities[target_id] = {"x": float(game.entities[1].x) + 20.0, "y": float(game.entities[1].y), "active": 1, "fps_min_height": 0.25, "fps_max_height": 1.8}
-	var target_visual := Node3D.new()
-	target_visual.set_meta("height", 1.8)
-	game.visuals[target_id] = target_visual
+	var empty_visual := Node3D.new()
+	empty_visual.set_meta("height", 1.8)
+	game.scene_root.add_child(empty_visual)
+	game.visuals[target_id] = empty_visual
+	check(not game._fps_targetable(target_id, Vector2.INF, 1.2), "Visual metadata without a physics body cannot certify a hit")
+	empty_visual.free()
+	_spawn_target(target_id, Vector3(0, 0, -2), 1.8, 10)
+	var target_visual: Node3D = game.visuals[target_id]
+	target_visual.set_meta("height", 9.0) # stale picture height cannot enlarge its physical band
 	check(game._fps_targetable(target_id, Vector2.INF, 1.2), "Aim ray can hit an enemy at eye height")
 	check(not game._fps_targetable(target_id, Vector2.INF, 2.0), "Aim ray misses above an enemy")
 	game.entities.erase(target_id)
 	game.visuals.erase(target_id)
+	target_visual.free()
 	check(int(game.vm.globals.get("story", 0)) == 1, "Original opening quest advances story")
 	check(not game.dialogue_log.is_empty(), "Original opening mother conversation is retained")
 	check(game.journal_log.any(func(line): return str(line).begins_with("Mother: ")) and game.journal_log.any(func(line): return str(line).begins_with("Dink: ")), "Journal identifies the actual opening speakers")
@@ -114,7 +121,6 @@ func _run() -> void:
 	check(not game.fp_world.is_inside(386) and not game.fp_world.is_inside(417) and not game.fp_world.is_inside(450), "kit-417's courtyard and its street are outdoors")
 	check(_mesh_count(game.scene_root) > 0, "Outdoor FPS screen builds 3D terrain and models")
 
-	target_visual.free()
 	# Exercise the projectile against controlled 3D bodies.  The actor visual's
 	# height is deliberately shorter than eye level for the over-target case.
 	game.ui.close_menu()

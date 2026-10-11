@@ -2,6 +2,12 @@
 # Campaign-compatible first-person presentation.  Simulation, DinkC, audio and
 # save format remain in game.gd; this class only translates controls/rendering.
 extends "res://scripts/game.gd"
+const SPRITE_WALLS := preload("res://scripts/sprite_walls.gd")
+var stone_walls = SPRITE_WALLS.new(null,self)
+const FIR_COLLISION := preload("res://scripts/fir_collision.gd")
+var fir_collision = FIR_COLLISION.new()
+const ENTITY_HIT_TARGETS := preload("res://scripts/entity_hit_targets.gd")
+var entity_hit_targets = ENTITY_HIT_TARGETS.new()
 
 const SCALE: float = preload("res://scripts/fp_world.gd").SCALE # metres per source pixel
 const EYE_HEIGHT := 1.65
@@ -212,6 +218,7 @@ func _after_script_position_set(id: int, key: String) -> void:
 	entities[1]["y"] = live.y
 
 func load_map(number: int, run_scripts: bool = true) -> void:
+	entity_hit_targets.reset()
 	_fps_restore_dialogue_camera()
 	if fp_world != null and entities.has(1) and world.screens.has(str(number)):
 		var live: Vector2 = fp_world.solids.map_player_door_position(number, _position2(1), float(FOOTPRINT_GROW))
@@ -367,6 +374,15 @@ func _blocked(pos: Vector2, mover: int, from: Vector2 = Vector2.INF) -> bool:
 	screen_footprints = saved_polys
 	footprint_tiles = saved_tiles
 	return blocked
+
+func _sprite_hardbox_replaced(e: Dictionary) -> bool:
+	return super._sprite_hardbox_replaced(e) or stone_walls.hardbox_replaced(e,current_screen)
+
+func _tile_pixel_replaced(pos: Vector2) -> bool:
+	return stone_walls.clears_tile(pos,current_screen)
+
+func _additional_structure_blocked(pos: Vector2, from: Vector2) -> bool:
+	return stone_walls.blocked(pos,from,current_screen) or fir_collision.blocked(pos,from,current_screen)
 
 func _move_entity(id: int, displacement: Vector2, ignore_hardness: bool = false) -> void:
 	if id != 1 or ignore_hardness or int(entities.get(id,{}).get("noclip",0)) != 0:
@@ -547,6 +563,13 @@ func _fps_material(color: Color, roughness: float) -> StandardMaterial3D:
 	material.roughness = roughness if roughness > 0.0 else 0.82
 	return material
 
+func _fps_interaction_position(id: int) -> Vector2:
+	var position := _position2(id)
+	var visual: Node3D = visuals.get(id)
+	if is_instance_valid(visual) and visual.has_meta("mounted_poster"):
+		position.y = float(visual.get_meta("mounted_poster").front_source_y)
+	return position
+
 func _fps_line_clear(from: Vector2, to: Vector2) -> bool:
 	var distance := from.distance_to(to)
 	for step in range(1, int(distance / 5.0)):
@@ -556,23 +579,18 @@ func _fps_line_clear(from: Vector2, to: Vector2) -> bool:
 func _fps_ray_reaches(id: int) -> bool:
 	var visual: Node3D = visuals.get(id)
 	if not is_instance_valid(visual): return false
-	var height := float(visual.get_meta("height", 0.0))
-	if height <= 0.0: return false
-	var target := visual.global_position + Vector3.UP * minf(EYE_HEIGHT, height * 0.65)
-	var query := PhysicsRayQueryParameters3D.create(camera.global_position, target, 3)
-	var hit := get_world_3d().direct_space_state.intersect_ray(query)
-	if hit.is_empty(): return false
-	var collider: Object = hit.get("collider")
-	return collider != null and int(collider.get_meta("entity_id", 0)) == id
+	return entity_hit_targets.reaches(visual,id,camera.global_position,get_world_3d().direct_space_state,3)
 
-func _fps_targetable(id: int, source_point: Vector2 = Vector2.INF, ray_height: float = -1.0) -> bool:
+func _fps_targetable(id: int, _source_point: Vector2 = Vector2.INF, ray_height: float = -1.0) -> bool:
 	if not entities.has(id): return false
 	var target: Dictionary = entities[id]
 	if int(target.get("active", 1)) == 0 or int(target.get("nohit", 0)) != 0 and str(target.get("script", "")).is_empty(): return false
 	var visual: Node3D = visuals.get(id)
-	var upper := float(visual.get_meta("height", 0.0)) if is_instance_valid(visual) else 0.0
+	var upper := entity_hit_targets.bounds(visual,id).end.y - visual.global_position.y if is_instance_valid(visual) else 0.0
 	if upper <= 0.0 or (ray_height >= 0.0 and ray_height > upper): return false
-	if source_point != Vector2.INF and not _fps_line_clear(source_point, _position2(id)): return false
+	# Source tile hardness has no height: it governs movement, not whether a
+	# visible actor can be reached by the eye/weapon ray. The caller verifies
+	# the actual first physics hit, including all built walls and occluders.
 	return true
 
 func _fps_aim_target(max_distance: float, cone_dot: float = 0.93) -> int:
@@ -604,7 +622,7 @@ func _talk() -> void:
 		if int(e.get("active", 1)) == 0 or int(e.get("type", 1)) != 1 or str(e.get("script", "")).is_empty(): continue
 		if vm._procedure_code(str(e.script).to_lower(), "talk").is_empty(): continue
 		var offset := _position2(int(id)) - origin
-		if offset.length() < best and (offset.length() < 20.0 or offset.normalized().dot(forward) > 0.55) and _fps_line_clear(origin, _position2(int(id))) and _fps_ray_reaches(int(id)):
+		if offset.length() < best and (offset.length() < 20.0 or offset.normalized().dot(forward) > 0.55) and _fps_ray_reaches(int(id)):
 			candidate = int(id)
 			best = offset.length()
 	if candidate: _run_event(candidate, "talk")
@@ -1270,8 +1288,18 @@ func _location() -> String:
 
 func _exit_tree() -> void:
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+	entity_hit_targets.reset()
 	if vm: vm.cancel_all()
 	if fp_world:
+		if fp_world.mounted_posters: fp_world.mounted_posters.world = null
+		fp_world.mounted_posters = null
+		if fp_world.source_interaction_body: fp_world.source_interaction_body.world = null
+		fp_world.source_interaction_body = null
+		if fp_world.source_firs: fp_world.source_firs.world = null
+		fp_world.source_firs = null
+		fp_world.stone_walls = null
+		stone_walls.fp_world = null
+		stone_walls.source_host = null
 		fp_world.terrain_cache.clear()
 		fp_world.models.clear()
 		fp_world.materials.clear()

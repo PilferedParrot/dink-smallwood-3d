@@ -600,7 +600,7 @@ func _blocked(pos: Vector2, mover: int, from: Vector2 = Vector2.INF) -> bool:
 		if id == mover or id == 1: continue
 		var e: Dictionary = entities[id]
 		if int(e.get("active",1)) == 0 or int(e.get("hard",1)) != 0 or e.get("warp") != null: continue
-		if footprint_sprites.has(int(e.get("editor_num",0))): continue # its footprint stands for it
+		if _sprite_hardbox_replaced(e): continue # its built footprint stands for it
 		var rect := _hard_rect(e)
 		if not rect.grow(FOOTPRINT_GROW).has_point(pos): continue
 		if from != Vector2.INF and not rect.has_point(pos) and rect.grow(FOOTPRINT_GROW).has_point(from) and not rect.has_point(from) \
@@ -615,7 +615,16 @@ func _rect_distance(rect: Rect2, p: Vector2) -> float:
 # The anonymous structure of the screen: tile hardness and the buildings' footprints. Movers,
 # missiles and lines of fire all stop at it.
 func _structure_blocked(pos: Vector2, from: Vector2 = Vector2.INF) -> bool:
-	return _footprint_blocked(pos,from) or _tile_blocked(pos)
+	return _footprint_blocked(pos,from) or _tile_blocked(pos) or _additional_structure_blocked(pos,from)
+
+func _sprite_hardbox_replaced(e: Dictionary) -> bool:
+	return footprint_sprites.has(int(e.get("editor_num",0)))
+
+func _tile_pixel_replaced(_pos: Vector2) -> bool:
+	return false
+
+func _additional_structure_blocked(_pos: Vector2, _from: Vector2) -> bool:
+	return false
 
 func _load_footprints(number: int) -> void:
 	footprint_sprites.clear()
@@ -665,6 +674,7 @@ func _edge_distance(pos: Vector2, poly: PackedVector2Array) -> float:
 
 func _tile_blocked(pos: Vector2) -> bool:
 	if pos.x < 20 or pos.x >= 620 or pos.y < 0 or pos.y >= 400: return false
+	if _tile_pixel_replaced(pos): return false
 	var tx := int((pos.x-20)/50)
 	var ty := int(pos.y/50)
 	var tile: Dictionary = world.screens[str(current_screen)].tiles[ty*12+tx]
@@ -1125,6 +1135,7 @@ func dink_call(command: String, args: Array, context: Dictionary) -> Variant:
 			if args.size()<2 or str(b) == "-1": return str(entities.get(int(a),{}).get("script",""))
 			if entities.has(int(a)):
 				entities[int(a)]["script"] = str(b).to_lower()
+				_update_visual(int(a))
 				if not vm._procedure_code(str(b).to_lower(),"main").is_empty(): vm.run(str(b),"main",int(a))
 		"sp":
 			for id in entities:
