@@ -1,34 +1,47 @@
-# Dink Smallwood 3D 0.3.2 candidate (work in progress)
+# Dink Smallwood 3D 0.3.2 (work in progress)
 
-This local release candidate corrects outdoor screen crossings, the house arrival,
-original melee reach, script-created actors, and repeated equipment text. Dink now
-casts a shadow from his original animated body. F9 saves a local screenshot and
-state/input report for diagnosing a reported problem.
+This release answers most of what Chris reported after playing 0.3.1. The game is
+still a work in progress.
 
-Dialogue frames the speaking actor above the measured card. Timed and blocking
-speech share the same named card while retaining their original script timing.
-Equipment shows one pair of HUD icons; the inventory distinguishes equipped items
-from the selected slot. Reports identify this candidate as 0.3.2.
+## What changed
+
+- **No more trapped crossings.** Walking from one screen to the next keeps Dink where
+  he is instead of dropping him at a fixed spot, which could be inside something
+  solid. Every edge of all 570 outdoor screens was walked: nowhere leaves Dink unable
+  to move.
+- **Stone walls are solid.** On the 18 screens with stone walls, the walls are built
+  from the original wall art as solid walls you can walk around. You can no longer
+  walk through a wall that is drawn there.
+- **Whole trees.** Firs that the original drew cut off at a screen or forest edge
+  are now whole firs standing on their own trunks, built from the original fir art.
+  A fir you can see is a fir you bump into.
+- **Save machines work from every side.** Walking up to a save machine and pressing
+  E now always offers to save. In 0.3.1 it could say "Move closer" from some sides.
+- **Talking and hitting** use what you can see: walls and buildings block them,
+  invisible blocking does not. Everything you can talk to or hit can be reached.
+- **Dink casts his own shadow**, from his original animated body.
+- **Barrels break at the original's reach.**
+- **Milder can be seen when he appears**, and the speaker in a conversation turns
+  to face you.
+- **The house's front room** is the size the original draws, not a long corridor.
+- **Text takes less of the screen** and is no longer shown twice at once.
+- **Buildings draw the same on every launch.** A few house kits drew the same dormer
+  twice; that is fixed.
+- **F9 saves a report** (a screenshot, Dink's position and the last few seconds of
+  input) on your computer, so a problem can be found exactly where you saw it.
+  Nothing is sent anywhere.
 
 ## Known issues
 
-- Half trees and invisible forest/wall hardness remain unresolved. The crossing
-  survey found no zero-motion traps in its startup fixtures; it does not prove
-  that every campaign position is safe.
-- Dink has a body shadow, but no visible torso or legs when looking down. The
-  fist and bow still need visual work.
-- The grief scene preserves the player's camera after a bounded automatic scene
-  framing experiment failed its rendered check. The original death picture is
-  painted on the floor, but is not guaranteed visible during dialogue. Original
-  freezing and scripted movement remain, so the player cannot freely walk around
-  during that beat.
-- The interface panels, coarse textures, low ceiling and some prop surface
-  mappings remain work in progress. Broken-barrel debris remains flat art.
-- Reduced-motion dialogue keeps the eye position; some obstructed speakers may
-  have no complete view above the card from that position.
-- Timed speech leaves gameplay running, but its bottom card can cover the upper
-  status bar until the line expires.
-- F9 replay begins from the reported final state and does not reconstruct pending
-  scripts or rewind the previous ten seconds.
+- Rocks and cliffs outdoors are painted flat on the ground but still block you, as
+  they do in the original. This is the next thing to fix.
+- You can walk into a fir's lower branches, and open forest ground is a picture of
+  treetops painted flat.
+- Looking down, Dink has a shadow but no body; the fist and bow are plain models.
+- Some interface panels, textures and the house ceiling are still rough.
+- In the grief scene the camera stays where you were standing, and you can't walk
+  around during it, as in the original.
+- Timed speech can cover the top of the status bar until the line ends.
+- F9's replay starts from the moment you pressed it; it does not rewind.
 
-No installation or publication is part of this candidate's local verification.
+If something is wrong where you are standing, press F9 and send the report.
