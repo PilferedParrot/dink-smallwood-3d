@@ -6,11 +6,12 @@ campaign data, ground art, dialogue, and FreeDink replacement audio alongside a
 new 3D renderer, modeled scenery, mouse and controller controls, and first-person
 combat.
 
-This is version 0.3.1, a work in progress. It is a development release, not a finished remake. The
+This is version 0.3.2, a work in progress. It is a development release, not a finished remake. The
 opening through Aunt Maria's letter and world map has been exercised in a
 continuous automated route. All 644 map areas are imported, but a complete
 start-to-finish playthrough has not been certified. See the
-[0.3.1 release notes](docs/RELEASE_NOTES_0.3.1.md) (with the known issues), the
+[0.3.2 release notes](docs/RELEASE_NOTES_0.3.2.md) (with the known issues), the
+[0.3.1 release notes](docs/RELEASE_NOTES_0.3.1.md), the
 [0.3.0 release notes](docs/RELEASE_NOTES_0.3.0.md), [what changed in M3](docs/M3.md),
 the [0.2.0 release notes](docs/RELEASE_NOTES_0.2.0.md) and the
 [first-person implementation notes](docs/FIRST_PERSON.md).
@@ -19,17 +20,21 @@ the [0.2.0 release notes](docs/RELEASE_NOTES_0.2.0.md) and the
 
 ## Play on Linux or Windows
 
-Download the version 0.3.1 archive for your platform, extract it, and run:
+Download the version 0.3.2 archive for your platform, extract it, and run:
 
 | Platform | File |
 | --- | --- |
-| Linux x86-64 | [dink-smallwood-3d-0.3.1-linux-x86_64.zip](https://github.com/PilferedParrot/dink-smallwood-3d/releases/download/v0.3.1/dink-smallwood-3d-0.3.1-linux-x86_64.zip) → `DinkSmallwood3D.x86_64` |
-| Windows x86-64 | [dink-smallwood-3d-0.3.1-windows-x86_64.zip](https://github.com/PilferedParrot/dink-smallwood-3d/releases/download/v0.3.1/dink-smallwood-3d-0.3.1-windows-x86_64.zip) → `DinkSmallwood3D.exe` |
+| Linux x86-64 | [dink-smallwood-3d-0.3.2-linux-x86_64.zip](https://github.com/PilferedParrot/dink-smallwood-3d/releases/download/v0.3.2/dink-smallwood-3d-0.3.2-linux-x86_64.zip) → `DinkSmallwood3D.x86_64` |
+| Windows x86-64 | [dink-smallwood-3d-0.3.2-windows-x86_64.zip](https://github.com/PilferedParrot/dink-smallwood-3d/releases/download/v0.3.2/dink-smallwood-3d-0.3.2-windows-x86_64.zip) → `DinkSmallwood3D.exe` |
 
 The game runs offline and does not need an account. Saves and settings are kept
 in Godot's application-data directory, separate from the extracted game folder.
 Use **Pause → Save adventure**. Saving is unavailable while a scripted
 conversation is in progress.
+
+If something looks wrong where you are standing, press **F9**: the game saves a
+screenshot and a short report (position and the last few seconds of input) on
+your computer and shows where. Nothing is sent anywhere; attach it to an issue.
 
 From a source checkout, install Godot 4.6.1 and run `./play.sh`. You can set
 `GODOT=/path/to/godot` if Godot is not on your `PATH`.
