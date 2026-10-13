@@ -40,8 +40,9 @@ def test_real_fps_south_talk_occlusion_melee_and_barrel_persistence(tmp_path: Pa
     assert "ENTITY HIT TARGETS LIVE PASS" in output
 
 
+@pytest.mark.local_evidence(reason="Reads an ignored tmp/rc5-pocket-audit ray-census JSON; local evidence absent from fresh checkouts and CI")
 def test_native_worldwide_ray_census_has_no_new_loss():
-    """Review the bounded native run when the topology evidence is present."""
+    """Review a locally generated native-run snapshot; do not run a census."""
     path = ROOT / "tmp/rc5-pocket-audit/ray-census-integrated.json"
     integrated = path.exists()
     if not integrated:
@@ -49,7 +50,7 @@ def test_native_worldwide_ray_census_has_no_new_loss():
     if not path.exists():
         path = ROOT / "tmp/rc5-pocket-audit/ray-census.json"
     if not path.exists():
-        pytest.skip("Generate native ray census from final reach masks first")
+        pytest.skip("Local-evidence check: ignored tmp/rc5-pocket-audit ray-census JSON is absent; fresh checkouts and CI do not generate it")
     report = json.loads(path.read_text())
     assert report["schema"] == "rc5-native-entity-ray-census-1"
     assert report["source_eligible_records"] == 817

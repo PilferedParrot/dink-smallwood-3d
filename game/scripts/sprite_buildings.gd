@@ -26,6 +26,8 @@ var tex_cache: Dictionary = {}
 var clean_panels: Dictionary = {}
 var kit_cache: Dictionary = {} # kit name -> [canvas, back, top-left, members]
 var surface_cache: Dictionary = {} # house or kit key -> [[ArrayMesh, Texture2D], ...]
+var ordered_materials: Dictionary = {} # supplied material id + surface role -> shared ordered copy
+var ordered_material_sources: Dictionary = {} # weak owners; dead transient inputs are pruned on construction
 # The kit buildings' filled canvases, baked by tools/bake_kit_canvases.gd: composing them here takes
 # seconds of per-pixel GDScript per building. Used while the manifest's facades.json hash matches.
 const BAKED_DIR := "res://data/kits"
@@ -236,20 +238,44 @@ func baked_house(key: String) -> Array:
 func node_from(surfaces: Array) -> Node3D:
 	var node := Node3D.new()
 	node.name = "Building"
-	for sf in surfaces:
+	# Separate front/back/detail meshes meet at ridges and embedded chimneys.
+	# A depth-buffer tie there must follow this authored surface order, not
+	# recycled material RID slots (the Compatibility renderer's opaque sort key).
+	if surfaces.size() > Material.RENDER_PRIORITY_MAX + 1:
+		push_error("Too many fitted surfaces for a unique render priority")
+		node.free()
+		return null
+	# Copies own their priority; no fitted-building caller supplies an ordering
+	# policy. Keep at most one copy per live source/role. Weak owners also bound
+	# transient prototype/debug inputs instead of retaining every past input.
+	for key in ordered_material_sources.keys():
+		if ordered_material_sources[key].get_ref() == null:
+			ordered_material_sources.erase(key)
+			ordered_materials.erase(key)
+	for surface_index in surfaces.size():
+		var sf: Array = surfaces[surface_index]
 		var mi := MeshInstance3D.new()
 		mi.mesh = sf[0]
 		# A surface material, not an override, so a story treatment can override it per node
 		# (fp_world.gd add_ruin_skin).
+		var material: Material
 		if sf[1] is Material:
-			mi.set_surface_override_material(0, sf[1])
+			# Preserve the supplied material and sharing between instances of the
+			# same role; per-node copies would break the renderer's batching.
+			var key := "%d:%d" % [sf[1].get_instance_id(), surface_index]
+			if not ordered_materials.has(key):
+				ordered_materials[key] = sf[1].duplicate()
+				ordered_material_sources[key] = weakref(sf[1])
+			material = ordered_materials[key]
 		else:
 			var m := StandardMaterial3D.new()
 			m.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
 			m.albedo_texture = sf[1]
 			m.texture_filter = BaseMaterial3D.TEXTURE_FILTER_NEAREST_WITH_MIPMAPS
 			m.cull_mode = BaseMaterial3D.CULL_DISABLED
-			mi.set_surface_override_material(0, m)
+			material = m
+		material.render_priority = surface_index
+		mi.set_surface_override_material(0, material)
 		node.add_child(mi)
 	return node
 
@@ -736,7 +762,15 @@ func kit(b: Dictionary) -> Node3D:
 		if sides.is_empty(): sides = kit_canvases(b)
 		var surfaces: Array = []
 		_block_house(surfaces, b, _texture(sides[0]), _texture(sides[1]))
-		for dm in b.get("dormers", []): _dormer(surfaces, dm)
+		# Roof panels on neighbouring source screens can describe the same
+		# dormer. Keep its complete geometry/UV/texture once; member ids alone
+		# are source placements, not distinct solids.
+		var dormers_seen := {}
+		for dm in b.get("dormers", []):
+			var identity := JSON.stringify([dm.path, dm.faces])
+			if dormers_seen.has(identity): continue
+			dormers_seen[identity] = true
+			_dormer(surfaces, dm)
 		surface_cache[key] = [surfaces, null]
 	return node_from(surface_cache[key][0])
 

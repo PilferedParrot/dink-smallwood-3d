@@ -2146,3 +2146,32 @@ RC5 pack in `tmp/rc5-forest-preview/`. Reproduction and limitations are in
 `docs/rc5/forest-preview.md`; frames and poses belong in its artifact ledger,
 with builder findings separate. Chris decides the picture; no release,
 installation or public push is authorized by this fixture.
+
+## Repeatable fitted surfaces and complete rendered gates — October 12, RC5
+
+What broke: the cabin's separate textured surfaces met at depth ties, where
+Godot Compatibility's opaque sort selected UVs according to recycled material
+slots. Why we made it: an integration oversight treated resource allocation
+order as stable while assigning equal priorities. Explicit authored surface
+priorities now resolve those ties. Supplied materials retain their properties
+and sharing through copies per role; weak owners prune transient inputs, and
+excessive surface counts are rejected at runtime. The cabin's shared ridge and
+embedded chimney remain: the geometry scan found no duplicated cabin face.
+
+The scan did find six duplicate dormer solids in kits 251, 537 and 570. We had
+mistaken source roof-panel placements across seams for distinct solids. Complete
+geometry, UV and texture identity now prevents emitting the same dormer twice.
+
+The rendered gate also silently removed unstable cameras and accepted an
+arbitrary surviving count. Filtering noisy samples was a misapplied heuristic
+for a test promising every named geometry case. The lead's initial zero-headroom
+explanation was an unmeasured estimate: the historical fixture had 23 outer
+views, two inner views and four views of headroom over its minimum of 19;
+losing seven to nine views caused the failure. The gate now requires every
+planned camera and rejects instability in built, old and wide variants, while
+retaining the pop, wrong-side and wide-blend controls.
+
+Native tests isolate profiles, use Dummy audio and default to bounded software
+rendering. CI requires Godot and xvfb; the allocator regression checks both
+stability and the authored pixel winner. Thread pinning did not fix the bug.
+See `docs/rc5/render-determinism.md` for evidence, verification, costs and limits.

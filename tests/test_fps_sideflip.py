@@ -42,7 +42,7 @@ def _run(args, tmp_path, timeout=900):
     env = {k: v for k, v in os.environ.items() if k != "WAYLAND_DISPLAY"}
     env.update({"XDG_CONFIG_HOME": str(tmp_path / "xdg-config"), "XDG_DATA_HOME": str(tmp_path / "xdg-data"),
                 "XDG_CACHE_HOME": str(tmp_path / "xdg-cache"), "OMP_NUM_THREADS": "1",
-                "OPENBLAS_NUM_THREADS": "1", "MKL_NUM_THREADS": "1", "LP_NUM_THREADS": "4",
+                "OPENBLAS_NUM_THREADS": "1", "MKL_NUM_THREADS": "1", "LP_NUM_THREADS": os.environ.get("LP_NUM_THREADS", "1"),
                 "LIBGL_ALWAYS_SOFTWARE": "1", "GALLIUM_DRIVER": "llvmpipe"})
     command = ["nice", "-n", "10", "xvfb-run", "-a", "-s", "-screen 0 1280x720x24", GODOT, "--resolution", "960x540", "--audio-driver", "Dummy",
                "--path", "game", "--script", str(ROOT / "tests/fps_sideflip_test.gd"), "--"] + args
@@ -128,17 +128,26 @@ def test_cameras_beyond_the_band_get_the_old_picture_and_the_controls_go_red(tmp
     views_file = tmp_path / "views.json"
     views_file.write_text(json.dumps(_views()))
     near, built = _render(tmp_path / "built", views_file)
+    _, built_again = _render(tmp_path / "built-again", views_file)
     _, old = _render(tmp_path / "old", views_file, k=0)
     _, old_again = _render(tmp_path / "old-again", views_file, k=0)
     _, wide = _render(tmp_path / "wide", views_file, k=1)
-    assert set(near) == set(built) == set(old) == set(old_again) == set(wide) and len(near) > 20
-    # A view that does not render the same twice is dropped,
-    # and the test fails below if too few remain.
-    steady = [n for n in near if old[n] == old_again[n]]
-    beyond = [n for n in steady if near[n] >= band + 0.01]
-    inside = [n for n in steady if near[n] < band - 0.01]
-    assert len(beyond) > 18 and inside, (len(steady), len(beyond), inside)
-    # The rail: every steady camera at least the band from every flagged plane renders the old picture, byte for byte.
+    _, wide_again = _render(tmp_path / "wide-again", views_file, k=1)
+    planned = {v["name"] for v in _views()}
+    assert set(near) == set(built) == set(built_again) == set(old) == set(old_again) == set(wide) == set(wide_again) == planned
+    # Instability is an instrument failure, never permission to lose a camera.
+    for variant, first, repeated in (("built", built, built_again), ("old", old, old_again), ("wide", wide, wide_again)):
+        unstable = [n for n in planned if first[n] != repeated[n]]
+        assert not unstable, (f"{variant} picture changed between processes", sorted(unstable))
+    beyond = {n for n in planned if near[n] >= band + 0.01}
+    inside = {n for n in planned if near[n] < band - 0.01}
+    # These camera positions straddle the retained tree-04's wall plane.
+    # Require each geometry case, rather than a count fitted to one run. The
+    # 0.01-reach clearance also exceeds SHOT's 0.001-reach output resolution.
+    expected_inside = {"side-496-2", "ring-496-130-270", "band-496-252.5", "band-496-253.0"}
+    assert inside == expected_inside, (inside, expected_inside)
+    assert beyond == planned - expected_inside, (beyond, planned - expected_inside)
+    # Every camera beyond every flagged plane's band retains the old pixels.
     assert [n for n in beyond if built[n] != old[n]] == []
     # The south view at (600,465) stands 0.43 reach from the tree's wall plane.
     assert "side-496-0" in beyond and 0.40 < near["side-496-0"] < 0.46

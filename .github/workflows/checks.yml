@@ -5,6 +5,8 @@ permissions:
 jobs:
   verify:
     runs-on: ubuntu-latest
+    env:
+      DINK_REQUIRE_GODOT: '1'
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -19,8 +21,8 @@ jobs:
           echo '/tmp/godot' >> "$GITHUB_PATH"
           echo 'GODOT=/tmp/godot/Godot_v4.6.1-stable_linux.x86_64' >> "$GITHUB_ENV"
       - name: Import assets
-        run: "$GODOT --headless --path game --editor --import"
+        run: "$GODOT --headless --audio-driver Dummy --path game --editor --import"
       - name: Test compiler, assets, UI and VM
         run: python -m pytest -q
       - name: Exercise new game and save/load
-        run: timeout 45 "$GODOT" --headless --path game -- --smoke-test
+        run: timeout 45 "$GODOT" --headless --audio-driver Dummy --path game -- --smoke-test
