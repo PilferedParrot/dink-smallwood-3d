@@ -283,6 +283,10 @@ func _vine(path: String) -> TextureRect:
 
 func _process(_delta: float) -> void:
 	if page == "dialogue": _fit_dialogue_panel()
+	# A top-level Container grows to a wrapped Label's minimum but does not
+	# shrink when that minimum falls. Startup can wrap before width settles;
+	# keep the anchored width and own the content height on every layout pass.
+	toast_backing.size.y = toast_backing.get_combined_minimum_size().y
 	panel_underlay.visible = panel.visible and page != "title"
 	if panel.visible:
 		panel_underlay.position = panel.position
