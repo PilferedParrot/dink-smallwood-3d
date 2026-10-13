@@ -7,7 +7,7 @@ cd "$TASK_ROOT"
 STAGE=${1:?stage: fit, parse, export, gates, capture, sheet}
 OUT="$TASK_ROOT/tmp/rc5-forest-preview"
 PACK="$TASK_ROOT/tmp/rc5-forest-package/DinkSmallwood3D.x86_64"
-GODOT=${GODOT:-/home/chris/.local/bin/Godot_v4.6.1-stable_linux.x86_64}
+GODOT=${GODOT:-godot}
 FOREST_PYTHON=${FOREST_PYTHON:-python3}
 mkdir -p "$OUT"
 export OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 MKL_NUM_THREADS=1 LP_NUM_THREADS=6

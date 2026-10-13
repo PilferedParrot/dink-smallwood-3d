@@ -1905,7 +1905,7 @@ surface the camera saw is the sprite projected back, UV = (cx + X, cz + k Z - Y)
 
 ## RC3: who speaks faces you; the save machine stands — October 8-9 (Opus 5.5 lead; Sonnet 5.5 unit)
 
-From the RC1 review's open list (`/home/chris/dink-review-rc1/review/FINDINGS.md`), on branch `claude/rc3`:
+From the RC1 review's open list (the RC1 review's findings, kept outside the repository), on branch `claude/rc3`:
 - **A speaker in dialogue faces you.** While a line shows, the speaker's visual carries `face_camera` and the billboard
   picks the frame drawn facing the camera (`fp_world.gd update_billboard`, `fps_game.gd _dialogue`); the entity's own
   direction, which the scripts read, is unchanged. The opening's Mother showed her back (map facing south-west, Dink east
