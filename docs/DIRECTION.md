@@ -2175,3 +2175,38 @@ Native tests isolate profiles, use Dummy audio and default to bounded software
 rendering. CI requires Godot and xvfb; the allocator regression checks both
 stability and the authored pixel winner. Thread pinning did not fix the bug.
 See `docs/rc5/render-determinism.md` for evidence, verification, costs and limits.
+
+## Speech leaves the status artwork clear — October 19, P2
+
+What broke: every speech card ended at 93% of the viewport while the status
+artwork scaled independently from its original 640×80 pixels. Actual M input
+ran BUTTON6's “I don't own a map yet.” and covered 56.5 logical pixels of the
+bar: 56 image rows at 1280×800 and 76 at 1920×1080. The vines extended farther
+down outside the bar's horizontal span. Why we made it: an integration
+oversight reused the blocking card for timed speech while restoring the HUD;
+height and ownership checks never tested their simultaneous screen occupancy.
+
+The status owner now exposes the same local artwork rectangle it draws.
+Every timed, blocking and choice card reserves that rectangle, with the existing
+VBox spacing as the gap and both vines included in its vertical footprint.
+Placement follows the scaled art on resize, including while a card stays open.
+Short cards still shrink to their content; long text retains the 35% height cap,
+scrolling body and independent Continue. Timed speech retains its timer and
+nonmodal behavior. Notification height ownership is unchanged.
+
+The census also exposed a pre-existing cap exception: long choice prompts were
+pinned heading chrome, whose minimum height overruled the cap at enlarged text
+sizes. Treating dialogue content as a heading was the second layout oversight.
+Choice prompts now enter the scrolling body at the common body text size.
+The first option still owns focus/confirmation, its accessibility name reports
+the prompt before the answer, and page entry starts at the prompt. No prompt
+text is removed and no extra Continue is introduced.
+
+The regression drives M and Enter through normal viewport input, exercises all
+five DinkC speech commands and choices, and checks both resolutions at every
+supported text-scale endpoint and the default. A separate UI-only census checks
+all 2,065 source speech calls and 410 choice texts at those sizes/scales using
+fixed steps; it makes no timing or campaign reachability claim. Synthetic long
+text covers interpolation growth. Before/after geometry, pixels and packed
+frames are retained locally in `tmp/p2-evidence/`; fixtures explicitly skip
+campaign progression. Existing camera, ownership and toast checks remain gates.

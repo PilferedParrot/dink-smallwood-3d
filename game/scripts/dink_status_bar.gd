@@ -68,6 +68,11 @@ func _layout_dock() -> void:
 	var dock_height := STATUS_HEIGHT * _dock_scale
 	_dock_y = CONTROL_HEIGHT - dock_height
 
+func art_rect() -> Rect2:
+	# The Control reserves transparent space above the original 640x80 art.
+	# Other UI owners must reserve the drawn artwork, not that padding.
+	return Rect2((size.x - _dock_width) * 0.5, _dock_y, _dock_width, STATUS_HEIGHT * _dock_scale)
+
 func update_stats(stats: Dictionary) -> void:
 	_stats = stats.duplicate(true)
 	_weapon_texture = _texture_for_item(_stats.get("weapon_item", {}), false)
@@ -140,8 +145,7 @@ func _script_icon(script_name: String, is_spell: bool) -> String:
 func _draw() -> void:
 	var x := (size.x - _dock_width) * 0.5
 	var scale_factor := _dock_scale
-	var art_rect := Rect2(x, _dock_y, _dock_width, STATUS_HEIGHT * scale_factor)
-	draw_texture_rect(STATUS_ART, art_rect, false)
+	draw_texture_rect(STATUS_ART, art_rect(), false)
 	var font := ThemeDB.fallback_font
 	if font == null:
 		return

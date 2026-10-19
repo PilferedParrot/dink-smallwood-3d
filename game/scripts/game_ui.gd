@@ -45,6 +45,7 @@ var hint_backing: PanelContainer
 var gameplay_hint_used := false
 var gameplay_hint_deadline_msec := 0
 const GAMEPLAY_HINT_SECONDS := 8.0
+const SPEECH_VINE_SIZE := Vector2(80, 140)
 const CREAM := Color("f6ebcb")
 const GOLD := Color("ffdc79")
 const INK := Color("292019")
@@ -292,7 +293,7 @@ func _process(_delta: float) -> void:
 		panel_underlay.position = panel.position
 		panel_underlay.size = panel.size
 		vines_left.position = panel.position + Vector2(-65, 0)
-		vines_left.size = Vector2(80, 140)
+		vines_left.size = SPEECH_VINE_SIZE
 		vines_right.position = panel.position + Vector2(panel.size.x - 15, 0)
 		vines_right.size = vines_left.size
 	if modal:
@@ -344,7 +345,7 @@ func _layout_for(next_page: String) -> void:
 		overlay.color = Color.BLACK
 	elif next_page == "dialogue":
 		panel.anchor_left = 0.12; panel.anchor_right = 0.88
-		panel.anchor_top = 0.58; panel.anchor_bottom = 0.93
+		panel.anchor_top = 0; panel.anchor_bottom = 0
 		overlay.color = Color(0.025, 0.015, 0.008, 0.08)
 	else:
 		panel.anchor_left = 0.14; panel.anchor_right = 0.86
@@ -360,14 +361,18 @@ func _layout_for(next_page: String) -> void:
 func _fit_dialogue_panel() -> void:
 	var chrome := panel.get_combined_minimum_size().y-menu_scroll.get_combined_minimum_size().y
 	var body := column.get_combined_minimum_size().y
-	var key := Vector4(chrome,body,root.size.y,text_scale)
+	var height := minf(chrome+body,maxf(chrome,root.size.y*0.35))
+	# All speech and choices share one footprint, even when blocking speech
+	# hides the HUD. Include the vines, which can outgrow a short timed card.
+	var bottom: float = status_dock.position.y + status_dock.art_rect().position.y - column.get_theme_constant("separation")
+	var top := bottom - maxf(height, SPEECH_VINE_SIZE.y)
+	var key := Vector4(chrome,body,height,top)
 	if key == dialogue_layout_key: return
 	dialogue_layout_key = key
-	var height := minf(chrome+body,maxf(chrome,root.size.y*0.35))
-	panel.anchor_top = 0.93
-	panel.anchor_bottom = 0.93
-	panel.offset_top = -height
-	panel.offset_bottom = 0
+	panel.anchor_top = 0
+	panel.anchor_bottom = 0
+	panel.offset_top = top
+	panel.offset_bottom = top + height
 
 func _ensure_controller_navigation() -> void:
 	var buttons := {"ui_accept": JOY_BUTTON_A, "ui_cancel": JOY_BUTTON_B, "ui_up": JOY_BUTTON_DPAD_UP, "ui_down": JOY_BUTTON_DPAD_DOWN, "ui_left": JOY_BUTTON_DPAD_LEFT, "ui_right": JOY_BUTTON_DPAD_RIGHT}
@@ -625,7 +630,7 @@ func prepare_dialogue_layout() -> bool:
 	panel_underlay.position = panel.position
 	panel_underlay.size = panel.size
 	vines_left.position = panel.position + Vector2(-65, 0)
-	vines_left.size = Vector2(80, 140)
+	vines_left.size = SPEECH_VINE_SIZE
 	vines_right.position = panel.position + Vector2(panel.size.x-15, 0)
 	vines_right.size = vines_left.size
 	return true
@@ -650,8 +655,13 @@ func _continue_dialogue() -> void:
 	dialogue_finished.emit(0)
 
 func show_choices(title: String, options: Array) -> void:
-	_clear(title if not title.is_empty() else "What will you do?", "dialogue")
+	_clear("What will you do?", "dialogue")
 	dialogue_mode = true
+	# A choice prompt is content, not fixed chrome. It must scroll with its
+	# answers so a paragraph cannot enlarge the card beyond the speech cap.
+	if not title.is_empty():
+		var prompt := _label(title)
+		prompt.name = "ChoicePrompt"
 	_update_hint()
 	for i in range(options.size()):
 		var button := Button.new()
@@ -659,6 +669,9 @@ func show_choices(title: String, options: Array) -> void:
 		button.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		button.custom_minimum_size.y = roundi(48.0 * text_scale)
 		button.focus_mode = Control.FOCUS_ALL
+		# Keep the first option as the keyboard/pad confirmation owner while
+		# reporting its prompt first to assistive apps. Page entry resets to top.
+		if i == 0 and not title.is_empty(): button.accessibility_name = title + "\n" + button.text
 		button.pressed.connect(_choose_dialogue.bind(i + 1))
 		column.add_child(button)
 	_focus()
