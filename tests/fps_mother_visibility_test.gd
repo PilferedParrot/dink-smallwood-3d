@@ -49,6 +49,8 @@ func _run() -> void:
 		var player_position: Vector2 = game._position2(1)
 		var player_camera: Vector3 = game.camera.position
 		game.test_mode = false
+		# S1-H1-M explicitly freezes Dink before the six-line request.
+		game.entities[1].frozen = true
 		game._dialogue("some AlkTree nuts, I think they're in season.", mother, {"sprite_id":mother})
 		await _revealed_line()
 		check(game.fps_dialogue_camera_active, "Blocked Story 2 Mother line uses a temporary clear room camera")
@@ -58,7 +60,7 @@ func _run() -> void:
 		if not capture_path.is_empty():
 			await RenderingServer.frame_post_draw
 			get_root().get_texture().get_image().save_png(capture_path)
-		game.ui.dialogue_finished.emit(0)
+		game.ui.cancel_speech()
 		await process_frame
 		await process_frame
 		check(not game.fps_dialogue_camera_active, "Mother dialogue completion restores the ordinary player camera")
@@ -79,7 +81,7 @@ func _run() -> void:
 		if not capture_path.is_empty():
 			await RenderingServer.frame_post_draw
 			get_root().get_texture().get_image().save_png(capture_path.get_basename() + "-x202.png")
-		game.ui.dialogue_finished.emit(0)
+		game.ui.cancel_speech()
 		await process_frame
 		await process_frame
 		game.entities[mother]["x"] = 216.583511
@@ -96,7 +98,7 @@ func _run() -> void:
 		game._physics_process(0.016)
 		check(not game.fps_dialogue_camera_active, "Title/reset physics releases the temporary Mother camera")
 		check(is_equal_approx(game.fps_yaw, 0.585729) and is_equal_approx(game.fps_pitch, 0.022599), "Title/reset preserves the saved player rotation")
-		game.ui.dialogue_finished.emit(0)
+		game.ui.cancel_speech()
 		await process_frame
 		game.playing = true
 		# Map teardown must likewise never leave a detached cinematic camera active.

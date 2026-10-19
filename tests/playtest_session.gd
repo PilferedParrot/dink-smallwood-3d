@@ -281,17 +281,20 @@ func _telemetry() -> Dictionary:
 	var script_entities: Array = []
 	for entity in entity_state:
 		if not str(entity.script).is_empty(): script_entities.append({"id": entity.id, "script": entity.script})
+	# A waiting speech script and a modal choice are both dialogue. Modality
+	# remains separately observable; free speech must never imply blocked input.
 	return {"mode": mode, "screen": int(game.current_screen), "x": pos.x, "y": pos.y,
 		"yaw": float(game.fps_yaw), "pitch": float(game.fps_pitch),
 		"playing": bool(game.playing), "changing": bool(game.changing),
-		"modal": bool(ui.modal), "page": str(ui.page), "dialogue": bool(ui.dialogue_mode),
+		"modal": bool(ui.modal), "page": str(ui.page), "dialogue": bool(ui.dialogue_mode or game.dialogue_busy),
 		"frozen": bool(p.get("frozen", false)), "disabled": int(p.get("disabled", 0)),
 		"nocontrol": int(p.get("nocontrol", 0)), "cooldown": float(game.attack_cooldown),
 		"frame_count": simulation_frames, "cardinal_blocked": {"north": game._blocked(pos + Vector2(0, -8), 1),
 		"south": game._blocked(pos + Vector2(0, 8), 1), "west": game._blocked(pos + Vector2(-8, 0), 1),
 		"east": game._blocked(pos + Vector2(8, 0), 1)},
 		"recent_dialogue": game.dialogue_log.slice(maxi(0, game.dialogue_log.size() - 5)),
-		"ui": {"page": str(ui.page), "title": ui.page == "title", "dialogue": ui.dialogue_mode,
+		"ui": {"page": str(ui.page), "title": ui.page == "title", "dialogue": bool(ui.dialogue_mode or game.dialogue_busy),
+			"choice": ui.dialogue_mode, "speech_active": ui.is_speech_active(ui.active_speech_id),
 			"modal": ui.modal, "labels": _ui_labels(), "buttons": buttons, "focused": focused},
 		"render_geometry": _render_geometry(),
 		"globals": game.vm.globals.duplicate(true), "inventory": game.items.duplicate(true),

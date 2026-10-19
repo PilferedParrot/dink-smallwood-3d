@@ -29,6 +29,18 @@ var speech_born_msec := 0
 # -1: readable natural expiry; 0: persistent; positive: explicit script deadline.
 var speech_deadline_msec := -1
 var pending_speech: Dictionary = {}
+# Independent text sprites. The shared card presents the newest live line;
+# expiry and script waiters belong to IDs, never to global menu modality.
+var speech_lines: Dictionary = {}
+var speech_pause_started_msec := -1
+var speech_pause_offset_msec := 0
+var speech_waits_for_me := false:
+	set(value):
+		speech_waits_for_me = value
+		for line in speech_lines.values(): line.waits = value
+		if is_instance_valid(root): _update_hint()
+var timed_reading_done := false
+var speech_dismiss_hint: Label
 var page := "title"
 var text_scale := 1.0
 var menu_theme: Theme
@@ -300,6 +312,10 @@ func _ready() -> void:
 	dialogue_continue.pressed.connect(_continue_dialogue)
 	dialogue_continue.hide()
 	contents.add_child(dialogue_continue)
+	speech_dismiss_hint = Label.new()
+	speech_dismiss_hint.add_theme_font_size_override("font_size", 18)
+	speech_dismiss_hint.hide()
+	contents.add_child(speech_dismiss_hint)
 	menu_footer = Button.new()
 	menu_footer.custom_minimum_size.y = 48
 	menu_footer.focus_mode = Control.FOCUS_ALL
@@ -321,6 +337,20 @@ func _vine(path: String) -> TextureRect:
 	return vine
 
 func _process(_delta: float) -> void:
+	var speech_now := _speech_now_msec()
+	var speech_step := 0.0 if speech_pause_started_msec >= 0 else _delta
+	for id in speech_lines.keys():
+		var line: Dictionary = speech_lines[id]
+		# FreeDink109.6 game_engine.cpp:188-207 uses a monotonic millisecond
+		# clock. Godot clamps slow-frame delta: it must not extend short text.
+		if not bool(line.get("layout_pending", false)):
+			line.remaining = maxf(0, minf(float(line.remaining) - speech_step, float(int(line.expires) - speech_now) / 1000.0))
+		var expired := int(line.deadline) > 0 and speech_now >= int(line.deadline)
+		if int(line.deadline) == -1 and not bool(line.waits) and not bool(line.get("layout_pending", false)) and float(line.remaining) <= 0:
+			# Keep P2's complete overflow reading/scroll coverage for the card
+			# being read; hidden text still ages independently like FreeDink.
+			expired = id != active_speech_id or page != "dialogue" or dialogue_mode or not bool(line.get("overflow", false)) or timed_reading_done
+		if expired: cancel_speech_id(id)
 	if page == "dialogue": _fit_dialogue_panel()
 	if page == "dialogue" and not dialogue_mode: _advance_timed_speech(_delta)
 	if page == "dialogue" and choice_prompt_scroll.visible:
@@ -490,6 +520,12 @@ func _controls_text() -> String:
 	return "\n".join(lines)
 
 func _input(event: InputEvent) -> void:
+	if page == "dialogue" and not dialogue_mode and speech_lines.has(active_speech_id):
+		if bool(speech_lines[active_speech_id].waits) and event.is_action_pressed("talk") and not event.is_echo():
+			controller_active = event is InputEventJoypadButton or event is InputEventJoypadMotion
+			cancel_speech_id(active_speech_id)
+			get_viewport().set_input_as_handled()
+			return
 	if page == "dialogue" and choice_prompt_scroll.visible:
 		var direction := int(event.is_action_pressed("ui_page_down")) - int(event.is_action_pressed("ui_page_up"))
 		if direction != 0 and not event is InputEventJoypadMotion:
@@ -520,6 +556,9 @@ func _uses_gameplay_control(event: InputEvent) -> bool:
 	return false
 
 func _update_hint() -> void:
+	if is_instance_valid(speech_dismiss_hint):
+		speech_dismiss_hint.visible = page == "dialogue" and not dialogue_mode and speech_lines.has(active_speech_id) and bool(speech_lines[active_speech_id].waits)
+		speech_dismiss_hint.text = "%s  Dismiss" % _key("talk")
 	if is_instance_valid(control_primer_label): control_primer_label.text = _control_primer()
 	if is_instance_valid(controls_label): controls_label.text = _controls_text()
 	if not is_instance_valid(hint): return
@@ -553,6 +592,9 @@ func _update_hint() -> void:
 	hint.text = _gameplay_hint()
 
 func _clear(title: String, next_page: String) -> void:
+	# Our modal menus preserve reading time. Script choices remain on the
+	# speech clock, as distinct from Escape/Settings/Equipment pages.
+	_set_speech_clock_paused(next_page not in ["dialogue", "loading"])
 	if is_instance_valid(controls_menu):
 		controls_menu.get_parent().remove_child(controls_menu)
 		controls_menu.queue_free()
@@ -578,6 +620,7 @@ func _clear(title: String, next_page: String) -> void:
 		column.remove_child(child)
 		child.queue_free()
 	dialogue_continue.hide()
+	speech_dismiss_hint.hide()
 	menu_footer.hide()
 	equipment_name.hide()
 	modal = true
@@ -657,6 +700,7 @@ func set_text_scale(value: float) -> void:
 	hint.add_theme_font_size_override("font_size", roundi(20.0 * text_scale))
 	toast.add_theme_font_size_override("font_size", roundi(22.0 * text_scale))
 	status_dock.set_text_scale(text_scale)
+	speech_dismiss_hint.add_theme_font_size_override("font_size", roundi(18.0 * text_scale))
 	heading.add_theme_font_size_override("font_size", roundi(32.0 * text_scale))
 	equipment_name.add_theme_font_size_override("font_size", roundi(22.0 * text_scale))
 	modal_feedback_text.add_theme_font_size_override("font_size", roundi(20.0 * text_scale))
@@ -668,6 +712,7 @@ func set_text_scale(value: float) -> void:
 			node.custom_minimum_size.y = roundi(float(node.get_meta("base_minimum_height")) * text_scale)
 
 func show_title(has_save: bool) -> void:
+	cancel_speech()
 	gameplay_hint_used = false
 	gameplay_hint_deadline_msec = 0
 	_clear("Your adventure awaits", "title")
@@ -705,39 +750,80 @@ func show_hud(stats: Dictionary) -> void:
 	compass_label.text = str(stats.get("location", ""))
 	_update_hint()
 
+# Legacy modal presentation is retained for UI layout probes. DinkC speech
+# always uses show_speech; only choices/menus may own player input.
 func show_dialogue(text: String, speaker: String = "Dink", blocking: bool = true) -> int:
+	if not blocking: return show_speech(text, speaker)
 	speech_request += 1
-	var request := speech_request
-	if not blocking and modal:
-		# Latest ambient line wins; a modal request always owns its card.
-		pending_speech = {"text":text,"speaker":speaker,"expires":Time.get_ticks_msec()+int(toast_timer.wait_time*1000),"id":request,"born":Time.get_ticks_msec(),"deadline":-1}
-		return request
 	_clear(speaker, "dialogue")
-	active_speech_id = request
-	speech_born_msec = Time.get_ticks_msec()
-	speech_deadline_msec = -1
-	dialogue_mode = blocking
+	dialogue_mode = true
 	_label(text)
-	if blocking:
-		dialogue_continue.custom_minimum_size.y = roundi(52.0 * text_scale)
-		dialogue_continue.show()
-	else:
-		modal = false
-		root.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		overlay.hide()
-		_set_playing_visuals(true)
-		timed_text = text
-		timed_layout_key = Vector4.INF
+	dialogue_continue.custom_minimum_size.y = roundi(52.0 * text_scale)
+	dialogue_continue.show()
 	_update_hint()
-	if blocking: _grab_current_focus.call_deferred(dialogue_continue, page_serial)
-	return request
+	_grab_current_focus.call_deferred(dialogue_continue, page_serial)
+	return speech_request
+
+func _speech_now_msec() -> int:
+	var tick := Time.get_ticks_msec() if speech_pause_started_msec < 0 else speech_pause_started_msec
+	return tick - speech_pause_offset_msec
+
+func _set_speech_clock_paused(paused: bool) -> void:
+	var tick := Time.get_ticks_msec()
+	if paused and speech_pause_started_msec < 0:
+		speech_pause_started_msec = tick
+	elif not paused and speech_pause_started_msec >= 0:
+		speech_pause_offset_msec += tick - speech_pause_started_msec
+		speech_pause_started_msec = -1
+
+static func source_speech_msec(expanded_text: String) -> int:
+	# FreeDink109.6 text.cpp:40-65, strlen AFTER substitution, BEFORE colour removal.
+	return maxi(2700, expanded_text.to_utf8_buffer().size() * 77)
+
+func show_speech(text: String, speaker: String = "Dink", owner: int = 0, ttl_msec: int = -1) -> int:
+	if owner == 0: cancel_owner_speech(0)
+	speech_request += 1
+	var id := speech_request
+	var ttl := source_speech_msec(text) if ttl_msec < 0 else ttl_msec
+	var now := _speech_now_msec()
+	speech_lines[id] = {"id":id,"text":text,"speaker":speaker,"owner":owner,"born":now,"expires":now+ttl,"deadline":-1,"remaining":float(ttl)/1000.0,"waits":speech_waits_for_me}
+	if modal:
+		pending_speech = speech_lines[id]
+	else:
+		_present_speech(id)
+	return id
+
+func _present_speech(id: int) -> void:
+	if not speech_lines.has(id): return
+	var line: Dictionary = speech_lines[id]
+	_clear(str(line.speaker), "dialogue")
+	active_speech_id = id
+	speech_born_msec = int(line.born)
+	speech_deadline_msec = int(line.deadline)
+	dialogue_mode = false
+	_label(str(line.text))
+	modal = false
+	root.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	overlay.hide()
+	_set_playing_visuals(true)
+	timed_text = str(line.text)
+	timed_reading_done = false
+	timed_layout_key = Vector4.INF
+	_update_hint()
+
+func has_owner_speech(owner: int) -> bool:
+	for line in speech_lines.values():
+		if int(line.owner) == owner: return true
+	return false
+
+func cancel_owner_speech(owner: int) -> void:
+	for id in speech_lines.keys():
+		if int(speech_lines[id].owner) == owner: cancel_speech_id(id)
 
 func _advance_timed_speech(delta: float) -> void:
-	if speech_deadline_msec > 0 and Time.get_ticks_msec() >= speech_deadline_msec:
-		close_menu()
-		return
 	var bar := menu_scroll.get_v_scroll_bar()
 	var extent := maxf(0, bar.max_value - bar.page)
+	if speech_lines.has(active_speech_id): speech_lines[active_speech_id].overflow = extent > 0
 	var label: Label = column.get_child(0) if column.get_child_count() > 0 else null
 	if label == null: return
 	var line_step := float(label.get_line_height() + label.get_theme_constant("line_spacing"))
@@ -748,7 +834,7 @@ func _advance_timed_speech(delta: float) -> void:
 		var words := timed_text.replace("\n", " ").replace("\t", " ").replace("\r", " ").split(" ", false).size()
 		var reading := maxf(float(words) / SPEECH_WORDS_PER_SECOND, float(timed_text.length()) / SPEECH_CHARACTERS_PER_SECOND)
 		var visible_fraction := minf(1, menu_scroll.size.y / maxf(1, key.x))
-		timed_hold = maxf(toast_timer.wait_time, reading * visible_fraction if extent > 0 else reading)
+		timed_hold = reading * visible_fraction if extent > 0 else reading
 		timed_last_hold = reading * visible_fraction
 		timed_scroll_speed = key.x / reading if reading > 0 else 0.0
 		timed_scroll_offset = 0
@@ -760,7 +846,7 @@ func _advance_timed_speech(delta: float) -> void:
 		timed_phase_elapsed += delta
 		if timed_phase_elapsed >= timed_hold:
 			if extent <= 0:
-				if speech_deadline_msec == -1: close_menu()
+				timed_reading_done = true
 			else: timed_phase = 1; timed_phase_elapsed = 0
 	elif timed_phase == 1:
 		# Even a stalled render may advance at most one overlapping text page.
@@ -773,24 +859,29 @@ func _advance_timed_speech(delta: float) -> void:
 			timed_phase_elapsed = 0
 	else:
 		timed_phase_elapsed += delta
-		if timed_phase_elapsed >= timed_last_hold and speech_deadline_msec == -1: close_menu()
+		if timed_phase_elapsed >= timed_last_hold: timed_reading_done = true
 
 func _show_pending_speech() -> void:
-	if modal or pending_speech.is_empty(): return
-	var line := pending_speech
+	if modal or (page == "dialogue" and speech_lines.has(active_speech_id)): return
 	pending_speech = {}
-	if int(line.deadline) == 0 or (int(line.deadline) > Time.get_ticks_msec()) or (int(line.deadline) == -1 and int(line.expires) > Time.get_ticks_msec()):
-		show_dialogue(str(line.text), str(line.speaker), false)
-		active_speech_id = int(line.id)
-		speech_born_msec = int(line.born)
-		speech_deadline_msec = int(line.deadline)
+	if not speech_lines.is_empty():
+		_present_speech(int(speech_lines.keys().back()))
+
+func _finish_speech_layout(id: int) -> void:
+	if speech_lines.has(id) and bool(speech_lines[id].get("layout_pending", false)):
+		speech_lines[id].layout_pending = false
+		speech_lines[id].expires = _speech_now_msec() + roundi(float(speech_lines[id].remaining) * 1000)
 
 func prepare_dialogue_layout() -> bool:
+	var id := active_speech_id
+	if speech_lines.has(id): speech_lines[id].layout_pending = true
 	var serial := page_serial
 	panel.hide(); panel_underlay.hide(); vines_left.hide(); vines_right.hide()
 	for _i in 3:
 		await get_tree().process_frame
-		if serial != page_serial or page != "dialogue": return false
+		if serial != page_serial or page != "dialogue":
+			_finish_speech_layout(id)
+			return false
 		_fit_dialogue_panel()
 	# These are the decorations' actual future positions, even while hidden.
 	panel_underlay.position = panel.position
@@ -811,6 +902,7 @@ func speech_safe_rect() -> Rect2:
 
 func reveal_dialogue() -> void:
 	if page != "dialogue": return
+	_finish_speech_layout(active_speech_id)
 	panel.show(); panel_underlay.show(); vines_left.show(); vines_right.show()
 	# Initial deferred focus can run while prepare_dialogue_layout hides the
 	# panel. Restore it only after the measured card becomes visible.
@@ -851,6 +943,12 @@ func hide_dialogue() -> void:
 	dialogue_mode = false
 
 func close_menu() -> void:
+	_set_speech_clock_paused(false)
+	# An explicit close of a displayed text removes THAT text only. Opening
+	# a menu uses _clear and preserves independent text lifetimes underneath.
+	if page == "dialogue" and not dialogue_mode:
+		speech_lines.erase(active_speech_id)
+	active_speech_id = 0
 	page_serial += 1
 	speech_request += 1
 	modal = false
@@ -867,25 +965,25 @@ func close_menu() -> void:
 	_show_pending_speech.call_deferred()
 
 func is_speech_active(id: int) -> bool:
-	if id <= 0: return false
-	return int(pending_speech.get("id", 0)) == id or (page == "dialogue" and not dialogue_mode and active_speech_id == id)
+	return speech_lines.has(id)
 
 func set_speech_ttl(id: int, milliseconds: int) -> void:
-	if id <= 0: return
-	if int(pending_speech.get("id", 0)) == id:
-		pending_speech.deadline = 0 if milliseconds <= 0 else int(pending_speech.born) + milliseconds
-	if page == "dialogue" and not dialogue_mode and active_speech_id == id:
-		speech_deadline_msec = 0 if milliseconds <= 0 else speech_born_msec + milliseconds
-		if speech_deadline_msec > 0 and Time.get_ticks_msec() >= speech_deadline_msec: close_menu()
+	if not speech_lines.has(id): return
+	var line: Dictionary = speech_lines[id]
+	line.deadline = 0 if milliseconds <= 0 else int(line.born) + milliseconds
+	if active_speech_id == id: speech_deadline_msec = int(line.deadline)
+	if int(line.deadline) > 0 and _speech_now_msec() >= int(line.deadline): cancel_speech_id(id)
 
 func cancel_speech_id(id: int) -> void:
-	if id <= 0: return
+	if not speech_lines.has(id): return
+	speech_lines.erase(id)
 	if int(pending_speech.get("id", 0)) == id: pending_speech = {}
 	if active_speech_id == id and page == "dialogue" and not dialogue_mode:
 		close_menu()
 
 func cancel_speech() -> void:
 	var was_blocking := dialogue_mode
+	speech_lines.clear()
 	pending_speech = {}
 	speech_request += 1
 	if page == "dialogue":
@@ -1006,6 +1104,15 @@ func show_settings(settings: Dictionary) -> void:
 	reduced.toggled.connect(_toggle_readout.bind(reduced, "Reduce camera movement"))
 	_toggle_readout(reduced.button_pressed, reduced, "Reduce camera movement")
 	column.add_child(reduced)
+	var speech_wait := Button.new()
+	speech_wait.toggle_mode = true
+	speech_wait.set_meta("setting_key", "speech_waits_for_me")
+	speech_wait.focus_mode = Control.FOCUS_ALL
+	speech_wait.button_pressed = bool(settings.get("speech_waits_for_me", false))
+	speech_wait.toggled.connect(func(value: bool): action_requested.emit("setting", {"key":"speech_waits_for_me", "value":value}))
+	speech_wait.toggled.connect(_toggle_readout.bind(speech_wait, "Speech waits for me"))
+	_toggle_readout(speech_wait.button_pressed, speech_wait, "Speech waits for me")
+	column.add_child(speech_wait)
 	_button("Done", "back")
 	_focus()
 

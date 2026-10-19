@@ -40,7 +40,9 @@ still a work in progress.
 - Looking down, Dink has a shadow but no body; the fist and bow are plain models.
 - Some interface panels, textures and the house ceiling are still rough.
 - In the grief scene the camera stays where you were standing, and you can't walk
-  around during it, as in the original.
+  around during its explicit script freeze (FreeDink109.6
+  `dinkc_bindings.cpp:552–559`, `brain_keyboard.cpp:222–240`; campaign
+  `S1-H1-S.c`).
 - Timed speech can cover the top of the status bar until the line ends.
 - F9's replay starts from the moment you pressed it; it does not rewind.
 

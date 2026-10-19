@@ -1,6 +1,7 @@
 extends SceneTree
 ## Scenario fixture skips campaign progression/startup scripts. M runs the
-## original BUTTON6 script; Continue/choices use normal viewport key events.
+## BUTTON6 script; Talk dismissal/choices use normal viewport key events.
+## FreeDink109.6 dinkc_bindings.cpp:748-825: stop waits for text, not input modality.
 const GAME = preload("res://scripts/fps_game.gd")
 var game
 var failures: Array[String] = []
@@ -136,22 +137,25 @@ func _run() -> void:
 			for line in ["Short line.", "A long speech line that must scroll within the card. ".repeat(100)]:
 				var blocking: bool = command.begins_with("say_stop")
 				var previous := completed
+				game.ui.speech_waits_for_me = blocking
 				if blocking: _blocking(command, line)
 				else: await game.dink_call(command, [line, 1, 1], {})
 				await settle()
 				var tag := "%s-%s-%.2f" % [command, "short" if line.length() < 50 else "long", scale]
 				inspect_card(tag)
-				check(game.ui.dialogue_continue.visible == blocking, tag + ": one Continue owner for blocking speech only")
+				check(not game.ui.modal and not game.ui.dialogue_continue.visible, tag + ": all speech remains nonmodal")
+				check(game.ui.speech_dismiss_hint.visible == blocking, tag + ": opt-in speech has a plain Talk dismiss hint")
 				if line.length() > 50:
 					check(game.ui.menu_scroll.get_v_scroll_bar().max_value > game.ui.menu_scroll.size.y, tag + ": long text scrolls")
 					if command == "say" and scale == 1.0: await frame("03-timed-long")
 				if blocking:
-					check(completed == previous, tag + ": script waits for real Continue input")
+					check(completed == previous, tag + ": caller waits for opt-in Talk dismissal")
 					if command == "say_stop" and scale == 1.0: await frame("02-blocking-" + ("short" if line.length() < 50 else "long"))
 					await key(KEY_ENTER)
-					check(completed == previous + 1 and game.ui.page == "game", tag + ": Enter releases exactly one blocking call")
+					check(completed == previous + 1 and game.ui.page == "game", tag + ": Talk dismisses exactly one waiting line")
 				else:
 					game.ui.cancel_speech()
+		game.ui.speech_waits_for_me = false
 		var previous := completed
 		_choices()
 		await settle()

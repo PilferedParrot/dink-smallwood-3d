@@ -22,7 +22,7 @@ var editor_state: Dictionary = {}
 var items: Array = []
 var magic_items: Array = []
 var sound_slots: Dictionary = {}
-var settings := {"master":0.8,"music":0.55,"sfx":0.8,"text_scale":1.0,"camera_angle":50.0,"reduced_motion":false}
+var settings := {"master":0.8,"music":0.55,"sfx":0.8,"text_scale":1.0,"camera_angle":50.0,"reduced_motion":false,"speech_waits_for_me":false}
 var scene_root: Node3D
 var camera: Camera3D
 var music: AudioStreamPlayer
@@ -37,6 +37,8 @@ var hurt_cooldown := 0.0
 var warp_cooldown := 0.0
 var hud_clock := 0.0
 var dialogue_busy := false
+var speech_waiters: Dictionary = {}
+var last_talk_speech := 0
 var unknown: Dictionary = {}
 var last_music := ""
 var generation := 0
@@ -475,7 +477,7 @@ func _input(event: InputEvent) -> void:
 	get_viewport().set_input_as_handled()
 
 func _open_world_map() -> void:
-	if not playing or not entities.has(1) or dialogue_busy: return
+	if not playing or not entities.has(1): return
 	var player: Dictionary = entities[1]
 	if player.get("frozen", false) or player.get("disabled", false) or int(player.get("nocontrol", 0)): return
 	if ui.modal and ui.page != "pause": return
@@ -493,6 +495,9 @@ func _unhandled_input(event: InputEvent) -> void:
 		get_viewport().set_input_as_handled()
 		return
 	if ui.modal or not playing: return
+	if _speech_talk(event):
+		get_viewport().set_input_as_handled()
+		return
 	if event.is_action_pressed("talk"): _talk()
 	if event.is_action_pressed("attack"): _attack()
 	if event.is_action_pressed("magic"): _cast()
@@ -978,7 +983,7 @@ func _update_ai(delta: float) -> void:
 						_damage(target,shot)
 					if brain == 11: break
 
-func _interpolate(value: Variant, context: Dictionary) -> String:
+func _interpolate(value: Variant, context: Dictionary, strip_colour := true) -> String:
 	var result := str(value)
 	var regex := RegEx.new()
 	regex.compile("&[A-Za-z_][A-Za-z0-9_-]*")
@@ -989,33 +994,63 @@ func _interpolate(value: Variant, context: Dictionary) -> String:
 		var val: Variant = context.get("locals",{}).get(name,vm.globals.get(name,0))
 		if name == "current_sprite": val = context.get("sprite_id",0)
 		result = result.substr(0,found.get_start())+str(val)+result.substr(found.get_end())
+	if not strip_colour: return result
 	regex.compile("`.")
 	return regex.sub(result,"",true)
 
-func _dialogue(text: String, speaker: int, context: Dictionary) -> void:
-	var expected := generation
-	while dialogue_busy and expected == generation:
-		await get_tree().process_frame
-	if expected != generation: return
-	dialogue_busy = true
-	var line := _interpolate(text,context)
-	var speaker_name := "Dink" if speaker == 1 else "Conversation"
+func _speech_name(speaker: int, _context: Dictionary) -> String:
+	return "Dink" if speaker == 1 else "Conversation"
+
+func _start_speech(text: String, speaker: int, context: Dictionary, binding: String) -> int:
+	# FreeDink109.6 dinkc_bindings.cpp:748-825: text ownership is separate
+	# from script suspension and never sets the player's frozen flag.
+	var owner := 1000 if binding.ends_with("xy") else speaker
+	if owner == 0 and binding != "say_stop_npc": return 0
+	if binding == "say_stop_npc" and ui.has_owner_speech(owner): return 0
+	if binding == "say_stop" or (binding == "say" and owner != 1000): ui.cancel_owner_speech(owner)
+	if binding == "say_stop": ui.cancel_owner_speech(1)
+	var expanded := _interpolate(text, context, false)
+	var line := _interpolate(text, context)
+	var speaker_name := _speech_name(speaker, context)
 	_record_dialogue(line, speaker_name)
-	if test_mode:
+	var id: int = ui.show_speech(line, speaker_name, owner, UI.source_speech_msec(expanded))
+	if binding.begins_with("say_stop"):
+		speech_waiters[id] = true
+		dialogue_busy = true
+	if binding in ["say_stop", "say_stop_xy"]: last_talk_speech = id
+	return id
+
+func _wait_for_speech(id: int, expected: int) -> void:
+	if id <= 0: return
+	speech_waiters[id] = true
+	dialogue_busy = true
+	while expected == generation and ui.is_speech_active(id):
 		await get_tree().process_frame
-	else:
-		ui.show_dialogue(line,"Dink" if speaker == 1 else "Conversation")
-		await ui.dialogue_finished
-	dialogue_busy = false
+	speech_waiters.erase(id)
+	dialogue_busy = not speech_waiters.is_empty()
+
+func _dialogue(text: String, speaker: int, context: Dictionary, binding: String = "say_stop") -> int:
+	if test_mode:
+		_record_dialogue(_interpolate(text, context), _speech_name(speaker, context))
+		await get_tree().process_frame
+		return 0
+	var id := _start_speech(text, speaker, context, binding)
+	await _wait_for_speech(id, generation)
+	return TEXT_SPRITE_BASE + id if id > 0 else 0
+
+# FreeDink109.6 brain_keyboard.cpp:222-240 fast-forwards last_talk only
+# while explicitly frozen. Unfrozen ordinary speech never captures Talk.
+func _speech_talk(event: InputEvent) -> bool:
+	if event.is_action_pressed("talk") and not event.is_echo() and entities.has(1) and bool(entities[1].get("frozen", false)) and ui.is_speech_active(last_talk_speech):
+		ui.cancel_speech_id(last_talk_speech)
+		return true
+	return false
 
 func _record_dialogue(line: String, speaker_name: String = "") -> void:
 	dialogue_log.append(line)
 	journal_log.append("%s: %s" % [speaker_name, line] if not speaker_name.is_empty() else line)
 	if dialogue_log.size() > 100: dialogue_log.pop_front()
 	if journal_log.size() > 100: journal_log.pop_front()
-
-func _show_nonblocking_speech(line: String, _speaker: int, _context: Dictionary) -> int:
-	return ui.show_dialogue(line, "Conversation", false)
 
 func _script_move_destination(_id: int, _dir: int, destination: float) -> float:
 	return destination
@@ -1100,19 +1135,10 @@ func dink_call(command: String, args: Array, context: Dictionary) -> Variant:
 		"freeze", "freeeze", "unfreeze", "unfreeeze":
 			if entities.has(int(a)): entities[int(a)]["frozen"] = cmd in ["freeze","freeeze"]
 		"say_stop", "say_stop_npc", "say_stop_xy":
-			await _dialogue(str(a),int(b) if cmd != "say_stop_xy" else 0,context)
+			return await _dialogue(str(a),int(b) if cmd != "say_stop_xy" else 1000,context,cmd)
 		"say", "say_xy":
-			var line := _interpolate(a,context)
-			var speaker_id := int(b) if cmd == "say" else 0
-			var text_id: int = _show_nonblocking_speech(line, speaker_id, context)
-			if speaker_id == 1:
-				_record_dialogue(line, "Dink")
-			elif has_method("_fps_speaker_name"):
-				var speaker_name := str(call("_fps_speaker_name", speaker_id, context))
-				_record_dialogue(line, "" if speaker_name == "Conversation" else speaker_name)
-			else:
-				_record_dialogue(line)
-			return TEXT_SPRITE_BASE + text_id
+			var text_id := _start_speech(str(a),int(b) if cmd == "say" else 1000,context,cmd)
+			return TEXT_SPRITE_BASE + text_id if text_id > 0 else 0
 		"choice":
 			var options: Array = b if b is Array else []
 			if options.is_empty(): return 0
@@ -1389,7 +1415,9 @@ func _apply_settings() -> void:
 		var angle := deg_to_rad(float(settings.camera_angle))
 		camera.position = Vector3(0,sin(angle)*25,cos(angle)*25)
 		camera.look_at(Vector3.ZERO)
-	if is_instance_valid(ui) and is_instance_valid(ui.root): ui.set_text_scale(float(settings.text_scale))
+	if is_instance_valid(ui) and is_instance_valid(ui.root):
+		ui.set_text_scale(float(settings.text_scale))
+		ui.speech_waits_for_me = bool(settings.get("speech_waits_for_me", false))
 
 func _location() -> String:
 	return "Screen %d • %d places explored" % [current_screen,visited.size()]

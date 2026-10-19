@@ -2187,7 +2187,8 @@ oversight whose tests measured card height and ownership separately.
 The status owner exposes the artwork rectangle it draws. Timed speech, blocking
 speech and choices share its upper boundary, the existing8px VBox gap and a
 footprint that includes both vines. Short cards shrink; long cards retain the
-35% cap and blocking speech retains its independent Continue. Notifications keep
+35% cap. The Continue-only speech described by this pass was subsequently
+corrected; see [Speech and reading pace](SPEECH.md). Notifications keep
 the toast-height fix.
 
 Long choice prompts had another exception: fixed heading chrome could override
@@ -2201,12 +2202,14 @@ and reports the full prompt before its answer to assistive apps.
 
 A capped timed paragraph also expired after4s with unread lines below the fold.
 The missing rule was reading coverage, missed by sizing-only tests. Natural
-expiry now allows at least4s and a reading budget of170 words/minute with a
+expiry at this pass allowed at least4s and a reading budget of170 words/minute with a
 17 character/second ceiling for long tokens. It holds the first viewport, scrolls
 with overlapping pages, then holds the final viewport. Reflow starts reading at
 the top.170wpm is an editorial default informed by BBC R&D WHP306's scrolling
 study, not a universal accessibility guarantee. Presentation duration never
-blocks a `say`/`say_xy` VM call or changes explicit script waits.
+blocks a `say`/`say_xy` VM call. The later speech correction uses FreeDink
+109.6 `text.cpp:40–65` source TTL for normal text and retains overflow reading
+coverage as an explicit presentation extension; see [SPEECH.md](SPEECH.md).
 
 The source audit found one stored timed-speech return: S3-ST2's wall label.
 The old host returned0 and discarded its `sp_kill` control; why made was a
@@ -2455,3 +2458,39 @@ The fixture now settles briefly, sends physical Help at hint capture, and
 asserts visibility before saving; capture screenshots also assert that the UI
 is still listening. The corrected largest-text packed frame visibly shows the
 remapped Attack key. This changes the harness, not game timing or hint expiry.
+
+## Speech suspension, lifetimes and optional dismissal — October 19
+
+The old `say_stop` bridge suspended its calling script by opening a modal card.
+That also stopped player movement and AI. The second cause was an uncited test
+that equated a script wait with “original blocking semantics.” FreeDink109.6
+`dinkc_bindings.cpp:748–825` and `brain_keyboard.cpp:216–241` separate text,
+script suspension and explicit player freeze. The replacement keeps independent
+text handles and caller waiters; ambient speech allows movement and look. Only
+an explicitly frozen player receives speaker camera framing. Choices remain
+modal. See [Speech and reading pace](SPEECH.md) for the complete source table.
+
+Normal TTL is `max(2700, expanded UTF8 bytes × 77)` milliseconds
+(`text.cpp:40–65`), including colour codes. A monotonic creation deadline avoids
+Godot's slow-frame delta clamp stretching short text (`game_engine.cpp:188–207`).
+P2's overflow reading scroll remains a deliberate presentation extension. The
+optional Settings toggle **Speech waits for me**, default Off, keeps text and
+its caller waiting until a bound Talk input dismisses it. Its plain hint follows
+the current binding and input device. Script-controlled zero/positive TTL and
+removal retain their text-handle ownership.
+
+Our own pause, equipment and settings pages preserve reading time. This differs
+from FreeDink inventory, whose early update return defers removal while its SDL
+clock keeps counting (`update_frame.cpp:243–246`); script choices retain their
+clock (`update_frame.cpp:267–300`). `wait_for_button` is still unsupported and
+has zero calls in the bundled campaign AST (`dinkc_bindings.cpp:639–651`,
+`update_frame.cpp:171–203`).
+
+The shared harness `tests/playtest_session.gd` now reports `dialogue` for either
+a waiting speech script or a choice, with `modal`, `ui.choice` and
+`ui.speech_active` separate. This contract is shared by the campaign, PUSH and
+INDOOR checks: a waiting caller must not imply blocked movement. Regression
+fixtures exercise real keys in both presentations, normal map131 noise in a
+labelled scenario, all five speech bindings, independent callers, remapped Talk,
+process restart, stalled frames and menu reading-time preservation. The earned
+campaign route remains a separate integration check.

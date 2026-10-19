@@ -103,6 +103,8 @@ func _check_line(id: int, line: String, label: String) -> void:
 	var source_position: Vector2 = game._position2(1)
 	var old_yaw: float = game.fps_yaw
 	var old_pitch: float = game.fps_pitch
+	# Camera framing is a presentation adaptation for explicitly frozen speech.
+	game.entities[1].frozen = true
 	game._dialogue(line, id, {"sprite_id":id})
 	await _settled_line()
 	var safe: Rect2 = game.ui.speech_safe_rect()
@@ -113,7 +115,7 @@ func _check_line(id: int, line: String, label: String) -> void:
 	check(game._fps_subject_rays_clear(game.camera.global_position, game._fps_points_center(points), points, id, false), "%s has clear head and torso rays" % label)
 	check(not game._fps_effect_in_front(points, game.camera.global_position, id), "%s is clear of nearer visible fire" % label)
 	check(game._position2(1).is_equal_approx(source_position), "%s keeps player source position" % label)
-	check(game.ui.dialogue_continue.has_focus(), "%s visible Continue receives keyboard focus after hidden layout" % label)
+	check(not game.ui.dialogue_continue.visible and not game.ui.modal, "%s speech retains nonmodal input while explicit freeze gates movement" % label)
 	for pressed in [true,false]:
 		var event := InputEventKey.new()
 		event.keycode = KEY_ENTER
@@ -122,7 +124,7 @@ func _check_line(id: int, line: String, label: String) -> void:
 		Input.parse_input_event(event)
 		Input.flush_buffered_events()
 		await process_frame
-	check(not game.ui.dialogue_mode, "%s actual Enter completes the line" % label)
+	check(not game.ui.panel.visible, "%s actual Talk fast-forwards frozen last_talk line (brain_keyboard.cpp:222-240)" % label)
 	await process_frame
 	await process_frame
 	check(is_equal_approx(game.fps_yaw, old_yaw) and is_equal_approx(game.fps_pitch, old_pitch), "%s restores yaw and pitch" % label)
@@ -131,5 +133,4 @@ func _settled_line() -> void:
 	for i in 5: await process_frame
 
 func _end_line() -> void:
-	game.ui.hide_dialogue()
-	game.ui.dialogue_finished.emit(0)
+	game.ui.cancel_speech()

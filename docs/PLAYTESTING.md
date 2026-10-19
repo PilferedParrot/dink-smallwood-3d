@@ -249,3 +249,9 @@ Repeated Talk during that delay can create duplicate tasks. For the return route
 walk south through the open gate lane at `x=450`, then west near `y=375`; the eastern
 perimeter is solid. See [LETTER_MILESTONE.md](LETTER_MILESTONE.md) for source-backed
 acceptance conditions and the fire/grief presentation changes.
+
+Speech telemetry distinguishes dialogue from input modality: `dialogue` means a
+choice or a script waiting for its text; `modal` describes UI input ownership.
+`ui.choice` and `ui.speech_active` expose the presentation separately. Unfrozen
+`say_stop` can therefore report dialogue while W still moves the player
+(FreeDink109.6 `dinkc_bindings.cpp:766–788`, `brain_keyboard.cpp:216–241`).

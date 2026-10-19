@@ -76,7 +76,7 @@ The existing `user://settings.json` gains one field:
 }}}}
 ```
 
-Other settings fields survive. No bindings field means original defaults;
+Other settings fields survive. No bindings field means shipped defaults;
 loading it writes nothing. Unknown actions/contexts, unsupported versions,
 malformed events, collisions and corrupt JSON produce warnings and defaults,
 retaining unrelated valid action overrides. Invalid essential menu overrides
@@ -104,6 +104,10 @@ settings file remains available if a new binding cannot be saved.
 
 Pause/back and map-toggle also remain active in menus (`menu_active` registry
 metadata), so their bindings conflict with menu actions in either game mode.
-The original Escape alias between Pause and Menu back is intentional. For
+The shipped Escape alias between Pause and Menu back is intentional. For
 example, assigning menu confirmation to M is refused while M toggles the map;
 assigning it to an ordinary gameplay attack key can be accepted.
+
+Speech dismissal uses the Talk bindings, including alternate and controller slots.
+Settings → **Speech waits for me** enables this at any reading pace; it defaults
+to Off. See [Speech and reading pace](SPEECH.md) for the source contract.

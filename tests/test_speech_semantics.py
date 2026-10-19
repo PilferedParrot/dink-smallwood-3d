@@ -1,15 +1,15 @@
-import os
-import subprocess
-from pathlib import Path
-
-ROOT = Path(__file__).resolve().parents[1]
-GODOT = os.environ.get("GODOT", str(Path.home() / ".local/bin/Godot_v4.6.1-stable_linux.x86_64"))
+import json
+from test_speech_input import run_speech
 
 
-def test_shared_speech_card_preserves_original_blocking_semantics(tmp_path):
-    env = dict(os.environ, XDG_CONFIG_HOME=str(tmp_path / "config"),
-               XDG_DATA_HOME=str(tmp_path / "data"), XDG_CACHE_HOME=str(tmp_path / "cache"))
-    result = subprocess.run([GODOT, "--headless", "--audio-driver", "Dummy", "--path", os.environ.get("SPEECH_LAYOUT_GAME", "game"),
-                             "--script", str(ROOT / "tests/speech_semantics_test.gd")],
-                            cwd=ROOT, env=env, capture_output=True, text=True, timeout=45)
-    assert result.returncode == 0 and "SPEECH SEMANTICS PASS" in result.stdout and "SCRIPT ERROR" not in result.stderr, result.stdout + result.stderr
+def test_source_speech_yields_only_its_caller_with_independent_text_lifetime(tmp_path):
+    result = run_speech(tmp_path, "speech_semantics_test.gd")
+    assert result.returncode == 0 and "SPEECH SEMANTICS PASS" in result.stdout and "SCRIPT ERROR" not in result.stdout + result.stderr, result.stdout + result.stderr
+
+
+def test_speech_contract_table_can_reject_a_wrong_row(tmp_path):
+    result = run_speech(tmp_path, "speech_semantics_test.gd", "--flip-row")
+    assert result.returncode == 1 and "say caller wait=true" in result.stdout + result.stderr
+    assert "SCRIPT ERROR" not in result.stdout + result.stderr
+    errors = json.loads(next(line.removeprefix("SPEECH FAILURES ") for line in result.stdout.splitlines() if line.startswith("SPEECH FAILURES ")))
+    assert len(errors) == 1 and errors[0].startswith("say caller wait=true"), errors

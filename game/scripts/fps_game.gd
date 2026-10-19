@@ -41,8 +41,7 @@ var fps_dialogue_restore_pitch := 0.0
 var fps_dialogue_subject := 0
 var fps_dialogue_screen := -1
 var fps_dialogue_owner_generation := -1
-var fps_dialogue_finished_generation := -1
-var fps_dialogue_busy_generation := -1
+var fps_speech_camera_id := 0
 var fps_dialogue_used_rects: Dictionary = {}
 var fps_dialogue_alpha_images: Dictionary = {} # rendered Texture2D instance -> Image
 var fps_dialogue_opaque_pixels: Dictionary = {} # source path / texture + alpha threshold -> pixel centers
@@ -184,6 +183,9 @@ func _physics_process(delta: float) -> void:
 		_fps_restore_dialogue_camera()
 		_fps_update_mouse_mode()
 		return
+	if fps_dialogue_camera_active and entities.has(1) and not bool(entities[1].get("frozen", false)):
+		_fps_restore_dialogue_camera()
+		fps_speech_camera_id = 0
 	attack_cooldown = maxf(0.0, attack_cooldown - delta)
 	hurt_cooldown = maxf(0.0, hurt_cooldown - delta)
 	warp_cooldown = maxf(0.0, warp_cooldown - delta)
@@ -367,6 +369,9 @@ func _unhandled_input(event: InputEvent) -> void:
 		get_viewport().set_input_as_handled()
 		return
 	if ui.modal or not playing: return
+	if _speech_talk(event):
+		get_viewport().set_input_as_handled()
+		return
 	if _fps_is_initial_action_press(event, "weapon_previous"):
 		_fps_cycle_weapon(-1)
 		get_viewport().set_input_as_handled()
@@ -398,12 +403,13 @@ func _sync_fps_camera() -> void:
 func _apply_settings() -> void:
 	AudioServer.set_bus_volume_db(0, linear_to_db(maxf(0.0001, float(settings.master))))
 	if is_instance_valid(music): music.volume_db = linear_to_db(maxf(0.0001, float(settings.music)))
-	if is_instance_valid(ui) and is_instance_valid(ui.root): ui.set_text_scale(float(settings.text_scale))
+	if is_instance_valid(ui) and is_instance_valid(ui.root):
+		ui.set_text_scale(float(settings.text_scale))
+		ui.speech_waits_for_me = bool(settings.get("speech_waits_for_me", false))
 	_sync_fps_camera()
 
-func _show_nonblocking_speech(line: String, speaker: int, context: Dictionary) -> int:
-	var identity := speaker if speaker != 0 else int(context.get("sprite_id", 0))
-	return ui.show_dialogue(line, _fps_speaker_name(identity, context), false)
+func _speech_name(speaker: int, context: Dictionary) -> String:
+	return _fps_speaker_name(speaker, context)
 
 func _fps_update_controller_look(delta: float) -> void:
 	if ui.modal: return
@@ -641,34 +647,32 @@ func _fps_melee_target() -> int:
 	return best
 
 
-func _dialogue(text: String, speaker: int, context: Dictionary) -> void:
+func _dialogue(text: String, speaker: int, context: Dictionary, binding: String = "say_stop") -> int:
+	if test_mode: return await super._dialogue(text, speaker, context, binding)
 	var expected := generation
-	while dialogue_busy and expected == generation:
-		await get_tree().process_frame
-	if expected != generation: return
-	dialogue_busy = true
-	fps_dialogue_busy_generation = expected
-	var line := _interpolate(text, context)
+	var id := _start_speech(text, speaker, context, binding)
+	if id <= 0: return 0
 	var displayed_speaker := speaker
-	if displayed_speaker == 0: displayed_speaker = int(context.get("sprite_id", 0))
-	var speaker_name := _fps_speaker_name(displayed_speaker, context)
-	_record_dialogue(line, speaker_name)
-	if test_mode:
-		await get_tree().process_frame
-	else:
-		var facing_visual: Node3D = null
+	var facing_visual: Node3D = null
+	var frame_speaker: bool = entities.has(1) and bool(entities[1].get("frozen", false)) and ui.active_speech_id == id
+	if frame_speaker:
+		fps_speech_camera_id = id
 		if displayed_speaker != 1 and entities.has(displayed_speaker):
 			facing_visual = visuals.get(displayed_speaker)
 			if is_instance_valid(facing_visual):
 				facing_visual.set_meta("face_camera", true)
+				facing_visual.set_meta("speech_face_id", id)
 				_update_visual(displayed_speaker)
-		ui.show_dialogue(line, speaker_name)
 		var layout_ready: bool = await ui.prepare_dialogue_layout()
-		if expected != generation or not is_instance_valid(ui) or not layout_ready:
-			if is_instance_valid(facing_visual): facing_visual.remove_meta("face_camera")
-			_fps_restore_dialogue_camera(expected)
-			if fps_dialogue_busy_generation == expected: dialogue_busy = false
-			return
+		if expected != generation or not layout_ready or not ui.is_speech_active(id):
+			if is_instance_valid(facing_visual) and int(facing_visual.get_meta("speech_face_id", 0)) == id:
+				facing_visual.remove_meta("face_camera")
+				facing_visual.remove_meta("speech_face_id")
+			if fps_speech_camera_id == id:
+				_fps_restore_dialogue_camera(expected)
+				fps_speech_camera_id = 0
+			await _wait_for_speech(id, expected)
+			return TEXT_SPRITE_BASE + id
 		var safe: Rect2 = ui.speech_safe_rect()
 		fps_dialogue_frame_valid = true
 		fps_dialogue_frame_failure = ""
@@ -682,22 +686,16 @@ func _dialogue(text: String, speaker: int, context: Dictionary) -> void:
 				if not fps_dialogue_frame_valid: fps_dialogue_frame_failure = "grief room has no clear source-derived scene view above the card"
 		if not fps_dialogue_frame_valid:
 			push_warning("Dialogue framing: %s (screen %d, reduced motion %s, probes %s)" % [fps_dialogue_frame_failure, current_screen, settings.get("reduced_motion", false), fps_dialogue_rejections])
-		# Commit the camera before the same, already measured card is shown.
-		fps_dialogue_finished_generation = -1
-		var finished_callback: Callable = Callable(self, "_fps_dialogue_finished").bind(expected)
-		ui.dialogue_finished.connect(finished_callback, Object.CONNECT_ONE_SHOT)
 		ui.reveal_dialogue()
 		_fps_update_viewmodel(0.0)
-		while expected == generation and fps_dialogue_finished_generation != expected:
-			await get_tree().process_frame
-		if is_instance_valid(ui) and ui.dialogue_finished.is_connected(finished_callback):
-			ui.dialogue_finished.disconnect(finished_callback)
-		if is_instance_valid(facing_visual): facing_visual.remove_meta("face_camera")
+	await _wait_for_speech(id, expected)
+	if is_instance_valid(facing_visual) and int(facing_visual.get_meta("speech_face_id", 0)) == id:
+		facing_visual.remove_meta("face_camera")
+		facing_visual.remove_meta("speech_face_id")
+	if frame_speaker and fps_speech_camera_id == id:
 		_fps_restore_dialogue_camera(expected)
-	if fps_dialogue_busy_generation == expected: dialogue_busy = false
-
-func _fps_dialogue_finished(_choice: int, expected_generation: int) -> void:
-	fps_dialogue_finished_generation = expected_generation
+		fps_speech_camera_id = 0
+	return TEXT_SPRITE_BASE + id
 
 func _fps_frame_speaker(speaker: int, safe: Rect2) -> bool:
 	if not entities.has(1) or not entities.has(speaker): return false

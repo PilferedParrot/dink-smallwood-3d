@@ -36,6 +36,9 @@ commands such as `sp_x`, `create_sprite`, `say_stop`, `move_stop`, `load_screen`
 `external`. `wait`, `say_stop`, `move_stop`, and the batched `choice` command may be
 asynchronous. For `choice`, args are `[title, options]`, where each option has `text`
 and `value`; return the selected value (DinkC assigns it to `&result`).
+Speech waits suspend only the calling script; movement is separate. See
+[Speech and reading pace](SPEECH.md) for command-by-command source citations,
+lifetimes, presentation adaptations and the unsupported `wait_for_button` gap.
 
 `script_attach(sprite)` is interpreter state as well as a bridge call. It changes the
 task's `context.sprite_id` for later instructions; attachment `1000` is the DinkC
