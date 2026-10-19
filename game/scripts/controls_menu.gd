@@ -207,7 +207,8 @@ func _input(event: InputEvent) -> void:
 	if event is InputEventMouseButton:
 		# Native pointer activation is still available on Cancel/Remove.
 		for button in footer.get_children():
-			if button.get_global_rect().has_point(get_global_mouse_position()): return
+			var local: InputEventMouseButton = button.make_input_local(event)
+			if Rect2(Vector2.ZERO,button.size).has_point(local.position): return
 	get_viewport().set_input_as_handled()
 	if event.is_echo(): return
 	if not axis_token.is_empty() and blocked_axes.has(axis_token): return
@@ -249,6 +250,8 @@ func _propose() -> void:
 	else:
 		_label("Save this binding?")
 		_button("Bind", "bind", footer).pressed.connect(_save.bind("refuse"))
+	if slot >= 0:
+		_button("Remove binding", "remove", footer).pressed.connect(_ask_remove)
 	_button("Cancel", "cancel", footer).pressed.connect(_build_list)
 	_focus_later("swap" if buttons.has("swap") else ("bind" if buttons.has("bind") else "retry"), layout_serial)
 
