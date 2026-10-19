@@ -125,10 +125,22 @@ func expected_record() -> Dictionary:
 	if device == "keyboard": return {"type":"key","physical":KEY_K}
 	if device == "pad": return {"type":"pad","button":JOY_BUTTON_MISC1}
 	return {"type":"mouse","button":MOUSE_BUTTON_XBUTTON1}
+# Frame-count waits can outlast real-time Help on slow software rendering.
+# Refresh Help through physical input at capture and assert the visible plaque.
 func frame(name: String) -> void:
 	if not capture_frames: return
-	await settle(10)
+	if name == "gameplay-hint":
+		var e := InputEventKey.new()
+		e.keycode=KEY_F1; e.physical_keycode=KEY_F1; e.pressed=true
+		Input.parse_input_event(e)
+		await process_frame
+		e.pressed=false; Input.parse_input_event(e)
+	else:
+		await settle(2)
 	await RenderingServer.frame_post_draw
+	if name == "gameplay-hint":
+		check(game.ui.hint_backing.is_visible_in_tree() and game.ui.hint_backing.modulate.a>0.0,"Gameplay hint is visible in the captured frame")
+	if name == "capture": check(game.ui.controls_menu.state=="capture","Capture frame is still listening")
 	root.get_texture().get_image().save_png(out.path_join(name+".png"))
 	print("FRAME="+out.path_join(name+".png"))
 func open_controls() -> bool:

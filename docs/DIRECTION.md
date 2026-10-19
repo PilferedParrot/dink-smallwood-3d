@@ -2446,3 +2446,12 @@ from the earlier presentation branch and indiscriminate reuse of list layout.
 Unknown key names retain a numeric hexadecimal fallback (`Key 0x…`) when the
 engine cannot supply readable text. This is a safety label, not a claim of a
 complete naming table; its number follows the engine's key identifiers.
+
+Software capture exposed a harness bug during review verification: waiting ten
+rendered frames could outlast real-time Help, producing a PNG without the hint
+although its stored-text assertion passed. Why made: frame-count stabilization
+was assumed to imply a short wall-clock delay (a misapplied timing heuristic).
+The fixture now settles briefly, sends physical Help at hint capture, and
+asserts visibility before saving; capture screenshots also assert that the UI
+is still listening. The corrected largest-text packed frame visibly shows the
+remapped Attack key. This changes the harness, not game timing or hint expiry.
