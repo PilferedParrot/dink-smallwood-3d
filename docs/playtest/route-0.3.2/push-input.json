@@ -539,7 +539,7 @@
     },
     {
       "dialogue": [],
-      "label": "diagonal",
+      "label": "fps-brief-sliding-contact",
       "player": {
         "active": 1,
         "anim_time": 0.0166666666666667,
@@ -606,6 +606,303 @@
         }
       ],
       "rock_placement": 1.0,
+      "screen": 277
+    },
+    {
+      "dialogue": [],
+      "label": "2d-diagonal",
+      "player": {
+        "active": 1,
+        "anim_time": 0.0166666666666667,
+        "attack_hit_sound": 0.0,
+        "base_attack": 100,
+        "base_idle": 10,
+        "base_walk": 70,
+        "brain": 1,
+        "dir": 9,
+        "editor_num": 0,
+        "frame": 1,
+        "frame_delay": 0.0,
+        "frozen": false,
+        "hard": 1,
+        "nocontrol": 0,
+        "pframe": 1,
+        "pseq": 14,
+        "script": "",
+        "seq": 18,
+        "size": 100,
+        "speed": 3,
+        "x": 229.949768066406,
+        "y": 168.625579833984
+      },
+      "pushes": [],
+      "rock_placement": 0,
+      "screen": 277
+    },
+    {
+      "dialogue": [
+        "It's .. it's moving..."
+      ],
+      "label": "fps-face-10-degrees",
+      "player": {
+        "active": 1,
+        "anim_time": 0.0333333333333333,
+        "attack_hit_sound": 0.0,
+        "base_attack": 100,
+        "base_idle": 10,
+        "base_walk": 70,
+        "brain": 1,
+        "dir": 6,
+        "editor_num": 0,
+        "frame": 4,
+        "frame_delay": 0.0,
+        "frozen": false,
+        "hard": 1,
+        "nocontrol": 0,
+        "pframe": 1,
+        "pseq": 14,
+        "script": "",
+        "seq": 16,
+        "size": 100,
+        "speed": 1,
+        "x": 230.25,
+        "y": 188.226013183594
+      },
+      "pushes": [
+        {
+          "dir": 6,
+          "editor": 3,
+          "id": 32,
+          "script": "s1-roc"
+        }
+      ],
+      "rock_placement": 1.0,
+      "screen": 277
+    },
+    {
+      "dialogue": [
+        "It's .. it's moving..."
+      ],
+      "label": "fps-face-20-degrees",
+      "player": {
+        "active": 1,
+        "anim_time": 0.0333333333333333,
+        "attack_hit_sound": 0.0,
+        "base_attack": 100,
+        "base_idle": 10,
+        "base_walk": 70,
+        "brain": 1,
+        "dir": 6,
+        "editor_num": 0,
+        "frame": 4,
+        "frame_delay": 0.0,
+        "frozen": false,
+        "hard": 1,
+        "nocontrol": 0,
+        "pframe": 1,
+        "pseq": 14,
+        "script": "",
+        "seq": 16,
+        "size": 100,
+        "speed": 1,
+        "x": 230.25,
+        "y": 182.627716064453
+      },
+      "pushes": [
+        {
+          "dir": 6,
+          "editor": 3,
+          "id": 32,
+          "script": "s1-roc"
+        }
+      ],
+      "rock_placement": 1.0,
+      "screen": 277
+    },
+    {
+      "dialogue": [
+        "It's .. it's moving..."
+      ],
+      "label": "fps-face-30-degrees",
+      "player": {
+        "active": 1,
+        "anim_time": 0.0333333333333333,
+        "attack_hit_sound": 0.0,
+        "base_attack": 100,
+        "base_idle": 10,
+        "base_walk": 70,
+        "brain": 1,
+        "dir": 6,
+        "editor_num": 0,
+        "frame": 4,
+        "frame_delay": 0.0,
+        "frozen": false,
+        "hard": 1,
+        "nocontrol": 0,
+        "pframe": 1,
+        "pseq": 14,
+        "script": "",
+        "seq": 16,
+        "size": 100,
+        "speed": 1,
+        "x": 230.25,
+        "y": 177.375
+      },
+      "pushes": [
+        {
+          "dir": 6,
+          "editor": 3,
+          "id": 32,
+          "script": "s1-roc"
+        }
+      ],
+      "rock_placement": 1.0,
+      "screen": 277
+    },
+    {
+      "dialogue": [
+        "It's .. it's moving..."
+      ],
+      "label": "fps-face-40-degrees",
+      "player": {
+        "active": 1,
+        "anim_time": 0.0166666666666667,
+        "attack_hit_sound": 0.0,
+        "base_attack": 100,
+        "base_idle": 10,
+        "base_walk": 70,
+        "brain": 1,
+        "dir": 6,
+        "editor_num": 0,
+        "frame": 4,
+        "frame_delay": 0.0,
+        "frozen": false,
+        "hard": 1,
+        "nocontrol": 0,
+        "pframe": 1,
+        "pseq": 14,
+        "script": "",
+        "seq": 16,
+        "size": 100,
+        "speed": 1,
+        "x": 230.920288085938,
+        "y": 172.064880371094
+      },
+      "pushes": [
+        {
+          "dir": 6,
+          "editor": 3,
+          "id": 32,
+          "script": "s1-roc"
+        }
+      ],
+      "rock_placement": 1.0,
+      "screen": 277
+    },
+    {
+      "dialogue": [],
+      "label": "fps-true-corner",
+      "player": {
+        "active": 1,
+        "anim_time": 0.0166666666666667,
+        "attack_hit_sound": 0.0,
+        "base_attack": 100,
+        "base_idle": 10,
+        "base_walk": 70,
+        "brain": 1,
+        "dir": 9,
+        "editor_num": 0,
+        "frame": 1,
+        "frame_delay": 0.0,
+        "frozen": false,
+        "hard": 1,
+        "nocontrol": 0,
+        "pframe": 1,
+        "pseq": 14,
+        "script": "",
+        "seq": 18,
+        "size": 100,
+        "speed": 3,
+        "x": 232.25,
+        "y": 168.25
+      },
+      "pushes": [],
+      "rock_placement": 0,
+      "screen": 277
+    },
+    {
+      "dialogue": [],
+      "label": "freeze-script-repeat",
+      "player": {
+        "active": 1,
+        "anim_time": 0.0166666666666667,
+        "attack_hit_sound": 0.0,
+        "base_attack": 100,
+        "base_idle": 10,
+        "base_walk": 70,
+        "brain": 1,
+        "dir": 6,
+        "editor_num": 0,
+        "frame": 1,
+        "frame_delay": 0.0,
+        "frozen": true,
+        "hard": 1,
+        "nocontrol": 1,
+        "pframe": 1,
+        "pseq": 14,
+        "script": "",
+        "seq": 316,
+        "size": 100,
+        "speed": 3,
+        "x": 230.25,
+        "y": 181.0
+      },
+      "pushes": [
+        {
+          "dir": 6,
+          "editor": 3,
+          "id": 32,
+          "script": "push-freeze-regression"
+        },
+        {
+          "dir": 6,
+          "editor": 3,
+          "id": 32,
+          "script": "push-freeze-regression"
+        }
+      ],
+      "rock_placement": 1,
+      "screen": 277
+    },
+    {
+      "dialogue": [],
+      "label": "2d-touch-during-swing",
+      "player": {
+        "active": 1,
+        "anim_time": 0.0166666666666667,
+        "attack_hit_sound": 0.0,
+        "base_attack": 100,
+        "base_idle": 10,
+        "base_walk": 70,
+        "brain": 1,
+        "dir": 4,
+        "editor_num": 0,
+        "frame": 1.0,
+        "frame_delay": 0.0,
+        "frozen": false,
+        "hard": 1,
+        "nocontrol": 1.0,
+        "pframe": 1,
+        "pseq": 14,
+        "script": "",
+        "seq": 104,
+        "size": 100,
+        "speed": 3,
+        "x": 275.0,
+        "y": 164.0
+      },
+      "pushes": [],
+      "rock_placement": 0,
       "screen": 277
     }
   ],

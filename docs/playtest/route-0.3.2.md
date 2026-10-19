@@ -371,15 +371,15 @@ unfinished milestone remains unfinished even when its preceding quest flags
 and controls are verified. No release, deployment or publishing is implied.
 
 
-## PUSH follow-up on build `9cae768` — 2026-10-19
+## PUSH follow-up on build `eb9b27c` — 2026-10-19
 
 The same unmodified earned pre-push save now runs `S1-ROC.push` through normal
-movement. Source implementation: `9cae768a1669b0146f8b9b06bdead7a8940cafd2`;
+movement. Source implementation: `eb9b27ca4c07b9eb5de9d7e7016a5d691e17e520`;
 the Linux release-preset executable SHA-256 is
-`5467026b37454066398ae2cc0590029c150f640a67b6f23c4169eb13a931b519`.
+`b4b8c783521e8e29e2cc2798cac0eb2077144084cdd1a71e2c51561495d0f3c1`.
 This is a local test build of 0.3.2, not a release or an installed-game change.
 
-The [focused input cases](route-0.3.2/push-input.json) pass all 15 scenarios.
+The [focused input cases](route-0.3.2/push-input.json) pass all 23 scenarios.
 The [same cave case on 434db5a](route-0.3.2/push-must-fail.json) fails with zero
 PUSH calls and `rock_placement=0`. All four original PUSH procedures run through
 physical input, including FPS forward/strafe and the overhead controller;
@@ -389,6 +389,17 @@ beside tile collision, inclusive selection edges, all matches and the actual
 map 590 editor 11-before-4 order. The source derivation and both causes of the
 missing interaction are in [DIRECTION.md](../DIRECTION.md#campaign-push-dispatch-2026-10-19).
 
+The off-axis and freeze-cadence follow-up cases were also
+[red on the reviewed implementation](route-0.3.2/push-review-red.json) and
+[green after the fix](route-0.3.2/push-review-green.json). FPS takes its PUSH
+direction from the actual raw contact face, with true corners excluded; the
+2D path retains the original diagonal keyboard gate. The tests use the real
+rock bounds at 10/20/30/40 degrees and a composed freeze-using DinkC procedure.
+The proposed 2D transition regression was withdrawn after checking the
+baseline's indentation: that control gate already existed and remains intact.
+Unimplemented D-Mod switches and tile/footprint ownership limits are stated in
+DIRECTION.md; this is a claim about the shipped campaign's tested procedures.
+
 ### Actual executable, same earned save
 
 `tools/repro_cave_rock.py --expect-push` normally Continues the earned save
@@ -396,7 +407,7 @@ missing interaction are in [DIRECTION.md](../DIRECTION.md#campaign-push-dispatch
 OS D for 1.2 s initiates the push; release lets the original rock script finish. F9
 records the flag changing 0→1 and rock x 285→349.1666667, within the existing
 scripted mover's below 1 px completion tolerance. A further D for 0.1 s reaches
-x240.7504, beyond the old collision boundary 231. Strength remains 4 and the
+x251.2504, beyond the old collision boundary 231. Strength remains 4 and the
 script releases Dink's controls. This is normal Continue and OS input, with
 no scenario setup, quest mutation or direct procedure invocation.
 
@@ -404,7 +415,7 @@ The [proof and record manifest](route-0.3.2/push-proof.json) bind the executable
 earned save and all three [before](route-0.3.2/push-export-before.json),
 [pushed](route-0.3.2/push-export-pushed.json) and
 [passage](route-0.3.2/push-export-passage.json) F9 records to native images.
-Published records rewrite only the screenshot basename. The earned camera
+Shared records rewrite only the screenshot basename. The earned camera
 faces north, so the D strafe proof observes the interaction in state while the
 rock itself lies outside the image.
 

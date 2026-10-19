@@ -1,13 +1,13 @@
 {
   "build": {
-    "fps_script_sha256": "aca1392c27d7844e27e04c93788a2648673bf6d6d0ee2763323cac1c663a4e44",
+    "fps_script_sha256": "fe46184e31feaabda15a5a2ef50f2e9138e51f0b48ff3ae09a71052c4cbc49f7",
     "godot": "4.6.1-stable (official)",
     "name": "Dink Smallwood 3D",
     "platform": "Linux",
     "renderer_script_sha256": "7a6d3fe70ae6f9be3a75c8ea4916323cc4880af074ee31bff3a5ccf937d3199e",
     "version": "0.3.2"
   },
-  "captured_utc": "2026-10-19T16:17:01",
+  "captured_utc": "2026-10-19T17:13:32",
   "input": {
     "dropped_for_cap": 0,
     "events": [],
@@ -34,7 +34,7 @@
     "entities": {
       "1": {
         "active": 1.0,
-        "anim_time": 0.233333333333333,
+        "anim_time": 0.183333333333333,
         "attack_hit_sound": 0.0,
         "base_attack": 100.0,
         "base_idle": 10.0,
@@ -42,7 +42,7 @@
         "brain": 1.0,
         "dir": 8.0,
         "editor_num": 0.0,
-        "frame": 4,
+        "frame": 1,
         "frame_delay": 0.0,
         "frozen": false,
         "hard": 1.0,

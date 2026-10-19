@@ -1,13 +1,13 @@
 {
   "build": {
-    "fps_script_sha256": "aca1392c27d7844e27e04c93788a2648673bf6d6d0ee2763323cac1c663a4e44",
+    "fps_script_sha256": "fe46184e31feaabda15a5a2ef50f2e9138e51f0b48ff3ae09a71052c4cbc49f7",
     "godot": "4.6.1-stable (official)",
     "name": "Dink Smallwood 3D",
     "platform": "Linux",
     "renderer_script_sha256": "7a6d3fe70ae6f9be3a75c8ea4916323cc4880af074ee31bff3a5ccf937d3199e",
     "version": "0.3.2"
   },
-  "captured_utc": "2026-10-19T16:17:13",
+  "captured_utc": "2026-10-19T17:13:45",
   "input": {
     "dropped_for_cap": 0,
     "events": [
@@ -20,7 +20,7 @@
         "physical": 68,
         "pressed": true,
         "shift": false,
-        "t_ms": -5924.961,
+        "t_ms": -5713.131,
         "type": "key"
       },
       {
@@ -32,7 +32,7 @@
         "physical": 68,
         "pressed": true,
         "shift": false,
-        "t_ms": -5213.579,
+        "t_ms": -5067.074,
         "type": "key"
       },
       {
@@ -44,7 +44,7 @@
         "physical": 68,
         "pressed": true,
         "shift": false,
-        "t_ms": -5213.507,
+        "t_ms": -5067.033,
         "type": "key"
       },
       {
@@ -56,7 +56,7 @@
         "physical": 68,
         "pressed": true,
         "shift": false,
-        "t_ms": -5120.073,
+        "t_ms": -4981.159,
         "type": "key"
       },
       {
@@ -68,7 +68,7 @@
         "physical": 68,
         "pressed": true,
         "shift": false,
-        "t_ms": -5120.011,
+        "t_ms": -4981.119,
         "type": "key"
       },
       {
@@ -80,7 +80,7 @@
         "physical": 68,
         "pressed": true,
         "shift": false,
-        "t_ms": -5027.183,
+        "t_ms": -4905.48,
         "type": "key"
       },
       {
@@ -92,7 +92,7 @@
         "physical": 68,
         "pressed": true,
         "shift": false,
-        "t_ms": -5027.126,
+        "t_ms": -4905.44,
         "type": "key"
       },
       {
@@ -104,7 +104,7 @@
         "physical": 68,
         "pressed": true,
         "shift": false,
-        "t_ms": -4938.852,
+        "t_ms": -4834.412,
         "type": "key"
       },
       {
@@ -116,7 +116,7 @@
         "physical": 68,
         "pressed": true,
         "shift": false,
-        "t_ms": -4938.8,
+        "t_ms": -4834.375,
         "type": "key"
       },
       {
@@ -128,7 +128,7 @@
         "physical": 68,
         "pressed": true,
         "shift": false,
-        "t_ms": -4938.782,
+        "t_ms": -4759.406,
         "type": "key"
       },
       {
@@ -140,7 +140,7 @@
         "physical": 68,
         "pressed": true,
         "shift": false,
-        "t_ms": -4850.948,
+        "t_ms": -4759.371,
         "type": "key"
       },
       {
@@ -152,7 +152,7 @@
         "physical": 68,
         "pressed": true,
         "shift": false,
-        "t_ms": -4850.858,
+        "t_ms": -4677.666,
         "type": "key"
       },
       {
@@ -164,7 +164,7 @@
         "physical": 68,
         "pressed": true,
         "shift": false,
-        "t_ms": -4763.929,
+        "t_ms": -4677.629,
         "type": "key"
       },
       {
@@ -176,7 +176,7 @@
         "physical": 68,
         "pressed": true,
         "shift": false,
-        "t_ms": -4763.849,
+        "t_ms": -4593.68,
         "type": "key"
       },
       {
@@ -188,7 +188,7 @@
         "physical": 68,
         "pressed": true,
         "shift": false,
-        "t_ms": -4665.915,
+        "t_ms": -4593.622,
         "type": "key"
       },
       {
@@ -200,7 +200,7 @@
         "physical": 68,
         "pressed": false,
         "shift": false,
-        "t_ms": -4665.836,
+        "t_ms": -4517.553,
         "type": "key"
       }
     ],
@@ -227,7 +227,7 @@
     "entities": {
       "1": {
         "active": 1.0,
-        "anim_time": 0.116666666666667,
+        "anim_time": 0.2,
         "attack_hit_sound": 0.0,
         "base_attack": 100.0,
         "base_idle": 10.0,
@@ -235,7 +235,7 @@
         "brain": 1.0,
         "dir": 6,
         "editor_num": 0.0,
-        "frame": 2,
+        "frame": 1,
         "frame_delay": 0.0,
         "frozen": false,
         "hard": 1.0,
