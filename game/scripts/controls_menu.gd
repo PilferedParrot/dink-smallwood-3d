@@ -103,6 +103,10 @@ func _event_name(value: Dictionary) -> String:
 	var text: String = bindings.event_label(value)
 	return "Pad " + text if value.type == "pad" and not text.begins_with("Pad ") else text
 
+func _reserved_reason(id: String) -> String:
+	var key_name: String = bindings.label(id,false,"global" if id == "escape" else "fps")
+	return "%s always goes back and pauses the game." % key_name if id == "escape" else "%s is reserved for local bug reports." % key_name
+
 func _build_list() -> void:
 	state = "list"
 	_clear_body()
@@ -145,7 +149,7 @@ func _build_list() -> void:
 			add.pressed.connect(_capture.bind(id,-1))
 			if first.is_empty(): first = id+"_add"
 		else:
-			_label("Always available for going back and pausing." if id == "escape" else "F9 is reserved for local bug reports.", row)
+			_label("Always available for going back and pausing." if id == "escape" else _reserved_reason(id), row)
 	_button("Back", "back", footer).pressed.connect(ui.request_back)
 	_button("Reset all…", "reset_all", footer).pressed.connect(_ask_reset.bind(""))
 	_focus_later(restore_token if buttons.has(restore_token) else first, layout_serial)
@@ -183,7 +187,7 @@ func _capture(id: String, index: int) -> void:
 func _process(_delta: float) -> void:
 	if state != "capture": return
 	var seconds := maxi(0, ceili(float(capture_deadline-Time.get_ticks_msec())/1000.0))
-	countdown.text = "Escape to cancel · %d s remaining" % seconds
+	countdown.text = "%s to cancel · %d s remaining" % [bindings.label("escape",false,"global"),seconds]
 	if seconds == 0: _build_list()
 
 func _input(event: InputEvent) -> void:
@@ -236,7 +240,7 @@ func _propose() -> void:
 	_label(GROUPS[scope] + " · " + bindings.actions[action].name, body, true)
 	_label("%s will replace %s." % [name,old_name] if slot >= 0 else "Add %s as another binding." % name)
 	if clashes.has("escape") or clashes.has("bug_report"):
-		_label("Escape always goes back and pauses the game." if clashes.has("escape") else "F9 is reserved for local bug reports.")
+		_label(_reserved_reason("escape" if clashes.has("escape") else "bug_report"))
 		_button("Try another input", "retry", footer).pressed.connect(_capture.bind(action,slot))
 	elif not clashes.is_empty():
 		var names: Array[String] = []
@@ -304,7 +308,7 @@ func _finish(result: Dictionary) -> void:
 	_label("Binding unchanged", body, true)
 	var error: String = result.get("error","")
 	match error:
-		"reserved": _label("Escape is kept for going back. F9 is kept for local bug reports.")
+		"reserved": _label(_reserved_reason("escape") + " " + _reserved_reason("bug_report"))
 		"write_failed": _label("Could not save settings. Your previous bindings are still in use.")
 		"conflict": _label("These bindings cannot be swapped safely. Try another input, or reset all.")
 		"menu_device_required":
