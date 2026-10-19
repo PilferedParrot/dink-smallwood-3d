@@ -3018,3 +3018,40 @@ The separate 328 source/UV-deduplicated rank-1 hut bands remain excluded from
 this repair; they are not passing controls. Castle wall, tower, block and cap
 emitters were not measured here. See [building-continuations.md](building-continuations.md)
 for the source-derived method, regeneration and rendered mask contract.
+
+
+## Existing script instances on repeated events — October 19, INTEGRATE
+
+The speech correction lets a player trigger another event while its script
+waits. This exposed a VM integration defect: every invocation allocated a new
+coroutine even when the sprite already owned that script. The second cause was
+an unverified invocation-is-independent heuristic, concealed by the old globally
+modal speech path. Repeated hit/touch probes executed both old and new tails;
+held weak-rock and S3-ROCK stop-speech briefly had two live continuations.
+
+FreeDink109.6 `brain_keyboard.cpp:78` locates PUSH in the existing script;
+`dinkc.cpp:402–470` replaces its instruction position while retaining locals.
+A new wait or stop-speech replaces returning callbacks (`dinkc_bindings.cpp:
+766–818,906–912`; `dinkc.cpp:1085–1111`). Repeated entry restarts that instance,
+without preserving the old event tail. External and spawn are different: they
+load new instances (`dinkc.cpp:2540–2571`; `dinkc_bindings.cpp:1237–1249`).
+See [Script instances and event re-entry](SCRIPT_INSTANCES.md) for the full
+source derivation, host mapping and its limits.
+
+Normal VM entry now replaces the same canonical script's prior task on its
+original native instance, keeping its locals. Current script attachment is
+separate from that identity. External calls explicitly get a fresh task and
+private locals; spawn's distinct native handle retains persistent locals across
+named callbacks. Different scripts/owners remain independent. Cancellation is
+checked again before committing an awaited result, preventing stale writes.
+
+Five-second physical-input holds cover all four source PUSH scripts plus the
+weak-rock branch. Each dispatch and dialogue line is retained; one authored
+line on every repeated PUSH is expected, while stacked continuations are not.
+The mother-NPC event probes require two talk/hit/touch entries but one tail.
+Negative controls cover locals, missing procedures, unrelated instances,
+external/spawn attachment, spawned callbacks and cancelled awaited assignments.
+These are labelled scenarios and event probes, not earned campaign progression
+or rendering certification. The red's short three-tick first-talk drain was
+insufficient; the corrected harness drains boundedly before its exact checks.
+Seven other red assertions directly establish the continuation defect.

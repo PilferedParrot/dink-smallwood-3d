@@ -91,11 +91,19 @@ func clear_sprite_locals(sprite_id: int) -> void:
 
 ## Runs one procedure asynchronously. Each sprite gets persistent local storage for
 ## a script, so event procedures such as talk/hit can share its declared variables.
-func run(script: String, procedure: String, sprite_id: int = 0) -> Variant:
+## new_instance is reserved for external() calls with independent local storage.
+func run(script: String, procedure: String, sprite_id: int = 0, new_instance: bool = false) -> Variant:
 	var canonical: String = _script_name(script)
+	# FreeDink109.6 dinkc.cpp:402-470 relocates the existing script cursor.
+	# External/spawn load a separate instance, even when the owner is shared.
+	if not new_instance and not _procedure_code(canonical, procedure.to_lower()).is_empty():
+		for old_id in _live_tasks.keys():
+			var old: Dictionary = _live_tasks[old_id]
+			if not bool(old.get("new_instance", false)) and str(old.get("script", "")) == canonical and int(old.get("instance_sprite", old.get("sprite_id", 0))) == sprite_id:
+				_live_tasks.erase(old_id)
 	var task_id: int = _next_task_id
 	_next_task_id += 1
-	_live_tasks[task_id] = {"sprite_id": sprite_id}
+	_live_tasks[task_id] = {"sprite_id": sprite_id, "instance_sprite": sprite_id, "script": canonical, "new_instance": new_instance, "locals": {}}
 	var output: Variant = await _execute(canonical, procedure.to_lower(), sprite_id, task_id, _generation, [])
 	_live_tasks.erase(task_id)
 	return output
@@ -142,7 +150,7 @@ func _execute(script: String, procedure: String, sprite_id: int, task_id: int, g
 	if code.is_empty():
 		push_warning("DinkVM: missing procedure %s.%s" % [script, procedure])
 		return null
-	var locals := _locals_for(script, sprite_id)
+	var locals: Dictionary = _live_tasks[task_id].locals if bool(_live_tasks[task_id].get("new_instance", false)) else _locals_for(script, sprite_id)
 	var labels := _labels(code)
 	var ip := 0
 	var choice_options: Array = []
@@ -163,6 +171,7 @@ func _execute(script: String, procedure: String, sprite_id: int, task_id: int, g
 			"set", "assign":
 				var set_target: Variant = instruction.get("target", instruction.get("name", ""))
 				var set_value: Variant = await _eval(instruction.get("expr", instruction.get("value", 0)), locals, script, current_sprite, task_id, generation)
+				if generation != _generation or not _live_tasks.has(task_id): return null
 				if instruction.has("declare"):
 					# `int &name` is a DinkC script-local declaration; '&' is part of
 					# DinkC's variable spelling, not a global-state marker by itself.
@@ -172,6 +181,7 @@ func _execute(script: String, procedure: String, sprite_id: int, task_id: int, g
 			"inc", "dec":
 				var target: Variant = instruction.get("target", instruction.get("name", ""))
 				var amount: int = _number(await _eval(instruction.get("expr", instruction.get("value", 1)), locals, script, current_sprite, task_id, generation))
+				if generation != _generation or not _live_tasks.has(task_id): return null
 				if op == "dec": amount = -amount
 				_set_ref(target, _number(_get_ref(target, locals, current_sprite)) + amount, locals, current_sprite)
 			"if_goto":
@@ -194,11 +204,13 @@ func _execute(script: String, procedure: String, sprite_id: int, task_id: int, g
 					choice_options.append({"text": await _eval(instruction.get("text", instruction.get("value", "")), locals, script, current_sprite, task_id, generation), "value": await _eval(instruction.get("result", instruction.get("id", choice_options.size() + 1)), locals, script, current_sprite, task_id, generation)})
 			"choice_end":
 				var chosen: Variant = await _host_call("choice", [choice_title, choice_options], script, procedure, current_sprite, task_id, generation, locals)
+				if generation != _generation or not _live_tasks.has(task_id): return null
 				globals["result"] = chosen
 				choice_options.clear()
 			"proc", "procedure", "call_proc":
 				var proc_name := str(instruction.get("procedure", instruction.get("name", "main"))).to_lower()
 				var proc_result: Variant = await _execute(script, proc_name, sprite_id, task_id, generation, stack + [script + "." + procedure])
+				if generation != _generation or not _live_tasks.has(task_id): return null
 				if instruction.has("target"): _set_ref(instruction["target"], proc_result, locals, current_sprite)
 			"call", "command":
 				var command := str(instruction.get("name", instruction.get("command", "")))
@@ -209,11 +221,13 @@ func _execute(script: String, procedure: String, sprite_id: int, task_id: int, g
 				# Calls to another procedure in this DinkC source do not go to the host.
 				if _procedure_code(script, command.to_lower()).size() > 0 and not instruction.get("host", false):
 					var nested: Variant = await _execute(script, command.to_lower(), sprite_id, task_id, generation, stack + [script + "." + procedure])
+					if generation != _generation or not _live_tasks.has(task_id): return null
 					if instruction.has("target"): _set_ref(instruction["target"], nested, locals, current_sprite)
 				else:
 					if command.to_lower() == "script_attach" and not args.is_empty():
 						_set_task_sprite(task_id, _number(args[0]))
 					var result: Variant = await _host_call(command, args, script, procedure, current_sprite, task_id, generation, locals)
+					if generation != _generation or not _live_tasks.has(task_id): return null
 					if instruction.has("target"): _set_ref(instruction["target"], result, locals, current_sprite)
 					# In DinkC this ends the current script after the host has completed its
 					# transition bookkeeping.  Continuing here would run stale map logic.

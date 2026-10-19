@@ -15,7 +15,7 @@ class FakeVM extends RefCounted:
 	var procedures: Dictionary = {}
 	func _procedure_code(script: String, procedure: String) -> Array:
 		return procedures.get(script.to_lower()+":"+procedure.to_lower(),[])
-	func run(script: String, procedure: String, sprite_id: int = 0) -> Variant:
+	func run(script: String, procedure: String, sprite_id: int = 0, _new_instance: bool = false) -> Variant:
 		calls.append([script.to_lower(),procedure.to_lower(),sprite_id])
 		if script.to_lower() == "lraise" and procedure.to_lower() == "raise":
 			globals["level"] = int(globals.get("level",1))+1

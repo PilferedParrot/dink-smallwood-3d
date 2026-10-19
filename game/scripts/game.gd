@@ -1330,7 +1330,7 @@ func dink_call(command: String, args: Array, context: Dictionary) -> Variant:
 		"move", "move_stop":
 			if cmd == "move_stop": await _script_move(int(a),int(b),float(c),float(d))
 			else: _script_move(int(a),int(b),float(c),float(d))
-		"external": return await vm.run(str(a),str(b),sid)
+		"external": return await vm.run(str(a),str(b),sid,true)
 		"spawn", "load":
 			var id := next_entity
 			next_entity += 1
