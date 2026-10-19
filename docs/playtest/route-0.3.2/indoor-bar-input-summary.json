@@ -1,0 +1,57 @@
+{
+  "source_report_sha256": "dbe339c22111f6c85cc6fe10b821c5651d581b189c88a700e74ed9178b1ddad3",
+  "evidence": {
+    "status": "passed",
+    "setup": "Five separately locked30-trial batches; collectively25columns\u00d76approaches. Startup/progression skipped, actual key events.",
+    "source_sha256": {
+      "game/scripts/fps_game.gd": "6a45c12610a43f30701a6f27cafa3ed31d4c06d3f22829b065d70629b50e21e2",
+      "tests/fps_indoor_portal_input.gd": "fa2ac039b672aa1b566c46b06bea23fb939ccc55089f99b11b923690e8c5b510"
+    },
+    "runs": [
+      {
+        "start": 311,
+        "stop": 316,
+        "exit": 0,
+        "ok": true,
+        "seconds_including_lock_wait": 79.149,
+        "report_sha256": "1a0f1bf9449d95e4e8c6e7b2784d8283cc7dda348fc48d6d798b41694dc9525b"
+      },
+      {
+        "start": 316,
+        "stop": 321,
+        "exit": 0,
+        "ok": true,
+        "seconds_including_lock_wait": 53.973,
+        "report_sha256": "3f4a238cd70085532156030c2a36a06a0e710731d8763ab84d7188ec6d5773ba"
+      },
+      {
+        "start": 321,
+        "stop": 326,
+        "exit": 0,
+        "ok": true,
+        "seconds_including_lock_wait": 65.918,
+        "report_sha256": "cab1aca1e5001c365a9781c75c9b62993bcdd3de63bb190000bf8e7f162a02cf"
+      },
+      {
+        "start": 326,
+        "stop": 331,
+        "exit": 0,
+        "ok": true,
+        "seconds_including_lock_wait": 58.762,
+        "report_sha256": "06493d47d6b4138353b2f49e394616813b8cefd5b2ea7bdb57b446494d56cebd"
+      },
+      {
+        "start": 331,
+        "stop": 336,
+        "exit": 0,
+        "ok": true,
+        "seconds_including_lock_wait": 153.362,
+        "report_sha256": "c6a2d834b12914a1f53ea72bae57646d60090b24a75971fc6b571f1343d9ab1a"
+      }
+    ],
+    "total_trials": 150,
+    "all_arrive498": true,
+    "never66": true,
+    "finished_utc": "2026-10-19T20:10:02.483063+00:00"
+  }
+}

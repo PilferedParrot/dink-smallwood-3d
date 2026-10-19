@@ -1,0 +1,4624 @@
+{
+  "candidate": "8a663b0bbac4a1e4e45df2f451a2ff60bc6da06d",
+  "game_tree": "3cc399d55ad6a5bbe1b993b378b6453ceffad255",
+  "status": "complete",
+  "interruptions": [
+    {
+      "status": "incomplete; missing timing or XML node identities",
+      "finished_utc": "2026-10-19T21:36:45.819999+00:00",
+      "reason": "Stopped queued hut-render node before lock acquisition: positional2400s budget was not recognized by old scanner."
+    }
+  ],
+  "registered_budget_manifest_sha256": "f3760171a28d0820960969b53fa026ad3e8f0917935345867f3060b2e010f488",
+  "source_report_sha256": "eb5aeba2f35d222db53f6fd733c81baf0f3385c34b54ea238717f99c2145985d",
+  "collected": 274,
+  "covered": 274,
+  "counts": {
+    "passed": 273,
+    "skipped": 1
+  },
+  "unrun": [],
+  "active_seconds": 2323.806999999999,
+  "lock_wait_seconds": 4133.708000000003,
+  "method": "Frozen full cohort. Audited79Python-only route nodes behind fail-closed Godot guard; every other node has one independently stopped systemd unit and shared-lock turn, isolated profile, silent software rendering. Registered timeouts start after lock acquisition.",
+  "runs": [
+    {
+      "nodeid": "__pure_batch__",
+      "covered_nodes": [
+        "tests/test_playtest_campaign.py::test_feed_waypoint_tolerance_fits_the_actual_item_pig_acceptance_box",
+        "tests/test_playtest_campaign.py::test_native_grid_step_api_rejects_non_integral_or_unbounded_sampling",
+        "tests/test_playtest_campaign.py::test_native_pixel_barrier_and_waypoint_tolerance_both_constrain_the_plan",
+        "tests/test_playtest_campaign.py::test_disconnected_edge_candidate_is_rejected_before_expensive_search",
+        "tests/test_playtest_campaign.py::test_aim_faces_target_before_walking_despite_viewport_scaling[0.0-0.5]",
+        "tests/test_playtest_campaign.py::test_aim_faces_target_before_walking_despite_viewport_scaling[0.0-1.0]",
+        "tests/test_playtest_campaign.py::test_aim_faces_target_before_walking_despite_viewport_scaling[0.0-1.4814814814814814]",
+        "tests/test_playtest_campaign.py::test_aim_faces_target_before_walking_despite_viewport_scaling[0.0-3.0]",
+        "tests/test_playtest_campaign.py::test_aim_faces_target_before_walking_despite_viewport_scaling[3.1315926535897933-0.5]",
+        "tests/test_playtest_campaign.py::test_aim_faces_target_before_walking_despite_viewport_scaling[3.1315926535897933-1.0]",
+        "tests/test_playtest_campaign.py::test_aim_faces_target_before_walking_despite_viewport_scaling[3.1315926535897933-1.4814814814814814]",
+        "tests/test_playtest_campaign.py::test_aim_faces_target_before_walking_despite_viewport_scaling[3.1315926535897933-3.0]",
+        "tests/test_playtest_campaign.py::test_aim_faces_target_before_walking_despite_viewport_scaling[-3.1315926535897933-0.5]",
+        "tests/test_playtest_campaign.py::test_aim_faces_target_before_walking_despite_viewport_scaling[-3.1315926535897933-1.0]",
+        "tests/test_playtest_campaign.py::test_aim_faces_target_before_walking_despite_viewport_scaling[-3.1315926535897933-1.4814814814814814]",
+        "tests/test_playtest_campaign.py::test_aim_faces_target_before_walking_despite_viewport_scaling[-3.1315926535897933-3.0]",
+        "tests/test_playtest_campaign.py::test_aim_faces_target_before_walking_despite_viewport_scaling[14.066370614359172-0.5]",
+        "tests/test_playtest_campaign.py::test_aim_faces_target_before_walking_despite_viewport_scaling[14.066370614359172-1.0]",
+        "tests/test_playtest_campaign.py::test_aim_faces_target_before_walking_despite_viewport_scaling[14.066370614359172-1.4814814814814814]",
+        "tests/test_playtest_campaign.py::test_aim_faces_target_before_walking_despite_viewport_scaling[14.066370614359172-3.0]",
+        "tests/test_playtest_campaign.py::test_door_approach_stops_on_an_unexpected_map",
+        "tests/test_playtest_campaign.py::test_aim_allows_one_capture_tick_and_rejects_unresponsive_input[True]",
+        "tests/test_playtest_campaign.py::test_aim_allows_one_capture_tick_and_rejects_unresponsive_input[False]",
+        "tests/test_playtest_campaign.py::test_nut_collected_during_fall_does_not_require_a_settled_sprite[True]",
+        "tests/test_playtest_campaign.py::test_nut_collected_during_fall_does_not_require_a_settled_sprite[False]",
+        "tests/test_playtest_campaign.py::test_cutscene_acceptance_waits_past_early_quest_flag_and_control_gap",
+        "tests/test_playtest_campaign.py::test_cutscene_acceptance_rejects_quest_flag_without_conversation",
+        "tests/test_playtest_campaign.py::test_cutscene_acceptance_tracks_lines_across_the_five_line_telemetry_window",
+        "tests/test_playtest_campaign.py::test_alktree_route_rejects_early_flags_without_earned_ethel_dialogue",
+        "tests/test_playtest_campaign.py::test_alktree_route_requires_observed_request_line_even_with_flags",
+        "tests/test_playtest_campaign.py::test_alktree_aftermath_rejects_story_five_without_exterior_fire_lines",
+        "tests/test_playtest_campaign.py::test_alktree_aftermath_rejects_story_five_without_neighbour_dialogue",
+        "tests/test_playtest_campaign.py::test_letter_route_rejects_story_five_flag_without_guard_lines",
+        "tests/test_playtest_campaign.py::test_letter_completion_requires_released_controls_and_finished_vm_tasks",
+        "tests/test_playtest_campaign.py::test_letter_post_fade_task_is_not_assumed_finished_by_released_controls",
+        "tests/test_playtest_campaign.py::test_chest_selection_uses_live_description_case_and_real_enter[]",
+        "tests/test_playtest_campaign.py::test_chest_selection_uses_live_description_case_and_real_enter[Selected: ]",
+        "tests/test_playtest_campaign.py::test_chest_rejects_stale_description_when_back_has_focus[]",
+        "tests/test_playtest_campaign.py::test_chest_rejects_stale_description_when_back_has_focus[Selected: ]",
+        "tests/test_playtest_campaign.py::test_grid_planner_takes_open_corridor_around_solid_wall",
+        "tests/test_playtest_campaign.py::test_grid_planner_does_not_treat_disconnected_direction_as_game_failure",
+        "tests/test_playtest_campaign.py::test_rounded_blocked_start_keeps_nearby_open_sample_as_a_real_waypoint",
+        "tests/test_playtest_campaign.py::test_start_projection_stays_local_and_does_not_rewrite_a_blocked_goal",
+        "tests/test_playtest_campaign.py::test_partial_terris_report_can_resume_only_its_exact_earned_letter_save[320-320.000001]",
+        "tests/test_playtest_campaign.py::test_partial_terris_report_can_resume_only_its_exact_earned_letter_save[362.416656494141-362.416666666667]",
+        "tests/test_playtest_campaign.py::test_terris_arrival_rejects_flags_without_its_actual_conversation",
+        "tests/test_playtest_campaign.py::test_terris_arrival_waits_for_control_and_task_completion",
+        "tests/test_playtest_campaign.py::test_terris_arrival_requires_source_bridge_story_progression",
+        "tests/test_playtest_campaign.py::test_terris_route_rejects_unearned_letter",
+        "tests/test_playtest_campaign.py::test_letter_continuation_rejects_scenario_setup_and_unrelated_save",
+        "tests/test_playtest_campaign.py::test_grid_planner_cannot_use_transition_space_to_bypass_a_wall",
+        "tests/test_playtest_campaign.py::test_planning_excludes_the_exact_continuous_crossing_boundary[east]",
+        "tests/test_playtest_campaign.py::test_planning_excludes_the_exact_continuous_crossing_boundary[south]",
+        "tests/test_playtest_campaign.py::test_grid_planner_prefers_clearance_over_hugging_a_sampled_boundary",
+        "tests/test_playtest_campaign.py::test_planned_navigation_rejects_unexpected_door_transition",
+        "tests/test_playtest_campaign.py::test_save_acceptance_detects_lost_magic_and_changed_combat_stats[fireball]",
+        "tests/test_playtest_campaign.py::test_save_acceptance_detects_lost_magic_and_changed_combat_stats[life]",
+        "tests/test_playtest_campaign.py::test_save_acceptance_detects_lost_magic_and_changed_combat_stats[magic]",
+        "tests/test_playtest_campaign.py::test_save_acceptance_detects_lost_magic_and_changed_combat_stats[defense]",
+        "tests/test_playtest_campaign.py::test_save_acceptance_detects_lost_magic_and_changed_combat_stats[exp]",
+        "tests/test_playtest_campaign.py::test_save_acceptance_detects_lost_magic_and_changed_combat_stats[level]",
+        "tests/test_playtest_campaign.py::test_map_wide_corridor_is_split_to_fit_normal_walking_budget",
+        "tests/test_playtest_campaign.py::test_continuation_rejects_changed_save_when_report_records_its_hash",
+        "tests/test_playtest_campaign.py::test_landing_probe_requires_all_directions_blocked_and_released_controls[False-False]",
+        "tests/test_playtest_campaign.py::test_landing_probe_requires_all_directions_blocked_and_released_controls[True-False]",
+        "tests/test_playtest_campaign.py::test_landing_probe_requires_all_directions_blocked_and_released_controls[False-True]",
+        "tests/test_playtest_campaign.py::test_cave_route_accepts_entrance_reached_during_held_push[277]",
+        "tests/test_playtest_campaign.py::test_cave_route_accepts_entrance_reached_during_held_push[131]",
+        "tests/test_playtest_campaign.py::test_cave_route_rejects_unexpected_transition_during_push",
+        "tests/test_playtest_campaign.py::test_walk_uses_normal_enter_workaround_for_nonfrozen_modal_text[False]",
+        "tests/test_playtest_campaign.py::test_walk_uses_normal_enter_workaround_for_nonfrozen_modal_text[True]",
+        "tests/test_playtest_campaign.py::test_earned_save_handles_only_recognized_level_choice_through_input[before]",
+        "tests/test_playtest_campaign.py::test_earned_save_handles_only_recognized_level_choice_through_input[after-pause]",
+        "tests/test_playtest_campaign.py::test_earned_save_handles_only_recognized_level_choice_through_input[during-menu]",
+        "tests/test_playtest_campaign.py::test_earned_save_rejects_unknown_menu_replacement_without_selecting_it",
+        "tests/test_playtest_push_route.py::test_continuation_requires_the_actual_earned_leg[bonca-277-2-0-wizard-rock-before-push-earned-save]",
+        "tests/test_playtest_push_route.py::test_continuation_requires_the_actual_earned_leg[reward-100-3-1-bonca-complete-earned-save]",
+        "tests/test_playtest_push_route.py::test_continuation_requires_the_actual_earned_leg[terris-6-4-1-wizard-reward-earned-save]",
+        "tests/test_playtest_push_route.py::test_terris_leg_requires_the_earned_spell"
+      ],
+      "launcher_exit": 0,
+      "pure_guard_violation": false,
+      "active_seconds": 0.533,
+      "effective_outer_cap_seconds": 180,
+      "controller_requested_outer_cap_seconds": null,
+      "aggregate_child_budget_seconds": null,
+      "aborted_before_lock": false,
+      "attempt_classification": null,
+      "outcomes": [
+        {
+          "name": "test_feed_waypoint_tolerance_fits_the_actual_item_pig_acceptance_box",
+          "outcome": "passed",
+          "seconds": 0.001
+        },
+        {
+          "name": "test_native_grid_step_api_rejects_non_integral_or_unbounded_sampling",
+          "outcome": "passed",
+          "seconds": 0.0
+        },
+        {
+          "name": "test_native_pixel_barrier_and_waypoint_tolerance_both_constrain_the_plan",
+          "outcome": "passed",
+          "seconds": 0.002
+        },
+        {
+          "name": "test_disconnected_edge_candidate_is_rejected_before_expensive_search",
+          "outcome": "passed",
+          "seconds": 0.001
+        },
+        {
+          "name": "test_aim_faces_target_before_walking_despite_viewport_scaling[0.0-0.5]",
+          "outcome": "passed",
+          "seconds": 0.0
+        },
+        {
+          "name": "test_aim_faces_target_before_walking_despite_viewport_scaling[0.0-1.0]",
+          "outcome": "passed",
+          "seconds": 0.0
+        },
+        {
+          "name": "test_aim_faces_target_before_walking_despite_viewport_scaling[0.0-1.4814814814814814]",
+          "outcome": "passed",
+          "seconds": 0.0
+        },
+        {
+          "name": "test_aim_faces_target_before_walking_despite_viewport_scaling[0.0-3.0]",
+          "outcome": "passed",
+          "seconds": 0.0
+        },
+        {
+          "name": "test_aim_faces_target_before_walking_despite_viewport_scaling[3.1315926535897933-0.5]",
+          "outcome": "passed",
+          "seconds": 0.0
+        },
+        {
+          "name": "test_aim_faces_target_before_walking_despite_viewport_scaling[3.1315926535897933-1.0]",
+          "outcome": "passed",
+          "seconds": 0.0
+        },
+        {
+          "name": "test_aim_faces_target_before_walking_despite_viewport_scaling[3.1315926535897933-1.4814814814814814]",
+          "outcome": "passed",
+          "seconds": 0.001
+        },
+        {
+          "name": "test_aim_faces_target_before_walking_despite_viewport_scaling[3.1315926535897933-3.0]",
+          "outcome": "passed",
+          "seconds": 0.0
+        },
+        {
+          "name": "test_aim_faces_target_before_walking_despite_viewport_scaling[-3.1315926535897933-0.5]",
+          "outcome": "passed",
+          "seconds": 0.0
+        },
+        {
+          "name": "test_aim_faces_target_before_walking_despite_viewport_scaling[-3.1315926535897933-1.0]",
+          "outcome": "passed",
+          "seconds": 0.0
+        },
+        {
+          "name": "test_aim_faces_target_before_walking_despite_viewport_scaling[-3.1315926535897933-1.4814814814814814]",
+          "outcome": "passed",
+          "seconds": 0.0
+        },
+        {
+          "name": "test_aim_faces_target_before_walking_despite_viewport_scaling[-3.1315926535897933-3.0]",
+          "outcome": "passed",
+          "seconds": 0.0
+        },
+        {
+          "name": "test_aim_faces_target_before_walking_despite_viewport_scaling[14.066370614359172-0.5]",
+          "outcome": "passed",
+          "seconds": 0.0
+        },
+        {
+          "name": "test_aim_faces_target_before_walking_despite_viewport_scaling[14.066370614359172-1.0]",
+          "outcome": "passed",
+          "seconds": 0.0
+        },
+        {
+          "name": "test_aim_faces_target_before_walking_despite_viewport_scaling[14.066370614359172-1.4814814814814814]",
+          "outcome": "passed",
+          "seconds": 0.0
+        },
+        {
+          "name": "test_aim_faces_target_before_walking_despite_viewport_scaling[14.066370614359172-3.0]",
+          "outcome": "passed",
+          "seconds": 0.0
+        },
+        {
+          "name": "test_door_approach_stops_on_an_unexpected_map",
+          "outcome": "passed",
+          "seconds": 0.0
+        },
+        {
+          "name": "test_aim_allows_one_capture_tick_and_rejects_unresponsive_input[True]",
+          "outcome": "passed",
+          "seconds": 0.0
+        },
+        {
+          "name": "test_aim_allows_one_capture_tick_and_rejects_unresponsive_input[False]",
+          "outcome": "passed",
+          "seconds": 0.0
+        },
+        {
+          "name": "test_nut_collected_during_fall_does_not_require_a_settled_sprite[True]",
+          "outcome": "passed",
+          "seconds": 0.0
+        },
+        {
+          "name": "test_nut_collected_during_fall_does_not_require_a_settled_sprite[False]",
+          "outcome": "passed",
+          "seconds": 0.0
+        },
+        {
+          "name": "test_cutscene_acceptance_waits_past_early_quest_flag_and_control_gap",
+          "outcome": "passed",
+          "seconds": 0.0
+        },
+        {
+          "name": "test_cutscene_acceptance_rejects_quest_flag_without_conversation",
+          "outcome": "passed",
+          "seconds": 0.0
+        },
+        {
+          "name": "test_cutscene_acceptance_tracks_lines_across_the_five_line_telemetry_window",
+          "outcome": "passed",
+          "seconds": 0.0
+        },
+        {
+          "name": "test_alktree_route_rejects_early_flags_without_earned_ethel_dialogue",
+          "outcome": "passed",
+          "seconds": 0.0
+        },
+        {
+          "name": "test_alktree_route_requires_observed_request_line_even_with_flags",
+          "outcome": "passed",
+          "seconds": 0.0
+        },
+        {
+          "name": "test_alktree_aftermath_rejects_story_five_without_exterior_fire_lines",
+          "outcome": "passed",
+          "seconds": 0.0
+        },
+        {
+          "name": "test_alktree_aftermath_rejects_story_five_without_neighbour_dialogue",
+          "outcome": "passed",
+          "seconds": 0.0
+        },
+        {
+          "name": "test_letter_route_rejects_story_five_flag_without_guard_lines",
+          "outcome": "passed",
+          "seconds": 0.0
+        },
+        {
+          "name": "test_letter_completion_requires_released_controls_and_finished_vm_tasks",
+          "outcome": "passed",
+          "seconds": 0.0
+        },
+        {
+          "name": "test_letter_post_fade_task_is_not_assumed_finished_by_released_controls",
+          "outcome": "passed",
+          "seconds": 0.0
+        },
+        {
+          "name": "test_chest_selection_uses_live_description_case_and_real_enter[]",
+          "outcome": "passed",
+          "seconds": 0.0
+        },
+        {
+          "name": "test_chest_selection_uses_live_description_case_and_real_enter[Selected: ]",
+          "outcome": "passed",
+          "seconds": 0.0
+        },
+        {
+          "name": "test_chest_rejects_stale_description_when_back_has_focus[]",
+          "outcome": "passed",
+          "seconds": 0.0
+        },
+        {
+          "name": "test_chest_rejects_stale_description_when_back_has_focus[Selected: ]",
+          "outcome": "passed",
+          "seconds": 0.0
+        },
+        {
+          "name": "test_grid_planner_takes_open_corridor_around_solid_wall",
+          "outcome": "passed",
+          "seconds": 0.0
+        },
+        {
+          "name": "test_grid_planner_does_not_treat_disconnected_direction_as_game_failure",
+          "outcome": "passed",
+          "seconds": 0.0
+        },
+        {
+          "name": "test_rounded_blocked_start_keeps_nearby_open_sample_as_a_real_waypoint",
+          "outcome": "passed",
+          "seconds": 0.0
+        },
+        {
+          "name": "test_start_projection_stays_local_and_does_not_rewrite_a_blocked_goal",
+          "outcome": "passed",
+          "seconds": 0.0
+        },
+        {
+          "name": "test_partial_terris_report_can_resume_only_its_exact_earned_letter_save[320-320.000001]",
+          "outcome": "passed",
+          "seconds": 0.002
+        },
+        {
+          "name": "test_partial_terris_report_can_resume_only_its_exact_earned_letter_save[362.416656494141-362.416666666667]",
+          "outcome": "passed",
+          "seconds": 0.002
+        },
+        {
+          "name": "test_terris_arrival_rejects_flags_without_its_actual_conversation",
+          "outcome": "passed",
+          "seconds": 0.001
+        },
+        {
+          "name": "test_terris_arrival_waits_for_control_and_task_completion",
+          "outcome": "passed",
+          "seconds": 0.0
+        },
+        {
+          "name": "test_terris_arrival_requires_source_bridge_story_progression",
+          "outcome": "passed",
+          "seconds": 0.0
+        },
+        {
+          "name": "test_terris_route_rejects_unearned_letter",
+          "outcome": "passed",
+          "seconds": 0.0
+        },
+        {
+          "name": "test_letter_continuation_rejects_scenario_setup_and_unrelated_save",
+          "outcome": "passed",
+          "seconds": 0.001
+        },
+        {
+          "name": "test_grid_planner_cannot_use_transition_space_to_bypass_a_wall",
+          "outcome": "passed",
+          "seconds": 0.001
+        },
+        {
+          "name": "test_planning_excludes_the_exact_continuous_crossing_boundary[east]",
+          "outcome": "passed",
+          "seconds": 0.03
+        },
+        {
+          "name": "test_planning_excludes_the_exact_continuous_crossing_boundary[south]",
+          "outcome": "passed",
+          "seconds": 0.01
+        },
+        {
+          "name": "test_grid_planner_prefers_clearance_over_hugging_a_sampled_boundary",
+          "outcome": "passed",
+          "seconds": 0.001
+        },
+        {
+          "name": "test_planned_navigation_rejects_unexpected_door_transition",
+          "outcome": "passed",
+          "seconds": 0.0
+        },
+        {
+          "name": "test_save_acceptance_detects_lost_magic_and_changed_combat_stats[fireball]",
+          "outcome": "passed",
+          "seconds": 0.0
+        },
+        {
+          "name": "test_save_acceptance_detects_lost_magic_and_changed_combat_stats[life]",
+          "outcome": "passed",
+          "seconds": 0.0
+        },
+        {
+          "name": "test_save_acceptance_detects_lost_magic_and_changed_combat_stats[magic]",
+          "outcome": "passed",
+          "seconds": 0.0
+        },
+        {
+          "name": "test_save_acceptance_detects_lost_magic_and_changed_combat_stats[defense]",
+          "outcome": "passed",
+          "seconds": 0.0
+        },
+        {
+          "name": "test_save_acceptance_detects_lost_magic_and_changed_combat_stats[exp]",
+          "outcome": "passed",
+          "seconds": 0.0
+        },
+        {
+          "name": "test_save_acceptance_detects_lost_magic_and_changed_combat_stats[level]",
+          "outcome": "passed",
+          "seconds": 0.0
+        },
+        {
+          "name": "test_map_wide_corridor_is_split_to_fit_normal_walking_budget",
+          "outcome": "passed",
+          "seconds": 0.0
+        },
+        {
+          "name": "test_continuation_rejects_changed_save_when_report_records_its_hash",
+          "outcome": "passed",
+          "seconds": 0.001
+        },
+        {
+          "name": "test_landing_probe_requires_all_directions_blocked_and_released_controls[False-False]",
+          "outcome": "passed",
+          "seconds": 0.0
+        },
+        {
+          "name": "test_landing_probe_requires_all_directions_blocked_and_released_controls[True-False]",
+          "outcome": "passed",
+          "seconds": 0.0
+        },
+        {
+          "name": "test_landing_probe_requires_all_directions_blocked_and_released_controls[False-True]",
+          "outcome": "passed",
+          "seconds": 0.0
+        },
+        {
+          "name": "test_cave_route_accepts_entrance_reached_during_held_push[277]",
+          "outcome": "passed",
+          "seconds": 0.0
+        },
+        {
+          "name": "test_cave_route_accepts_entrance_reached_during_held_push[131]",
+          "outcome": "passed",
+          "seconds": 0.0
+        },
+        {
+          "name": "test_cave_route_rejects_unexpected_transition_during_push",
+          "outcome": "passed",
+          "seconds": 0.0
+        },
+        {
+          "name": "test_walk_uses_normal_enter_workaround_for_nonfrozen_modal_text[False]",
+          "outcome": "passed",
+          "seconds": 0.0
+        },
+        {
+          "name": "test_walk_uses_normal_enter_workaround_for_nonfrozen_modal_text[True]",
+          "outcome": "passed",
+          "seconds": 0.0
+        },
+        {
+          "name": "test_earned_save_handles_only_recognized_level_choice_through_input[before]",
+          "outcome": "passed",
+          "seconds": 0.0
+        },
+        {
+          "name": "test_earned_save_handles_only_recognized_level_choice_through_input[after-pause]",
+          "outcome": "passed",
+          "seconds": 0.0
+        },
+        {
+          "name": "test_earned_save_handles_only_recognized_level_choice_through_input[during-menu]",
+          "outcome": "passed",
+          "seconds": 0.0
+        },
+        {
+          "name": "test_earned_save_rejects_unknown_menu_replacement_without_selecting_it",
+          "outcome": "passed",
+          "seconds": 0.0
+        },
+        {
+          "name": "test_continuation_requires_the_actual_earned_leg[bonca-277-2-0-wizard-rock-before-push-earned-save]",
+          "outcome": "passed",
+          "seconds": 0.0
+        },
+        {
+          "name": "test_continuation_requires_the_actual_earned_leg[reward-100-3-1-bonca-complete-earned-save]",
+          "outcome": "passed",
+          "seconds": 0.0
+        },
+        {
+          "name": "test_continuation_requires_the_actual_earned_leg[terris-6-4-1-wizard-reward-earned-save]",
+          "outcome": "passed",
+          "seconds": 0.0
+        },
+        {
+          "name": "test_terris_leg_requires_the_earned_spell",
+          "outcome": "passed",
+          "seconds": 0.0
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_adventure.py::test_opening_adventure_and_all_imported_screens",
+      "covered_nodes": [
+        "tests/test_adventure.py::test_opening_adventure_and_all_imported_screens"
+      ],
+      "launcher_exit": 0,
+      "pure_guard_violation": false,
+      "active_seconds": 8.129,
+      "effective_outer_cap_seconds": 600,
+      "controller_requested_outer_cap_seconds": null,
+      "aggregate_child_budget_seconds": null,
+      "aborted_before_lock": false,
+      "attempt_classification": null,
+      "outcomes": [
+        {
+          "name": "test_opening_adventure_and_all_imported_screens",
+          "outcome": "passed",
+          "seconds": 7.819
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_adventure.py::test_combat_brains_and_callbacks",
+      "covered_nodes": [
+        "tests/test_adventure.py::test_combat_brains_and_callbacks"
+      ],
+      "launcher_exit": 0,
+      "pure_guard_violation": false,
+      "active_seconds": 0.787,
+      "effective_outer_cap_seconds": 600,
+      "controller_requested_outer_cap_seconds": null,
+      "aggregate_child_budget_seconds": null,
+      "aborted_before_lock": false,
+      "attempt_classification": null,
+      "outcomes": [
+        {
+          "name": "test_combat_brains_and_callbacks",
+          "outcome": "passed",
+          "seconds": 0.434
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_alktree_aftermath.py::test_original_frozen_evacuation_and_neighbor_aftermath",
+      "covered_nodes": [
+        "tests/test_alktree_aftermath.py::test_original_frozen_evacuation_and_neighbor_aftermath"
+      ],
+      "launcher_exit": 0,
+      "pure_guard_violation": false,
+      "active_seconds": 13.258,
+      "effective_outer_cap_seconds": 600,
+      "controller_requested_outer_cap_seconds": null,
+      "aggregate_child_budget_seconds": null,
+      "aborted_before_lock": false,
+      "attempt_classification": null,
+      "outcomes": [
+        {
+          "name": "test_original_frozen_evacuation_and_neighbor_aftermath",
+          "outcome": "passed",
+          "seconds": 12.947
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_assets.py::test_map_screen_reads_96_tiles_before_sprite_table",
+      "covered_nodes": [
+        "tests/test_assets.py::test_map_screen_reads_96_tiles_before_sprite_table"
+      ],
+      "launcher_exit": 0,
+      "pure_guard_violation": false,
+      "active_seconds": 0.293,
+      "effective_outer_cap_seconds": 120,
+      "controller_requested_outer_cap_seconds": null,
+      "aggregate_child_budget_seconds": null,
+      "aborted_before_lock": false,
+      "attempt_classification": null,
+      "outcomes": [
+        {
+          "name": "test_map_screen_reads_96_tiles_before_sprite_table",
+          "outcome": "passed",
+          "seconds": 0.002
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_assets.py::test_map_screen_reads_script_after_the_complete_sprite_table",
+      "covered_nodes": [
+        "tests/test_assets.py::test_map_screen_reads_script_after_the_complete_sprite_table"
+      ],
+      "launcher_exit": 0,
+      "pure_guard_violation": false,
+      "active_seconds": 0.354,
+      "effective_outer_cap_seconds": 120,
+      "controller_requested_outer_cap_seconds": null,
+      "aggregate_child_budget_seconds": null,
+      "aborted_before_lock": false,
+      "attempt_classification": null,
+      "outcomes": [
+        {
+          "name": "test_map_screen_reads_script_after_the_complete_sprite_table",
+          "outcome": "passed",
+          "seconds": 0.002
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_assets.py::test_map_screen_treats_leading_nul_as_an_empty_script",
+      "covered_nodes": [
+        "tests/test_assets.py::test_map_screen_treats_leading_nul_as_an_empty_script"
+      ],
+      "launcher_exit": 0,
+      "pure_guard_violation": false,
+      "active_seconds": 0.337,
+      "effective_outer_cap_seconds": 120,
+      "controller_requested_outer_cap_seconds": null,
+      "aggregate_child_budget_seconds": null,
+      "aborted_before_lock": false,
+      "attempt_classification": null,
+      "outcomes": [
+        {
+          "name": "test_map_screen_treats_leading_nul_as_an_empty_script",
+          "outcome": "passed",
+          "seconds": 0.002
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_assets.py::test_map_sprite_alt_rectangle_is_clip_rect_not_physical_hardbox",
+      "covered_nodes": [
+        "tests/test_assets.py::test_map_sprite_alt_rectangle_is_clip_rect_not_physical_hardbox"
+      ],
+      "launcher_exit": 0,
+      "pure_guard_violation": false,
+      "active_seconds": 0.401,
+      "effective_outer_cap_seconds": 120,
+      "controller_requested_outer_cap_seconds": null,
+      "aggregate_child_budget_seconds": null,
+      "aborted_before_lock": false,
+      "attempt_classification": null,
+      "outcomes": [
+        {
+          "name": "test_map_sprite_alt_rectangle_is_clip_rect_not_physical_hardbox",
+          "outcome": "passed",
+          "seconds": 0.002
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_assets.py::test_installed_freedink_screen_one_mother_layout",
+      "covered_nodes": [
+        "tests/test_assets.py::test_installed_freedink_screen_one_mother_layout"
+      ],
+      "launcher_exit": 0,
+      "pure_guard_violation": false,
+      "active_seconds": 0.341,
+      "effective_outer_cap_seconds": 120,
+      "controller_requested_outer_cap_seconds": null,
+      "aggregate_child_budget_seconds": null,
+      "aborted_before_lock": false,
+      "attempt_classification": null,
+      "outcomes": [
+        {
+          "name": "test_installed_freedink_screen_one_mother_layout",
+          "outcome": "passed",
+          "seconds": 0.007
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_assets.py::test_installed_freedink_opening_screen_scripts",
+      "covered_nodes": [
+        "tests/test_assets.py::test_installed_freedink_opening_screen_scripts"
+      ],
+      "launcher_exit": 0,
+      "pure_guard_violation": false,
+      "active_seconds": 1.028,
+      "effective_outer_cap_seconds": 120,
+      "controller_requested_outer_cap_seconds": null,
+      "aggregate_child_budget_seconds": null,
+      "aborted_before_lock": false,
+      "attempt_classification": null,
+      "outcomes": [
+        {
+          "name": "test_installed_freedink_opening_screen_scripts",
+          "outcome": "passed",
+          "seconds": 0.635
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_assets.py::test_hard_dat_preserves_all_800_tile_masks",
+      "covered_nodes": [
+        "tests/test_assets.py::test_hard_dat_preserves_all_800_tile_masks"
+      ],
+      "launcher_exit": 0,
+      "pure_guard_violation": false,
+      "active_seconds": 0.605,
+      "effective_outer_cap_seconds": 120,
+      "controller_requested_outer_cap_seconds": null,
+      "aggregate_child_budget_seconds": null,
+      "aborted_before_lock": false,
+      "attempt_classification": null,
+      "outcomes": [
+        {
+          "name": "test_hard_dat_preserves_all_800_tile_masks",
+          "outcome": "passed",
+          "seconds": 0.21
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_assets.py::test_dink_dat_has_769_records",
+      "covered_nodes": [
+        "tests/test_assets.py::test_dink_dat_has_769_records"
+      ],
+      "launcher_exit": 0,
+      "pure_guard_violation": false,
+      "active_seconds": 0.437,
+      "effective_outer_cap_seconds": 120,
+      "controller_requested_outer_cap_seconds": null,
+      "aggregate_child_budget_seconds": null,
+      "aborted_before_lock": false,
+      "attempt_classification": null,
+      "outcomes": [
+        {
+          "name": "test_dink_dat_has_769_records",
+          "outcome": "passed",
+          "seconds": 0.002
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_assets.py::test_sequences_match_freedink_metadata_aliases_and_repeat_sentinels",
+      "covered_nodes": [
+        "tests/test_assets.py::test_sequences_match_freedink_metadata_aliases_and_repeat_sentinels"
+      ],
+      "launcher_exit": 0,
+      "pure_guard_violation": false,
+      "active_seconds": 0.739,
+      "effective_outer_cap_seconds": 120,
+      "controller_requested_outer_cap_seconds": null,
+      "aggregate_child_budget_seconds": null,
+      "aborted_before_lock": false,
+      "attempt_classification": null,
+      "outcomes": [
+        {
+          "name": "test_sequences_match_freedink_metadata_aliases_and_repeat_sentinels",
+          "outcome": "passed",
+          "seconds": 0.305
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_assets.py::test_home_exit_warp_uses_the_original_sequence_frame",
+      "covered_nodes": [
+        "tests/test_assets.py::test_home_exit_warp_uses_the_original_sequence_frame"
+      ],
+      "launcher_exit": 0,
+      "pure_guard_violation": false,
+      "active_seconds": 0.996,
+      "effective_outer_cap_seconds": 120,
+      "controller_requested_outer_cap_seconds": null,
+      "aggregate_child_budget_seconds": null,
+      "aborted_before_lock": false,
+      "attempt_classification": null,
+      "outcomes": [
+        {
+          "name": "test_home_exit_warp_uses_the_original_sequence_frame",
+          "outcome": "passed",
+          "seconds": 0.62
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_assets.py::test_sound_manifest_records_midi_inputs_and_bundled_replacement_sources",
+      "covered_nodes": [
+        "tests/test_assets.py::test_sound_manifest_records_midi_inputs_and_bundled_replacement_sources"
+      ],
+      "launcher_exit": 0,
+      "pure_guard_violation": false,
+      "active_seconds": 0.367,
+      "effective_outer_cap_seconds": 120,
+      "controller_requested_outer_cap_seconds": null,
+      "aggregate_child_budget_seconds": null,
+      "aborted_before_lock": false,
+      "attempt_classification": null,
+      "outcomes": [
+        {
+          "name": "test_sound_manifest_records_midi_inputs_and_bundled_replacement_sources",
+          "outcome": "passed",
+          "seconds": 0.002
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_audio_cues.py::test_every_audio_cue_resolves_or_is_a_listed_freedink_gap",
+      "covered_nodes": [
+        "tests/test_audio_cues.py::test_every_audio_cue_resolves_or_is_a_listed_freedink_gap"
+      ],
+      "launcher_exit": 0,
+      "pure_guard_violation": false,
+      "active_seconds": 18.805,
+      "effective_outer_cap_seconds": 600,
+      "controller_requested_outer_cap_seconds": null,
+      "aggregate_child_budget_seconds": null,
+      "aborted_before_lock": false,
+      "attempt_classification": null,
+      "outcomes": [
+        {
+          "name": "test_every_audio_cue_resolves_or_is_a_listed_freedink_gap",
+          "outcome": "passed",
+          "seconds": 18.433
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_audio_provenance.py::test_every_shipped_sound_is_the_listed_freedink_file",
+      "covered_nodes": [
+        "tests/test_audio_provenance.py::test_every_shipped_sound_is_the_listed_freedink_file"
+      ],
+      "launcher_exit": 0,
+      "pure_guard_violation": false,
+      "active_seconds": 0.401,
+      "effective_outer_cap_seconds": 120,
+      "controller_requested_outer_cap_seconds": null,
+      "aggregate_child_budget_seconds": null,
+      "aborted_before_lock": false,
+      "attempt_classification": null,
+      "outcomes": [
+        {
+          "name": "test_every_shipped_sound_is_the_listed_freedink_file",
+          "outcome": "passed",
+          "seconds": 0.094
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_audio_provenance.py::test_table_covers_music_and_effects_exactly_once",
+      "covered_nodes": [
+        "tests/test_audio_provenance.py::test_table_covers_music_and_effects_exactly_once"
+      ],
+      "launcher_exit": 0,
+      "pure_guard_violation": false,
+      "active_seconds": 0.282,
+      "effective_outer_cap_seconds": 120,
+      "controller_requested_outer_cap_seconds": null,
+      "aggregate_child_budget_seconds": null,
+      "aborted_before_lock": false,
+      "attempt_classification": null,
+      "outcomes": [
+        {
+          "name": "test_table_covers_music_and_effects_exactly_once",
+          "outcome": "passed",
+          "seconds": 0.001
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_audio_provenance.py::test_verifier_rejects_an_unlisted_or_altered_sound",
+      "covered_nodes": [
+        "tests/test_audio_provenance.py::test_verifier_rejects_an_unlisted_or_altered_sound"
+      ],
+      "launcher_exit": 0,
+      "pure_guard_violation": false,
+      "active_seconds": 0.377,
+      "effective_outer_cap_seconds": 120,
+      "controller_requested_outer_cap_seconds": null,
+      "aggregate_child_budget_seconds": null,
+      "aborted_before_lock": false,
+      "attempt_classification": null,
+      "outcomes": [
+        {
+          "name": "test_verifier_rejects_an_unlisted_or_altered_sound",
+          "outcome": "passed",
+          "seconds": 0.077
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_audio_provenance.py::test_empty_music_render_is_rejected",
+      "covered_nodes": [
+        "tests/test_audio_provenance.py::test_empty_music_render_is_rejected"
+      ],
+      "launcher_exit": 0,
+      "pure_guard_violation": false,
+      "active_seconds": 0.291,
+      "effective_outer_cap_seconds": 120,
+      "controller_requested_outer_cap_seconds": null,
+      "aggregate_child_budget_seconds": null,
+      "aborted_before_lock": false,
+      "attempt_classification": null,
+      "outcomes": [
+        {
+          "name": "test_empty_music_render_is_rejected",
+          "outcome": "passed",
+          "seconds": 0.001
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_audio_provenance.py::test_running_status_after_a_meta_event_is_written_out",
+      "covered_nodes": [
+        "tests/test_audio_provenance.py::test_running_status_after_a_meta_event_is_written_out"
+      ],
+      "launcher_exit": 0,
+      "pure_guard_violation": false,
+      "active_seconds": 0.356,
+      "effective_outer_cap_seconds": 120,
+      "controller_requested_outer_cap_seconds": null,
+      "aggregate_child_budget_seconds": null,
+      "aborted_before_lock": false,
+      "attempt_classification": null,
+      "outcomes": [
+        {
+          "name": "test_running_status_after_a_meta_event_is_written_out",
+          "outcome": "passed",
+          "seconds": 0.001
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_audio_provenance.py::test_explicit_status_is_lossless_on_every_freedink_midi",
+      "covered_nodes": [
+        "tests/test_audio_provenance.py::test_explicit_status_is_lossless_on_every_freedink_midi"
+      ],
+      "launcher_exit": 0,
+      "pure_guard_violation": false,
+      "active_seconds": 0.354,
+      "effective_outer_cap_seconds": 120,
+      "controller_requested_outer_cap_seconds": null,
+      "aggregate_child_budget_seconds": null,
+      "aborted_before_lock": false,
+      "attempt_classification": null,
+      "outcomes": [
+        {
+          "name": "test_explicit_status_is_lossless_on_every_freedink_midi",
+          "outcome": "passed",
+          "seconds": 0.051
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_audio_provenance.py::test_gap_fill_rules_reject_what_they_must",
+      "covered_nodes": [
+        "tests/test_audio_provenance.py::test_gap_fill_rules_reject_what_they_must"
+      ],
+      "launcher_exit": 0,
+      "pure_guard_violation": false,
+      "active_seconds": 0.33,
+      "effective_outer_cap_seconds": 120,
+      "controller_requested_outer_cap_seconds": null,
+      "aggregate_child_budget_seconds": null,
+      "aborted_before_lock": false,
+      "attempt_classification": null,
+      "outcomes": [
+        {
+          "name": "test_gap_fill_rules_reject_what_they_must",
+          "outcome": "passed",
+          "seconds": 0.002
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_audio_provenance.py::test_synthesized_fills_rebuild_byte_for_byte",
+      "covered_nodes": [
+        "tests/test_audio_provenance.py::test_synthesized_fills_rebuild_byte_for_byte"
+      ],
+      "launcher_exit": 0,
+      "pure_guard_violation": false,
+      "active_seconds": 0.74,
+      "effective_outer_cap_seconds": 120,
+      "controller_requested_outer_cap_seconds": null,
+      "aggregate_child_budget_seconds": null,
+      "aborted_before_lock": false,
+      "attempt_classification": null,
+      "outcomes": [
+        {
+          "name": "test_synthesized_fills_rebuild_byte_for_byte",
+          "outcome": "passed",
+          "seconds": 0.387
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_bug_report_recorder.py::test_bug_report_recorder_saves_local_evidence_and_bounded_input",
+      "covered_nodes": [
+        "tests/test_bug_report_recorder.py::test_bug_report_recorder_saves_local_evidence_and_bounded_input"
+      ],
+      "launcher_exit": 0,
+      "pure_guard_violation": false,
+      "active_seconds": 0.593,
+      "effective_outer_cap_seconds": 600,
+      "controller_requested_outer_cap_seconds": null,
+      "aggregate_child_budget_seconds": null,
+      "aborted_before_lock": false,
+      "attempt_classification": null,
+      "outcomes": [
+        {
+          "name": "test_bug_report_recorder_saves_local_evidence_and_bounded_input",
+          "outcome": "passed",
+          "seconds": 0.312
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_effect_alpha_visibility.py::test_effect_alpha_visibility_and_source_floor_art",
+      "covered_nodes": [
+        "tests/test_effect_alpha_visibility.py::test_effect_alpha_visibility_and_source_floor_art"
+      ],
+      "launcher_exit": 0,
+      "pure_guard_violation": false,
+      "active_seconds": 4.575,
+      "effective_outer_cap_seconds": 600,
+      "controller_requested_outer_cap_seconds": null,
+      "aggregate_child_budget_seconds": null,
+      "aborted_before_lock": false,
+      "attempt_classification": null,
+      "outcomes": [
+        {
+          "name": "test_effect_alpha_visibility_and_source_floor_art",
+          "outcome": "passed",
+          "seconds": 4.184
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_ethel_dialogue.py::test_both_ethel_agreements_release_player_and_npc",
+      "covered_nodes": [
+        "tests/test_ethel_dialogue.py::test_both_ethel_agreements_release_player_and_npc"
+      ],
+      "launcher_exit": 0,
+      "pure_guard_violation": false,
+      "active_seconds": 4.072,
+      "effective_outer_cap_seconds": 600,
+      "controller_requested_outer_cap_seconds": null,
+      "aggregate_child_budget_seconds": null,
+      "aborted_before_lock": false,
+      "attempt_classification": null,
+      "outcomes": [
+        {
+          "name": "test_both_ethel_agreements_release_player_and_npc",
+          "outcome": "passed",
+          "seconds": 3.785
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_fitted_surface_order.py::test_fitted_surfaces_keep_their_order_and_source_panel_copies_make_one_solid",
+      "covered_nodes": [
+        "tests/test_fitted_surface_order.py::test_fitted_surfaces_keep_their_order_and_source_panel_copies_make_one_solid"
+      ],
+      "launcher_exit": 0,
+      "pure_guard_violation": false,
+      "active_seconds": 2.12,
+      "effective_outer_cap_seconds": 600,
+      "controller_requested_outer_cap_seconds": null,
+      "aggregate_child_budget_seconds": null,
+      "aborted_before_lock": false,
+      "attempt_classification": null,
+      "outcomes": [
+        {
+          "name": "test_fitted_surfaces_keep_their_order_and_source_panel_copies_make_one_solid",
+          "outcome": "passed",
+          "seconds": 1.81
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_fps.py::test_first_person_campaign_integration",
+      "covered_nodes": [
+        "tests/test_fps.py::test_first_person_campaign_integration"
+      ],
+      "launcher_exit": 0,
+      "pure_guard_violation": false,
+      "active_seconds": 8.766,
+      "effective_outer_cap_seconds": 600,
+      "controller_requested_outer_cap_seconds": null,
+      "aggregate_child_budget_seconds": null,
+      "aborted_before_lock": false,
+      "attempt_classification": null,
+      "outcomes": [
+        {
+          "name": "test_first_person_campaign_integration",
+          "outcome": "passed",
+          "seconds": 8.392
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_fps.py::test_first_person_controller_regressions",
+      "covered_nodes": [
+        "tests/test_fps.py::test_first_person_controller_regressions"
+      ],
+      "launcher_exit": 0,
+      "pure_guard_violation": false,
+      "active_seconds": 5.498,
+      "effective_outer_cap_seconds": 600,
+      "controller_requested_outer_cap_seconds": null,
+      "aggregate_child_budget_seconds": null,
+      "aborted_before_lock": false,
+      "attempt_classification": null,
+      "outcomes": [
+        {
+          "name": "test_first_person_controller_regressions",
+          "outcome": "passed",
+          "seconds": 5.129
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_fps_bake.py::test_baked_houses_equal_their_composition",
+      "covered_nodes": [
+        "tests/test_fps_bake.py::test_baked_houses_equal_their_composition"
+      ],
+      "launcher_exit": 0,
+      "pure_guard_violation": false,
+      "active_seconds": 15.255,
+      "effective_outer_cap_seconds": 600,
+      "controller_requested_outer_cap_seconds": null,
+      "aggregate_child_budget_seconds": null,
+      "aborted_before_lock": false,
+      "attempt_classification": null,
+      "outcomes": [
+        {
+          "name": "test_baked_houses_equal_their_composition",
+          "outcome": "passed",
+          "seconds": 14.905
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_fps_bridge_rails.py::test_an_east_west_decks_foot_line_is_its_planks_top_edge_and_no_railing_pixel_is_under_it[brdge-06.png]",
+      "covered_nodes": [
+        "tests/test_fps_bridge_rails.py::test_an_east_west_decks_foot_line_is_its_planks_top_edge_and_no_railing_pixel_is_under_it[brdge-06.png]"
+      ],
+      "launcher_exit": 0,
+      "pure_guard_violation": false,
+      "active_seconds": 0.345,
+      "effective_outer_cap_seconds": 600,
+      "controller_requested_outer_cap_seconds": null,
+      "aggregate_child_budget_seconds": null,
+      "aborted_before_lock": false,
+      "attempt_classification": null,
+      "outcomes": [
+        {
+          "name": "test_an_east_west_decks_foot_line_is_its_planks_top_edge_and_no_railing_pixel_is_under_it[brdge-06.png]",
+          "outcome": "passed",
+          "seconds": 0.009
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_fps_bridge_rails.py::test_an_east_west_decks_foot_line_is_its_planks_top_edge_and_no_railing_pixel_is_under_it[brdge-08.png]",
+      "covered_nodes": [
+        "tests/test_fps_bridge_rails.py::test_an_east_west_decks_foot_line_is_its_planks_top_edge_and_no_railing_pixel_is_under_it[brdge-08.png]"
+      ],
+      "launcher_exit": 0,
+      "pure_guard_violation": false,
+      "active_seconds": 0.323,
+      "effective_outer_cap_seconds": 600,
+      "controller_requested_outer_cap_seconds": null,
+      "aggregate_child_budget_seconds": null,
+      "aborted_before_lock": false,
+      "attempt_classification": null,
+      "outcomes": [
+        {
+          "name": "test_an_east_west_decks_foot_line_is_its_planks_top_edge_and_no_railing_pixel_is_under_it[brdge-08.png]",
+          "outcome": "passed",
+          "seconds": 0.008
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_fps_bridge_rails.py::test_an_east_west_decks_foot_line_is_its_planks_top_edge_and_no_railing_pixel_is_under_it[brdge-10.png]",
+      "covered_nodes": [
+        "tests/test_fps_bridge_rails.py::test_an_east_west_decks_foot_line_is_its_planks_top_edge_and_no_railing_pixel_is_under_it[brdge-10.png]"
+      ],
+      "launcher_exit": 0,
+      "pure_guard_violation": false,
+      "active_seconds": 0.352,
+      "effective_outer_cap_seconds": 600,
+      "controller_requested_outer_cap_seconds": null,
+      "aggregate_child_budget_seconds": null,
+      "aborted_before_lock": false,
+      "attempt_classification": null,
+      "outcomes": [
+        {
+          "name": "test_an_east_west_decks_foot_line_is_its_planks_top_edge_and_no_railing_pixel_is_under_it[brdge-10.png]",
+          "outcome": "passed",
+          "seconds": 0.006
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_fps_bridge_rails.py::test_the_north_south_profiles_follow_the_original_plank_rows_and_clear_upper_posts",
+      "covered_nodes": [
+        "tests/test_fps_bridge_rails.py::test_the_north_south_profiles_follow_the_original_plank_rows_and_clear_upper_posts"
+      ],
+      "launcher_exit": 0,
+      "pure_guard_violation": false,
+      "active_seconds": 0.355,
+      "effective_outer_cap_seconds": 600,
+      "controller_requested_outer_cap_seconds": null,
+      "aggregate_child_budget_seconds": null,
+      "aborted_before_lock": false,
+      "attempt_classification": null,
+      "outcomes": [
+        {
+          "name": "test_the_north_south_profiles_follow_the_original_plank_rows_and_clear_upper_posts",
+          "outcome": "passed",
+          "seconds": 0.021
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_fps_bridge_rails.py::test_a_near_railings_posts_stand_on_its_line_and_everything_in_its_card_is_above_it[brdge-07.png]",
+      "covered_nodes": [
+        "tests/test_fps_bridge_rails.py::test_a_near_railings_posts_stand_on_its_line_and_everything_in_its_card_is_above_it[brdge-07.png]"
+      ],
+      "launcher_exit": 0,
+      "pure_guard_violation": false,
+      "active_seconds": 0.338,
+      "effective_outer_cap_seconds": 600,
+      "controller_requested_outer_cap_seconds": null,
+      "aggregate_child_budget_seconds": null,
+      "aborted_before_lock": false,
+      "attempt_classification": null,
+      "outcomes": [
+        {
+          "name": "test_a_near_railings_posts_stand_on_its_line_and_everything_in_its_card_is_above_it[brdge-07.png]",
+          "outcome": "passed",
+          "seconds": 0.006
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_fps_bridge_rails.py::test_a_near_railings_posts_stand_on_its_line_and_everything_in_its_card_is_above_it[brdge-09.png]",
+      "covered_nodes": [
+        "tests/test_fps_bridge_rails.py::test_a_near_railings_posts_stand_on_its_line_and_everything_in_its_card_is_above_it[brdge-09.png]"
+      ],
+      "launcher_exit": 0,
+      "pure_guard_violation": false,
+      "active_seconds": 0.362,
+      "effective_outer_cap_seconds": 600,
+      "controller_requested_outer_cap_seconds": null,
+      "aggregate_child_budget_seconds": null,
+      "aborted_before_lock": false,
+      "attempt_classification": null,
+      "outcomes": [
+        {
+          "name": "test_a_near_railings_posts_stand_on_its_line_and_everything_in_its_card_is_above_it[brdge-09.png]",
+          "outcome": "passed",
+          "seconds": 0.008
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_fps_bridge_rails.py::test_a_near_railings_posts_stand_on_its_line_and_everything_in_its_card_is_above_it[brdge-11.png]",
+      "covered_nodes": [
+        "tests/test_fps_bridge_rails.py::test_a_near_railings_posts_stand_on_its_line_and_everything_in_its_card_is_above_it[brdge-11.png]"
+      ],
+      "launcher_exit": 0,
+      "pure_guard_violation": false,
+      "active_seconds": 0.371,
+      "effective_outer_cap_seconds": 600,
+      "controller_requested_outer_cap_seconds": null,
+      "aggregate_child_budget_seconds": null,
+      "aborted_before_lock": false,
+      "attempt_classification": null,
+      "outcomes": [
+        {
+          "name": "test_a_near_railings_posts_stand_on_its_line_and_everything_in_its_card_is_above_it[brdge-11.png]",
+          "outcome": "passed",
+          "seconds": 0.009
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_fps_bridge_rails.py::test_the_committed_split_is_what_the_tool_makes_from_the_art",
+      "covered_nodes": [
+        "tests/test_fps_bridge_rails.py::test_the_committed_split_is_what_the_tool_makes_from_the_art"
+      ],
+      "launcher_exit": 0,
+      "pure_guard_violation": false,
+      "active_seconds": 0.802,
+      "effective_outer_cap_seconds": 600,
+      "controller_requested_outer_cap_seconds": null,
+      "aggregate_child_budget_seconds": null,
+      "aborted_before_lock": false,
+      "attempt_classification": null,
+      "outcomes": [
+        {
+          "name": "test_the_committed_split_is_what_the_tool_makes_from_the_art",
+          "outcome": "passed",
+          "seconds": 0.443
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_fps_bridge_rails.py::test_north_south_modular_ropes_join_and_terminate_on_supports",
+      "covered_nodes": [
+        "tests/test_fps_bridge_rails.py::test_north_south_modular_ropes_join_and_terminate_on_supports"
+      ],
+      "launcher_exit": 0,
+      "pure_guard_violation": false,
+      "active_seconds": 13.21,
+      "effective_outer_cap_seconds": 600,
+      "controller_requested_outer_cap_seconds": null,
+      "aggregate_child_budget_seconds": null,
+      "aborted_before_lock": false,
+      "attempt_classification": null,
+      "outcomes": [
+        {
+          "name": "test_north_south_modular_ropes_join_and_terminate_on_supports",
+          "outcome": "passed",
+          "seconds": 12.832
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_fps_bridge_rails.py::test_north_south_side_materials_use_only_opaque_rope_pixels_and_shared_depth_phase",
+      "covered_nodes": [
+        "tests/test_fps_bridge_rails.py::test_north_south_side_materials_use_only_opaque_rope_pixels_and_shared_depth_phase"
+      ],
+      "launcher_exit": 0,
+      "pure_guard_violation": false,
+      "active_seconds": 12.383,
+      "effective_outer_cap_seconds": 600,
+      "controller_requested_outer_cap_seconds": null,
+      "aggregate_child_budget_seconds": null,
+      "aborted_before_lock": false,
+      "attempt_classification": null,
+      "outcomes": [
+        {
+          "name": "test_north_south_side_materials_use_only_opaque_rope_pixels_and_shared_depth_phase",
+          "outcome": "passed",
+          "seconds": 12.05
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_fps_bridge_rails.py::test_every_bridge_sprite_of_the_map_is_built_with_its_railing_and_its_ray_body",
+      "covered_nodes": [
+        "tests/test_fps_bridge_rails.py::test_every_bridge_sprite_of_the_map_is_built_with_its_railing_and_its_ray_body"
+      ],
+      "launcher_exit": 0,
+      "pure_guard_violation": false,
+      "active_seconds": 14.223,
+      "effective_outer_cap_seconds": 600,
+      "controller_requested_outer_cap_seconds": null,
+      "aggregate_child_budget_seconds": null,
+      "aborted_before_lock": false,
+      "attempt_classification": null,
+      "outcomes": [
+        {
+          "name": "test_every_bridge_sprite_of_the_map_is_built_with_its_railing_and_its_ray_body",
+          "outcome": "passed",
+          "seconds": 13.744
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_fps_bridge_rails.py::test_standing_rails_leave_the_ground_and_central_north_south_plank_seams_are_preserved",
+      "covered_nodes": [
+        "tests/test_fps_bridge_rails.py::test_standing_rails_leave_the_ground_and_central_north_south_plank_seams_are_preserved"
+      ],
+      "launcher_exit": 0,
+      "pure_guard_violation": false,
+      "active_seconds": 11.007,
+      "effective_outer_cap_seconds": 600,
+      "controller_requested_outer_cap_seconds": null,
+      "aggregate_child_budget_seconds": null,
+      "aborted_before_lock": false,
+      "attempt_classification": null,
+      "outcomes": [
+        {
+          "name": "test_standing_rails_leave_the_ground_and_central_north_south_plank_seams_are_preserved",
+          "outcome": "passed",
+          "seconds": 10.624
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_fps_bridge_rails.py::test_a_downward_ray_onto_a_deck_hits_the_deck_and_one_beside_it_does_not",
+      "covered_nodes": [
+        "tests/test_fps_bridge_rails.py::test_a_downward_ray_onto_a_deck_hits_the_deck_and_one_beside_it_does_not"
+      ],
+      "launcher_exit": 0,
+      "pure_guard_violation": false,
+      "active_seconds": 24.49,
+      "effective_outer_cap_seconds": 600,
+      "controller_requested_outer_cap_seconds": null,
+      "aggregate_child_budget_seconds": null,
+      "aborted_before_lock": false,
+      "attempt_classification": null,
+      "outcomes": [
+        {
+          "name": "test_a_downward_ray_onto_a_deck_hits_the_deck_and_one_beside_it_does_not",
+          "outcome": "passed",
+          "seconds": 24.146
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_fps_bridge_rails.py::test_a_railing_seen_from_its_own_axis_is_not_a_sliver",
+      "covered_nodes": [
+        "tests/test_fps_bridge_rails.py::test_a_railing_seen_from_its_own_axis_is_not_a_sliver"
+      ],
+      "launcher_exit": 0,
+      "pure_guard_violation": false,
+      "active_seconds": 24.756,
+      "effective_outer_cap_seconds": 600,
+      "controller_requested_outer_cap_seconds": null,
+      "aggregate_child_budget_seconds": null,
+      "aborted_before_lock": false,
+      "attempt_classification": null,
+      "outcomes": [
+        {
+          "name": "test_a_railing_seen_from_its_own_axis_is_not_a_sliver",
+          "outcome": "passed",
+          "seconds": 24.375
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_fps_bridges.py::test_every_bridge_deck_of_the_map_is_painted_into_the_ground_and_every_railing_is_a_fixed_card",
+      "covered_nodes": [
+        "tests/test_fps_bridges.py::test_every_bridge_deck_of_the_map_is_painted_into_the_ground_and_every_railing_is_a_fixed_card"
+      ],
+      "launcher_exit": 0,
+      "pure_guard_violation": false,
+      "active_seconds": 8.948,
+      "effective_outer_cap_seconds": 120,
+      "controller_requested_outer_cap_seconds": null,
+      "aggregate_child_budget_seconds": null,
+      "aborted_before_lock": false,
+      "attempt_classification": null,
+      "outcomes": [
+        {
+          "name": "test_every_bridge_deck_of_the_map_is_painted_into_the_ground_and_every_railing_is_a_fixed_card",
+          "outcome": "passed",
+          "seconds": 8.578
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_fps_bridges.py::test_the_deck_of_448s_bridge_is_continuous_down_the_middle_of_the_picture",
+      "covered_nodes": [
+        "tests/test_fps_bridges.py::test_the_deck_of_448s_bridge_is_continuous_down_the_middle_of_the_picture"
+      ],
+      "launcher_exit": 0,
+      "pure_guard_violation": false,
+      "active_seconds": 14.843,
+      "effective_outer_cap_seconds": 120,
+      "controller_requested_outer_cap_seconds": null,
+      "aggregate_child_budget_seconds": null,
+      "aborted_before_lock": false,
+      "attempt_classification": null,
+      "outcomes": [
+        {
+          "name": "test_the_deck_of_448s_bridge_is_continuous_down_the_middle_of_the_picture",
+          "outcome": "passed",
+          "seconds": 14.516
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_fps_bug_report.py::test_f9_saves_rendered_local_report_and_actual_input",
+      "covered_nodes": [
+        "tests/test_fps_bug_report.py::test_f9_saves_rendered_local_report_and_actual_input"
+      ],
+      "launcher_exit": 0,
+      "pure_guard_violation": false,
+      "active_seconds": 21.741,
+      "effective_outer_cap_seconds": 600,
+      "controller_requested_outer_cap_seconds": null,
+      "aggregate_child_budget_seconds": null,
+      "aborted_before_lock": false,
+      "attempt_classification": null,
+      "outcomes": [
+        {
+          "name": "test_f9_saves_rendered_local_report_and_actual_input",
+          "outcome": "passed",
+          "seconds": 21.438
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_fps_cards.py::test_every_card_of_the_map_is_a_billboard_unless_its_art_is_a_structure",
+      "covered_nodes": [
+        "tests/test_fps_cards.py::test_every_card_of_the_map_is_a_billboard_unless_its_art_is_a_structure"
+      ],
+      "launcher_exit": 0,
+      "pure_guard_violation": false,
+      "active_seconds": 52.547,
+      "effective_outer_cap_seconds": 120,
+      "controller_requested_outer_cap_seconds": null,
+      "aggregate_child_budget_seconds": null,
+      "aborted_before_lock": false,
+      "attempt_classification": null,
+      "outcomes": [
+        {
+          "name": "test_every_card_of_the_map_is_a_billboard_unless_its_art_is_a_structure",
+          "outcome": "passed",
+          "seconds": 52.262
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_fps_cards.py::test_loaded_scenes_agree_and_every_billboard_has_a_twin_on_the_sun",
+      "covered_nodes": [
+        "tests/test_fps_cards.py::test_loaded_scenes_agree_and_every_billboard_has_a_twin_on_the_sun"
+      ],
+      "launcher_exit": 0,
+      "pure_guard_violation": false,
+      "active_seconds": 11.911,
+      "effective_outer_cap_seconds": 120,
+      "controller_requested_outer_cap_seconds": null,
+      "aggregate_child_budget_seconds": null,
+      "aborted_before_lock": false,
+      "attempt_classification": null,
+      "outcomes": [
+        {
+          "name": "test_loaded_scenes_agree_and_every_billboard_has_a_twin_on_the_sun",
+          "outcome": "passed",
+          "seconds": 11.616
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_fps_cards.py::test_a_tree_stands_whole_from_every_side_and_still_casts_a_shadow",
+      "covered_nodes": [
+        "tests/test_fps_cards.py::test_a_tree_stands_whole_from_every_side_and_still_casts_a_shadow"
+      ],
+      "launcher_exit": 0,
+      "pure_guard_violation": false,
+      "active_seconds": 14.945,
+      "effective_outer_cap_seconds": 120,
+      "controller_requested_outer_cap_seconds": null,
+      "aggregate_child_budget_seconds": null,
+      "aborted_before_lock": false,
+      "attempt_classification": null,
+      "outcomes": [
+        {
+          "name": "test_a_tree_stands_whole_from_every_side_and_still_casts_a_shadow",
+          "outcome": "passed",
+          "seconds": 14.611
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_fps_castle.py::test_every_fitted_castle_frame_is_a_3d_piece_and_nothing_else_is",
+      "covered_nodes": [
+        "tests/test_fps_castle.py::test_every_fitted_castle_frame_is_a_3d_piece_and_nothing_else_is"
+      ],
+      "launcher_exit": 0,
+      "pure_guard_violation": false,
+      "active_seconds": 20.751,
+      "effective_outer_cap_seconds": 120,
+      "controller_requested_outer_cap_seconds": null,
+      "aggregate_child_budget_seconds": null,
+      "aborted_before_lock": false,
+      "attempt_classification": null,
+      "outcomes": [
+        {
+          "name": "test_every_fitted_castle_frame_is_a_3d_piece_and_nothing_else_is",
+          "outcome": "passed",
+          "seconds": 20.411
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_fps_castle.py::test_each_fitted_piece_reproduces_its_sprite_through_the_original_camera_and_a_wall_is_deep",
+      "covered_nodes": [
+        "tests/test_fps_castle.py::test_each_fitted_piece_reproduces_its_sprite_through_the_original_camera_and_a_wall_is_deep"
+      ],
+      "launcher_exit": 0,
+      "pure_guard_violation": false,
+      "active_seconds": 43.835,
+      "effective_outer_cap_seconds": 120,
+      "controller_requested_outer_cap_seconds": null,
+      "aggregate_child_budget_seconds": null,
+      "aborted_before_lock": false,
+      "attempt_classification": null,
+      "outcomes": [
+        {
+          "name": "test_each_fitted_piece_reproduces_its_sprite_through_the_original_camera_and_a_wall_is_deep",
+          "outcome": "passed",
+          "seconds": 43.51
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_fps_collision_input.py::test_seam_solids_and_open_grass_through_keyboard",
+      "covered_nodes": [
+        "tests/test_fps_collision_input.py::test_seam_solids_and_open_grass_through_keyboard"
+      ],
+      "launcher_exit": 0,
+      "pure_guard_violation": false,
+      "active_seconds": 6.133,
+      "effective_outer_cap_seconds": 600,
+      "controller_requested_outer_cap_seconds": null,
+      "aggregate_child_budget_seconds": null,
+      "aborted_before_lock": false,
+      "attempt_classification": null,
+      "outcomes": [
+        {
+          "name": "test_seam_solids_and_open_grass_through_keyboard",
+          "outcome": "passed",
+          "seconds": 5.828
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_fps_collision_input.py::test_diagonal_neighbor_solidity_and_continuous_coordinates",
+      "covered_nodes": [
+        "tests/test_fps_collision_input.py::test_diagonal_neighbor_solidity_and_continuous_coordinates"
+      ],
+      "launcher_exit": 0,
+      "pure_guard_violation": false,
+      "active_seconds": 1.369,
+      "effective_outer_cap_seconds": 600,
+      "controller_requested_outer_cap_seconds": null,
+      "aggregate_child_budget_seconds": null,
+      "aborted_before_lock": false,
+      "attempt_classification": null,
+      "outcomes": [
+        {
+          "name": "test_diagonal_neighbor_solidity_and_continuous_coordinates",
+          "outcome": "passed",
+          "seconds": 1.073
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_fps_collision_sweep.py::test_outdoor_landings_and_walkable_grid_never_trap",
+      "covered_nodes": [
+        "tests/test_fps_collision_sweep.py::test_outdoor_landings_and_walkable_grid_never_trap"
+      ],
+      "launcher_exit": 0,
+      "pure_guard_violation": false,
+      "active_seconds": 467.529,
+      "effective_outer_cap_seconds": 3660,
+      "controller_requested_outer_cap_seconds": null,
+      "aggregate_child_budget_seconds": null,
+      "aborted_before_lock": false,
+      "attempt_classification": null,
+      "outcomes": [
+        {
+          "name": "test_outdoor_landings_and_walkable_grid_never_trap",
+          "outcome": "passed",
+          "seconds": 467.145
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_fps_collision_sweep.py::test_survey_rejects_an_injected_indoor_landing_trap",
+      "covered_nodes": [
+        "tests/test_fps_collision_sweep.py::test_survey_rejects_an_injected_indoor_landing_trap"
+      ],
+      "launcher_exit": 0,
+      "pure_guard_violation": false,
+      "active_seconds": 2.561,
+      "effective_outer_cap_seconds": 3660,
+      "controller_requested_outer_cap_seconds": null,
+      "aggregate_child_budget_seconds": null,
+      "aborted_before_lock": false,
+      "attempt_classification": null,
+      "outcomes": [
+        {
+          "name": "test_survey_rejects_an_injected_indoor_landing_trap",
+          "outcome": "passed",
+          "seconds": 2.182
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_fps_dialogue_framing.py::test_dialogue_camera_fits_rendered_actor_and_grief_room",
+      "covered_nodes": [
+        "tests/test_fps_dialogue_framing.py::test_dialogue_camera_fits_rendered_actor_and_grief_room"
+      ],
+      "launcher_exit": 0,
+      "pure_guard_violation": false,
+      "active_seconds": 6.524,
+      "effective_outer_cap_seconds": 600,
+      "controller_requested_outer_cap_seconds": null,
+      "aggregate_child_budget_seconds": null,
+      "aborted_before_lock": false,
+      "attempt_classification": null,
+      "outcomes": [
+        {
+          "name": "test_dialogue_camera_fits_rendered_actor_and_grief_room",
+          "outcome": "passed",
+          "seconds": 6.096
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_fps_doors.py::test_castle_doors_share_wall_plane_and_drawbridge_is_down",
+      "covered_nodes": [
+        "tests/test_fps_doors.py::test_castle_doors_share_wall_plane_and_drawbridge_is_down"
+      ],
+      "launcher_exit": 0,
+      "pure_guard_violation": false,
+      "active_seconds": 28.357,
+      "effective_outer_cap_seconds": 600,
+      "controller_requested_outer_cap_seconds": null,
+      "aggregate_child_budget_seconds": null,
+      "aborted_before_lock": false,
+      "attempt_classification": null,
+      "outcomes": [
+        {
+          "name": "test_castle_doors_share_wall_plane_and_drawbridge_is_down",
+          "outcome": "passed",
+          "seconds": 27.221
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_fps_entity_hit_targets.py::test_collision_shapes_supply_hit_targets",
+      "covered_nodes": [
+        "tests/test_fps_entity_hit_targets.py::test_collision_shapes_supply_hit_targets"
+      ],
+      "launcher_exit": 0,
+      "pure_guard_violation": false,
+      "active_seconds": 0.936,
+      "effective_outer_cap_seconds": 600,
+      "controller_requested_outer_cap_seconds": null,
+      "aggregate_child_budget_seconds": null,
+      "aborted_before_lock": false,
+      "attempt_classification": null,
+      "outcomes": [
+        {
+          "name": "test_collision_shapes_supply_hit_targets",
+          "outcome": "passed",
+          "seconds": 0.414
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_fps_entity_hit_targets.py::test_real_fps_south_talk_occlusion_melee_and_barrel_persistence",
+      "covered_nodes": [
+        "tests/test_fps_entity_hit_targets.py::test_real_fps_south_talk_occlusion_melee_and_barrel_persistence"
+      ],
+      "launcher_exit": 0,
+      "pure_guard_violation": false,
+      "active_seconds": 7.241,
+      "effective_outer_cap_seconds": 600,
+      "controller_requested_outer_cap_seconds": null,
+      "aggregate_child_budget_seconds": null,
+      "aborted_before_lock": false,
+      "attempt_classification": null,
+      "outcomes": [
+        {
+          "name": "test_real_fps_south_talk_occlusion_melee_and_barrel_persistence",
+          "outcome": "passed",
+          "seconds": 6.679
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_fps_entity_hit_targets.py::test_native_worldwide_ray_census_has_no_new_loss",
+      "covered_nodes": [
+        "tests/test_fps_entity_hit_targets.py::test_native_worldwide_ray_census_has_no_new_loss"
+      ],
+      "launcher_exit": 0,
+      "pure_guard_violation": false,
+      "active_seconds": 0.59,
+      "effective_outer_cap_seconds": 600,
+      "controller_requested_outer_cap_seconds": null,
+      "aggregate_child_budget_seconds": null,
+      "aborted_before_lock": false,
+      "attempt_classification": null,
+      "outcomes": [
+        {
+          "name": "test_native_worldwide_ray_census_has_no_new_loss",
+          "outcome": "skipped",
+          "seconds": 0.002,
+          "classification": "Optional local-evidence skip: ignored tmp/rc5-pocket-audit ray-census JSON is absent, as expected on fresh checkouts. The native collision-shape hit-target test passed; this is not missing Godot or an executed game failure."
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_fps_facing.py::test_actors_turn_with_the_camera_and_a_speaker_faces_you",
+      "covered_nodes": [
+        "tests/test_fps_facing.py::test_actors_turn_with_the_camera_and_a_speaker_faces_you"
+      ],
+      "launcher_exit": 0,
+      "pure_guard_violation": false,
+      "active_seconds": 5.587,
+      "effective_outer_cap_seconds": 600,
+      "controller_requested_outer_cap_seconds": null,
+      "aggregate_child_budget_seconds": null,
+      "aborted_before_lock": false,
+      "attempt_classification": null,
+      "outcomes": [
+        {
+          "name": "test_actors_turn_with_the_camera_and_a_speaker_faces_you",
+          "outcome": "passed",
+          "seconds": 5.202
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_fps_fence_ray.py::test_fitted_fences_pass_open_bay_rays_and_stop_part_rays",
+      "covered_nodes": [
+        "tests/test_fps_fence_ray.py::test_fitted_fences_pass_open_bay_rays_and_stop_part_rays"
+      ],
+      "launcher_exit": 0,
+      "pure_guard_violation": false,
+      "active_seconds": 5.248,
+      "effective_outer_cap_seconds": 600,
+      "controller_requested_outer_cap_seconds": null,
+      "aggregate_child_budget_seconds": null,
+      "aborted_before_lock": false,
+      "attempt_classification": null,
+      "outcomes": [
+        {
+          "name": "test_fitted_fences_pass_open_bay_rays_and_stop_part_rays",
+          "outcome": "passed",
+          "seconds": 4.786
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_fps_fences.py::test_every_fence_art_of_the_map_has_a_reading_and_the_reading_is_the_modules",
+      "covered_nodes": [
+        "tests/test_fps_fences.py::test_every_fence_art_of_the_map_has_a_reading_and_the_reading_is_the_modules"
+      ],
+      "launcher_exit": 0,
+      "pure_guard_violation": false,
+      "active_seconds": 0.446,
+      "effective_outer_cap_seconds": 660,
+      "controller_requested_outer_cap_seconds": null,
+      "aggregate_child_budget_seconds": null,
+      "aborted_before_lock": false,
+      "attempt_classification": null,
+      "outcomes": [
+        {
+          "name": "test_every_fence_art_of_the_map_has_a_reading_and_the_reading_is_the_modules",
+          "outcome": "passed",
+          "seconds": 0.001
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_fps_fences.py::test_every_posts_foot_is_where_its_pixels_end_and_its_width_is_drawn[assets/graphics/lands/Fence/fence-01.png]",
+      "covered_nodes": [
+        "tests/test_fps_fences.py::test_every_posts_foot_is_where_its_pixels_end_and_its_width_is_drawn[assets/graphics/lands/Fence/fence-01.png]"
+      ],
+      "launcher_exit": 0,
+      "pure_guard_violation": false,
+      "active_seconds": 0.486,
+      "effective_outer_cap_seconds": 660,
+      "controller_requested_outer_cap_seconds": null,
+      "aggregate_child_budget_seconds": null,
+      "aborted_before_lock": false,
+      "attempt_classification": null,
+      "outcomes": [
+        {
+          "name": "test_every_posts_foot_is_where_its_pixels_end_and_its_width_is_drawn[assets/graphics/lands/Fence/fence-01.png]",
+          "outcome": "passed",
+          "seconds": 0.009
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_fps_fences.py::test_every_posts_foot_is_where_its_pixels_end_and_its_width_is_drawn[assets/graphics/lands/Fence/fence-02.png]",
+      "covered_nodes": [
+        "tests/test_fps_fences.py::test_every_posts_foot_is_where_its_pixels_end_and_its_width_is_drawn[assets/graphics/lands/Fence/fence-02.png]"
+      ],
+      "launcher_exit": 0,
+      "pure_guard_violation": false,
+      "active_seconds": 0.506,
+      "effective_outer_cap_seconds": 660,
+      "controller_requested_outer_cap_seconds": null,
+      "aggregate_child_budget_seconds": null,
+      "aborted_before_lock": false,
+      "attempt_classification": null,
+      "outcomes": [
+        {
+          "name": "test_every_posts_foot_is_where_its_pixels_end_and_its_width_is_drawn[assets/graphics/lands/Fence/fence-02.png]",
+          "outcome": "passed",
+          "seconds": 0.007
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_fps_fences.py::test_every_posts_foot_is_where_its_pixels_end_and_its_width_is_drawn[assets/graphics/lands/Fence/fence-03.png]",
+      "covered_nodes": [
+        "tests/test_fps_fences.py::test_every_posts_foot_is_where_its_pixels_end_and_its_width_is_drawn[assets/graphics/lands/Fence/fence-03.png]"
+      ],
+      "launcher_exit": 0,
+      "pure_guard_violation": false,
+      "active_seconds": 0.4,
+      "effective_outer_cap_seconds": 660,
+      "controller_requested_outer_cap_seconds": null,
+      "aggregate_child_budget_seconds": null,
+      "aborted_before_lock": false,
+      "attempt_classification": null,
+      "outcomes": [
+        {
+          "name": "test_every_posts_foot_is_where_its_pixels_end_and_its_width_is_drawn[assets/graphics/lands/Fence/fence-03.png]",
+          "outcome": "passed",
+          "seconds": 0.01
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_fps_fences.py::test_every_posts_foot_is_where_its_pixels_end_and_its_width_is_drawn[assets/graphics/lands/Fence/fence-04.png]",
+      "covered_nodes": [
+        "tests/test_fps_fences.py::test_every_posts_foot_is_where_its_pixels_end_and_its_width_is_drawn[assets/graphics/lands/Fence/fence-04.png]"
+      ],
+      "launcher_exit": 0,
+      "pure_guard_violation": false,
+      "active_seconds": 0.439,
+      "effective_outer_cap_seconds": 660,
+      "controller_requested_outer_cap_seconds": null,
+      "aggregate_child_budget_seconds": null,
+      "aborted_before_lock": false,
+      "attempt_classification": null,
+      "outcomes": [
+        {
+          "name": "test_every_posts_foot_is_where_its_pixels_end_and_its_width_is_drawn[assets/graphics/lands/Fence/fence-04.png]",
+          "outcome": "passed",
+          "seconds": 0.007
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_fps_fences.py::test_every_posts_foot_is_where_its_pixels_end_and_its_width_is_drawn[assets/graphics/lands/Fence/fence-05.png]",
+      "covered_nodes": [
+        "tests/test_fps_fences.py::test_every_posts_foot_is_where_its_pixels_end_and_its_width_is_drawn[assets/graphics/lands/Fence/fence-05.png]"
+      ],
+      "launcher_exit": 0,
+      "pure_guard_violation": false,
+      "active_seconds": 0.398,
+      "effective_outer_cap_seconds": 660,
+      "controller_requested_outer_cap_seconds": null,
+      "aggregate_child_budget_seconds": null,
+      "aborted_before_lock": false,
+      "attempt_classification": null,
+      "outcomes": [
+        {
+          "name": "test_every_posts_foot_is_where_its_pixels_end_and_its_width_is_drawn[assets/graphics/lands/Fence/fence-05.png]",
+          "outcome": "passed",
+          "seconds": 0.008
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_fps_fences.py::test_every_posts_foot_is_where_its_pixels_end_and_its_width_is_drawn[assets/graphics/lands/Fence/fence-06.png]",
+      "covered_nodes": [
+        "tests/test_fps_fences.py::test_every_posts_foot_is_where_its_pixels_end_and_its_width_is_drawn[assets/graphics/lands/Fence/fence-06.png]"
+      ],
+      "launcher_exit": 0,
+      "pure_guard_violation": false,
+      "active_seconds": 0.404,
+      "effective_outer_cap_seconds": 660,
+      "controller_requested_outer_cap_seconds": null,
+      "aggregate_child_budget_seconds": null,
+      "aborted_before_lock": false,
+      "attempt_classification": null,
+      "outcomes": [
+        {
+          "name": "test_every_posts_foot_is_where_its_pixels_end_and_its_width_is_drawn[assets/graphics/lands/Fence/fence-06.png]",
+          "outcome": "passed",
+          "seconds": 0.008
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_fps_fences.py::test_every_posts_foot_is_where_its_pixels_end_and_its_width_is_drawn[assets/graphics/struct/Island/isle-07.png]",
+      "covered_nodes": [
+        "tests/test_fps_fences.py::test_every_posts_foot_is_where_its_pixels_end_and_its_width_is_drawn[assets/graphics/struct/Island/isle-07.png]"
+      ],
+      "launcher_exit": 0,
+      "pure_guard_violation": false,
+      "active_seconds": 0.425,
+      "effective_outer_cap_seconds": 660,
+      "controller_requested_outer_cap_seconds": null,
+      "aggregate_child_budget_seconds": null,
+      "aborted_before_lock": false,
+      "attempt_classification": null,
+      "outcomes": [
+        {
+          "name": "test_every_posts_foot_is_where_its_pixels_end_and_its_width_is_drawn[assets/graphics/struct/Island/isle-07.png]",
+          "outcome": "passed",
+          "seconds": 0.007
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_fps_fences.py::test_every_posts_foot_is_where_its_pixels_end_and_its_width_is_drawn[assets/graphics/struct/Island/isle-08.png]",
+      "covered_nodes": [
+        "tests/test_fps_fences.py::test_every_posts_foot_is_where_its_pixels_end_and_its_width_is_drawn[assets/graphics/struct/Island/isle-08.png]"
+      ],
+      "launcher_exit": 0,
+      "pure_guard_violation": false,
+      "active_seconds": 0.403,
+      "effective_outer_cap_seconds": 660,
+      "controller_requested_outer_cap_seconds": null,
+      "aggregate_child_budget_seconds": null,
+      "aborted_before_lock": false,
+      "attempt_classification": null,
+      "outcomes": [
+        {
+          "name": "test_every_posts_foot_is_where_its_pixels_end_and_its_width_is_drawn[assets/graphics/struct/Island/isle-08.png]",
+          "outcome": "passed",
+          "seconds": 0.006
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_fps_fences.py::test_the_committed_reading_is_what_the_tool_makes_from_the_art",
+      "covered_nodes": [
+        "tests/test_fps_fences.py::test_the_committed_reading_is_what_the_tool_makes_from_the_art"
+      ],
+      "launcher_exit": 0,
+      "pure_guard_violation": false,
+      "active_seconds": 10.591,
+      "effective_outer_cap_seconds": 660,
+      "controller_requested_outer_cap_seconds": null,
+      "aggregate_child_budget_seconds": null,
+      "aborted_before_lock": false,
+      "attempt_classification": null,
+      "outcomes": [
+        {
+          "name": "test_the_committed_reading_is_what_the_tool_makes_from_the_art",
+          "outcome": "passed",
+          "seconds": 10.127
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_fps_fences.py::test_the_maps_chains_stand_on_the_rows_the_reading_takes_for_depth",
+      "covered_nodes": [
+        "tests/test_fps_fences.py::test_the_maps_chains_stand_on_the_rows_the_reading_takes_for_depth"
+      ],
+      "launcher_exit": 0,
+      "pure_guard_violation": false,
+      "active_seconds": 1.573,
+      "effective_outer_cap_seconds": 660,
+      "controller_requested_outer_cap_seconds": null,
+      "aggregate_child_budget_seconds": null,
+      "aborted_before_lock": false,
+      "attempt_classification": null,
+      "outcomes": [
+        {
+          "name": "test_the_maps_chains_stand_on_the_rows_the_reading_takes_for_depth",
+          "outcome": "passed",
+          "seconds": 1.143
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_fps_fences.py::test_every_fence_entity_stands_solid_with_a_fitted_ray_body_and_no_card",
+      "covered_nodes": [
+        "tests/test_fps_fences.py::test_every_fence_entity_stands_solid_with_a_fitted_ray_body_and_no_card"
+      ],
+      "launcher_exit": 0,
+      "pure_guard_violation": false,
+      "active_seconds": 12.869,
+      "effective_outer_cap_seconds": 660,
+      "controller_requested_outer_cap_seconds": null,
+      "aggregate_child_budget_seconds": null,
+      "aborted_before_lock": false,
+      "attempt_classification": null,
+      "outcomes": [
+        {
+          "name": "test_every_fence_entity_stands_solid_with_a_fitted_ray_body_and_no_card",
+          "outcome": "passed",
+          "seconds": 12.549
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_fps_fences.py::test_a_post_the_map_shares_is_one_post_and_every_post_is_the_modules_size",
+      "covered_nodes": [
+        "tests/test_fps_fences.py::test_a_post_the_map_shares_is_one_post_and_every_post_is_the_modules_size"
+      ],
+      "launcher_exit": 0,
+      "pure_guard_violation": false,
+      "active_seconds": 13.111,
+      "effective_outer_cap_seconds": 660,
+      "controller_requested_outer_cap_seconds": null,
+      "aggregate_child_budget_seconds": null,
+      "aborted_before_lock": false,
+      "attempt_classification": null,
+      "outcomes": [
+        {
+          "name": "test_a_post_the_map_shares_is_one_post_and_every_post_is_the_modules_size",
+          "outcome": "passed",
+          "seconds": 12.743
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_fps_fences.py::test_the_rails_meet_posts_and_a_chain_is_one_line",
+      "covered_nodes": [
+        "tests/test_fps_fences.py::test_the_rails_meet_posts_and_a_chain_is_one_line"
+      ],
+      "launcher_exit": 0,
+      "pure_guard_violation": false,
+      "active_seconds": 12.705,
+      "effective_outer_cap_seconds": 660,
+      "controller_requested_outer_cap_seconds": null,
+      "aggregate_child_budget_seconds": null,
+      "aborted_before_lock": false,
+      "attempt_classification": null,
+      "outcomes": [
+        {
+          "name": "test_the_rails_meet_posts_and_a_chain_is_one_line",
+          "outcome": "passed",
+          "seconds": 12.379
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_fps_fences.py::test_a_fence_seen_from_its_own_axis_is_not_a_sliver",
+      "covered_nodes": [
+        "tests/test_fps_fences.py::test_a_fence_seen_from_its_own_axis_is_not_a_sliver"
+      ],
+      "launcher_exit": 0,
+      "pure_guard_violation": false,
+      "active_seconds": 13.948,
+      "effective_outer_cap_seconds": 660,
+      "controller_requested_outer_cap_seconds": null,
+      "aggregate_child_budget_seconds": null,
+      "aborted_before_lock": false,
+      "attempt_classification": null,
+      "outcomes": [
+        {
+          "name": "test_a_fence_seen_from_its_own_axis_is_not_a_sliver",
+          "outcome": "passed",
+          "seconds": 13.643
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_fps_fir_collision.py::test_compiled_fit_rebuilds_from_native_baseline",
+      "covered_nodes": [
+        "tests/test_fps_fir_collision.py::test_compiled_fit_rebuilds_from_native_baseline"
+      ],
+      "launcher_exit": 0,
+      "pure_guard_violation": false,
+      "active_seconds": 2.866,
+      "effective_outer_cap_seconds": 600,
+      "controller_requested_outer_cap_seconds": null,
+      "aggregate_child_budget_seconds": null,
+      "aborted_before_lock": false,
+      "attempt_classification": null,
+      "outcomes": [
+        {
+          "name": "test_compiled_fit_rebuilds_from_native_baseline",
+          "outcome": "passed",
+          "seconds": 2.48
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_fps_fir_collision.py::test_screen_index_includes_corners_without_row_wrap",
+      "covered_nodes": [
+        "tests/test_fps_fir_collision.py::test_screen_index_includes_corners_without_row_wrap"
+      ],
+      "launcher_exit": 0,
+      "pure_guard_violation": false,
+      "active_seconds": 0.413,
+      "effective_outer_cap_seconds": 600,
+      "controller_requested_outer_cap_seconds": null,
+      "aggregate_child_budget_seconds": null,
+      "aborted_before_lock": false,
+      "attempt_classification": null,
+      "outcomes": [
+        {
+          "name": "test_screen_index_includes_corners_without_row_wrap",
+          "outcome": "passed",
+          "seconds": 0.089
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_fps_fir_collision.py::test_native_inventory_uses_source_collision_baseline",
+      "covered_nodes": [
+        "tests/test_fps_fir_collision.py::test_native_inventory_uses_source_collision_baseline"
+      ],
+      "launcher_exit": 0,
+      "pure_guard_violation": false,
+      "active_seconds": 2.481,
+      "effective_outer_cap_seconds": 600,
+      "controller_requested_outer_cap_seconds": null,
+      "aggregate_child_budget_seconds": null,
+      "aborted_before_lock": false,
+      "attempt_classification": null,
+      "outcomes": [
+        {
+          "name": "test_native_inventory_uses_source_collision_baseline",
+          "outcome": "passed",
+          "seconds": 2.178
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_fps_fir_collision.py::test_runtime_rectangles_and_escape_band",
+      "covered_nodes": [
+        "tests/test_fps_fir_collision.py::test_runtime_rectangles_and_escape_band"
+      ],
+      "launcher_exit": 0,
+      "pure_guard_violation": false,
+      "active_seconds": 0.603,
+      "effective_outer_cap_seconds": 600,
+      "controller_requested_outer_cap_seconds": null,
+      "aggregate_child_budget_seconds": null,
+      "aborted_before_lock": false,
+      "attempt_classification": null,
+      "outcomes": [
+        {
+          "name": "test_runtime_rectangles_and_escape_band",
+          "outcome": "passed",
+          "seconds": 0.238
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_fps_fire_world.py::test_fire_and_ruin_fixture_headless",
+      "covered_nodes": [
+        "tests/test_fps_fire_world.py::test_fire_and_ruin_fixture_headless"
+      ],
+      "launcher_exit": 0,
+      "pure_guard_violation": false,
+      "active_seconds": 4.331,
+      "effective_outer_cap_seconds": 600,
+      "controller_requested_outer_cap_seconds": null,
+      "aggregate_child_budget_seconds": null,
+      "aborted_before_lock": false,
+      "attempt_classification": null,
+      "outcomes": [
+        {
+          "name": "test_fire_and_ruin_fixture_headless",
+          "outcome": "passed",
+          "seconds": 4.05
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_fps_fire_world.py::test_fire_and_ruin_fixture_rendered",
+      "covered_nodes": [
+        "tests/test_fps_fire_world.py::test_fire_and_ruin_fixture_rendered"
+      ],
+      "launcher_exit": 0,
+      "pure_guard_violation": false,
+      "active_seconds": 9.817,
+      "effective_outer_cap_seconds": 600,
+      "controller_requested_outer_cap_seconds": null,
+      "aggregate_child_budget_seconds": null,
+      "aborted_before_lock": false,
+      "attempt_classification": null,
+      "outcomes": [
+        {
+          "name": "test_fire_and_ruin_fixture_rendered",
+          "outcome": "passed",
+          "seconds": 9.511
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_fps_foyer.py::test_foyer_door_and_keyboard_warp_match_source",
+      "covered_nodes": [
+        "tests/test_fps_foyer.py::test_foyer_door_and_keyboard_warp_match_source"
+      ],
+      "launcher_exit": 0,
+      "pure_guard_violation": false,
+      "active_seconds": 4.812,
+      "effective_outer_cap_seconds": 600,
+      "controller_requested_outer_cap_seconds": null,
+      "aggregate_child_budget_seconds": null,
+      "aborted_before_lock": false,
+      "attempt_classification": null,
+      "outcomes": [
+        {
+          "name": "test_foyer_door_and_keyboard_warp_match_source",
+          "outcome": "passed",
+          "seconds": 4.524
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_fps_foyer_mapping.py::test_live_foyer_mapping_and_inactive_leaf",
+      "covered_nodes": [
+        "tests/test_fps_foyer_mapping.py::test_live_foyer_mapping_and_inactive_leaf"
+      ],
+      "launcher_exit": 0,
+      "pure_guard_violation": false,
+      "active_seconds": 4.881,
+      "effective_outer_cap_seconds": 600,
+      "controller_requested_outer_cap_seconds": null,
+      "aggregate_child_budget_seconds": null,
+      "aborted_before_lock": false,
+      "attempt_classification": null,
+      "outcomes": [
+        {
+          "name": "test_live_foyer_mapping_and_inactive_leaf",
+          "outcome": "passed",
+          "seconds": 4.609
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_fps_gate.py::test_hard_one_fence_gate_is_walkable_but_hard_zero_fence_stays_solid",
+      "covered_nodes": [
+        "tests/test_fps_gate.py::test_hard_one_fence_gate_is_walkable_but_hard_zero_fence_stays_solid"
+      ],
+      "launcher_exit": 0,
+      "pure_guard_violation": false,
+      "active_seconds": 6.198,
+      "effective_outer_cap_seconds": 600,
+      "controller_requested_outer_cap_seconds": null,
+      "aggregate_child_budget_seconds": null,
+      "aborted_before_lock": false,
+      "attempt_classification": null,
+      "outcomes": [
+        {
+          "name": "test_hard_one_fence_gate_is_walkable_but_hard_zero_fence_stays_solid",
+          "outcome": "passed",
+          "seconds": 5.912
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_fps_grief_presentation.py::test_story_three_grief_camera_and_aftermath_labels",
+      "covered_nodes": [
+        "tests/test_fps_grief_presentation.py::test_story_three_grief_camera_and_aftermath_labels"
+      ],
+      "launcher_exit": 0,
+      "pure_guard_violation": false,
+      "active_seconds": 4.458,
+      "effective_outer_cap_seconds": 600,
+      "controller_requested_outer_cap_seconds": null,
+      "aggregate_child_budget_seconds": null,
+      "aborted_before_lock": false,
+      "attempt_classification": null,
+      "outcomes": [
+        {
+          "name": "test_story_three_grief_camera_and_aftermath_labels",
+          "outcome": "passed",
+          "seconds": 4.165
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_fps_huts.py::test_every_hut_is_a_3d_piece_and_the_rest_of_the_island_is_not",
+      "covered_nodes": [
+        "tests/test_fps_huts.py::test_every_hut_is_a_3d_piece_and_the_rest_of_the_island_is_not"
+      ],
+      "launcher_exit": 0,
+      "pure_guard_violation": false,
+      "active_seconds": 22.625,
+      "effective_outer_cap_seconds": 120,
+      "controller_requested_outer_cap_seconds": null,
+      "aggregate_child_budget_seconds": null,
+      "aborted_before_lock": false,
+      "attempt_classification": null,
+      "outcomes": [
+        {
+          "name": "test_every_hut_is_a_3d_piece_and_the_rest_of_the_island_is_not",
+          "outcome": "passed",
+          "seconds": 22.324
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_fps_huts.py::test_each_hut_reproduces_its_sprite_through_the_original_camera_and_stands_seen_from_the_east",
+      "covered_nodes": [],
+      "launcher_exit": 0,
+      "pure_guard_violation": false,
+      "active_seconds": 0,
+      "effective_outer_cap_seconds": null,
+      "controller_requested_outer_cap_seconds": null,
+      "aggregate_child_budget_seconds": null,
+      "aborted_before_lock": true,
+      "attempt_classification": "Queued node stopped before native launch to correct positional helper timeout. No pytest verdict.",
+      "outcomes": []
+    },
+    {
+      "nodeid": "tests/test_fps_huts.py::test_each_hut_reproduces_its_sprite_through_the_original_camera_and_stands_seen_from_the_east",
+      "covered_nodes": [
+        "tests/test_fps_huts.py::test_each_hut_reproduces_its_sprite_through_the_original_camera_and_stands_seen_from_the_east"
+      ],
+      "launcher_exit": 0,
+      "pure_guard_violation": false,
+      "active_seconds": 34.149,
+      "effective_outer_cap_seconds": 2460,
+      "controller_requested_outer_cap_seconds": null,
+      "aggregate_child_budget_seconds": null,
+      "aborted_before_lock": false,
+      "attempt_classification": null,
+      "outcomes": [
+        {
+          "name": "test_each_hut_reproduces_its_sprite_through_the_original_camera_and_stands_seen_from_the_east",
+          "outcome": "passed",
+          "seconds": 33.864
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_fps_indoor_arrival_door.py::test_indoor_arrival_queries_use_target_door_state_and_restore_source",
+      "covered_nodes": [
+        "tests/test_fps_indoor_arrival_door.py::test_indoor_arrival_queries_use_target_door_state_and_restore_source"
+      ],
+      "launcher_exit": 0,
+      "pure_guard_violation": false,
+      "active_seconds": 1.624,
+      "effective_outer_cap_seconds": 600,
+      "controller_requested_outer_cap_seconds": null,
+      "aggregate_child_budget_seconds": null,
+      "aborted_before_lock": false,
+      "attempt_classification": null,
+      "outcomes": [
+        {
+          "name": "test_indoor_arrival_queries_use_target_door_state_and_restore_source",
+          "outcome": "passed",
+          "seconds": 1.331
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_fps_indoor_edges.py::test_indoor_edges_use_links_and_collision_instead_of_the_indoor_bit",
+      "covered_nodes": [
+        "tests/test_fps_indoor_edges.py::test_indoor_edges_use_links_and_collision_instead_of_the_indoor_bit"
+      ],
+      "launcher_exit": 0,
+      "pure_guard_violation": false,
+      "active_seconds": 26.44,
+      "effective_outer_cap_seconds": 660,
+      "controller_requested_outer_cap_seconds": null,
+      "aggregate_child_budget_seconds": null,
+      "aborted_before_lock": false,
+      "attempt_classification": null,
+      "outcomes": [
+        {
+          "name": "test_indoor_edges_use_links_and_collision_instead_of_the_indoor_bit",
+          "outcome": "passed",
+          "seconds": 26.163
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_fps_indoor_edges.py::test_original_map_link_oracle_rejects_one_deliberately_wrong_expectation",
+      "covered_nodes": [
+        "tests/test_fps_indoor_edges.py::test_original_map_link_oracle_rejects_one_deliberately_wrong_expectation"
+      ],
+      "launcher_exit": 0,
+      "pure_guard_violation": false,
+      "active_seconds": 1.521,
+      "effective_outer_cap_seconds": 660,
+      "controller_requested_outer_cap_seconds": null,
+      "aggregate_child_budget_seconds": null,
+      "aborted_before_lock": false,
+      "attempt_classification": null,
+      "outcomes": [
+        {
+          "name": "test_original_map_link_oracle_rejects_one_deliberately_wrong_expectation",
+          "outcome": "passed",
+          "seconds": 1.249
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_fps_indoor_portal_input.py::test_indoor_edge_change_keeps_walls_and_authored_warp_priority",
+      "covered_nodes": [
+        "tests/test_fps_indoor_portal_input.py::test_indoor_edge_change_keeps_walls_and_authored_warp_priority"
+      ],
+      "launcher_exit": 0,
+      "pure_guard_violation": false,
+      "active_seconds": 19.138,
+      "effective_outer_cap_seconds": 960,
+      "controller_requested_outer_cap_seconds": null,
+      "aggregate_child_budget_seconds": null,
+      "aborted_before_lock": false,
+      "attempt_classification": null,
+      "outcomes": [
+        {
+          "name": "test_indoor_edge_change_keeps_walls_and_authored_warp_priority",
+          "outcome": "passed",
+          "seconds": 18.885
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_fps_indoor_warp_edges.py::test_other_warp_edges_redirect_end_middle_end_instead_of_neighbor",
+      "covered_nodes": [
+        "tests/test_fps_indoor_warp_edges.py::test_other_warp_edges_redirect_end_middle_end_instead_of_neighbor"
+      ],
+      "launcher_exit": 0,
+      "pure_guard_violation": false,
+      "active_seconds": 12.743,
+      "effective_outer_cap_seconds": 660,
+      "controller_requested_outer_cap_seconds": null,
+      "aggregate_child_budget_seconds": null,
+      "aborted_before_lock": false,
+      "attempt_classification": null,
+      "outcomes": [
+        {
+          "name": "test_other_warp_edges_redirect_end_middle_end_instead_of_neighbor",
+          "outcome": "passed",
+          "seconds": 12.468
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_fps_interior.py::test_fits_read_each_shape_from_its_own_pixels",
+      "covered_nodes": [
+        "tests/test_fps_interior.py::test_fits_read_each_shape_from_its_own_pixels"
+      ],
+      "launcher_exit": 0,
+      "pure_guard_violation": false,
+      "active_seconds": 1.158,
+      "effective_outer_cap_seconds": 960,
+      "controller_requested_outer_cap_seconds": null,
+      "aggregate_child_budget_seconds": null,
+      "aborted_before_lock": false,
+      "attempt_classification": null,
+      "outcomes": [
+        {
+          "name": "test_fits_read_each_shape_from_its_own_pixels",
+          "outcome": "passed",
+          "seconds": 0.879
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_fps_interior.py::test_dinks_house_stands_solid_with_no_sky_and_a_door",
+      "covered_nodes": [
+        "tests/test_fps_interior.py::test_dinks_house_stands_solid_with_no_sky_and_a_door"
+      ],
+      "launcher_exit": 0,
+      "pure_guard_violation": false,
+      "active_seconds": 5.158,
+      "effective_outer_cap_seconds": 960,
+      "controller_requested_outer_cap_seconds": null,
+      "aggregate_child_budget_seconds": null,
+      "aborted_before_lock": false,
+      "attempt_classification": null,
+      "outcomes": [
+        {
+          "name": "test_dinks_house_stands_solid_with_no_sky_and_a_door",
+          "outcome": "passed",
+          "seconds": 4.884
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_fps_landing.py::test_clearance_band_landing_does_not_trap_player",
+      "covered_nodes": [
+        "tests/test_fps_landing.py::test_clearance_band_landing_does_not_trap_player"
+      ],
+      "launcher_exit": 0,
+      "pure_guard_violation": false,
+      "active_seconds": 4.792,
+      "effective_outer_cap_seconds": 600,
+      "controller_requested_outer_cap_seconds": null,
+      "aggregate_child_budget_seconds": null,
+      "aborted_before_lock": false,
+      "attempt_classification": null,
+      "outcomes": [
+        {
+          "name": "test_clearance_band_landing_does_not_trap_player",
+          "outcome": "passed",
+          "seconds": 4.503
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_fps_landmarks.py::test_both_landmarks_are_on_the_screen",
+      "covered_nodes": [
+        "tests/test_fps_landmarks.py::test_both_landmarks_are_on_the_screen"
+      ],
+      "launcher_exit": 0,
+      "pure_guard_violation": false,
+      "active_seconds": 5.239,
+      "effective_outer_cap_seconds": 960,
+      "controller_requested_outer_cap_seconds": null,
+      "aggregate_child_budget_seconds": null,
+      "aborted_before_lock": false,
+      "attempt_classification": null,
+      "outcomes": [
+        {
+          "name": "test_both_landmarks_are_on_the_screen",
+          "outcome": "passed",
+          "seconds": 4.975
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_fps_landmarks.py::test_a_landmark_is_a_solid_not_a_card[save-ring]",
+      "covered_nodes": [
+        "tests/test_fps_landmarks.py::test_a_landmark_is_a_solid_not_a_card[save-ring]"
+      ],
+      "launcher_exit": 0,
+      "pure_guard_violation": false,
+      "active_seconds": 5.242,
+      "effective_outer_cap_seconds": 960,
+      "controller_requested_outer_cap_seconds": null,
+      "aggregate_child_budget_seconds": null,
+      "aborted_before_lock": false,
+      "attempt_classification": null,
+      "outcomes": [
+        {
+          "name": "test_a_landmark_is_a_solid_not_a_card[save-ring]",
+          "outcome": "passed",
+          "seconds": 4.979
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_fps_landmarks.py::test_the_save_machine_is_not_the_same_from_two_sides_and_keeps_its_script",
+      "covered_nodes": [
+        "tests/test_fps_landmarks.py::test_the_save_machine_is_not_the_same_from_two_sides_and_keeps_its_script"
+      ],
+      "launcher_exit": 0,
+      "pure_guard_violation": false,
+      "active_seconds": 5.338,
+      "effective_outer_cap_seconds": 960,
+      "controller_requested_outer_cap_seconds": null,
+      "aggregate_child_budget_seconds": null,
+      "aborted_before_lock": false,
+      "attempt_classification": null,
+      "outcomes": [
+        {
+          "name": "test_the_save_machine_is_not_the_same_from_two_sides_and_keeps_its_script",
+          "outcome": "passed",
+          "seconds": 5.072
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_fps_landmarks.py::test_the_well_has_a_body_the_rays_hit",
+      "covered_nodes": [
+        "tests/test_fps_landmarks.py::test_the_well_has_a_body_the_rays_hit"
+      ],
+      "launcher_exit": 0,
+      "pure_guard_violation": false,
+      "active_seconds": 5.227,
+      "effective_outer_cap_seconds": 960,
+      "controller_requested_outer_cap_seconds": null,
+      "aggregate_child_budget_seconds": null,
+      "aborted_before_lock": false,
+      "attempt_classification": null,
+      "outcomes": [
+        {
+          "name": "test_the_well_has_a_body_the_rays_hit",
+          "outcome": "passed",
+          "seconds": 4.977
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_fps_landmarks.py::test_the_well_keeps_its_sprite_until_its_base_reads",
+      "covered_nodes": [
+        "tests/test_fps_landmarks.py::test_the_well_keeps_its_sprite_until_its_base_reads"
+      ],
+      "launcher_exit": 0,
+      "pure_guard_violation": false,
+      "active_seconds": 5.347,
+      "effective_outer_cap_seconds": 960,
+      "controller_requested_outer_cap_seconds": null,
+      "aggregate_child_budget_seconds": null,
+      "aborted_before_lock": false,
+      "attempt_classification": null,
+      "outcomes": [
+        {
+          "name": "test_the_well_keeps_its_sprite_until_its_base_reads",
+          "outcome": "passed",
+          "seconds": 5.07
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_fps_landmarks.py::test_the_wells_roof_is_a_gable_not_a_flat_slab",
+      "covered_nodes": [
+        "tests/test_fps_landmarks.py::test_the_wells_roof_is_a_gable_not_a_flat_slab"
+      ],
+      "launcher_exit": 0,
+      "pure_guard_violation": false,
+      "active_seconds": 5.363,
+      "effective_outer_cap_seconds": 960,
+      "controller_requested_outer_cap_seconds": null,
+      "aggregate_child_budget_seconds": null,
+      "aborted_before_lock": false,
+      "attempt_classification": null,
+      "outcomes": [
+        {
+          "name": "test_the_wells_roof_is_a_gable_not_a_flat_slab",
+          "outcome": "passed",
+          "seconds": 5.076
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_fps_landmarks.py::test_the_wells_pitch_is_the_thatched_cottages",
+      "covered_nodes": [
+        "tests/test_fps_landmarks.py::test_the_wells_pitch_is_the_thatched_cottages"
+      ],
+      "launcher_exit": 0,
+      "pure_guard_violation": false,
+      "active_seconds": 5.345,
+      "effective_outer_cap_seconds": 960,
+      "controller_requested_outer_cap_seconds": null,
+      "aggregate_child_budget_seconds": null,
+      "aborted_before_lock": false,
+      "attempt_classification": null,
+      "outcomes": [
+        {
+          "name": "test_the_wells_pitch_is_the_thatched_cottages",
+          "outcome": "passed",
+          "seconds": 5.083
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_fps_map.py::test_original_map_ownership_and_keyboard_menu_inputs",
+      "covered_nodes": [
+        "tests/test_fps_map.py::test_original_map_ownership_and_keyboard_menu_inputs"
+      ],
+      "launcher_exit": 0,
+      "pure_guard_violation": false,
+      "active_seconds": 4.226,
+      "effective_outer_cap_seconds": 600,
+      "controller_requested_outer_cap_seconds": null,
+      "aggregate_child_budget_seconds": null,
+      "aborted_before_lock": false,
+      "attempt_classification": null,
+      "outcomes": [
+        {
+          "name": "test_original_map_ownership_and_keyboard_menu_inputs",
+          "outcome": "passed",
+          "seconds": 3.953
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_fps_melee_reach.py::test_fist_uses_original_target_hardbox_reach_and_barrel_script",
+      "covered_nodes": [
+        "tests/test_fps_melee_reach.py::test_fist_uses_original_target_hardbox_reach_and_barrel_script"
+      ],
+      "launcher_exit": 0,
+      "pure_guard_violation": false,
+      "active_seconds": 4.514,
+      "effective_outer_cap_seconds": 600,
+      "controller_requested_outer_cap_seconds": null,
+      "aggregate_child_budget_seconds": null,
+      "aborted_before_lock": false,
+      "attempt_classification": null,
+      "outcomes": [
+        {
+          "name": "test_fist_uses_original_target_hardbox_reach_and_barrel_script",
+          "outcome": "passed",
+          "seconds": 4.24
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_fps_milder_script.py::test_actual_pig_feed_script_keeps_offscreen_spawned_milder_visible",
+      "covered_nodes": [
+        "tests/test_fps_milder_script.py::test_actual_pig_feed_script_keeps_offscreen_spawned_milder_visible"
+      ],
+      "launcher_exit": 0,
+      "pure_guard_violation": false,
+      "active_seconds": 8.508,
+      "effective_outer_cap_seconds": 600,
+      "controller_requested_outer_cap_seconds": null,
+      "aggregate_child_budget_seconds": null,
+      "aborted_before_lock": false,
+      "attempt_classification": null,
+      "outcomes": [
+        {
+          "name": "test_actual_pig_feed_script_keeps_offscreen_spawned_milder_visible",
+          "outcome": "passed",
+          "seconds": 8.236
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_fps_mother_visibility.py::test_story_two_mother_dialogue_uses_and_restores_clear_camera",
+      "covered_nodes": [
+        "tests/test_fps_mother_visibility.py::test_story_two_mother_dialogue_uses_and_restores_clear_camera"
+      ],
+      "launcher_exit": 0,
+      "pure_guard_violation": false,
+      "active_seconds": 4.224,
+      "effective_outer_cap_seconds": 600,
+      "controller_requested_outer_cap_seconds": null,
+      "aggregate_child_budget_seconds": null,
+      "aborted_before_lock": false,
+      "attempt_classification": null,
+      "outcomes": [
+        {
+          "name": "test_story_two_mother_dialogue_uses_and_restores_clear_camera",
+          "outcome": "passed",
+          "seconds": 3.961
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_fps_mounted_posters.py::test_source_poster_rectangles_share_one_fitted_wall_front",
+      "covered_nodes": [
+        "tests/test_fps_mounted_posters.py::test_source_poster_rectangles_share_one_fitted_wall_front"
+      ],
+      "launcher_exit": 0,
+      "pure_guard_violation": false,
+      "active_seconds": 0.468,
+      "effective_outer_cap_seconds": 600,
+      "controller_requested_outer_cap_seconds": null,
+      "aggregate_child_budget_seconds": null,
+      "aborted_before_lock": false,
+      "attempt_classification": null,
+      "outcomes": [
+        {
+          "name": "test_source_poster_rectangles_share_one_fitted_wall_front",
+          "outcome": "passed",
+          "seconds": 0.127
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_fps_mounted_posters.py::test_native_mounted_poster_class",
+      "covered_nodes": [
+        "tests/test_fps_mounted_posters.py::test_native_mounted_poster_class"
+      ],
+      "launcher_exit": 0,
+      "pure_guard_violation": false,
+      "active_seconds": 4.632,
+      "effective_outer_cap_seconds": 600,
+      "controller_requested_outer_cap_seconds": null,
+      "aggregate_child_budget_seconds": null,
+      "aborted_before_lock": false,
+      "attempt_classification": null,
+      "outcomes": [
+        {
+          "name": "test_native_mounted_poster_class",
+          "outcome": "passed",
+          "seconds": 4.318
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_fps_neighbor_crossing.py::test_duck_preview_survives_real_w_key_boundary_crossing",
+      "covered_nodes": [
+        "tests/test_fps_neighbor_crossing.py::test_duck_preview_survives_real_w_key_boundary_crossing"
+      ],
+      "launcher_exit": 0,
+      "pure_guard_violation": false,
+      "active_seconds": 4.205,
+      "effective_outer_cap_seconds": 600,
+      "controller_requested_outer_cap_seconds": null,
+      "aggregate_child_budget_seconds": null,
+      "aborted_before_lock": false,
+      "attempt_classification": null,
+      "outcomes": [
+        {
+          "name": "test_duck_preview_survives_real_w_key_boundary_crossing",
+          "outcome": "passed",
+          "seconds": 3.947
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_fps_neighbor_startup.py::test_neighbour_startup_real_loads_disagree_with_editor_only_control",
+      "covered_nodes": [
+        "tests/test_fps_neighbor_startup.py::test_neighbour_startup_real_loads_disagree_with_editor_only_control"
+      ],
+      "launcher_exit": 0,
+      "pure_guard_violation": false,
+      "active_seconds": 17.566,
+      "effective_outer_cap_seconds": 600,
+      "controller_requested_outer_cap_seconds": null,
+      "aggregate_child_budget_seconds": null,
+      "aborted_before_lock": false,
+      "attempt_classification": null,
+      "outcomes": [
+        {
+          "name": "test_neighbour_startup_real_loads_disagree_with_editor_only_control",
+          "outcome": "passed",
+          "seconds": 17.312
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_fps_neighbor_startup_survey.py::test_all_outdoor_neighbor_startup_fixtures",
+      "covered_nodes": [
+        "tests/test_fps_neighbor_startup_survey.py::test_all_outdoor_neighbor_startup_fixtures"
+      ],
+      "launcher_exit": 0,
+      "pure_guard_violation": false,
+      "active_seconds": 32.755,
+      "effective_outer_cap_seconds": 1860,
+      "controller_requested_outer_cap_seconds": null,
+      "aggregate_child_budget_seconds": null,
+      "aborted_before_lock": false,
+      "attempt_classification": null,
+      "outcomes": [
+        {
+          "name": "test_all_outdoor_neighbor_startup_fixtures",
+          "outcome": "passed",
+          "seconds": 32.478
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_fps_neighbours.py::test_the_neighbours_draw_the_actors_the_map_places_on_them",
+      "covered_nodes": [
+        "tests/test_fps_neighbours.py::test_the_neighbours_draw_the_actors_the_map_places_on_them"
+      ],
+      "launcher_exit": 0,
+      "pure_guard_violation": false,
+      "active_seconds": 5.933,
+      "effective_outer_cap_seconds": 960,
+      "controller_requested_outer_cap_seconds": null,
+      "aggregate_child_budget_seconds": null,
+      "aborted_before_lock": false,
+      "attempt_classification": null,
+      "outcomes": [
+        {
+          "name": "test_the_neighbours_draw_the_actors_the_map_places_on_them",
+          "outcome": "passed",
+          "seconds": 5.629
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_fps_neighbours.py::test_a_neighbour_pig_shows_the_frame_drawn_for_its_facing_as_the_camera_sees_it[--face-FACE-cameras0]",
+      "covered_nodes": [
+        "tests/test_fps_neighbours.py::test_a_neighbour_pig_shows_the_frame_drawn_for_its_facing_as_the_camera_sees_it[--face-FACE-cameras0]"
+      ],
+      "launcher_exit": 0,
+      "pure_guard_violation": false,
+      "active_seconds": 5.342,
+      "effective_outer_cap_seconds": 960,
+      "controller_requested_outer_cap_seconds": null,
+      "aggregate_child_budget_seconds": null,
+      "aborted_before_lock": false,
+      "attempt_classification": null,
+      "outcomes": [
+        {
+          "name": "test_a_neighbour_pig_shows_the_frame_drawn_for_its_facing_as_the_camera_sees_it[--face-FACE-cameras0]",
+          "outcome": "passed",
+          "seconds": 5.068
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_fps_neighbours.py::test_a_neighbour_pig_shows_the_frame_drawn_for_its_facing_as_the_camera_sees_it[--live-LIVE-cameras1]",
+      "covered_nodes": [
+        "tests/test_fps_neighbours.py::test_a_neighbour_pig_shows_the_frame_drawn_for_its_facing_as_the_camera_sees_it[--live-LIVE-cameras1]"
+      ],
+      "launcher_exit": 0,
+      "pure_guard_violation": false,
+      "active_seconds": 6.269,
+      "effective_outer_cap_seconds": 960,
+      "controller_requested_outer_cap_seconds": null,
+      "aggregate_child_budget_seconds": null,
+      "aborted_before_lock": false,
+      "attempt_classification": null,
+      "outcomes": [
+        {
+          "name": "test_a_neighbour_pig_shows_the_frame_drawn_for_its_facing_as_the_camera_sees_it[--live-LIVE-cameras1]",
+          "outcome": "passed",
+          "seconds": 6.002
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_fps_neighbours.py::test_the_neighbour_pigs_are_in_the_picture_and_the_instrument_is_still",
+      "covered_nodes": [
+        "tests/test_fps_neighbours.py::test_the_neighbour_pigs_are_in_the_picture_and_the_instrument_is_still"
+      ],
+      "launcher_exit": 0,
+      "pure_guard_violation": false,
+      "active_seconds": 11.943,
+      "effective_outer_cap_seconds": 960,
+      "controller_requested_outer_cap_seconds": null,
+      "aggregate_child_budget_seconds": null,
+      "aborted_before_lock": false,
+      "attempt_classification": null,
+      "outcomes": [
+        {
+          "name": "test_the_neighbour_pigs_are_in_the_picture_and_the_instrument_is_still",
+          "outcome": "passed",
+          "seconds": 11.699
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_fps_opening_polish.py::test_opening_polish_fixture_headless",
+      "covered_nodes": [
+        "tests/test_fps_opening_polish.py::test_opening_polish_fixture_headless"
+      ],
+      "launcher_exit": 0,
+      "pure_guard_violation": false,
+      "active_seconds": 4.101,
+      "effective_outer_cap_seconds": 600,
+      "controller_requested_outer_cap_seconds": null,
+      "aggregate_child_budget_seconds": null,
+      "aborted_before_lock": false,
+      "attempt_classification": null,
+      "outcomes": [
+        {
+          "name": "test_opening_polish_fixture_headless",
+          "outcome": "passed",
+          "seconds": 3.855
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_fps_opening_polish.py::test_opening_polish_rendered_fixture",
+      "covered_nodes": [
+        "tests/test_fps_opening_polish.py::test_opening_polish_rendered_fixture"
+      ],
+      "launcher_exit": 0,
+      "pure_guard_violation": false,
+      "active_seconds": 11.357,
+      "effective_outer_cap_seconds": 600,
+      "controller_requested_outer_cap_seconds": null,
+      "aggregate_child_budget_seconds": null,
+      "aborted_before_lock": false,
+      "attempt_classification": null,
+      "outcomes": [
+        {
+          "name": "test_opening_polish_rendered_fixture",
+          "outcome": "passed",
+          "seconds": 11.1
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_fps_player_shadow.py::test_player_shadow_tracks_source_frame_sun_position_and_size",
+      "covered_nodes": [
+        "tests/test_fps_player_shadow.py::test_player_shadow_tracks_source_frame_sun_position_and_size"
+      ],
+      "launcher_exit": 0,
+      "pure_guard_violation": false,
+      "active_seconds": 3.749,
+      "effective_outer_cap_seconds": 600,
+      "controller_requested_outer_cap_seconds": null,
+      "aggregate_child_budget_seconds": null,
+      "aborted_before_lock": false,
+      "attempt_classification": null,
+      "outcomes": [
+        {
+          "name": "test_player_shadow_tracks_source_frame_sun_position_and_size",
+          "outcome": "passed",
+          "seconds": 3.486
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_fps_props.py::test_every_fitted_prop_is_a_solid",
+      "covered_nodes": [
+        "tests/test_fps_props.py::test_every_fitted_prop_is_a_solid"
+      ],
+      "launcher_exit": 0,
+      "pure_guard_violation": false,
+      "active_seconds": 11.026,
+      "effective_outer_cap_seconds": 1860,
+      "controller_requested_outer_cap_seconds": null,
+      "aggregate_child_budget_seconds": null,
+      "aborted_before_lock": false,
+      "attempt_classification": null,
+      "outcomes": [
+        {
+          "name": "test_every_fitted_prop_is_a_solid",
+          "outcome": "passed",
+          "seconds": 10.764
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_fps_props.py::test_the_pig_feed_sack_and_the_pie_are_solids_as_deep_as_they_are_wide",
+      "covered_nodes": [
+        "tests/test_fps_props.py::test_the_pig_feed_sack_and_the_pie_are_solids_as_deep_as_they_are_wide"
+      ],
+      "launcher_exit": 0,
+      "pure_guard_violation": false,
+      "active_seconds": 12.84,
+      "effective_outer_cap_seconds": 1860,
+      "controller_requested_outer_cap_seconds": 1860,
+      "aggregate_child_budget_seconds": null,
+      "aborted_before_lock": false,
+      "attempt_classification": null,
+      "outcomes": [
+        {
+          "name": "test_the_pig_feed_sack_and_the_pie_are_solids_as_deep_as_they_are_wide",
+          "outcome": "passed",
+          "seconds": 12.551
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_fps_props.py::test_a_barrel_stands_round",
+      "covered_nodes": [
+        "tests/test_fps_props.py::test_a_barrel_stands_round"
+      ],
+      "launcher_exit": 0,
+      "pure_guard_violation": false,
+      "active_seconds": 11.12,
+      "effective_outer_cap_seconds": 1860,
+      "controller_requested_outer_cap_seconds": 1860,
+      "aggregate_child_budget_seconds": null,
+      "aborted_before_lock": false,
+      "attempt_classification": null,
+      "outcomes": [
+        {
+          "name": "test_a_barrel_stands_round",
+          "outcome": "passed",
+          "seconds": 10.857
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_fps_props.py::test_the_camera_never_stands_inside_a_solid_prop",
+      "covered_nodes": [
+        "tests/test_fps_props.py::test_the_camera_never_stands_inside_a_solid_prop"
+      ],
+      "launcher_exit": 0,
+      "pure_guard_violation": false,
+      "active_seconds": 13.359,
+      "effective_outer_cap_seconds": 1860,
+      "controller_requested_outer_cap_seconds": 1860,
+      "aggregate_child_budget_seconds": null,
+      "aborted_before_lock": false,
+      "attempt_classification": null,
+      "outcomes": [
+        {
+          "name": "test_the_camera_never_stands_inside_a_solid_prop",
+          "outcome": "passed",
+          "seconds": 12.987
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_fps_props.py::test_a_prop_follows_the_frame_its_sequence_shows",
+      "covered_nodes": [
+        "tests/test_fps_props.py::test_a_prop_follows_the_frame_its_sequence_shows"
+      ],
+      "launcher_exit": 0,
+      "pure_guard_violation": false,
+      "active_seconds": 11.112,
+      "effective_outer_cap_seconds": 1860,
+      "controller_requested_outer_cap_seconds": 1860,
+      "aggregate_child_budget_seconds": null,
+      "aborted_before_lock": false,
+      "attempt_classification": null,
+      "outcomes": [
+        {
+          "name": "test_a_prop_follows_the_frame_its_sequence_shows",
+          "outcome": "passed",
+          "seconds": 10.856
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_fps_props.py::test_props_the_player_walks_through_are_no_deeper_than_their_footprint",
+      "covered_nodes": [
+        "tests/test_fps_props.py::test_props_the_player_walks_through_are_no_deeper_than_their_footprint"
+      ],
+      "launcher_exit": 0,
+      "pure_guard_violation": false,
+      "active_seconds": 11.102,
+      "effective_outer_cap_seconds": 1860,
+      "controller_requested_outer_cap_seconds": 1860,
+      "aggregate_child_budget_seconds": null,
+      "aborted_before_lock": false,
+      "attempt_classification": null,
+      "outcomes": [
+        {
+          "name": "test_props_the_player_walks_through_are_no_deeper_than_their_footprint",
+          "outcome": "passed",
+          "seconds": 10.857
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_fps_reload.py::test_structural_fps_visuals_survive_repeated_save_load",
+      "covered_nodes": [
+        "tests/test_fps_reload.py::test_structural_fps_visuals_survive_repeated_save_load"
+      ],
+      "launcher_exit": 0,
+      "pure_guard_violation": false,
+      "active_seconds": 7.597,
+      "effective_outer_cap_seconds": 600,
+      "controller_requested_outer_cap_seconds": 600,
+      "aggregate_child_budget_seconds": null,
+      "aborted_before_lock": false,
+      "attempt_classification": null,
+      "outcomes": [
+        {
+          "name": "test_structural_fps_visuals_survive_repeated_save_load",
+          "outcome": "passed",
+          "seconds": 7.311
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_fps_seams.py::test_every_billboard_part_is_built_as_the_independent_reading_says",
+      "covered_nodes": [
+        "tests/test_fps_seams.py::test_every_billboard_part_is_built_as_the_independent_reading_says"
+      ],
+      "launcher_exit": 0,
+      "pure_guard_violation": false,
+      "active_seconds": 9.012,
+      "effective_outer_cap_seconds": 1560,
+      "controller_requested_outer_cap_seconds": 960,
+      "aggregate_child_budget_seconds": 1500,
+      "aborted_before_lock": false,
+      "attempt_classification": null,
+      "outcomes": [
+        {
+          "name": "test_every_billboard_part_is_built_as_the_independent_reading_says",
+          "outcome": "passed",
+          "seconds": 8.75
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_fps_seams.py::test_trees_stand_on_the_ground_once[376]",
+      "covered_nodes": [
+        "tests/test_fps_seams.py::test_trees_stand_on_the_ground_once[376]"
+      ],
+      "launcher_exit": 0,
+      "pure_guard_violation": false,
+      "active_seconds": 5.156,
+      "effective_outer_cap_seconds": 960,
+      "controller_requested_outer_cap_seconds": 960,
+      "aggregate_child_budget_seconds": 900,
+      "aborted_before_lock": false,
+      "attempt_classification": null,
+      "outcomes": [
+        {
+          "name": "test_trees_stand_on_the_ground_once[376]",
+          "outcome": "passed",
+          "seconds": 4.884
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_fps_seams.py::test_trees_stand_on_the_ground_once[251]",
+      "covered_nodes": [
+        "tests/test_fps_seams.py::test_trees_stand_on_the_ground_once[251]"
+      ],
+      "launcher_exit": 0,
+      "pure_guard_violation": false,
+      "active_seconds": 5.17,
+      "effective_outer_cap_seconds": 960,
+      "controller_requested_outer_cap_seconds": 960,
+      "aggregate_child_budget_seconds": 900,
+      "aborted_before_lock": false,
+      "attempt_classification": null,
+      "outcomes": [
+        {
+          "name": "test_trees_stand_on_the_ground_once[251]",
+          "outcome": "passed",
+          "seconds": 4.892
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_fps_seams.py::test_trees_stand_on_the_ground_once[319]",
+      "covered_nodes": [
+        "tests/test_fps_seams.py::test_trees_stand_on_the_ground_once[319]"
+      ],
+      "launcher_exit": 0,
+      "pure_guard_violation": false,
+      "active_seconds": 5.203,
+      "effective_outer_cap_seconds": 960,
+      "controller_requested_outer_cap_seconds": 960,
+      "aggregate_child_budget_seconds": 900,
+      "aborted_before_lock": false,
+      "attempt_classification": null,
+      "outcomes": [
+        {
+          "name": "test_trees_stand_on_the_ground_once[319]",
+          "outcome": "passed",
+          "seconds": 4.893
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_fps_seams.py::test_trees_stand_on_the_ground_once[451]",
+      "covered_nodes": [
+        "tests/test_fps_seams.py::test_trees_stand_on_the_ground_once[451]"
+      ],
+      "launcher_exit": 0,
+      "pure_guard_violation": false,
+      "active_seconds": 10.933,
+      "effective_outer_cap_seconds": 960,
+      "controller_requested_outer_cap_seconds": 960,
+      "aggregate_child_budget_seconds": 900,
+      "aborted_before_lock": false,
+      "attempt_classification": null,
+      "outcomes": [
+        {
+          "name": "test_trees_stand_on_the_ground_once[451]",
+          "outcome": "passed",
+          "seconds": 10.659
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_fps_seams.py::test_trees_stand_on_the_ground_once[768]",
+      "covered_nodes": [
+        "tests/test_fps_seams.py::test_trees_stand_on_the_ground_once[768]"
+      ],
+      "launcher_exit": 0,
+      "pure_guard_violation": false,
+      "active_seconds": 6.71,
+      "effective_outer_cap_seconds": 960,
+      "controller_requested_outer_cap_seconds": 960,
+      "aggregate_child_budget_seconds": 900,
+      "aborted_before_lock": false,
+      "attempt_classification": null,
+      "outcomes": [
+        {
+          "name": "test_trees_stand_on_the_ground_once[768]",
+          "outcome": "passed",
+          "seconds": 6.4
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_fps_sideflip.py::test_the_flip_is_spread_over_the_band_and_the_old_code_pops[260-284-True]",
+      "covered_nodes": [
+        "tests/test_fps_sideflip.py::test_the_flip_is_spread_over_the_band_and_the_old_code_pops[260-284-True]"
+      ],
+      "launcher_exit": 0,
+      "pure_guard_violation": false,
+      "active_seconds": 65.619,
+      "effective_outer_cap_seconds": 1860,
+      "controller_requested_outer_cap_seconds": 960,
+      "aggregate_child_budget_seconds": 1800,
+      "aborted_before_lock": false,
+      "attempt_classification": null,
+      "outcomes": [
+        {
+          "name": "test_the_flip_is_spread_over_the_band_and_the_old_code_pops[260-284-True]",
+          "outcome": "passed",
+          "seconds": 65.349
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_fps_sideflip.py::test_the_flip_is_spread_over_the_band_and_the_old_code_pops[0-21-True]",
+      "covered_nodes": [
+        "tests/test_fps_sideflip.py::test_the_flip_is_spread_over_the_band_and_the_old_code_pops[0-21-True]"
+      ],
+      "launcher_exit": 0,
+      "pure_guard_violation": false,
+      "active_seconds": 53.461,
+      "effective_outer_cap_seconds": 1860,
+      "controller_requested_outer_cap_seconds": 960,
+      "aggregate_child_budget_seconds": 1800,
+      "aborted_before_lock": false,
+      "attempt_classification": null,
+      "outcomes": [
+        {
+          "name": "test_the_flip_is_spread_over_the_band_and_the_old_code_pops[0-21-True]",
+          "outcome": "passed",
+          "seconds": 53.2
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_fps_sideflip.py::test_cameras_beyond_the_band_get_the_old_picture_and_the_controls_go_red",
+      "covered_nodes": [
+        "tests/test_fps_sideflip.py::test_cameras_beyond_the_band_get_the_old_picture_and_the_controls_go_red"
+      ],
+      "launcher_exit": 0,
+      "pure_guard_violation": false,
+      "active_seconds": 90.072,
+      "effective_outer_cap_seconds": 5460,
+      "controller_requested_outer_cap_seconds": 960,
+      "aggregate_child_budget_seconds": 5400,
+      "aborted_before_lock": false,
+      "attempt_classification": null,
+      "outcomes": [
+        {
+          "name": "test_cameras_beyond_the_band_get_the_old_picture_and_the_controls_go_red",
+          "outcome": "passed",
+          "seconds": 89.794
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_fps_source_interaction_body.py::test_source_interaction_body_native",
+      "covered_nodes": [
+        "tests/test_fps_source_interaction_body.py::test_source_interaction_body_native"
+      ],
+      "launcher_exit": 0,
+      "pure_guard_violation": false,
+      "active_seconds": 1.247,
+      "effective_outer_cap_seconds": 600,
+      "controller_requested_outer_cap_seconds": 600,
+      "aggregate_child_budget_seconds": null,
+      "aborted_before_lock": false,
+      "attempt_classification": null,
+      "outcomes": [
+        {
+          "name": "test_source_interaction_body_native",
+          "outcome": "passed",
+          "seconds": 0.961
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_fps_sprite_walls.py::test_art_ownership_height_geometry_and_tile_subtraction",
+      "covered_nodes": [
+        "tests/test_fps_sprite_walls.py::test_art_ownership_height_geometry_and_tile_subtraction"
+      ],
+      "launcher_exit": 0,
+      "pure_guard_violation": false,
+      "active_seconds": 1.0,
+      "effective_outer_cap_seconds": 600,
+      "controller_requested_outer_cap_seconds": 600,
+      "aggregate_child_budget_seconds": null,
+      "aborted_before_lock": false,
+      "attempt_classification": null,
+      "outcomes": [
+        {
+          "name": "test_art_ownership_height_geometry_and_tile_subtraction",
+          "outcome": "passed",
+          "seconds": 0.653
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_fps_sprite_walls.py::test_native_wall_runtime",
+      "covered_nodes": [
+        "tests/test_fps_sprite_walls.py::test_native_wall_runtime"
+      ],
+      "launcher_exit": 0,
+      "pure_guard_violation": false,
+      "active_seconds": 94.125,
+      "effective_outer_cap_seconds": 600,
+      "controller_requested_outer_cap_seconds": 600,
+      "aggregate_child_budget_seconds": null,
+      "aborted_before_lock": false,
+      "attempt_classification": null,
+      "outcomes": [
+        {
+          "name": "test_native_wall_runtime",
+          "outcome": "passed",
+          "seconds": 93.624
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_fps_stuck.py::test_pig_farm_transition_walkable_from_source_collision",
+      "covered_nodes": [
+        "tests/test_fps_stuck.py::test_pig_farm_transition_walkable_from_source_collision"
+      ],
+      "launcher_exit": 0,
+      "pure_guard_violation": false,
+      "active_seconds": 14.304,
+      "effective_outer_cap_seconds": 600,
+      "controller_requested_outer_cap_seconds": 600,
+      "aggregate_child_budget_seconds": null,
+      "aborted_before_lock": false,
+      "attempt_classification": null,
+      "outcomes": [
+        {
+          "name": "test_pig_farm_transition_walkable_from_source_collision",
+          "outcome": "passed",
+          "seconds": 13.826
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_fps_trees.py::test_the_games_flags_equal_an_independent_reading_of_the_map",
+      "covered_nodes": [
+        "tests/test_fps_trees.py::test_the_games_flags_equal_an_independent_reading_of_the_map"
+      ],
+      "launcher_exit": 0,
+      "pure_guard_violation": false,
+      "active_seconds": 94.147,
+      "effective_outer_cap_seconds": 960,
+      "controller_requested_outer_cap_seconds": 960,
+      "aggregate_child_budget_seconds": 600,
+      "aborted_before_lock": false,
+      "attempt_classification": null,
+      "outcomes": [
+        {
+          "name": "test_the_games_flags_equal_an_independent_reading_of_the_map",
+          "outcome": "passed",
+          "seconds": 93.792
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_fps_trees.py::test_the_draw_order_holds_in_rendered_scenes_and_the_controls_go_red",
+      "covered_nodes": [
+        "tests/test_fps_trees.py::test_the_draw_order_holds_in_rendered_scenes_and_the_controls_go_red"
+      ],
+      "launcher_exit": 0,
+      "pure_guard_violation": false,
+      "active_seconds": 49.171,
+      "effective_outer_cap_seconds": 960,
+      "controller_requested_outer_cap_seconds": 960,
+      "aggregate_child_budget_seconds": 900,
+      "aborted_before_lock": false,
+      "attempt_classification": null,
+      "outcomes": [
+        {
+          "name": "test_the_draw_order_holds_in_rendered_scenes_and_the_controls_go_red",
+          "outcome": "passed",
+          "seconds": 48.895
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_fps_walk.py::test_opening_route_with_three_dimensional_collision",
+      "covered_nodes": [
+        "tests/test_fps_walk.py::test_opening_route_with_three_dimensional_collision"
+      ],
+      "launcher_exit": 0,
+      "pure_guard_violation": false,
+      "active_seconds": 12.975,
+      "effective_outer_cap_seconds": 600,
+      "controller_requested_outer_cap_seconds": 600,
+      "aggregate_child_budget_seconds": null,
+      "aborted_before_lock": false,
+      "attempt_classification": null,
+      "outcomes": [
+        {
+          "name": "test_opening_route_with_three_dimensional_collision",
+          "outcome": "passed",
+          "seconds": 12.71
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_fps_wall.py::test_player_stops_at_drawn_walls_and_doors_open",
+      "covered_nodes": [
+        "tests/test_fps_wall.py::test_player_stops_at_drawn_walls_and_doors_open"
+      ],
+      "launcher_exit": 0,
+      "pure_guard_violation": false,
+      "active_seconds": 16.369,
+      "effective_outer_cap_seconds": 600,
+      "controller_requested_outer_cap_seconds": 600,
+      "aggregate_child_budget_seconds": null,
+      "aborted_before_lock": false,
+      "attempt_classification": null,
+      "outcomes": [
+        {
+          "name": "test_player_stops_at_drawn_walls_and_doors_open",
+          "outcome": "passed",
+          "seconds": 16.082
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_fps_whole_fir.py::test_fit_matches_original_pixels",
+      "covered_nodes": [
+        "tests/test_fps_whole_fir.py::test_fit_matches_original_pixels"
+      ],
+      "launcher_exit": 0,
+      "pure_guard_violation": false,
+      "active_seconds": 0.458,
+      "effective_outer_cap_seconds": 600,
+      "controller_requested_outer_cap_seconds": 600,
+      "aggregate_child_budget_seconds": null,
+      "aborted_before_lock": false,
+      "attempt_classification": null,
+      "outcomes": [
+        {
+          "name": "test_fit_matches_original_pixels",
+          "outcome": "passed",
+          "seconds": 0.149
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_fps_whole_fir.py::test_all_source_parts_build_complete_geometry",
+      "covered_nodes": [
+        "tests/test_fps_whole_fir.py::test_all_source_parts_build_complete_geometry"
+      ],
+      "launcher_exit": 0,
+      "pure_guard_violation": false,
+      "active_seconds": 12.42,
+      "effective_outer_cap_seconds": 600,
+      "controller_requested_outer_cap_seconds": 600,
+      "aggregate_child_budget_seconds": null,
+      "aborted_before_lock": false,
+      "attempt_classification": null,
+      "outcomes": [
+        {
+          "name": "test_all_source_parts_build_complete_geometry",
+          "outcome": "passed",
+          "seconds": 12.114
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_fps_whole_fir.py::test_live_host_replaces_partial_art_in_439_and_768_views",
+      "covered_nodes": [
+        "tests/test_fps_whole_fir.py::test_live_host_replaces_partial_art_in_439_and_768_views"
+      ],
+      "launcher_exit": 0,
+      "pure_guard_violation": false,
+      "active_seconds": 4.299,
+      "effective_outer_cap_seconds": 600,
+      "controller_requested_outer_cap_seconds": 600,
+      "aggregate_child_budget_seconds": null,
+      "aborted_before_lock": false,
+      "attempt_classification": null,
+      "outcomes": [
+        {
+          "name": "test_live_host_replaces_partial_art_in_439_and_768_views",
+          "outcome": "passed",
+          "seconds": 4.041
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_fps_world.py::test_first_person_renderer_traverses_all_imported_screens",
+      "covered_nodes": [
+        "tests/test_fps_world.py::test_first_person_renderer_traverses_all_imported_screens"
+      ],
+      "launcher_exit": 0,
+      "pure_guard_violation": false,
+      "active_seconds": 177.926,
+      "effective_outer_cap_seconds": 600,
+      "controller_requested_outer_cap_seconds": 600,
+      "aggregate_child_budget_seconds": null,
+      "aborted_before_lock": false,
+      "attempt_classification": null,
+      "outcomes": [
+        {
+          "name": "test_first_person_renderer_traverses_all_imported_screens",
+          "outcome": "passed",
+          "seconds": 177.609
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_game_ui.py::test_game_ui_parses_with_supported_godot",
+      "covered_nodes": [
+        "tests/test_game_ui.py::test_game_ui_parses_with_supported_godot"
+      ],
+      "launcher_exit": 0,
+      "pure_guard_violation": false,
+      "active_seconds": 0.647,
+      "effective_outer_cap_seconds": 600,
+      "controller_requested_outer_cap_seconds": 600,
+      "aggregate_child_budget_seconds": null,
+      "aborted_before_lock": false,
+      "attempt_classification": null,
+      "outcomes": [
+        {
+          "name": "test_game_ui_parses_with_supported_godot",
+          "outcome": "passed",
+          "seconds": 0.324
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_game_ui.py::test_controller_can_navigate_and_activate_menu",
+      "covered_nodes": [
+        "tests/test_game_ui.py::test_controller_can_navigate_and_activate_menu"
+      ],
+      "launcher_exit": 0,
+      "pure_guard_violation": false,
+      "active_seconds": 1.143,
+      "effective_outer_cap_seconds": 600,
+      "controller_requested_outer_cap_seconds": 600,
+      "aggregate_child_budget_seconds": null,
+      "aborted_before_lock": false,
+      "attempt_classification": null,
+      "outcomes": [
+        {
+          "name": "test_controller_can_navigate_and_activate_menu",
+          "outcome": "passed",
+          "seconds": 0.8
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_game_ui.py::test_modal_ui_consumes_pointer_events_and_has_focusable_controls",
+      "covered_nodes": [
+        "tests/test_game_ui.py::test_modal_ui_consumes_pointer_events_and_has_focusable_controls"
+      ],
+      "launcher_exit": 0,
+      "pure_guard_violation": false,
+      "active_seconds": 0.432,
+      "effective_outer_cap_seconds": 600,
+      "controller_requested_outer_cap_seconds": 600,
+      "aggregate_child_budget_seconds": null,
+      "aborted_before_lock": false,
+      "attempt_classification": null,
+      "outcomes": [
+        {
+          "name": "test_modal_ui_consumes_pointer_events_and_has_focusable_controls",
+          "outcome": "passed",
+          "seconds": 0.002
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_game_ui.py::test_controller_callbacks_bind_each_choice_and_setting_key",
+      "covered_nodes": [
+        "tests/test_game_ui.py::test_controller_callbacks_bind_each_choice_and_setting_key"
+      ],
+      "launcher_exit": 0,
+      "pure_guard_violation": false,
+      "active_seconds": 0.375,
+      "effective_outer_cap_seconds": 600,
+      "controller_requested_outer_cap_seconds": 600,
+      "aggregate_child_budget_seconds": null,
+      "aborted_before_lock": false,
+      "attempt_classification": null,
+      "outcomes": [
+        {
+          "name": "test_controller_callbacks_bind_each_choice_and_setting_key",
+          "outcome": "passed",
+          "seconds": 0.002
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_game_ui.py::test_public_support_link_remains_in_credits",
+      "covered_nodes": [
+        "tests/test_game_ui.py::test_public_support_link_remains_in_credits"
+      ],
+      "launcher_exit": 0,
+      "pure_guard_violation": false,
+      "active_seconds": 0.293,
+      "effective_outer_cap_seconds": 600,
+      "controller_requested_outer_cap_seconds": 600,
+      "aggregate_child_budget_seconds": null,
+      "aborted_before_lock": false,
+      "attempt_classification": null,
+      "outcomes": [
+        {
+          "name": "test_public_support_link_remains_in_credits",
+          "outcome": "passed",
+          "seconds": 0.001
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_native_profile.py::test_default_native_subprocess_profile_is_disposable",
+      "covered_nodes": [
+        "tests/test_native_profile.py::test_default_native_subprocess_profile_is_disposable"
+      ],
+      "launcher_exit": 0,
+      "pure_guard_violation": false,
+      "active_seconds": 0.478,
+      "effective_outer_cap_seconds": 600,
+      "controller_requested_outer_cap_seconds": 600,
+      "aggregate_child_budget_seconds": null,
+      "aborted_before_lock": false,
+      "attempt_classification": null,
+      "outcomes": [
+        {
+          "name": "test_default_native_subprocess_profile_is_disposable",
+          "outcome": "passed",
+          "seconds": 0.207
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_native_requirements.py::test_ci_rejects_a_missing_godot_before_any_test_can_skip",
+      "covered_nodes": [
+        "tests/test_native_requirements.py::test_ci_rejects_a_missing_godot_before_any_test_can_skip"
+      ],
+      "launcher_exit": 0,
+      "pure_guard_violation": false,
+      "active_seconds": 0.415,
+      "effective_outer_cap_seconds": 600,
+      "controller_requested_outer_cap_seconds": 600,
+      "aggregate_child_budget_seconds": null,
+      "aborted_before_lock": false,
+      "attempt_classification": null,
+      "outcomes": [
+        {
+          "name": "test_ci_rejects_a_missing_godot_before_any_test_can_skip",
+          "outcome": "passed",
+          "seconds": 0.152
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_native_requirements.py::test_ci_rejects_missing_xvfb_before_any_test_can_skip",
+      "covered_nodes": [
+        "tests/test_native_requirements.py::test_ci_rejects_missing_xvfb_before_any_test_can_skip"
+      ],
+      "launcher_exit": 0,
+      "pure_guard_violation": false,
+      "active_seconds": 0.45,
+      "effective_outer_cap_seconds": 600,
+      "controller_requested_outer_cap_seconds": 600,
+      "aggregate_child_budget_seconds": null,
+      "aborted_before_lock": false,
+      "attempt_classification": null,
+      "outcomes": [
+        {
+          "name": "test_ci_rejects_missing_xvfb_before_any_test_can_skip",
+          "outcome": "passed",
+          "seconds": 0.171
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_nut_pickup.py::test_original_runtime_nut_touch_trigger",
+      "covered_nodes": [
+        "tests/test_nut_pickup.py::test_original_runtime_nut_touch_trigger"
+      ],
+      "launcher_exit": 0,
+      "pure_guard_violation": false,
+      "active_seconds": 3.709,
+      "effective_outer_cap_seconds": 600,
+      "controller_requested_outer_cap_seconds": 600,
+      "aggregate_child_budget_seconds": null,
+      "aborted_before_lock": false,
+      "attempt_classification": null,
+      "outcomes": [
+        {
+          "name": "test_original_runtime_nut_touch_trigger",
+          "outcome": "passed",
+          "seconds": 3.309
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_playtest.py::test_playtest_ticks_pause_and_headless_screenshot_rejection",
+      "covered_nodes": [
+        "tests/test_playtest.py::test_playtest_ticks_pause_and_headless_screenshot_rejection"
+      ],
+      "launcher_exit": 0,
+      "pure_guard_violation": false,
+      "active_seconds": 5.286,
+      "effective_outer_cap_seconds": 600,
+      "controller_requested_outer_cap_seconds": 600,
+      "aggregate_child_budget_seconds": null,
+      "aborted_before_lock": false,
+      "attempt_classification": null,
+      "outcomes": [
+        {
+          "name": "test_playtest_ticks_pause_and_headless_screenshot_rejection",
+          "outcome": "passed",
+          "seconds": 5.029
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_playtest.py::test_playtest_rejects_unbounded_or_non_integral_actions",
+      "covered_nodes": [
+        "tests/test_playtest.py::test_playtest_rejects_unbounded_or_non_integral_actions"
+      ],
+      "launcher_exit": 0,
+      "pure_guard_violation": false,
+      "active_seconds": 4.317,
+      "effective_outer_cap_seconds": 600,
+      "controller_requested_outer_cap_seconds": 600,
+      "aggregate_child_budget_seconds": null,
+      "aborted_before_lock": false,
+      "attempt_classification": null,
+      "outcomes": [
+        {
+          "name": "test_playtest_rejects_unbounded_or_non_integral_actions",
+          "outcome": "passed",
+          "seconds": 3.999
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_playtest.py::test_navigation_grid_is_read_only_and_keeps_solid_pigpen",
+      "covered_nodes": [
+        "tests/test_playtest.py::test_navigation_grid_is_read_only_and_keeps_solid_pigpen"
+      ],
+      "launcher_exit": 0,
+      "pure_guard_violation": false,
+      "active_seconds": 5.675,
+      "effective_outer_cap_seconds": 600,
+      "controller_requested_outer_cap_seconds": 600,
+      "aggregate_child_budget_seconds": null,
+      "aborted_before_lock": false,
+      "attempt_classification": null,
+      "outcomes": [
+        {
+          "name": "test_navigation_grid_is_read_only_and_keeps_solid_pigpen",
+          "outcome": "passed",
+          "seconds": 5.392
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_playtest.py::test_headless_mouse_look_is_reported_as_unsupported",
+      "covered_nodes": [
+        "tests/test_playtest.py::test_headless_mouse_look_is_reported_as_unsupported"
+      ],
+      "launcher_exit": 0,
+      "pure_guard_violation": false,
+      "active_seconds": 4.353,
+      "effective_outer_cap_seconds": 600,
+      "controller_requested_outer_cap_seconds": 600,
+      "aggregate_child_budget_seconds": null,
+      "aborted_before_lock": false,
+      "attempt_classification": null,
+      "outcomes": [
+        {
+          "name": "test_headless_mouse_look_is_reported_as_unsupported",
+          "outcome": "passed",
+          "seconds": 3.948
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_playtest.py::test_invalid_startup_fails_and_retains_log",
+      "covered_nodes": [
+        "tests/test_playtest.py::test_invalid_startup_fails_and_retains_log"
+      ],
+      "launcher_exit": 0,
+      "pure_guard_violation": false,
+      "active_seconds": 3.954,
+      "effective_outer_cap_seconds": 600,
+      "controller_requested_outer_cap_seconds": 600,
+      "aggregate_child_budget_seconds": null,
+      "aborted_before_lock": false,
+      "attempt_classification": null,
+      "outcomes": [
+        {
+          "name": "test_invalid_startup_fails_and_retains_log",
+          "outcome": "passed",
+          "seconds": 3.638
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_playtest.py::test_campaign_boots_real_title_and_starts_with_menu_input",
+      "covered_nodes": [
+        "tests/test_playtest.py::test_campaign_boots_real_title_and_starts_with_menu_input"
+      ],
+      "launcher_exit": 0,
+      "pure_guard_violation": false,
+      "active_seconds": 6.717,
+      "effective_outer_cap_seconds": 600,
+      "controller_requested_outer_cap_seconds": 600,
+      "aggregate_child_budget_seconds": null,
+      "aborted_before_lock": false,
+      "attempt_classification": null,
+      "outcomes": [
+        {
+          "name": "test_campaign_boots_real_title_and_starts_with_menu_input",
+          "outcome": "passed",
+          "seconds": 6.315
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_playtest.py::test_title_quit_requires_explicit_expected_exit",
+      "covered_nodes": [
+        "tests/test_playtest.py::test_title_quit_requires_explicit_expected_exit"
+      ],
+      "launcher_exit": 0,
+      "pure_guard_violation": false,
+      "active_seconds": 6.649,
+      "effective_outer_cap_seconds": 600,
+      "controller_requested_outer_cap_seconds": 600,
+      "aggregate_child_budget_seconds": null,
+      "aborted_before_lock": false,
+      "attempt_classification": null,
+      "outcomes": [
+        {
+          "name": "test_title_quit_requires_explicit_expected_exit",
+          "outcome": "passed",
+          "seconds": 6.193
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_playtest.py::test_campaign_opening_dialogue_and_ui_save_reload",
+      "covered_nodes": [
+        "tests/test_playtest.py::test_campaign_opening_dialogue_and_ui_save_reload"
+      ],
+      "launcher_exit": 0,
+      "pure_guard_violation": false,
+      "active_seconds": 17.538,
+      "effective_outer_cap_seconds": 600,
+      "controller_requested_outer_cap_seconds": 600,
+      "aggregate_child_budget_seconds": null,
+      "aborted_before_lock": false,
+      "attempt_classification": null,
+      "outcomes": [
+        {
+          "name": "test_campaign_opening_dialogue_and_ui_save_reload",
+          "outcome": "passed",
+          "seconds": 17.024
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_playtest_qwen.py::test_invalid_action_is_inconclusive_and_retains_usage",
+      "covered_nodes": [
+        "tests/test_playtest_qwen.py::test_invalid_action_is_inconclusive_and_retains_usage"
+      ],
+      "launcher_exit": 0,
+      "pure_guard_violation": false,
+      "active_seconds": 0.369,
+      "effective_outer_cap_seconds": 600,
+      "controller_requested_outer_cap_seconds": 600,
+      "aggregate_child_budget_seconds": null,
+      "aborted_before_lock": false,
+      "attempt_classification": null,
+      "outcomes": [
+        {
+          "name": "test_invalid_action_is_inconclusive_and_retains_usage",
+          "outcome": "passed",
+          "seconds": 0.001
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_playtest_qwen.py::test_truncated_and_extra_fields_are_inconclusive",
+      "covered_nodes": [
+        "tests/test_playtest_qwen.py::test_truncated_and_extra_fields_are_inconclusive"
+      ],
+      "launcher_exit": 0,
+      "pure_guard_violation": false,
+      "active_seconds": 0.296,
+      "effective_outer_cap_seconds": 600,
+      "controller_requested_outer_cap_seconds": 600,
+      "aggregate_child_budget_seconds": null,
+      "aborted_before_lock": false,
+      "attempt_classification": null,
+      "outcomes": [
+        {
+          "name": "test_truncated_and_extra_fields_are_inconclusive",
+          "outcome": "passed",
+          "seconds": 0.001
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_playtest_qwen.py::test_runner_history_and_pause_protect_false_positive",
+      "covered_nodes": [
+        "tests/test_playtest_qwen.py::test_runner_history_and_pause_protect_false_positive"
+      ],
+      "launcher_exit": 0,
+      "pure_guard_violation": false,
+      "active_seconds": 0.292,
+      "effective_outer_cap_seconds": 600,
+      "controller_requested_outer_cap_seconds": 600,
+      "aggregate_child_budget_seconds": null,
+      "aborted_before_lock": false,
+      "attempt_classification": null,
+      "outcomes": [
+        {
+          "name": "test_runner_history_and_pause_protect_false_positive",
+          "outcome": "passed",
+          "seconds": 0.001
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_playtest_qwen.py::test_modal_movement_is_never_a_pass",
+      "covered_nodes": [
+        "tests/test_playtest_qwen.py::test_modal_movement_is_never_a_pass"
+      ],
+      "launcher_exit": 0,
+      "pure_guard_violation": false,
+      "active_seconds": 0.263,
+      "effective_outer_cap_seconds": 600,
+      "controller_requested_outer_cap_seconds": 600,
+      "aggregate_child_budget_seconds": null,
+      "aborted_before_lock": false,
+      "attempt_classification": null,
+      "outcomes": [
+        {
+          "name": "test_modal_movement_is_never_a_pass",
+          "outcome": "passed",
+          "seconds": 0.001
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_playtest_qwen.py::test_command_failure_budget_and_bridge_exception_are_reported",
+      "covered_nodes": [
+        "tests/test_playtest_qwen.py::test_command_failure_budget_and_bridge_exception_are_reported"
+      ],
+      "launcher_exit": 0,
+      "pure_guard_violation": false,
+      "active_seconds": 0.297,
+      "effective_outer_cap_seconds": 600,
+      "controller_requested_outer_cap_seconds": 600,
+      "aggregate_child_budget_seconds": null,
+      "aborted_before_lock": false,
+      "attempt_classification": null,
+      "outcomes": [
+        {
+          "name": "test_command_failure_budget_and_bridge_exception_are_reported",
+          "outcome": "passed",
+          "seconds": 0.001
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_playtest_restart.py::test_cold_continue_uses_earned_isolated_save",
+      "covered_nodes": [
+        "tests/test_playtest_restart.py::test_cold_continue_uses_earned_isolated_save"
+      ],
+      "launcher_exit": 0,
+      "pure_guard_violation": false,
+      "active_seconds": 17.666,
+      "effective_outer_cap_seconds": 600,
+      "controller_requested_outer_cap_seconds": 600,
+      "aggregate_child_budget_seconds": null,
+      "aborted_before_lock": false,
+      "attempt_classification": null,
+      "outcomes": [
+        {
+          "name": "test_cold_continue_uses_earned_isolated_save",
+          "outcome": "passed",
+          "seconds": 17.391
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_playtest_restart.py::test_bounded_death_and_restart_uses_actual_menu_input",
+      "covered_nodes": [
+        "tests/test_playtest_restart.py::test_bounded_death_and_restart_uses_actual_menu_input"
+      ],
+      "launcher_exit": 0,
+      "pure_guard_violation": false,
+      "active_seconds": 12.629,
+      "effective_outer_cap_seconds": 600,
+      "controller_requested_outer_cap_seconds": 600,
+      "aggregate_child_budget_seconds": null,
+      "aborted_before_lock": false,
+      "attempt_classification": null,
+      "outcomes": [
+        {
+          "name": "test_bounded_death_and_restart_uses_actual_menu_input",
+          "outcome": "passed",
+          "seconds": 12.355
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_playtest_restart.py::test_letter_cold_continue_expected_globals_include_map_unlock",
+      "covered_nodes": [
+        "tests/test_playtest_restart.py::test_letter_cold_continue_expected_globals_include_map_unlock"
+      ],
+      "launcher_exit": 0,
+      "pure_guard_violation": false,
+      "active_seconds": 0.325,
+      "effective_outer_cap_seconds": 600,
+      "controller_requested_outer_cap_seconds": 600,
+      "aggregate_child_budget_seconds": null,
+      "aborted_before_lock": false,
+      "attempt_classification": null,
+      "outcomes": [
+        {
+          "name": "test_letter_cold_continue_expected_globals_include_map_unlock",
+          "outcome": "passed",
+          "seconds": 0.001
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_push_input.py::test_push_scripts_through_movement_input",
+      "covered_nodes": [
+        "tests/test_push_input.py::test_push_scripts_through_movement_input"
+      ],
+      "launcher_exit": 0,
+      "pure_guard_violation": false,
+      "active_seconds": 68.785,
+      "effective_outer_cap_seconds": 600,
+      "controller_requested_outer_cap_seconds": 600,
+      "aggregate_child_budget_seconds": null,
+      "aborted_before_lock": false,
+      "attempt_classification": null,
+      "outcomes": [
+        {
+          "name": "test_push_scripts_through_movement_input",
+          "outcome": "passed",
+          "seconds": 68.467
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_rc5_census.py::test_component_runs_preserve_all_pixels_including_diagonal_and_singletons",
+      "covered_nodes": [
+        "tests/test_rc5_census.py::test_component_runs_preserve_all_pixels_including_diagonal_and_singletons"
+      ],
+      "launcher_exit": 0,
+      "pure_guard_violation": false,
+      "active_seconds": 0.673,
+      "effective_outer_cap_seconds": 600,
+      "controller_requested_outer_cap_seconds": 600,
+      "aggregate_child_budget_seconds": null,
+      "aborted_before_lock": false,
+      "attempt_classification": null,
+      "outcomes": [
+        {
+          "name": "test_component_runs_preserve_all_pixels_including_diagonal_and_singletons",
+          "outcome": "passed",
+          "seconds": 0.014
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_rc5_census.py::test_hidden_crop_contributes_no_projected_pixel",
+      "covered_nodes": [
+        "tests/test_rc5_census.py::test_hidden_crop_contributes_no_projected_pixel"
+      ],
+      "launcher_exit": 0,
+      "pure_guard_violation": false,
+      "active_seconds": 0.545,
+      "effective_outer_cap_seconds": 600,
+      "controller_requested_outer_cap_seconds": 600,
+      "aggregate_child_budget_seconds": null,
+      "aborted_before_lock": false,
+      "attempt_classification": null,
+      "outcomes": [
+        {
+          "name": "test_hidden_crop_contributes_no_projected_pixel",
+          "outcome": "passed",
+          "seconds": 0.016
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_rc5_census.py::test_known_base_cases_and_every_pixel_has_a_partition",
+      "covered_nodes": [
+        "tests/test_rc5_census.py::test_known_base_cases_and_every_pixel_has_a_partition"
+      ],
+      "launcher_exit": 0,
+      "pure_guard_violation": false,
+      "active_seconds": 3.807,
+      "effective_outer_cap_seconds": 600,
+      "controller_requested_outer_cap_seconds": 600,
+      "aggregate_child_budget_seconds": null,
+      "aborted_before_lock": false,
+      "attempt_classification": null,
+      "outcomes": [
+        {
+          "name": "test_known_base_cases_and_every_pixel_has_a_partition",
+          "outcome": "passed",
+          "seconds": 3.22
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_rc5_census.py::test_current_structure_masks_match_real_fps_queries",
+      "covered_nodes": [
+        "tests/test_rc5_census.py::test_current_structure_masks_match_real_fps_queries"
+      ],
+      "launcher_exit": 0,
+      "pure_guard_violation": false,
+      "active_seconds": 4.489,
+      "effective_outer_cap_seconds": 600,
+      "controller_requested_outer_cap_seconds": 600,
+      "aggregate_child_budget_seconds": null,
+      "aborted_before_lock": false,
+      "attempt_classification": null,
+      "outcomes": [
+        {
+          "name": "test_current_structure_masks_match_real_fps_queries",
+          "outcome": "passed",
+          "seconds": 3.889
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_rc5_residue.py::test_membership_codes_preserve_high_bits_and_exact_union",
+      "covered_nodes": [
+        "tests/test_rc5_residue.py::test_membership_codes_preserve_high_bits_and_exact_union"
+      ],
+      "launcher_exit": 0,
+      "pure_guard_violation": false,
+      "active_seconds": 0.536,
+      "effective_outer_cap_seconds": 600,
+      "controller_requested_outer_cap_seconds": 600,
+      "aggregate_child_budget_seconds": null,
+      "aborted_before_lock": false,
+      "attempt_classification": null,
+      "outcomes": [
+        {
+          "name": "test_membership_codes_preserve_high_bits_and_exact_union",
+          "outcome": "passed",
+          "seconds": 0.002
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_rc5_residue.py::test_perimeter_cross_tab_is_location_union_and_keeps_membership_bits",
+      "covered_nodes": [
+        "tests/test_rc5_residue.py::test_perimeter_cross_tab_is_location_union_and_keeps_membership_bits"
+      ],
+      "launcher_exit": 0,
+      "pure_guard_violation": false,
+      "active_seconds": 0.468,
+      "effective_outer_cap_seconds": 600,
+      "controller_requested_outer_cap_seconds": 600,
+      "aggregate_child_budget_seconds": null,
+      "aborted_before_lock": false,
+      "attempt_classification": null,
+      "outcomes": [
+        {
+          "name": "test_perimeter_cross_tab_is_location_union_and_keeps_membership_bits",
+          "outcome": "passed",
+          "seconds": 0.001
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_rc5_residue.py::test_gzip_json_round_trip_is_deterministic",
+      "covered_nodes": [
+        "tests/test_rc5_residue.py::test_gzip_json_round_trip_is_deterministic"
+      ],
+      "launcher_exit": 0,
+      "pure_guard_violation": false,
+      "active_seconds": 0.518,
+      "effective_outer_cap_seconds": 600,
+      "controller_requested_outer_cap_seconds": 600,
+      "aggregate_child_budget_seconds": null,
+      "aborted_before_lock": false,
+      "attempt_classification": null,
+      "outcomes": [
+        {
+          "name": "test_gzip_json_round_trip_is_deterministic",
+          "outcome": "passed",
+          "seconds": 0.001
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_screen_startup.py::test_original_duck_search_runs_before_sprite_vision_filter",
+      "covered_nodes": [
+        "tests/test_screen_startup.py::test_original_duck_search_runs_before_sprite_vision_filter"
+      ],
+      "launcher_exit": 0,
+      "pure_guard_violation": false,
+      "active_seconds": 4.245,
+      "effective_outer_cap_seconds": 600,
+      "controller_requested_outer_cap_seconds": 600,
+      "aggregate_child_budget_seconds": null,
+      "aborted_before_lock": false,
+      "attempt_classification": null,
+      "outcomes": [
+        {
+          "name": "test_original_duck_search_runs_before_sprite_vision_filter",
+          "outcome": "passed",
+          "seconds": 3.951
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_speaker_occlusion_contract.py::test_speaker_floor_and_top_remain_above_actual_dialogue_card",
+      "covered_nodes": [
+        "tests/test_speaker_occlusion_contract.py::test_speaker_floor_and_top_remain_above_actual_dialogue_card"
+      ],
+      "launcher_exit": 0,
+      "pure_guard_violation": false,
+      "active_seconds": 4.052,
+      "effective_outer_cap_seconds": 600,
+      "controller_requested_outer_cap_seconds": 600,
+      "aggregate_child_budget_seconds": null,
+      "aborted_before_lock": false,
+      "attempt_classification": null,
+      "outcomes": [
+        {
+          "name": "test_speaker_floor_and_top_remain_above_actual_dialogue_card",
+          "outcome": "passed",
+          "seconds": 3.764
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_speech_semantics.py::test_shared_speech_card_preserves_original_blocking_semantics",
+      "covered_nodes": [
+        "tests/test_speech_semantics.py::test_shared_speech_card_preserves_original_blocking_semantics"
+      ],
+      "launcher_exit": 0,
+      "pure_guard_violation": false,
+      "active_seconds": 4.506,
+      "effective_outer_cap_seconds": 600,
+      "controller_requested_outer_cap_seconds": 600,
+      "aggregate_child_budget_seconds": null,
+      "aborted_before_lock": false,
+      "attempt_classification": null,
+      "outcomes": [
+        {
+          "name": "test_shared_speech_card_preserves_original_blocking_semantics",
+          "outcome": "passed",
+          "seconds": 4.232
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_static_death_art.py::test_prone_editor_art_has_one_original_ground_owner",
+      "covered_nodes": [
+        "tests/test_static_death_art.py::test_prone_editor_art_has_one_original_ground_owner"
+      ],
+      "launcher_exit": 0,
+      "pure_guard_violation": false,
+      "active_seconds": 3.098,
+      "effective_outer_cap_seconds": 600,
+      "controller_requested_outer_cap_seconds": 600,
+      "aggregate_child_budget_seconds": null,
+      "aborted_before_lock": false,
+      "attempt_classification": null,
+      "outcomes": [
+        {
+          "name": "test_prone_editor_art_has_one_original_ground_owner",
+          "outcome": "passed",
+          "seconds": 2.826
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_story.py::test_nested_control_flow_and_expression_ast",
+      "covered_nodes": [
+        "tests/test_story.py::test_nested_control_flow_and_expression_ast"
+      ],
+      "launcher_exit": 0,
+      "pure_guard_violation": false,
+      "active_seconds": 0.254,
+      "effective_outer_cap_seconds": 600,
+      "controller_requested_outer_cap_seconds": 600,
+      "aggregate_child_budget_seconds": null,
+      "aborted_before_lock": false,
+      "attempt_classification": null,
+      "outcomes": [
+        {
+          "name": "test_nested_control_flow_and_expression_ast",
+          "outcome": "passed",
+          "seconds": 0.001
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_story.py::test_labels_calls_and_overrides",
+      "covered_nodes": [
+        "tests/test_story.py::test_labels_calls_and_overrides"
+      ],
+      "launcher_exit": 0,
+      "pure_guard_violation": false,
+      "active_seconds": 0.297,
+      "effective_outer_cap_seconds": 600,
+      "controller_requested_outer_cap_seconds": 600,
+      "aggregate_child_budget_seconds": null,
+      "aborted_before_lock": false,
+      "attempt_classification": null,
+      "outcomes": [
+        {
+          "name": "test_labels_calls_and_overrides",
+          "outcome": "passed",
+          "seconds": 0.001
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_story.py::test_unsupported_syntax_is_reported_and_retained",
+      "covered_nodes": [
+        "tests/test_story.py::test_unsupported_syntax_is_reported_and_retained"
+      ],
+      "launcher_exit": 0,
+      "pure_guard_violation": false,
+      "active_seconds": 0.26,
+      "effective_outer_cap_seconds": 600,
+      "controller_requested_outer_cap_seconds": 600,
+      "aggregate_child_budget_seconds": null,
+      "aborted_before_lock": false,
+      "attempt_classification": null,
+      "outcomes": [
+        {
+          "name": "test_unsupported_syntax_is_reported_and_retained",
+          "outcome": "passed",
+          "seconds": 0.001
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_story.py::test_s1_h2_o_eof_brace_repair_keeps_unfreeze_in_talk",
+      "covered_nodes": [
+        "tests/test_story.py::test_s1_h2_o_eof_brace_repair_keeps_unfreeze_in_talk"
+      ],
+      "launcher_exit": 0,
+      "pure_guard_violation": false,
+      "active_seconds": 0.289,
+      "effective_outer_cap_seconds": 600,
+      "controller_requested_outer_cap_seconds": 600,
+      "aggregate_child_budget_seconds": null,
+      "aborted_before_lock": false,
+      "attempt_classification": null,
+      "outcomes": [
+        {
+          "name": "test_s1_h2_o_eof_brace_repair_keeps_unfreeze_in_talk",
+          "outcome": "passed",
+          "seconds": 0.001
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_story.py::test_eof_brace_repair_is_scoped_to_s1_h2_o",
+      "covered_nodes": [
+        "tests/test_story.py::test_eof_brace_repair_is_scoped_to_s1_h2_o"
+      ],
+      "launcher_exit": 0,
+      "pure_guard_violation": false,
+      "active_seconds": 0.3,
+      "effective_outer_cap_seconds": 600,
+      "controller_requested_outer_cap_seconds": 600,
+      "aggregate_child_budget_seconds": null,
+      "aborted_before_lock": false,
+      "attempt_classification": null,
+      "outcomes": [
+        {
+          "name": "test_eof_brace_repair_is_scoped_to_s1_h2_o",
+          "outcome": "passed",
+          "seconds": 0.001
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_story.py::test_choice_positions_and_script_scoped_overrides",
+      "covered_nodes": [
+        "tests/test_story.py::test_choice_positions_and_script_scoped_overrides"
+      ],
+      "launcher_exit": 0,
+      "pure_guard_violation": false,
+      "active_seconds": 0.274,
+      "effective_outer_cap_seconds": 600,
+      "controller_requested_outer_cap_seconds": 600,
+      "aggregate_child_budget_seconds": null,
+      "aborted_before_lock": false,
+      "attempt_classification": null,
+      "outcomes": [
+        {
+          "name": "test_choice_positions_and_script_scoped_overrides",
+          "outcome": "passed",
+          "seconds": 0.001
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_story.py::test_installed_campaign_compiles_without_unsupported_code",
+      "covered_nodes": [
+        "tests/test_story.py::test_installed_campaign_compiles_without_unsupported_code"
+      ],
+      "launcher_exit": 0,
+      "pure_guard_violation": false,
+      "active_seconds": 0.528,
+      "effective_outer_cap_seconds": 600,
+      "controller_requested_outer_cap_seconds": 600,
+      "aggregate_child_budget_seconds": null,
+      "aborted_before_lock": false,
+      "attempt_classification": null,
+      "outcomes": [
+        {
+          "name": "test_installed_campaign_compiles_without_unsupported_code",
+          "outcome": "passed",
+          "seconds": 0.24
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_story.py::test_dink_vm_regressions",
+      "covered_nodes": [
+        "tests/test_story.py::test_dink_vm_regressions"
+      ],
+      "launcher_exit": 0,
+      "pure_guard_violation": false,
+      "active_seconds": 0.586,
+      "effective_outer_cap_seconds": 600,
+      "controller_requested_outer_cap_seconds": 600,
+      "aggregate_child_budget_seconds": null,
+      "aborted_before_lock": false,
+      "attempt_classification": null,
+      "outcomes": [
+        {
+          "name": "test_dink_vm_regressions",
+          "outcome": "passed",
+          "seconds": 0.303
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_ui_feedback_ownership.py::test_equipment_feedback_has_one_owner_and_inventory_tracks_live_equipment",
+      "covered_nodes": [
+        "tests/test_ui_feedback_ownership.py::test_equipment_feedback_has_one_owner_and_inventory_tracks_live_equipment"
+      ],
+      "launcher_exit": 0,
+      "pure_guard_violation": false,
+      "active_seconds": 0.658,
+      "effective_outer_cap_seconds": 600,
+      "controller_requested_outer_cap_seconds": 600,
+      "aggregate_child_budget_seconds": null,
+      "aborted_before_lock": false,
+      "attempt_classification": null,
+      "outcomes": [
+        {
+          "name": "test_equipment_feedback_has_one_owner_and_inventory_tracks_live_equipment",
+          "outcome": "passed",
+          "seconds": 0.391
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,4936 @@
+{
+  "setup": "Unlocked static vision0 fitted wall/terrain boundary overlaps from the reviewed native class census; no rendered-view or campaign reachability certification. Owners use the census key.",
+  "source_report_sha256": "8cf4618c67a80d6fbc4a637d43e7581800ae7b845ccadcbe4782e9593ac609f2",
+  "owner_key": "positive: editor wall index; negative: terrain cell -(1+row*60+column); static geometry overlap, not rendered certification",
+  "edges_with_overlap": 87,
+  "edges": [
+    {
+      "source": 33,
+      "target": 34,
+      "direction": "east",
+      "presentation_source_wall_cells": 0,
+      "presentation_arrival_wall_cells": 398,
+      "presentation_wall_examples": [
+        {
+          "fps_allows": false,
+          "original_arrival": [
+            20.0,
+            2.0
+          ],
+          "source_point": [
+            619.0,
+            2.0
+          ],
+          "source_wall_owners": [],
+          "target_wall_owners": [
+            7
+          ]
+        },
+        {
+          "fps_allows": false,
+          "original_arrival": [
+            20.0,
+            3.0
+          ],
+          "source_point": [
+            619.0,
+            3.0
+          ],
+          "source_wall_owners": [],
+          "target_wall_owners": [
+            7
+          ]
+        },
+        {
+          "fps_allows": false,
+          "original_arrival": [
+            20.0,
+            4.0
+          ],
+          "source_point": [
+            619.0,
+            4.0
+          ],
+          "source_wall_owners": [],
+          "target_wall_owners": [
+            7
+          ]
+        }
+      ]
+    },
+    {
+      "source": 33,
+      "target": 1,
+      "direction": "north",
+      "presentation_source_wall_cells": 0,
+      "presentation_arrival_wall_cells": 399,
+      "presentation_wall_examples": [
+        {
+          "fps_allows": false,
+          "original_arrival": [
+            105.0,
+            399.0
+          ],
+          "source_point": [
+            105.0,
+            0.0
+          ],
+          "source_wall_owners": [],
+          "target_wall_owners": [
+            11
+          ]
+        },
+        {
+          "fps_allows": false,
+          "original_arrival": [
+            106.0,
+            399.0
+          ],
+          "source_point": [
+            106.0,
+            0.0
+          ],
+          "source_wall_owners": [],
+          "target_wall_owners": [
+            9,
+            11
+          ]
+        },
+        {
+          "fps_allows": false,
+          "original_arrival": [
+            107.0,
+            399.0
+          ],
+          "source_point": [
+            107.0,
+            0.0
+          ],
+          "source_wall_owners": [],
+          "target_wall_owners": [
+            9,
+            11
+          ]
+        }
+      ]
+    },
+    {
+      "source": 34,
+      "target": 2,
+      "direction": "north",
+      "presentation_source_wall_cells": 0,
+      "presentation_arrival_wall_cells": 382,
+      "presentation_wall_examples": [
+        {
+          "fps_allows": false,
+          "original_arrival": [
+            110.0,
+            399.0
+          ],
+          "source_point": [
+            110.0,
+            0.0
+          ],
+          "source_wall_owners": [],
+          "target_wall_owners": [
+            4
+          ]
+        },
+        {
+          "fps_allows": false,
+          "original_arrival": [
+            111.0,
+            399.0
+          ],
+          "source_point": [
+            111.0,
+            0.0
+          ],
+          "source_wall_owners": [],
+          "target_wall_owners": [
+            4
+          ]
+        },
+        {
+          "fps_allows": false,
+          "original_arrival": [
+            112.0,
+            399.0
+          ],
+          "source_point": [
+            112.0,
+            0.0
+          ],
+          "source_wall_owners": [],
+          "target_wall_owners": [
+            4
+          ]
+        }
+      ]
+    },
+    {
+      "source": 35,
+      "target": 34,
+      "direction": "west",
+      "presentation_source_wall_cells": 0,
+      "presentation_arrival_wall_cells": 350,
+      "presentation_wall_examples": [
+        {
+          "fps_allows": false,
+          "original_arrival": [
+            619.0,
+            50.0
+          ],
+          "source_point": [
+            20.0,
+            50.0
+          ],
+          "source_wall_owners": [],
+          "target_wall_owners": [
+            9
+          ]
+        },
+        {
+          "fps_allows": false,
+          "original_arrival": [
+            619.0,
+            51.0
+          ],
+          "source_point": [
+            20.0,
+            51.0
+          ],
+          "source_wall_owners": [],
+          "target_wall_owners": [
+            9
+          ]
+        },
+        {
+          "fps_allows": false,
+          "original_arrival": [
+            619.0,
+            52.0
+          ],
+          "source_point": [
+            20.0,
+            52.0
+          ],
+          "source_wall_owners": [],
+          "target_wall_owners": [
+            9
+          ]
+        }
+      ]
+    },
+    {
+      "source": 35,
+      "target": 3,
+      "direction": "north",
+      "presentation_source_wall_cells": 0,
+      "presentation_arrival_wall_cells": 521,
+      "presentation_wall_examples": [
+        {
+          "fps_allows": false,
+          "original_arrival": [
+            60.0,
+            399.0
+          ],
+          "source_point": [
+            60.0,
+            0.0
+          ],
+          "source_wall_owners": [],
+          "target_wall_owners": [
+            2
+          ]
+        },
+        {
+          "fps_allows": false,
+          "original_arrival": [
+            61.0,
+            399.0
+          ],
+          "source_point": [
+            61.0,
+            0.0
+          ],
+          "source_wall_owners": [],
+          "target_wall_owners": [
+            2
+          ]
+        },
+        {
+          "fps_allows": false,
+          "original_arrival": [
+            62.0,
+            399.0
+          ],
+          "source_point": [
+            62.0,
+            0.0
+          ],
+          "source_wall_owners": [],
+          "target_wall_owners": [
+            2
+          ]
+        }
+      ]
+    },
+    {
+      "source": 36,
+      "target": 4,
+      "direction": "north",
+      "presentation_source_wall_cells": 0,
+      "presentation_arrival_wall_cells": 344,
+      "presentation_wall_examples": [
+        {
+          "fps_allows": false,
+          "original_arrival": [
+            110.0,
+            399.0
+          ],
+          "source_point": [
+            110.0,
+            0.0
+          ],
+          "source_wall_owners": [],
+          "target_wall_owners": [
+            4
+          ]
+        },
+        {
+          "fps_allows": false,
+          "original_arrival": [
+            111.0,
+            399.0
+          ],
+          "source_point": [
+            111.0,
+            0.0
+          ],
+          "source_wall_owners": [],
+          "target_wall_owners": [
+            4
+          ]
+        },
+        {
+          "fps_allows": false,
+          "original_arrival": [
+            112.0,
+            399.0
+          ],
+          "source_point": [
+            112.0,
+            0.0
+          ],
+          "source_wall_owners": [],
+          "target_wall_owners": [
+            4
+          ]
+        }
+      ]
+    },
+    {
+      "source": 66,
+      "target": 67,
+      "direction": "east",
+      "presentation_source_wall_cells": 0,
+      "presentation_arrival_wall_cells": 298,
+      "presentation_wall_examples": [
+        {
+          "fps_allows": false,
+          "original_arrival": [
+            20.0,
+            52.0
+          ],
+          "source_point": [
+            619.0,
+            52.0
+          ],
+          "source_wall_owners": [],
+          "target_wall_owners": [
+            4
+          ]
+        },
+        {
+          "fps_allows": false,
+          "original_arrival": [
+            20.0,
+            53.0
+          ],
+          "source_point": [
+            619.0,
+            53.0
+          ],
+          "source_wall_owners": [],
+          "target_wall_owners": [
+            4
+          ]
+        },
+        {
+          "fps_allows": false,
+          "original_arrival": [
+            20.0,
+            54.0
+          ],
+          "source_point": [
+            619.0,
+            54.0
+          ],
+          "source_wall_owners": [],
+          "target_wall_owners": [
+            4
+          ]
+        }
+      ]
+    },
+    {
+      "source": 66,
+      "target": 34,
+      "direction": "north",
+      "presentation_source_wall_cells": 0,
+      "presentation_arrival_wall_cells": 567,
+      "presentation_wall_examples": [
+        {
+          "fps_allows": false,
+          "original_arrival": [
+            20.0,
+            399.0
+          ],
+          "source_point": [
+            20.0,
+            0.0
+          ],
+          "source_wall_owners": [],
+          "target_wall_owners": [
+            3
+          ]
+        },
+        {
+          "fps_allows": false,
+          "original_arrival": [
+            21.0,
+            399.0
+          ],
+          "source_point": [
+            21.0,
+            0.0
+          ],
+          "source_wall_owners": [],
+          "target_wall_owners": [
+            3
+          ]
+        },
+        {
+          "fps_allows": false,
+          "original_arrival": [
+            22.0,
+            399.0
+          ],
+          "source_point": [
+            22.0,
+            0.0
+          ],
+          "source_wall_owners": [],
+          "target_wall_owners": [
+            3
+          ]
+        }
+      ]
+    },
+    {
+      "source": 68,
+      "target": 67,
+      "direction": "west",
+      "presentation_source_wall_cells": 0,
+      "presentation_arrival_wall_cells": 84,
+      "presentation_wall_examples": [
+        {
+          "fps_allows": false,
+          "original_arrival": [
+            619.0,
+            100.0
+          ],
+          "source_point": [
+            20.0,
+            100.0
+          ],
+          "source_wall_owners": [],
+          "target_wall_owners": [
+            5
+          ]
+        },
+        {
+          "fps_allows": false,
+          "original_arrival": [
+            619.0,
+            101.0
+          ],
+          "source_point": [
+            20.0,
+            101.0
+          ],
+          "source_wall_owners": [],
+          "target_wall_owners": [
+            5
+          ]
+        },
+        {
+          "fps_allows": false,
+          "original_arrival": [
+            619.0,
+            102.0
+          ],
+          "source_point": [
+            20.0,
+            102.0
+          ],
+          "source_wall_owners": [],
+          "target_wall_owners": [
+            5
+          ]
+        }
+      ]
+    },
+    {
+      "source": 69,
+      "target": 68,
+      "direction": "west",
+      "presentation_source_wall_cells": 0,
+      "presentation_arrival_wall_cells": 96,
+      "presentation_wall_examples": [
+        {
+          "fps_allows": false,
+          "original_arrival": [
+            619.0,
+            118.0
+          ],
+          "source_point": [
+            20.0,
+            118.0
+          ],
+          "source_wall_owners": [],
+          "target_wall_owners": [
+            1
+          ]
+        },
+        {
+          "fps_allows": false,
+          "original_arrival": [
+            619.0,
+            119.0
+          ],
+          "source_point": [
+            20.0,
+            119.0
+          ],
+          "source_wall_owners": [],
+          "target_wall_owners": [
+            1
+          ]
+        },
+        {
+          "fps_allows": false,
+          "original_arrival": [
+            619.0,
+            120.0
+          ],
+          "source_point": [
+            20.0,
+            120.0
+          ],
+          "source_wall_owners": [],
+          "target_wall_owners": [
+            1
+          ]
+        }
+      ]
+    },
+    {
+      "source": 69,
+      "target": 37,
+      "direction": "north",
+      "presentation_source_wall_cells": 0,
+      "presentation_arrival_wall_cells": 421,
+      "presentation_wall_examples": [
+        {
+          "fps_allows": false,
+          "original_arrival": [
+            110.0,
+            399.0
+          ],
+          "source_point": [
+            110.0,
+            0.0
+          ],
+          "source_wall_owners": [],
+          "target_wall_owners": [
+            4
+          ]
+        },
+        {
+          "fps_allows": false,
+          "original_arrival": [
+            111.0,
+            399.0
+          ],
+          "source_point": [
+            111.0,
+            0.0
+          ],
+          "source_wall_owners": [],
+          "target_wall_owners": [
+            4
+          ]
+        },
+        {
+          "fps_allows": false,
+          "original_arrival": [
+            112.0,
+            399.0
+          ],
+          "source_point": [
+            112.0,
+            0.0
+          ],
+          "source_wall_owners": [],
+          "target_wall_owners": [
+            4
+          ]
+        }
+      ]
+    },
+    {
+      "source": 70,
+      "target": 38,
+      "direction": "north",
+      "presentation_source_wall_cells": 0,
+      "presentation_arrival_wall_cells": 388,
+      "presentation_wall_examples": [
+        {
+          "fps_allows": false,
+          "original_arrival": [
+            110.0,
+            399.0
+          ],
+          "source_point": [
+            110.0,
+            0.0
+          ],
+          "source_wall_owners": [],
+          "target_wall_owners": [
+            4
+          ]
+        },
+        {
+          "fps_allows": false,
+          "original_arrival": [
+            111.0,
+            399.0
+          ],
+          "source_point": [
+            111.0,
+            0.0
+          ],
+          "source_wall_owners": [],
+          "target_wall_owners": [
+            4
+          ]
+        },
+        {
+          "fps_allows": false,
+          "original_arrival": [
+            112.0,
+            399.0
+          ],
+          "source_point": [
+            112.0,
+            0.0
+          ],
+          "source_wall_owners": [],
+          "target_wall_owners": [
+            4
+          ]
+        }
+      ]
+    },
+    {
+      "source": 73,
+      "target": 74,
+      "direction": "east",
+      "presentation_source_wall_cells": 91,
+      "presentation_arrival_wall_cells": 98,
+      "presentation_wall_examples": [
+        {
+          "fps_allows": true,
+          "original_arrival": [
+            20.0,
+            44.0
+          ],
+          "source_point": [
+            619.0,
+            44.0
+          ],
+          "source_wall_owners": [
+            2
+          ],
+          "target_wall_owners": [
+            14
+          ]
+        },
+        {
+          "fps_allows": true,
+          "original_arrival": [
+            20.0,
+            45.0
+          ],
+          "source_point": [
+            619.0,
+            45.0
+          ],
+          "source_wall_owners": [
+            2
+          ],
+          "target_wall_owners": [
+            14
+          ]
+        },
+        {
+          "fps_allows": true,
+          "original_arrival": [
+            20.0,
+            46.0
+          ],
+          "source_point": [
+            619.0,
+            46.0
+          ],
+          "source_wall_owners": [
+            2
+          ],
+          "target_wall_owners": [
+            14
+          ]
+        }
+      ]
+    },
+    {
+      "source": 73,
+      "target": 105,
+      "direction": "south",
+      "presentation_source_wall_cells": 423,
+      "presentation_arrival_wall_cells": 397,
+      "presentation_wall_examples": [
+        {
+          "fps_allows": true,
+          "original_arrival": [
+            21.0,
+            0.0
+          ],
+          "source_point": [
+            21.0,
+            399.0
+          ],
+          "source_wall_owners": [
+            13
+          ],
+          "target_wall_owners": []
+        },
+        {
+          "fps_allows": true,
+          "original_arrival": [
+            22.0,
+            0.0
+          ],
+          "source_point": [
+            22.0,
+            399.0
+          ],
+          "source_wall_owners": [
+            13
+          ],
+          "target_wall_owners": []
+        },
+        {
+          "fps_allows": true,
+          "original_arrival": [
+            23.0,
+            0.0
+          ],
+          "source_point": [
+            23.0,
+            399.0
+          ],
+          "source_wall_owners": [
+            13
+          ],
+          "target_wall_owners": []
+        }
+      ]
+    },
+    {
+      "source": 74,
+      "target": 73,
+      "direction": "west",
+      "presentation_source_wall_cells": 98,
+      "presentation_arrival_wall_cells": 91,
+      "presentation_wall_examples": [
+        {
+          "fps_allows": true,
+          "original_arrival": [
+            619.0,
+            44.0
+          ],
+          "source_point": [
+            20.0,
+            44.0
+          ],
+          "source_wall_owners": [
+            14
+          ],
+          "target_wall_owners": [
+            2
+          ]
+        },
+        {
+          "fps_allows": true,
+          "original_arrival": [
+            619.0,
+            45.0
+          ],
+          "source_point": [
+            20.0,
+            45.0
+          ],
+          "source_wall_owners": [
+            14
+          ],
+          "target_wall_owners": [
+            2
+          ]
+        },
+        {
+          "fps_allows": true,
+          "original_arrival": [
+            619.0,
+            46.0
+          ],
+          "source_point": [
+            20.0,
+            46.0
+          ],
+          "source_wall_owners": [
+            14
+          ],
+          "target_wall_owners": [
+            2
+          ]
+        }
+      ]
+    },
+    {
+      "source": 74,
+      "target": 106,
+      "direction": "south",
+      "presentation_source_wall_cells": 154,
+      "presentation_arrival_wall_cells": 154,
+      "presentation_wall_examples": [
+        {
+          "fps_allows": true,
+          "original_arrival": [
+            20.0,
+            0.0
+          ],
+          "source_point": [
+            20.0,
+            399.0
+          ],
+          "source_wall_owners": [
+            3
+          ],
+          "target_wall_owners": [
+            2
+          ]
+        },
+        {
+          "fps_allows": true,
+          "original_arrival": [
+            21.0,
+            0.0
+          ],
+          "source_point": [
+            21.0,
+            399.0
+          ],
+          "source_wall_owners": [
+            3
+          ],
+          "target_wall_owners": [
+            2
+          ]
+        },
+        {
+          "fps_allows": true,
+          "original_arrival": [
+            22.0,
+            0.0
+          ],
+          "source_point": [
+            22.0,
+            399.0
+          ],
+          "source_wall_owners": [
+            3
+          ],
+          "target_wall_owners": [
+            2
+          ]
+        }
+      ]
+    },
+    {
+      "source": 97,
+      "target": 65,
+      "direction": "north",
+      "presentation_source_wall_cells": 0,
+      "presentation_arrival_wall_cells": 385,
+      "presentation_wall_examples": [
+        {
+          "fps_allows": false,
+          "original_arrival": [
+            110.0,
+            399.0
+          ],
+          "source_point": [
+            110.0,
+            0.0
+          ],
+          "source_wall_owners": [],
+          "target_wall_owners": [
+            4
+          ]
+        },
+        {
+          "fps_allows": false,
+          "original_arrival": [
+            111.0,
+            399.0
+          ],
+          "source_point": [
+            111.0,
+            0.0
+          ],
+          "source_wall_owners": [],
+          "target_wall_owners": [
+            4
+          ]
+        },
+        {
+          "fps_allows": false,
+          "original_arrival": [
+            112.0,
+            399.0
+          ],
+          "source_point": [
+            112.0,
+            0.0
+          ],
+          "source_wall_owners": [],
+          "target_wall_owners": [
+            4
+          ]
+        }
+      ]
+    },
+    {
+      "source": 98,
+      "target": 99,
+      "direction": "east",
+      "presentation_source_wall_cells": 7,
+      "presentation_arrival_wall_cells": 7,
+      "presentation_wall_examples": [
+        {
+          "fps_allows": true,
+          "original_arrival": [
+            20.0,
+            210.0
+          ],
+          "source_point": [
+            619.0,
+            210.0
+          ],
+          "source_wall_owners": [
+            -1320
+          ],
+          "target_wall_owners": [
+            -1261
+          ]
+        },
+        {
+          "fps_allows": true,
+          "original_arrival": [
+            20.0,
+            211.0
+          ],
+          "source_point": [
+            619.0,
+            211.0
+          ],
+          "source_wall_owners": [
+            -1320
+          ],
+          "target_wall_owners": [
+            -1261
+          ]
+        },
+        {
+          "fps_allows": true,
+          "original_arrival": [
+            20.0,
+            212.0
+          ],
+          "source_point": [
+            619.0,
+            212.0
+          ],
+          "source_wall_owners": [
+            -1320
+          ],
+          "target_wall_owners": [
+            -1261
+          ]
+        }
+      ]
+    },
+    {
+      "source": 98,
+      "target": 66,
+      "direction": "north",
+      "presentation_source_wall_cells": 0,
+      "presentation_arrival_wall_cells": 385,
+      "presentation_wall_examples": [
+        {
+          "fps_allows": false,
+          "original_arrival": [
+            110.0,
+            399.0
+          ],
+          "source_point": [
+            110.0,
+            0.0
+          ],
+          "source_wall_owners": [],
+          "target_wall_owners": [
+            4
+          ]
+        },
+        {
+          "fps_allows": false,
+          "original_arrival": [
+            111.0,
+            399.0
+          ],
+          "source_point": [
+            111.0,
+            0.0
+          ],
+          "source_wall_owners": [],
+          "target_wall_owners": [
+            4
+          ]
+        },
+        {
+          "fps_allows": false,
+          "original_arrival": [
+            112.0,
+            399.0
+          ],
+          "source_point": [
+            112.0,
+            0.0
+          ],
+          "source_wall_owners": [],
+          "target_wall_owners": [
+            4
+          ]
+        }
+      ]
+    },
+    {
+      "source": 99,
+      "target": 98,
+      "direction": "west",
+      "presentation_source_wall_cells": 7,
+      "presentation_arrival_wall_cells": 7,
+      "presentation_wall_examples": [
+        {
+          "fps_allows": true,
+          "original_arrival": [
+            619.0,
+            210.0
+          ],
+          "source_point": [
+            20.0,
+            210.0
+          ],
+          "source_wall_owners": [
+            -1261
+          ],
+          "target_wall_owners": [
+            -1320
+          ]
+        },
+        {
+          "fps_allows": true,
+          "original_arrival": [
+            619.0,
+            211.0
+          ],
+          "source_point": [
+            20.0,
+            211.0
+          ],
+          "source_wall_owners": [
+            -1261
+          ],
+          "target_wall_owners": [
+            -1320
+          ]
+        },
+        {
+          "fps_allows": true,
+          "original_arrival": [
+            619.0,
+            212.0
+          ],
+          "source_point": [
+            20.0,
+            212.0
+          ],
+          "source_wall_owners": [
+            -1261
+          ],
+          "target_wall_owners": [
+            -1320
+          ]
+        }
+      ]
+    },
+    {
+      "source": 99,
+      "target": 100,
+      "direction": "east",
+      "presentation_source_wall_cells": 7,
+      "presentation_arrival_wall_cells": 7,
+      "presentation_wall_examples": [
+        {
+          "fps_allows": true,
+          "original_arrival": [
+            20.0,
+            210.0
+          ],
+          "source_point": [
+            619.0,
+            210.0
+          ],
+          "source_wall_owners": [
+            -1320
+          ],
+          "target_wall_owners": [
+            -1261
+          ]
+        },
+        {
+          "fps_allows": true,
+          "original_arrival": [
+            20.0,
+            211.0
+          ],
+          "source_point": [
+            619.0,
+            211.0
+          ],
+          "source_wall_owners": [
+            -1320
+          ],
+          "target_wall_owners": [
+            -1261
+          ]
+        },
+        {
+          "fps_allows": true,
+          "original_arrival": [
+            20.0,
+            212.0
+          ],
+          "source_point": [
+            619.0,
+            212.0
+          ],
+          "source_wall_owners": [
+            -1320
+          ],
+          "target_wall_owners": [
+            -1261
+          ]
+        }
+      ]
+    },
+    {
+      "source": 99,
+      "target": 131,
+      "direction": "south",
+      "presentation_source_wall_cells": 7,
+      "presentation_arrival_wall_cells": 7,
+      "presentation_wall_examples": [
+        {
+          "fps_allows": true,
+          "original_arrival": [
+            430.0,
+            0.0
+          ],
+          "source_point": [
+            430.0,
+            399.0
+          ],
+          "source_wall_owners": [
+            -2382
+          ],
+          "target_wall_owners": [
+            -42
+          ]
+        },
+        {
+          "fps_allows": true,
+          "original_arrival": [
+            431.0,
+            0.0
+          ],
+          "source_point": [
+            431.0,
+            399.0
+          ],
+          "source_wall_owners": [
+            -2382
+          ],
+          "target_wall_owners": [
+            -42
+          ]
+        },
+        {
+          "fps_allows": true,
+          "original_arrival": [
+            432.0,
+            0.0
+          ],
+          "source_point": [
+            432.0,
+            399.0
+          ],
+          "source_wall_owners": [
+            -2382
+          ],
+          "target_wall_owners": [
+            -42
+          ]
+        }
+      ]
+    },
+    {
+      "source": 100,
+      "target": 99,
+      "direction": "west",
+      "presentation_source_wall_cells": 7,
+      "presentation_arrival_wall_cells": 7,
+      "presentation_wall_examples": [
+        {
+          "fps_allows": true,
+          "original_arrival": [
+            619.0,
+            210.0
+          ],
+          "source_point": [
+            20.0,
+            210.0
+          ],
+          "source_wall_owners": [
+            -1261
+          ],
+          "target_wall_owners": [
+            -1320
+          ]
+        },
+        {
+          "fps_allows": true,
+          "original_arrival": [
+            619.0,
+            211.0
+          ],
+          "source_point": [
+            20.0,
+            211.0
+          ],
+          "source_wall_owners": [
+            -1261
+          ],
+          "target_wall_owners": [
+            -1320
+          ]
+        },
+        {
+          "fps_allows": true,
+          "original_arrival": [
+            619.0,
+            212.0
+          ],
+          "source_point": [
+            20.0,
+            212.0
+          ],
+          "source_wall_owners": [
+            -1261
+          ],
+          "target_wall_owners": [
+            -1320
+          ]
+        }
+      ]
+    },
+    {
+      "source": 100,
+      "target": 68,
+      "direction": "north",
+      "presentation_source_wall_cells": 0,
+      "presentation_arrival_wall_cells": 250,
+      "presentation_wall_examples": [
+        {
+          "fps_allows": false,
+          "original_arrival": [
+            176.0,
+            399.0
+          ],
+          "source_point": [
+            176.0,
+            0.0
+          ],
+          "source_wall_owners": [],
+          "target_wall_owners": [
+            11
+          ]
+        },
+        {
+          "fps_allows": false,
+          "original_arrival": [
+            177.0,
+            399.0
+          ],
+          "source_point": [
+            177.0,
+            0.0
+          ],
+          "source_wall_owners": [],
+          "target_wall_owners": [
+            11
+          ]
+        },
+        {
+          "fps_allows": false,
+          "original_arrival": [
+            178.0,
+            399.0
+          ],
+          "source_point": [
+            178.0,
+            0.0
+          ],
+          "source_wall_owners": [],
+          "target_wall_owners": [
+            11
+          ]
+        }
+      ]
+    },
+    {
+      "source": 101,
+      "target": 69,
+      "direction": "north",
+      "presentation_source_wall_cells": 0,
+      "presentation_arrival_wall_cells": 10,
+      "presentation_wall_examples": [
+        {
+          "fps_allows": true,
+          "original_arrival": [
+            530.0,
+            399.0
+          ],
+          "source_point": [
+            530.0,
+            0.0
+          ],
+          "source_wall_owners": [],
+          "target_wall_owners": [
+            -2392
+          ]
+        },
+        {
+          "fps_allows": true,
+          "original_arrival": [
+            531.0,
+            399.0
+          ],
+          "source_point": [
+            531.0,
+            0.0
+          ],
+          "source_wall_owners": [],
+          "target_wall_owners": [
+            -2392
+          ]
+        },
+        {
+          "fps_allows": true,
+          "original_arrival": [
+            532.0,
+            399.0
+          ],
+          "source_point": [
+            532.0,
+            0.0
+          ],
+          "source_wall_owners": [],
+          "target_wall_owners": [
+            -2392
+          ]
+        }
+      ]
+    },
+    {
+      "source": 102,
+      "target": 134,
+      "direction": "south",
+      "presentation_source_wall_cells": 0,
+      "presentation_arrival_wall_cells": 10,
+      "presentation_wall_examples": [
+        {
+          "fps_allows": false,
+          "original_arrival": [
+            130.0,
+            0.0
+          ],
+          "source_point": [
+            130.0,
+            399.0
+          ],
+          "source_wall_owners": [],
+          "target_wall_owners": [
+            -12
+          ]
+        },
+        {
+          "fps_allows": false,
+          "original_arrival": [
+            131.0,
+            0.0
+          ],
+          "source_point": [
+            131.0,
+            399.0
+          ],
+          "source_wall_owners": [],
+          "target_wall_owners": [
+            -12
+          ]
+        },
+        {
+          "fps_allows": false,
+          "original_arrival": [
+            132.0,
+            0.0
+          ],
+          "source_point": [
+            132.0,
+            399.0
+          ],
+          "source_wall_owners": [],
+          "target_wall_owners": [
+            -12
+          ]
+        }
+      ]
+    },
+    {
+      "source": 105,
+      "target": 106,
+      "direction": "east",
+      "presentation_source_wall_cells": 90,
+      "presentation_arrival_wall_cells": 89,
+      "presentation_wall_examples": [
+        {
+          "fps_allows": true,
+          "original_arrival": [
+            20.0,
+            0.0
+          ],
+          "source_point": [
+            619.0,
+            0.0
+          ],
+          "source_wall_owners": [
+            12
+          ],
+          "target_wall_owners": [
+            2
+          ]
+        },
+        {
+          "fps_allows": true,
+          "original_arrival": [
+            20.0,
+            1.0
+          ],
+          "source_point": [
+            619.0,
+            1.0
+          ],
+          "source_wall_owners": [
+            12
+          ],
+          "target_wall_owners": [
+            2
+          ]
+        },
+        {
+          "fps_allows": true,
+          "original_arrival": [
+            20.0,
+            2.0
+          ],
+          "source_point": [
+            619.0,
+            2.0
+          ],
+          "source_wall_owners": [
+            12
+          ],
+          "target_wall_owners": [
+            2
+          ]
+        }
+      ]
+    },
+    {
+      "source": 105,
+      "target": 73,
+      "direction": "north",
+      "presentation_source_wall_cells": 397,
+      "presentation_arrival_wall_cells": 423,
+      "presentation_wall_examples": [
+        {
+          "fps_allows": true,
+          "original_arrival": [
+            21.0,
+            399.0
+          ],
+          "source_point": [
+            21.0,
+            0.0
+          ],
+          "source_wall_owners": [],
+          "target_wall_owners": [
+            13
+          ]
+        },
+        {
+          "fps_allows": true,
+          "original_arrival": [
+            22.0,
+            399.0
+          ],
+          "source_point": [
+            22.0,
+            0.0
+          ],
+          "source_wall_owners": [],
+          "target_wall_owners": [
+            13
+          ]
+        },
+        {
+          "fps_allows": true,
+          "original_arrival": [
+            23.0,
+            399.0
+          ],
+          "source_point": [
+            23.0,
+            0.0
+          ],
+          "source_wall_owners": [],
+          "target_wall_owners": [
+            13
+          ]
+        }
+      ]
+    },
+    {
+      "source": 105,
+      "target": 137,
+      "direction": "south",
+      "presentation_source_wall_cells": 62,
+      "presentation_arrival_wall_cells": 62,
+      "presentation_wall_examples": [
+        {
+          "fps_allows": true,
+          "original_arrival": [
+            42.0,
+            0.0
+          ],
+          "source_point": [
+            42.0,
+            399.0
+          ],
+          "source_wall_owners": [
+            2
+          ],
+          "target_wall_owners": [
+            9
+          ]
+        },
+        {
+          "fps_allows": true,
+          "original_arrival": [
+            43.0,
+            0.0
+          ],
+          "source_point": [
+            43.0,
+            399.0
+          ],
+          "source_wall_owners": [
+            2
+          ],
+          "target_wall_owners": [
+            9
+          ]
+        },
+        {
+          "fps_allows": true,
+          "original_arrival": [
+            44.0,
+            0.0
+          ],
+          "source_point": [
+            44.0,
+            399.0
+          ],
+          "source_wall_owners": [
+            2
+          ],
+          "target_wall_owners": [
+            9
+          ]
+        }
+      ]
+    },
+    {
+      "source": 106,
+      "target": 105,
+      "direction": "west",
+      "presentation_source_wall_cells": 89,
+      "presentation_arrival_wall_cells": 90,
+      "presentation_wall_examples": [
+        {
+          "fps_allows": true,
+          "original_arrival": [
+            619.0,
+            0.0
+          ],
+          "source_point": [
+            20.0,
+            0.0
+          ],
+          "source_wall_owners": [
+            2
+          ],
+          "target_wall_owners": [
+            12
+          ]
+        },
+        {
+          "fps_allows": true,
+          "original_arrival": [
+            619.0,
+            1.0
+          ],
+          "source_point": [
+            20.0,
+            1.0
+          ],
+          "source_wall_owners": [
+            2
+          ],
+          "target_wall_owners": [
+            12
+          ]
+        },
+        {
+          "fps_allows": true,
+          "original_arrival": [
+            619.0,
+            2.0
+          ],
+          "source_point": [
+            20.0,
+            2.0
+          ],
+          "source_wall_owners": [
+            2
+          ],
+          "target_wall_owners": [
+            12
+          ]
+        }
+      ]
+    },
+    {
+      "source": 106,
+      "target": 74,
+      "direction": "north",
+      "presentation_source_wall_cells": 104,
+      "presentation_arrival_wall_cells": 104,
+      "presentation_wall_examples": [
+        {
+          "fps_allows": true,
+          "original_arrival": [
+            20.0,
+            399.0
+          ],
+          "source_point": [
+            20.0,
+            0.0
+          ],
+          "source_wall_owners": [
+            2
+          ],
+          "target_wall_owners": [
+            3
+          ]
+        },
+        {
+          "fps_allows": true,
+          "original_arrival": [
+            21.0,
+            399.0
+          ],
+          "source_point": [
+            21.0,
+            0.0
+          ],
+          "source_wall_owners": [
+            2
+          ],
+          "target_wall_owners": [
+            3
+          ]
+        },
+        {
+          "fps_allows": true,
+          "original_arrival": [
+            22.0,
+            399.0
+          ],
+          "source_point": [
+            22.0,
+            0.0
+          ],
+          "source_wall_owners": [
+            2
+          ],
+          "target_wall_owners": [
+            3
+          ]
+        }
+      ]
+    },
+    {
+      "source": 131,
+      "target": 99,
+      "direction": "north",
+      "presentation_source_wall_cells": 7,
+      "presentation_arrival_wall_cells": 7,
+      "presentation_wall_examples": [
+        {
+          "fps_allows": true,
+          "original_arrival": [
+            430.0,
+            399.0
+          ],
+          "source_point": [
+            430.0,
+            0.0
+          ],
+          "source_wall_owners": [
+            -42
+          ],
+          "target_wall_owners": [
+            -2382
+          ]
+        },
+        {
+          "fps_allows": true,
+          "original_arrival": [
+            431.0,
+            399.0
+          ],
+          "source_point": [
+            431.0,
+            0.0
+          ],
+          "source_wall_owners": [
+            -42
+          ],
+          "target_wall_owners": [
+            -2382
+          ]
+        },
+        {
+          "fps_allows": true,
+          "original_arrival": [
+            432.0,
+            399.0
+          ],
+          "source_point": [
+            432.0,
+            0.0
+          ],
+          "source_wall_owners": [
+            -42
+          ],
+          "target_wall_owners": [
+            -2382
+          ]
+        }
+      ]
+    },
+    {
+      "source": 133,
+      "target": 134,
+      "direction": "east",
+      "presentation_source_wall_cells": 0,
+      "presentation_arrival_wall_cells": 10,
+      "presentation_wall_examples": [
+        {
+          "fps_allows": true,
+          "original_arrival": [
+            20.0,
+            210.0
+          ],
+          "source_point": [
+            619.0,
+            210.0
+          ],
+          "source_wall_owners": [],
+          "target_wall_owners": [
+            -1261
+          ]
+        },
+        {
+          "fps_allows": true,
+          "original_arrival": [
+            20.0,
+            211.0
+          ],
+          "source_point": [
+            619.0,
+            211.0
+          ],
+          "source_wall_owners": [],
+          "target_wall_owners": [
+            -1261
+          ]
+        },
+        {
+          "fps_allows": true,
+          "original_arrival": [
+            20.0,
+            212.0
+          ],
+          "source_point": [
+            619.0,
+            212.0
+          ],
+          "source_wall_owners": [],
+          "target_wall_owners": [
+            -1261
+          ]
+        }
+      ]
+    },
+    {
+      "source": 133,
+      "target": 101,
+      "direction": "north",
+      "presentation_source_wall_cells": 0,
+      "presentation_arrival_wall_cells": 10,
+      "presentation_wall_examples": [
+        {
+          "fps_allows": true,
+          "original_arrival": [
+            530.0,
+            399.0
+          ],
+          "source_point": [
+            530.0,
+            0.0
+          ],
+          "source_wall_owners": [],
+          "target_wall_owners": [
+            -2392
+          ]
+        },
+        {
+          "fps_allows": true,
+          "original_arrival": [
+            531.0,
+            399.0
+          ],
+          "source_point": [
+            531.0,
+            0.0
+          ],
+          "source_wall_owners": [],
+          "target_wall_owners": [
+            -2392
+          ]
+        },
+        {
+          "fps_allows": true,
+          "original_arrival": [
+            532.0,
+            399.0
+          ],
+          "source_point": [
+            532.0,
+            0.0
+          ],
+          "source_wall_owners": [],
+          "target_wall_owners": [
+            -2392
+          ]
+        }
+      ]
+    },
+    {
+      "source": 134,
+      "target": 133,
+      "direction": "west",
+      "presentation_source_wall_cells": 7,
+      "presentation_arrival_wall_cells": 0,
+      "presentation_wall_examples": [
+        {
+          "fps_allows": true,
+          "original_arrival": [
+            619.0,
+            210.0
+          ],
+          "source_point": [
+            20.0,
+            210.0
+          ],
+          "source_wall_owners": [
+            -1261
+          ],
+          "target_wall_owners": []
+        },
+        {
+          "fps_allows": true,
+          "original_arrival": [
+            619.0,
+            211.0
+          ],
+          "source_point": [
+            20.0,
+            211.0
+          ],
+          "source_wall_owners": [
+            -1261
+          ],
+          "target_wall_owners": []
+        },
+        {
+          "fps_allows": true,
+          "original_arrival": [
+            619.0,
+            212.0
+          ],
+          "source_point": [
+            20.0,
+            212.0
+          ],
+          "source_wall_owners": [
+            -1261
+          ],
+          "target_wall_owners": []
+        }
+      ]
+    },
+    {
+      "source": 134,
+      "target": 102,
+      "direction": "north",
+      "presentation_source_wall_cells": 0,
+      "presentation_arrival_wall_cells": 55,
+      "presentation_wall_examples": [
+        {
+          "fps_allows": false,
+          "original_arrival": [
+            180.0,
+            399.0
+          ],
+          "source_point": [
+            180.0,
+            0.0
+          ],
+          "source_wall_owners": [],
+          "target_wall_owners": [
+            -2357
+          ]
+        },
+        {
+          "fps_allows": false,
+          "original_arrival": [
+            181.0,
+            399.0
+          ],
+          "source_point": [
+            181.0,
+            0.0
+          ],
+          "source_wall_owners": [],
+          "target_wall_owners": [
+            -2357
+          ]
+        },
+        {
+          "fps_allows": false,
+          "original_arrival": [
+            182.0,
+            399.0
+          ],
+          "source_point": [
+            182.0,
+            0.0
+          ],
+          "source_wall_owners": [],
+          "target_wall_owners": [
+            -2357
+          ]
+        }
+      ]
+    },
+    {
+      "source": 137,
+      "target": 105,
+      "direction": "north",
+      "presentation_source_wall_cells": 62,
+      "presentation_arrival_wall_cells": 62,
+      "presentation_wall_examples": [
+        {
+          "fps_allows": true,
+          "original_arrival": [
+            42.0,
+            399.0
+          ],
+          "source_point": [
+            42.0,
+            0.0
+          ],
+          "source_wall_owners": [
+            9
+          ],
+          "target_wall_owners": [
+            2
+          ]
+        },
+        {
+          "fps_allows": true,
+          "original_arrival": [
+            43.0,
+            399.0
+          ],
+          "source_point": [
+            43.0,
+            0.0
+          ],
+          "source_wall_owners": [
+            9
+          ],
+          "target_wall_owners": [
+            2
+          ]
+        },
+        {
+          "fps_allows": true,
+          "original_arrival": [
+            44.0,
+            399.0
+          ],
+          "source_point": [
+            44.0,
+            0.0
+          ],
+          "source_wall_owners": [
+            9
+          ],
+          "target_wall_owners": [
+            2
+          ]
+        }
+      ]
+    },
+    {
+      "source": 137,
+      "target": 169,
+      "direction": "south",
+      "presentation_source_wall_cells": 28,
+      "presentation_arrival_wall_cells": 28,
+      "presentation_wall_examples": [
+        {
+          "fps_allows": true,
+          "original_arrival": [
+            42.0,
+            0.0
+          ],
+          "source_point": [
+            42.0,
+            399.0
+          ],
+          "source_wall_owners": [
+            3
+          ],
+          "target_wall_owners": [
+            17
+          ]
+        },
+        {
+          "fps_allows": true,
+          "original_arrival": [
+            43.0,
+            0.0
+          ],
+          "source_point": [
+            43.0,
+            399.0
+          ],
+          "source_wall_owners": [
+            3
+          ],
+          "target_wall_owners": [
+            17
+          ]
+        },
+        {
+          "fps_allows": true,
+          "original_arrival": [
+            44.0,
+            0.0
+          ],
+          "source_point": [
+            44.0,
+            399.0
+          ],
+          "source_wall_owners": [
+            3
+          ],
+          "target_wall_owners": [
+            17
+          ]
+        }
+      ]
+    },
+    {
+      "source": 138,
+      "target": 170,
+      "direction": "south",
+      "presentation_source_wall_cells": 25,
+      "presentation_arrival_wall_cells": 25,
+      "presentation_wall_examples": [
+        {
+          "fps_allows": true,
+          "original_arrival": [
+            595.0,
+            0.0
+          ],
+          "source_point": [
+            595.0,
+            399.0
+          ],
+          "source_wall_owners": [
+            2
+          ],
+          "target_wall_owners": [
+            4
+          ]
+        },
+        {
+          "fps_allows": true,
+          "original_arrival": [
+            596.0,
+            0.0
+          ],
+          "source_point": [
+            596.0,
+            399.0
+          ],
+          "source_wall_owners": [
+            2
+          ],
+          "target_wall_owners": [
+            4
+          ]
+        },
+        {
+          "fps_allows": true,
+          "original_arrival": [
+            597.0,
+            0.0
+          ],
+          "source_point": [
+            597.0,
+            399.0
+          ],
+          "source_wall_owners": [
+            2
+          ],
+          "target_wall_owners": [
+            4
+          ]
+        }
+      ]
+    },
+    {
+      "source": 163,
+      "target": 131,
+      "direction": "north",
+      "presentation_source_wall_cells": 0,
+      "presentation_arrival_wall_cells": 10,
+      "presentation_wall_examples": [
+        {
+          "fps_allows": true,
+          "original_arrival": [
+            330.0,
+            399.0
+          ],
+          "source_point": [
+            330.0,
+            0.0
+          ],
+          "source_wall_owners": [],
+          "target_wall_owners": [
+            -2372
+          ]
+        },
+        {
+          "fps_allows": true,
+          "original_arrival": [
+            331.0,
+            399.0
+          ],
+          "source_point": [
+            331.0,
+            0.0
+          ],
+          "source_wall_owners": [],
+          "target_wall_owners": [
+            -2372
+          ]
+        },
+        {
+          "fps_allows": true,
+          "original_arrival": [
+            332.0,
+            399.0
+          ],
+          "source_point": [
+            332.0,
+            0.0
+          ],
+          "source_wall_owners": [],
+          "target_wall_owners": [
+            -2372
+          ]
+        }
+      ]
+    },
+    {
+      "source": 164,
+      "target": 132,
+      "direction": "north",
+      "presentation_source_wall_cells": 0,
+      "presentation_arrival_wall_cells": 10,
+      "presentation_wall_examples": [
+        {
+          "fps_allows": true,
+          "original_arrival": [
+            330.0,
+            399.0
+          ],
+          "source_point": [
+            330.0,
+            0.0
+          ],
+          "source_wall_owners": [],
+          "target_wall_owners": [
+            -2372
+          ]
+        },
+        {
+          "fps_allows": true,
+          "original_arrival": [
+            331.0,
+            399.0
+          ],
+          "source_point": [
+            331.0,
+            0.0
+          ],
+          "source_wall_owners": [],
+          "target_wall_owners": [
+            -2372
+          ]
+        },
+        {
+          "fps_allows": true,
+          "original_arrival": [
+            332.0,
+            399.0
+          ],
+          "source_point": [
+            332.0,
+            0.0
+          ],
+          "source_wall_owners": [],
+          "target_wall_owners": [
+            -2372
+          ]
+        }
+      ]
+    },
+    {
+      "source": 166,
+      "target": 134,
+      "direction": "north",
+      "presentation_source_wall_cells": 0,
+      "presentation_arrival_wall_cells": 10,
+      "presentation_wall_examples": [
+        {
+          "fps_allows": false,
+          "original_arrival": [
+            560.0,
+            399.0
+          ],
+          "source_point": [
+            560.0,
+            0.0
+          ],
+          "source_wall_owners": [],
+          "target_wall_owners": [
+            -2395
+          ]
+        },
+        {
+          "fps_allows": false,
+          "original_arrival": [
+            561.0,
+            399.0
+          ],
+          "source_point": [
+            561.0,
+            0.0
+          ],
+          "source_wall_owners": [],
+          "target_wall_owners": [
+            -2395
+          ]
+        },
+        {
+          "fps_allows": false,
+          "original_arrival": [
+            562.0,
+            399.0
+          ],
+          "source_point": [
+            562.0,
+            0.0
+          ],
+          "source_wall_owners": [],
+          "target_wall_owners": [
+            -2395
+          ]
+        }
+      ]
+    },
+    {
+      "source": 169,
+      "target": 170,
+      "direction": "east",
+      "presentation_source_wall_cells": 95,
+      "presentation_arrival_wall_cells": 95,
+      "presentation_wall_examples": [
+        {
+          "fps_allows": true,
+          "original_arrival": [
+            20.0,
+            55.0
+          ],
+          "source_point": [
+            619.0,
+            55.0
+          ],
+          "source_wall_owners": [
+            14
+          ],
+          "target_wall_owners": [
+            6
+          ]
+        },
+        {
+          "fps_allows": true,
+          "original_arrival": [
+            20.0,
+            56.0
+          ],
+          "source_point": [
+            619.0,
+            56.0
+          ],
+          "source_wall_owners": [
+            14
+          ],
+          "target_wall_owners": [
+            6
+          ]
+        },
+        {
+          "fps_allows": true,
+          "original_arrival": [
+            20.0,
+            57.0
+          ],
+          "source_point": [
+            619.0,
+            57.0
+          ],
+          "source_wall_owners": [
+            14
+          ],
+          "target_wall_owners": [
+            6
+          ]
+        }
+      ]
+    },
+    {
+      "source": 169,
+      "target": 137,
+      "direction": "north",
+      "presentation_source_wall_cells": 28,
+      "presentation_arrival_wall_cells": 28,
+      "presentation_wall_examples": [
+        {
+          "fps_allows": true,
+          "original_arrival": [
+            42.0,
+            399.0
+          ],
+          "source_point": [
+            42.0,
+            0.0
+          ],
+          "source_wall_owners": [
+            17
+          ],
+          "target_wall_owners": [
+            3
+          ]
+        },
+        {
+          "fps_allows": true,
+          "original_arrival": [
+            43.0,
+            399.0
+          ],
+          "source_point": [
+            43.0,
+            0.0
+          ],
+          "source_wall_owners": [
+            17
+          ],
+          "target_wall_owners": [
+            3
+          ]
+        },
+        {
+          "fps_allows": true,
+          "original_arrival": [
+            44.0,
+            399.0
+          ],
+          "source_point": [
+            44.0,
+            0.0
+          ],
+          "source_wall_owners": [
+            17
+          ],
+          "target_wall_owners": [
+            3
+          ]
+        }
+      ]
+    },
+    {
+      "source": 170,
+      "target": 169,
+      "direction": "west",
+      "presentation_source_wall_cells": 95,
+      "presentation_arrival_wall_cells": 95,
+      "presentation_wall_examples": [
+        {
+          "fps_allows": true,
+          "original_arrival": [
+            619.0,
+            55.0
+          ],
+          "source_point": [
+            20.0,
+            55.0
+          ],
+          "source_wall_owners": [
+            6
+          ],
+          "target_wall_owners": [
+            14
+          ]
+        },
+        {
+          "fps_allows": true,
+          "original_arrival": [
+            619.0,
+            56.0
+          ],
+          "source_point": [
+            20.0,
+            56.0
+          ],
+          "source_wall_owners": [
+            6
+          ],
+          "target_wall_owners": [
+            14
+          ]
+        },
+        {
+          "fps_allows": true,
+          "original_arrival": [
+            619.0,
+            57.0
+          ],
+          "source_point": [
+            20.0,
+            57.0
+          ],
+          "source_wall_owners": [
+            6
+          ],
+          "target_wall_owners": [
+            14
+          ]
+        }
+      ]
+    },
+    {
+      "source": 170,
+      "target": 138,
+      "direction": "north",
+      "presentation_source_wall_cells": 25,
+      "presentation_arrival_wall_cells": 25,
+      "presentation_wall_examples": [
+        {
+          "fps_allows": true,
+          "original_arrival": [
+            595.0,
+            399.0
+          ],
+          "source_point": [
+            595.0,
+            0.0
+          ],
+          "source_wall_owners": [
+            4
+          ],
+          "target_wall_owners": [
+            2
+          ]
+        },
+        {
+          "fps_allows": true,
+          "original_arrival": [
+            596.0,
+            399.0
+          ],
+          "source_point": [
+            596.0,
+            0.0
+          ],
+          "source_wall_owners": [
+            4
+          ],
+          "target_wall_owners": [
+            2
+          ]
+        },
+        {
+          "fps_allows": true,
+          "original_arrival": [
+            597.0,
+            399.0
+          ],
+          "source_point": [
+            597.0,
+            0.0
+          ],
+          "source_wall_owners": [
+            4
+          ],
+          "target_wall_owners": [
+            2
+          ]
+        }
+      ]
+    },
+    {
+      "source": 170,
+      "target": 202,
+      "direction": "south",
+      "presentation_source_wall_cells": 50,
+      "presentation_arrival_wall_cells": 50,
+      "presentation_wall_examples": [
+        {
+          "fps_allows": true,
+          "original_arrival": [
+            20.0,
+            0.0
+          ],
+          "source_point": [
+            20.0,
+            399.0
+          ],
+          "source_wall_owners": [
+            5
+          ],
+          "target_wall_owners": [
+            18
+          ]
+        },
+        {
+          "fps_allows": true,
+          "original_arrival": [
+            21.0,
+            0.0
+          ],
+          "source_point": [
+            21.0,
+            399.0
+          ],
+          "source_wall_owners": [
+            5
+          ],
+          "target_wall_owners": [
+            18
+          ]
+        },
+        {
+          "fps_allows": true,
+          "original_arrival": [
+            22.0,
+            0.0
+          ],
+          "source_point": [
+            22.0,
+            399.0
+          ],
+          "source_wall_owners": [
+            5
+          ],
+          "target_wall_owners": [
+            18
+          ]
+        }
+      ]
+    },
+    {
+      "source": 196,
+      "target": 164,
+      "direction": "north",
+      "presentation_source_wall_cells": 0,
+      "presentation_arrival_wall_cells": 10,
+      "presentation_wall_examples": [
+        {
+          "fps_allows": true,
+          "original_arrival": [
+            330.0,
+            399.0
+          ],
+          "source_point": [
+            330.0,
+            0.0
+          ],
+          "source_wall_owners": [],
+          "target_wall_owners": [
+            -2372
+          ]
+        },
+        {
+          "fps_allows": true,
+          "original_arrival": [
+            331.0,
+            399.0
+          ],
+          "source_point": [
+            331.0,
+            0.0
+          ],
+          "source_wall_owners": [],
+          "target_wall_owners": [
+            -2372
+          ]
+        },
+        {
+          "fps_allows": true,
+          "original_arrival": [
+            332.0,
+            399.0
+          ],
+          "source_point": [
+            332.0,
+            0.0
+          ],
+          "source_wall_owners": [],
+          "target_wall_owners": [
+            -2372
+          ]
+        }
+      ]
+    },
+    {
+      "source": 197,
+      "target": 165,
+      "direction": "north",
+      "presentation_source_wall_cells": 0,
+      "presentation_arrival_wall_cells": 10,
+      "presentation_wall_examples": [
+        {
+          "fps_allows": true,
+          "original_arrival": [
+            330.0,
+            399.0
+          ],
+          "source_point": [
+            330.0,
+            0.0
+          ],
+          "source_wall_owners": [],
+          "target_wall_owners": [
+            -2372
+          ]
+        },
+        {
+          "fps_allows": true,
+          "original_arrival": [
+            331.0,
+            399.0
+          ],
+          "source_point": [
+            331.0,
+            0.0
+          ],
+          "source_wall_owners": [],
+          "target_wall_owners": [
+            -2372
+          ]
+        },
+        {
+          "fps_allows": true,
+          "original_arrival": [
+            332.0,
+            399.0
+          ],
+          "source_point": [
+            332.0,
+            0.0
+          ],
+          "source_wall_owners": [],
+          "target_wall_owners": [
+            -2372
+          ]
+        }
+      ]
+    },
+    {
+      "source": 198,
+      "target": 166,
+      "direction": "north",
+      "presentation_source_wall_cells": 0,
+      "presentation_arrival_wall_cells": 10,
+      "presentation_wall_examples": [
+        {
+          "fps_allows": true,
+          "original_arrival": [
+            330.0,
+            399.0
+          ],
+          "source_point": [
+            330.0,
+            0.0
+          ],
+          "source_wall_owners": [],
+          "target_wall_owners": [
+            -2372
+          ]
+        },
+        {
+          "fps_allows": true,
+          "original_arrival": [
+            331.0,
+            399.0
+          ],
+          "source_point": [
+            331.0,
+            0.0
+          ],
+          "source_wall_owners": [],
+          "target_wall_owners": [
+            -2372
+          ]
+        },
+        {
+          "fps_allows": true,
+          "original_arrival": [
+            332.0,
+            399.0
+          ],
+          "source_point": [
+            332.0,
+            0.0
+          ],
+          "source_wall_owners": [],
+          "target_wall_owners": [
+            -2372
+          ]
+        }
+      ]
+    },
+    {
+      "source": 202,
+      "target": 170,
+      "direction": "north",
+      "presentation_source_wall_cells": 50,
+      "presentation_arrival_wall_cells": 50,
+      "presentation_wall_examples": [
+        {
+          "fps_allows": true,
+          "original_arrival": [
+            20.0,
+            399.0
+          ],
+          "source_point": [
+            20.0,
+            0.0
+          ],
+          "source_wall_owners": [
+            18
+          ],
+          "target_wall_owners": [
+            5
+          ]
+        },
+        {
+          "fps_allows": true,
+          "original_arrival": [
+            21.0,
+            399.0
+          ],
+          "source_point": [
+            21.0,
+            0.0
+          ],
+          "source_wall_owners": [
+            18
+          ],
+          "target_wall_owners": [
+            5
+          ]
+        },
+        {
+          "fps_allows": true,
+          "original_arrival": [
+            22.0,
+            399.0
+          ],
+          "source_point": [
+            22.0,
+            0.0
+          ],
+          "source_wall_owners": [
+            18
+          ],
+          "target_wall_owners": [
+            5
+          ]
+        }
+      ]
+    },
+    {
+      "source": 228,
+      "target": 260,
+      "direction": "south",
+      "presentation_source_wall_cells": 0,
+      "presentation_arrival_wall_cells": 521,
+      "presentation_wall_examples": [
+        {
+          "fps_allows": true,
+          "original_arrival": [
+            99.0,
+            0.0
+          ],
+          "source_point": [
+            99.0,
+            399.0
+          ],
+          "source_wall_owners": [],
+          "target_wall_owners": [
+            12
+          ]
+        },
+        {
+          "fps_allows": true,
+          "original_arrival": [
+            100.0,
+            0.0
+          ],
+          "source_point": [
+            100.0,
+            399.0
+          ],
+          "source_wall_owners": [],
+          "target_wall_owners": [
+            12
+          ]
+        },
+        {
+          "fps_allows": true,
+          "original_arrival": [
+            101.0,
+            0.0
+          ],
+          "source_point": [
+            101.0,
+            399.0
+          ],
+          "source_wall_owners": [],
+          "target_wall_owners": [
+            12
+          ]
+        }
+      ]
+    },
+    {
+      "source": 257,
+      "target": 258,
+      "direction": "east",
+      "presentation_source_wall_cells": 7,
+      "presentation_arrival_wall_cells": 7,
+      "presentation_wall_examples": [
+        {
+          "fps_allows": true,
+          "original_arrival": [
+            20.0,
+            310.0
+          ],
+          "source_point": [
+            619.0,
+            310.0
+          ],
+          "source_wall_owners": [
+            -1920
+          ],
+          "target_wall_owners": [
+            -1861
+          ]
+        },
+        {
+          "fps_allows": true,
+          "original_arrival": [
+            20.0,
+            311.0
+          ],
+          "source_point": [
+            619.0,
+            311.0
+          ],
+          "source_wall_owners": [
+            -1920
+          ],
+          "target_wall_owners": [
+            -1861
+          ]
+        },
+        {
+          "fps_allows": true,
+          "original_arrival": [
+            20.0,
+            312.0
+          ],
+          "source_point": [
+            619.0,
+            312.0
+          ],
+          "source_wall_owners": [
+            -1920
+          ],
+          "target_wall_owners": [
+            -1861
+          ]
+        }
+      ]
+    },
+    {
+      "source": 258,
+      "target": 257,
+      "direction": "west",
+      "presentation_source_wall_cells": 7,
+      "presentation_arrival_wall_cells": 7,
+      "presentation_wall_examples": [
+        {
+          "fps_allows": true,
+          "original_arrival": [
+            619.0,
+            310.0
+          ],
+          "source_point": [
+            20.0,
+            310.0
+          ],
+          "source_wall_owners": [
+            -1861
+          ],
+          "target_wall_owners": [
+            -1920
+          ]
+        },
+        {
+          "fps_allows": true,
+          "original_arrival": [
+            619.0,
+            311.0
+          ],
+          "source_point": [
+            20.0,
+            311.0
+          ],
+          "source_wall_owners": [
+            -1861
+          ],
+          "target_wall_owners": [
+            -1920
+          ]
+        },
+        {
+          "fps_allows": true,
+          "original_arrival": [
+            619.0,
+            312.0
+          ],
+          "source_point": [
+            20.0,
+            312.0
+          ],
+          "source_wall_owners": [
+            -1861
+          ],
+          "target_wall_owners": [
+            -1920
+          ]
+        }
+      ]
+    },
+    {
+      "source": 258,
+      "target": 259,
+      "direction": "east",
+      "presentation_source_wall_cells": 7,
+      "presentation_arrival_wall_cells": 7,
+      "presentation_wall_examples": [
+        {
+          "fps_allows": true,
+          "original_arrival": [
+            20.0,
+            310.0
+          ],
+          "source_point": [
+            619.0,
+            310.0
+          ],
+          "source_wall_owners": [
+            -1920
+          ],
+          "target_wall_owners": [
+            -1861
+          ]
+        },
+        {
+          "fps_allows": true,
+          "original_arrival": [
+            20.0,
+            311.0
+          ],
+          "source_point": [
+            619.0,
+            311.0
+          ],
+          "source_wall_owners": [
+            -1920
+          ],
+          "target_wall_owners": [
+            -1861
+          ]
+        },
+        {
+          "fps_allows": true,
+          "original_arrival": [
+            20.0,
+            312.0
+          ],
+          "source_point": [
+            619.0,
+            312.0
+          ],
+          "source_wall_owners": [
+            -1920
+          ],
+          "target_wall_owners": [
+            -1861
+          ]
+        }
+      ]
+    },
+    {
+      "source": 259,
+      "target": 258,
+      "direction": "west",
+      "presentation_source_wall_cells": 7,
+      "presentation_arrival_wall_cells": 7,
+      "presentation_wall_examples": [
+        {
+          "fps_allows": true,
+          "original_arrival": [
+            619.0,
+            310.0
+          ],
+          "source_point": [
+            20.0,
+            310.0
+          ],
+          "source_wall_owners": [
+            -1861
+          ],
+          "target_wall_owners": [
+            -1920
+          ]
+        },
+        {
+          "fps_allows": true,
+          "original_arrival": [
+            619.0,
+            311.0
+          ],
+          "source_point": [
+            20.0,
+            311.0
+          ],
+          "source_wall_owners": [
+            -1861
+          ],
+          "target_wall_owners": [
+            -1920
+          ]
+        },
+        {
+          "fps_allows": true,
+          "original_arrival": [
+            619.0,
+            312.0
+          ],
+          "source_point": [
+            20.0,
+            312.0
+          ],
+          "source_wall_owners": [
+            -1861
+          ],
+          "target_wall_owners": [
+            -1920
+          ]
+        }
+      ]
+    },
+    {
+      "source": 259,
+      "target": 260,
+      "direction": "east",
+      "presentation_source_wall_cells": 0,
+      "presentation_arrival_wall_cells": 218,
+      "presentation_wall_examples": [
+        {
+          "fps_allows": false,
+          "original_arrival": [
+            20.0,
+            98.0
+          ],
+          "source_point": [
+            619.0,
+            98.0
+          ],
+          "source_wall_owners": [],
+          "target_wall_owners": [
+            22
+          ]
+        },
+        {
+          "fps_allows": false,
+          "original_arrival": [
+            20.0,
+            99.0
+          ],
+          "source_point": [
+            619.0,
+            99.0
+          ],
+          "source_wall_owners": [],
+          "target_wall_owners": [
+            22
+          ]
+        },
+        {
+          "fps_allows": false,
+          "original_arrival": [
+            20.0,
+            100.0
+          ],
+          "source_point": [
+            619.0,
+            100.0
+          ],
+          "source_wall_owners": [],
+          "target_wall_owners": [
+            22
+          ]
+        }
+      ]
+    },
+    {
+      "source": 259,
+      "target": 227,
+      "direction": "north",
+      "presentation_source_wall_cells": 0,
+      "presentation_arrival_wall_cells": 10,
+      "presentation_wall_examples": [
+        {
+          "fps_allows": true,
+          "original_arrival": [
+            530.0,
+            399.0
+          ],
+          "source_point": [
+            530.0,
+            0.0
+          ],
+          "source_wall_owners": [],
+          "target_wall_owners": [
+            -2392
+          ]
+        },
+        {
+          "fps_allows": true,
+          "original_arrival": [
+            531.0,
+            399.0
+          ],
+          "source_point": [
+            531.0,
+            0.0
+          ],
+          "source_wall_owners": [],
+          "target_wall_owners": [
+            -2392
+          ]
+        },
+        {
+          "fps_allows": true,
+          "original_arrival": [
+            532.0,
+            399.0
+          ],
+          "source_point": [
+            532.0,
+            0.0
+          ],
+          "source_wall_owners": [],
+          "target_wall_owners": [
+            -2392
+          ]
+        }
+      ]
+    },
+    {
+      "source": 260,
+      "target": 259,
+      "direction": "west",
+      "presentation_source_wall_cells": 25,
+      "presentation_arrival_wall_cells": 0,
+      "presentation_wall_examples": [
+        {
+          "fps_allows": true,
+          "original_arrival": [
+            619.0,
+            375.0
+          ],
+          "source_point": [
+            20.0,
+            375.0
+          ],
+          "source_wall_owners": [
+            21
+          ],
+          "target_wall_owners": []
+        },
+        {
+          "fps_allows": true,
+          "original_arrival": [
+            619.0,
+            376.0
+          ],
+          "source_point": [
+            20.0,
+            376.0
+          ],
+          "source_wall_owners": [
+            21
+          ],
+          "target_wall_owners": []
+        },
+        {
+          "fps_allows": true,
+          "original_arrival": [
+            619.0,
+            377.0
+          ],
+          "source_point": [
+            20.0,
+            377.0
+          ],
+          "source_wall_owners": [
+            21
+          ],
+          "target_wall_owners": []
+        }
+      ]
+    },
+    {
+      "source": 260,
+      "target": 261,
+      "direction": "east",
+      "presentation_source_wall_cells": 375,
+      "presentation_arrival_wall_cells": 0,
+      "presentation_wall_examples": [
+        {
+          "fps_allows": true,
+          "original_arrival": [
+            20.0,
+            0.0
+          ],
+          "source_point": [
+            619.0,
+            0.0
+          ],
+          "source_wall_owners": [
+            16,
+            17
+          ],
+          "target_wall_owners": []
+        },
+        {
+          "fps_allows": true,
+          "original_arrival": [
+            20.0,
+            1.0
+          ],
+          "source_point": [
+            619.0,
+            1.0
+          ],
+          "source_wall_owners": [
+            16,
+            17
+          ],
+          "target_wall_owners": []
+        },
+        {
+          "fps_allows": true,
+          "original_arrival": [
+            20.0,
+            2.0
+          ],
+          "source_point": [
+            619.0,
+            2.0
+          ],
+          "source_wall_owners": [
+            16,
+            17
+          ],
+          "target_wall_owners": []
+        }
+      ]
+    },
+    {
+      "source": 260,
+      "target": 228,
+      "direction": "north",
+      "presentation_source_wall_cells": 521,
+      "presentation_arrival_wall_cells": 0,
+      "presentation_wall_examples": [
+        {
+          "fps_allows": true,
+          "original_arrival": [
+            99.0,
+            399.0
+          ],
+          "source_point": [
+            99.0,
+            0.0
+          ],
+          "source_wall_owners": [
+            12
+          ],
+          "target_wall_owners": []
+        },
+        {
+          "fps_allows": true,
+          "original_arrival": [
+            100.0,
+            399.0
+          ],
+          "source_point": [
+            100.0,
+            0.0
+          ],
+          "source_wall_owners": [
+            12
+          ],
+          "target_wall_owners": []
+        },
+        {
+          "fps_allows": true,
+          "original_arrival": [
+            101.0,
+            399.0
+          ],
+          "source_point": [
+            101.0,
+            0.0
+          ],
+          "source_wall_owners": [
+            12
+          ],
+          "target_wall_owners": []
+        }
+      ]
+    },
+    {
+      "source": 261,
+      "target": 260,
+      "direction": "west",
+      "presentation_source_wall_cells": 0,
+      "presentation_arrival_wall_cells": 400,
+      "presentation_wall_examples": [
+        {
+          "fps_allows": true,
+          "original_arrival": [
+            619.0,
+            0.0
+          ],
+          "source_point": [
+            20.0,
+            0.0
+          ],
+          "source_wall_owners": [],
+          "target_wall_owners": [
+            16,
+            17
+          ]
+        },
+        {
+          "fps_allows": true,
+          "original_arrival": [
+            619.0,
+            1.0
+          ],
+          "source_point": [
+            20.0,
+            1.0
+          ],
+          "source_wall_owners": [],
+          "target_wall_owners": [
+            16,
+            17
+          ]
+        },
+        {
+          "fps_allows": true,
+          "original_arrival": [
+            619.0,
+            2.0
+          ],
+          "source_point": [
+            20.0,
+            2.0
+          ],
+          "source_wall_owners": [],
+          "target_wall_owners": [
+            16,
+            17
+          ]
+        }
+      ]
+    },
+    {
+      "source": 482,
+      "target": 514,
+      "direction": "south",
+      "presentation_source_wall_cells": 0,
+      "presentation_arrival_wall_cells": 30,
+      "presentation_wall_examples": [
+        {
+          "fps_allows": true,
+          "original_arrival": [
+            40.0,
+            0.0
+          ],
+          "source_point": [
+            40.0,
+            399.0
+          ],
+          "source_wall_owners": [],
+          "target_wall_owners": [
+            -3
+          ]
+        },
+        {
+          "fps_allows": true,
+          "original_arrival": [
+            41.0,
+            0.0
+          ],
+          "source_point": [
+            41.0,
+            399.0
+          ],
+          "source_wall_owners": [],
+          "target_wall_owners": [
+            -3
+          ]
+        },
+        {
+          "fps_allows": true,
+          "original_arrival": [
+            42.0,
+            0.0
+          ],
+          "source_point": [
+            42.0,
+            399.0
+          ],
+          "source_wall_owners": [],
+          "target_wall_owners": [
+            -3
+          ]
+        }
+      ]
+    },
+    {
+      "source": 514,
+      "target": 515,
+      "direction": "east",
+      "presentation_source_wall_cells": 42,
+      "presentation_arrival_wall_cells": 42,
+      "presentation_wall_examples": [
+        {
+          "fps_allows": true,
+          "original_arrival": [
+            20.0,
+            158.0
+          ],
+          "source_point": [
+            619.0,
+            158.0
+          ],
+          "source_wall_owners": [
+            11
+          ],
+          "target_wall_owners": [
+            3
+          ]
+        },
+        {
+          "fps_allows": true,
+          "original_arrival": [
+            20.0,
+            159.0
+          ],
+          "source_point": [
+            619.0,
+            159.0
+          ],
+          "source_wall_owners": [
+            11
+          ],
+          "target_wall_owners": [
+            3
+          ]
+        },
+        {
+          "fps_allows": true,
+          "original_arrival": [
+            20.0,
+            160.0
+          ],
+          "source_point": [
+            619.0,
+            160.0
+          ],
+          "source_wall_owners": [
+            11
+          ],
+          "target_wall_owners": [
+            3
+          ]
+        }
+      ]
+    },
+    {
+      "source": 514,
+      "target": 482,
+      "direction": "north",
+      "presentation_source_wall_cells": 5,
+      "presentation_arrival_wall_cells": 0,
+      "presentation_wall_examples": [
+        {
+          "fps_allows": true,
+          "original_arrival": [
+            40.0,
+            399.0
+          ],
+          "source_point": [
+            40.0,
+            0.0
+          ],
+          "source_wall_owners": [
+            -3
+          ],
+          "target_wall_owners": []
+        },
+        {
+          "fps_allows": true,
+          "original_arrival": [
+            41.0,
+            399.0
+          ],
+          "source_point": [
+            41.0,
+            0.0
+          ],
+          "source_wall_owners": [
+            -3
+          ],
+          "target_wall_owners": []
+        },
+        {
+          "fps_allows": true,
+          "original_arrival": [
+            42.0,
+            399.0
+          ],
+          "source_point": [
+            42.0,
+            0.0
+          ],
+          "source_wall_owners": [
+            -3
+          ],
+          "target_wall_owners": []
+        }
+      ]
+    },
+    {
+      "source": 514,
+      "target": 546,
+      "direction": "south",
+      "presentation_source_wall_cells": 24,
+      "presentation_arrival_wall_cells": 24,
+      "presentation_wall_examples": [
+        {
+          "fps_allows": true,
+          "original_arrival": [
+            21.0,
+            0.0
+          ],
+          "source_point": [
+            21.0,
+            399.0
+          ],
+          "source_wall_owners": [
+            3
+          ],
+          "target_wall_owners": [
+            8
+          ]
+        },
+        {
+          "fps_allows": true,
+          "original_arrival": [
+            22.0,
+            0.0
+          ],
+          "source_point": [
+            22.0,
+            399.0
+          ],
+          "source_wall_owners": [
+            3
+          ],
+          "target_wall_owners": [
+            8
+          ]
+        },
+        {
+          "fps_allows": true,
+          "original_arrival": [
+            23.0,
+            0.0
+          ],
+          "source_point": [
+            23.0,
+            399.0
+          ],
+          "source_wall_owners": [
+            3
+          ],
+          "target_wall_owners": [
+            8
+          ]
+        }
+      ]
+    },
+    {
+      "source": 515,
+      "target": 514,
+      "direction": "west",
+      "presentation_source_wall_cells": 42,
+      "presentation_arrival_wall_cells": 42,
+      "presentation_wall_examples": [
+        {
+          "fps_allows": true,
+          "original_arrival": [
+            619.0,
+            158.0
+          ],
+          "source_point": [
+            20.0,
+            158.0
+          ],
+          "source_wall_owners": [
+            3
+          ],
+          "target_wall_owners": [
+            11
+          ]
+        },
+        {
+          "fps_allows": true,
+          "original_arrival": [
+            619.0,
+            159.0
+          ],
+          "source_point": [
+            20.0,
+            159.0
+          ],
+          "source_wall_owners": [
+            3
+          ],
+          "target_wall_owners": [
+            11
+          ]
+        },
+        {
+          "fps_allows": true,
+          "original_arrival": [
+            619.0,
+            160.0
+          ],
+          "source_point": [
+            20.0,
+            160.0
+          ],
+          "source_wall_owners": [
+            3
+          ],
+          "target_wall_owners": [
+            11
+          ]
+        }
+      ]
+    },
+    {
+      "source": 515,
+      "target": 547,
+      "direction": "south",
+      "presentation_source_wall_cells": 23,
+      "presentation_arrival_wall_cells": 23,
+      "presentation_wall_examples": [
+        {
+          "fps_allows": true,
+          "original_arrival": [
+            595.0,
+            0.0
+          ],
+          "source_point": [
+            595.0,
+            399.0
+          ],
+          "source_wall_owners": [
+            9
+          ],
+          "target_wall_owners": [
+            10
+          ]
+        },
+        {
+          "fps_allows": true,
+          "original_arrival": [
+            596.0,
+            0.0
+          ],
+          "source_point": [
+            596.0,
+            399.0
+          ],
+          "source_wall_owners": [
+            9
+          ],
+          "target_wall_owners": [
+            10
+          ]
+        },
+        {
+          "fps_allows": true,
+          "original_arrival": [
+            597.0,
+            0.0
+          ],
+          "source_point": [
+            597.0,
+            399.0
+          ],
+          "source_wall_owners": [
+            9
+          ],
+          "target_wall_owners": [
+            10
+          ]
+        }
+      ]
+    },
+    {
+      "source": 546,
+      "target": 547,
+      "direction": "east",
+      "presentation_source_wall_cells": 60,
+      "presentation_arrival_wall_cells": 60,
+      "presentation_wall_examples": [
+        {
+          "fps_allows": true,
+          "original_arrival": [
+            20.0,
+            275.0
+          ],
+          "source_point": [
+            619.0,
+            275.0
+          ],
+          "source_wall_owners": [
+            9,
+            10
+          ],
+          "target_wall_owners": []
+        },
+        {
+          "fps_allows": true,
+          "original_arrival": [
+            20.0,
+            276.0
+          ],
+          "source_point": [
+            619.0,
+            276.0
+          ],
+          "source_wall_owners": [
+            9,
+            10
+          ],
+          "target_wall_owners": []
+        },
+        {
+          "fps_allows": true,
+          "original_arrival": [
+            20.0,
+            277.0
+          ],
+          "source_point": [
+            619.0,
+            277.0
+          ],
+          "source_wall_owners": [
+            9,
+            10
+          ],
+          "target_wall_owners": []
+        }
+      ]
+    },
+    {
+      "source": 546,
+      "target": 514,
+      "direction": "north",
+      "presentation_source_wall_cells": 24,
+      "presentation_arrival_wall_cells": 24,
+      "presentation_wall_examples": [
+        {
+          "fps_allows": true,
+          "original_arrival": [
+            21.0,
+            399.0
+          ],
+          "source_point": [
+            21.0,
+            0.0
+          ],
+          "source_wall_owners": [
+            8
+          ],
+          "target_wall_owners": [
+            3
+          ]
+        },
+        {
+          "fps_allows": true,
+          "original_arrival": [
+            22.0,
+            399.0
+          ],
+          "source_point": [
+            22.0,
+            0.0
+          ],
+          "source_wall_owners": [
+            8
+          ],
+          "target_wall_owners": [
+            3
+          ]
+        },
+        {
+          "fps_allows": true,
+          "original_arrival": [
+            23.0,
+            399.0
+          ],
+          "source_point": [
+            23.0,
+            0.0
+          ],
+          "source_wall_owners": [
+            8
+          ],
+          "target_wall_owners": [
+            3
+          ]
+        }
+      ]
+    },
+    {
+      "source": 546,
+      "target": 578,
+      "direction": "south",
+      "presentation_source_wall_cells": 58,
+      "presentation_arrival_wall_cells": 10,
+      "presentation_wall_examples": [
+        {
+          "fps_allows": true,
+          "original_arrival": [
+            273.0,
+            0.0
+          ],
+          "source_point": [
+            273.0,
+            399.0
+          ],
+          "source_wall_owners": [
+            3
+          ],
+          "target_wall_owners": []
+        },
+        {
+          "fps_allows": true,
+          "original_arrival": [
+            274.0,
+            0.0
+          ],
+          "source_point": [
+            274.0,
+            399.0
+          ],
+          "source_wall_owners": [
+            3
+          ],
+          "target_wall_owners": []
+        },
+        {
+          "fps_allows": true,
+          "original_arrival": [
+            275.0,
+            0.0
+          ],
+          "source_point": [
+            275.0,
+            399.0
+          ],
+          "source_wall_owners": [
+            3
+          ],
+          "target_wall_owners": []
+        }
+      ]
+    },
+    {
+      "source": 547,
+      "target": 546,
+      "direction": "west",
+      "presentation_source_wall_cells": 60,
+      "presentation_arrival_wall_cells": 60,
+      "presentation_wall_examples": [
+        {
+          "fps_allows": true,
+          "original_arrival": [
+            619.0,
+            275.0
+          ],
+          "source_point": [
+            20.0,
+            275.0
+          ],
+          "source_wall_owners": [],
+          "target_wall_owners": [
+            9,
+            10
+          ]
+        },
+        {
+          "fps_allows": true,
+          "original_arrival": [
+            619.0,
+            276.0
+          ],
+          "source_point": [
+            20.0,
+            276.0
+          ],
+          "source_wall_owners": [],
+          "target_wall_owners": [
+            9,
+            10
+          ]
+        },
+        {
+          "fps_allows": true,
+          "original_arrival": [
+            619.0,
+            277.0
+          ],
+          "source_point": [
+            20.0,
+            277.0
+          ],
+          "source_wall_owners": [],
+          "target_wall_owners": [
+            9,
+            10
+          ]
+        }
+      ]
+    },
+    {
+      "source": 547,
+      "target": 515,
+      "direction": "north",
+      "presentation_source_wall_cells": 23,
+      "presentation_arrival_wall_cells": 23,
+      "presentation_wall_examples": [
+        {
+          "fps_allows": true,
+          "original_arrival": [
+            595.0,
+            399.0
+          ],
+          "source_point": [
+            595.0,
+            0.0
+          ],
+          "source_wall_owners": [
+            10
+          ],
+          "target_wall_owners": [
+            9
+          ]
+        },
+        {
+          "fps_allows": true,
+          "original_arrival": [
+            596.0,
+            399.0
+          ],
+          "source_point": [
+            596.0,
+            0.0
+          ],
+          "source_wall_owners": [
+            10
+          ],
+          "target_wall_owners": [
+            9
+          ]
+        },
+        {
+          "fps_allows": true,
+          "original_arrival": [
+            597.0,
+            399.0
+          ],
+          "source_point": [
+            597.0,
+            0.0
+          ],
+          "source_wall_owners": [
+            10
+          ],
+          "target_wall_owners": [
+            9
+          ]
+        }
+      ]
+    },
+    {
+      "source": 547,
+      "target": 579,
+      "direction": "south",
+      "presentation_source_wall_cells": 0,
+      "presentation_arrival_wall_cells": 36,
+      "presentation_wall_examples": [
+        {
+          "fps_allows": true,
+          "original_arrival": [
+            584.0,
+            0.0
+          ],
+          "source_point": [
+            584.0,
+            399.0
+          ],
+          "source_wall_owners": [],
+          "target_wall_owners": [
+            9
+          ]
+        },
+        {
+          "fps_allows": true,
+          "original_arrival": [
+            585.0,
+            0.0
+          ],
+          "source_point": [
+            585.0,
+            399.0
+          ],
+          "source_wall_owners": [],
+          "target_wall_owners": [
+            9
+          ]
+        },
+        {
+          "fps_allows": true,
+          "original_arrival": [
+            586.0,
+            0.0
+          ],
+          "source_point": [
+            586.0,
+            399.0
+          ],
+          "source_wall_owners": [],
+          "target_wall_owners": [
+            9
+          ]
+        }
+      ]
+    },
+    {
+      "source": 578,
+      "target": 579,
+      "direction": "east",
+      "presentation_source_wall_cells": 145,
+      "presentation_arrival_wall_cells": 133,
+      "presentation_wall_examples": [
+        {
+          "fps_allows": true,
+          "original_arrival": [
+            20.0,
+            70.0
+          ],
+          "source_point": [
+            619.0,
+            70.0
+          ],
+          "source_wall_owners": [
+            -480
+          ],
+          "target_wall_owners": []
+        },
+        {
+          "fps_allows": true,
+          "original_arrival": [
+            20.0,
+            71.0
+          ],
+          "source_point": [
+            619.0,
+            71.0
+          ],
+          "source_wall_owners": [
+            -480
+          ],
+          "target_wall_owners": []
+        },
+        {
+          "fps_allows": true,
+          "original_arrival": [
+            20.0,
+            72.0
+          ],
+          "source_point": [
+            619.0,
+            72.0
+          ],
+          "source_wall_owners": [
+            -480
+          ],
+          "target_wall_owners": []
+        }
+      ]
+    },
+    {
+      "source": 578,
+      "target": 546,
+      "direction": "north",
+      "presentation_source_wall_cells": 10,
+      "presentation_arrival_wall_cells": 58,
+      "presentation_wall_examples": [
+        {
+          "fps_allows": true,
+          "original_arrival": [
+            273.0,
+            399.0
+          ],
+          "source_point": [
+            273.0,
+            0.0
+          ],
+          "source_wall_owners": [],
+          "target_wall_owners": [
+            3
+          ]
+        },
+        {
+          "fps_allows": true,
+          "original_arrival": [
+            274.0,
+            399.0
+          ],
+          "source_point": [
+            274.0,
+            0.0
+          ],
+          "source_wall_owners": [],
+          "target_wall_owners": [
+            3
+          ]
+        },
+        {
+          "fps_allows": true,
+          "original_arrival": [
+            275.0,
+            399.0
+          ],
+          "source_point": [
+            275.0,
+            0.0
+          ],
+          "source_wall_owners": [],
+          "target_wall_owners": [
+            3
+          ]
+        }
+      ]
+    },
+    {
+      "source": 578,
+      "target": 610,
+      "direction": "south",
+      "presentation_source_wall_cells": 36,
+      "presentation_arrival_wall_cells": 5,
+      "presentation_wall_examples": [
+        {
+          "fps_allows": true,
+          "original_arrival": [
+            390.0,
+            0.0
+          ],
+          "source_point": [
+            390.0,
+            399.0
+          ],
+          "source_wall_owners": [
+            -2378
+          ],
+          "target_wall_owners": [
+            -38
+          ]
+        },
+        {
+          "fps_allows": true,
+          "original_arrival": [
+            391.0,
+            0.0
+          ],
+          "source_point": [
+            391.0,
+            399.0
+          ],
+          "source_wall_owners": [
+            -2378
+          ],
+          "target_wall_owners": [
+            -38
+          ]
+        },
+        {
+          "fps_allows": true,
+          "original_arrival": [
+            392.0,
+            0.0
+          ],
+          "source_point": [
+            392.0,
+            399.0
+          ],
+          "source_wall_owners": [
+            -2378
+          ],
+          "target_wall_owners": [
+            -38
+          ]
+        }
+      ]
+    },
+    {
+      "source": 579,
+      "target": 578,
+      "direction": "west",
+      "presentation_source_wall_cells": 0,
+      "presentation_arrival_wall_cells": 45,
+      "presentation_wall_examples": [
+        {
+          "fps_allows": true,
+          "original_arrival": [
+            619.0,
+            70.0
+          ],
+          "source_point": [
+            20.0,
+            70.0
+          ],
+          "source_wall_owners": [],
+          "target_wall_owners": [
+            -480
+          ]
+        },
+        {
+          "fps_allows": true,
+          "original_arrival": [
+            619.0,
+            71.0
+          ],
+          "source_point": [
+            20.0,
+            71.0
+          ],
+          "source_wall_owners": [],
+          "target_wall_owners": [
+            -480
+          ]
+        },
+        {
+          "fps_allows": true,
+          "original_arrival": [
+            619.0,
+            72.0
+          ],
+          "source_point": [
+            20.0,
+            72.0
+          ],
+          "source_wall_owners": [],
+          "target_wall_owners": [
+            -480
+          ]
+        }
+      ]
+    },
+    {
+      "source": 579,
+      "target": 580,
+      "direction": "east",
+      "presentation_source_wall_cells": 75,
+      "presentation_arrival_wall_cells": 0,
+      "presentation_wall_examples": [
+        {
+          "fps_allows": true,
+          "original_arrival": [
+            20.0,
+            0.0
+          ],
+          "source_point": [
+            619.0,
+            0.0
+          ],
+          "source_wall_owners": [
+            9
+          ],
+          "target_wall_owners": []
+        },
+        {
+          "fps_allows": true,
+          "original_arrival": [
+            20.0,
+            1.0
+          ],
+          "source_point": [
+            619.0,
+            1.0
+          ],
+          "source_wall_owners": [
+            9
+          ],
+          "target_wall_owners": []
+        },
+        {
+          "fps_allows": true,
+          "original_arrival": [
+            20.0,
+            2.0
+          ],
+          "source_point": [
+            619.0,
+            2.0
+          ],
+          "source_wall_owners": [
+            9
+          ],
+          "target_wall_owners": []
+        }
+      ]
+    },
+    {
+      "source": 579,
+      "target": 547,
+      "direction": "north",
+      "presentation_source_wall_cells": 36,
+      "presentation_arrival_wall_cells": 0,
+      "presentation_wall_examples": [
+        {
+          "fps_allows": true,
+          "original_arrival": [
+            584.0,
+            399.0
+          ],
+          "source_point": [
+            584.0,
+            0.0
+          ],
+          "source_wall_owners": [
+            9
+          ],
+          "target_wall_owners": []
+        },
+        {
+          "fps_allows": true,
+          "original_arrival": [
+            585.0,
+            399.0
+          ],
+          "source_point": [
+            585.0,
+            0.0
+          ],
+          "source_wall_owners": [
+            9
+          ],
+          "target_wall_owners": []
+        },
+        {
+          "fps_allows": true,
+          "original_arrival": [
+            586.0,
+            399.0
+          ],
+          "source_point": [
+            586.0,
+            0.0
+          ],
+          "source_wall_owners": [
+            9
+          ],
+          "target_wall_owners": []
+        }
+      ]
+    },
+    {
+      "source": 580,
+      "target": 579,
+      "direction": "west",
+      "presentation_source_wall_cells": 0,
+      "presentation_arrival_wall_cells": 383,
+      "presentation_wall_examples": [
+        {
+          "fps_allows": true,
+          "original_arrival": [
+            619.0,
+            0.0
+          ],
+          "source_point": [
+            20.0,
+            0.0
+          ],
+          "source_wall_owners": [],
+          "target_wall_owners": [
+            9
+          ]
+        },
+        {
+          "fps_allows": true,
+          "original_arrival": [
+            619.0,
+            1.0
+          ],
+          "source_point": [
+            20.0,
+            1.0
+          ],
+          "source_wall_owners": [],
+          "target_wall_owners": [
+            9
+          ]
+        },
+        {
+          "fps_allows": true,
+          "original_arrival": [
+            619.0,
+            2.0
+          ],
+          "source_point": [
+            20.0,
+            2.0
+          ],
+          "source_wall_owners": [],
+          "target_wall_owners": [
+            9
+          ]
+        }
+      ]
+    },
+    {
+      "source": 609,
+      "target": 610,
+      "direction": "east",
+      "presentation_source_wall_cells": 5,
+      "presentation_arrival_wall_cells": 5,
+      "presentation_wall_examples": [
+        {
+          "fps_allows": true,
+          "original_arrival": [
+            20.0,
+            370.0
+          ],
+          "source_point": [
+            619.0,
+            370.0
+          ],
+          "source_wall_owners": [
+            -2280
+          ],
+          "target_wall_owners": [
+            -2221
+          ]
+        },
+        {
+          "fps_allows": true,
+          "original_arrival": [
+            20.0,
+            371.0
+          ],
+          "source_point": [
+            619.0,
+            371.0
+          ],
+          "source_wall_owners": [
+            -2280
+          ],
+          "target_wall_owners": [
+            -2221
+          ]
+        },
+        {
+          "fps_allows": true,
+          "original_arrival": [
+            20.0,
+            372.0
+          ],
+          "source_point": [
+            619.0,
+            372.0
+          ],
+          "source_wall_owners": [
+            -2280
+          ],
+          "target_wall_owners": [
+            -2221
+          ]
+        }
+      ]
+    },
+    {
+      "source": 610,
+      "target": 609,
+      "direction": "west",
+      "presentation_source_wall_cells": 5,
+      "presentation_arrival_wall_cells": 5,
+      "presentation_wall_examples": [
+        {
+          "fps_allows": true,
+          "original_arrival": [
+            619.0,
+            370.0
+          ],
+          "source_point": [
+            20.0,
+            370.0
+          ],
+          "source_wall_owners": [
+            -2221
+          ],
+          "target_wall_owners": [
+            -2280
+          ]
+        },
+        {
+          "fps_allows": true,
+          "original_arrival": [
+            619.0,
+            371.0
+          ],
+          "source_point": [
+            20.0,
+            371.0
+          ],
+          "source_wall_owners": [
+            -2221
+          ],
+          "target_wall_owners": [
+            -2280
+          ]
+        },
+        {
+          "fps_allows": true,
+          "original_arrival": [
+            619.0,
+            372.0
+          ],
+          "source_point": [
+            20.0,
+            372.0
+          ],
+          "source_wall_owners": [
+            -2221
+          ],
+          "target_wall_owners": [
+            -2280
+          ]
+        }
+      ]
+    },
+    {
+      "source": 610,
+      "target": 611,
+      "direction": "east",
+      "presentation_source_wall_cells": 158,
+      "presentation_arrival_wall_cells": 0,
+      "presentation_wall_examples": [
+        {
+          "fps_allows": true,
+          "original_arrival": [
+            20.0,
+            49.0
+          ],
+          "source_point": [
+            619.0,
+            49.0
+          ],
+          "source_wall_owners": [
+            1
+          ],
+          "target_wall_owners": []
+        },
+        {
+          "fps_allows": true,
+          "original_arrival": [
+            20.0,
+            50.0
+          ],
+          "source_point": [
+            619.0,
+            50.0
+          ],
+          "source_wall_owners": [
+            1
+          ],
+          "target_wall_owners": []
+        },
+        {
+          "fps_allows": true,
+          "original_arrival": [
+            20.0,
+            51.0
+          ],
+          "source_point": [
+            619.0,
+            51.0
+          ],
+          "source_wall_owners": [
+            1
+          ],
+          "target_wall_owners": []
+        }
+      ]
+    },
+    {
+      "source": 610,
+      "target": 578,
+      "direction": "north",
+      "presentation_source_wall_cells": 5,
+      "presentation_arrival_wall_cells": 36,
+      "presentation_wall_examples": [
+        {
+          "fps_allows": true,
+          "original_arrival": [
+            390.0,
+            399.0
+          ],
+          "source_point": [
+            390.0,
+            0.0
+          ],
+          "source_wall_owners": [
+            -38
+          ],
+          "target_wall_owners": [
+            -2378
+          ]
+        },
+        {
+          "fps_allows": true,
+          "original_arrival": [
+            391.0,
+            399.0
+          ],
+          "source_point": [
+            391.0,
+            0.0
+          ],
+          "source_wall_owners": [
+            -38
+          ],
+          "target_wall_owners": [
+            -2378
+          ]
+        },
+        {
+          "fps_allows": true,
+          "original_arrival": [
+            392.0,
+            399.0
+          ],
+          "source_point": [
+            392.0,
+            0.0
+          ],
+          "source_wall_owners": [
+            -38
+          ],
+          "target_wall_owners": [
+            -2378
+          ]
+        }
+      ]
+    },
+    {
+      "source": 611,
+      "target": 610,
+      "direction": "west",
+      "presentation_source_wall_cells": 0,
+      "presentation_arrival_wall_cells": 205,
+      "presentation_wall_examples": [
+        {
+          "fps_allows": true,
+          "original_arrival": [
+            619.0,
+            49.0
+          ],
+          "source_point": [
+            20.0,
+            49.0
+          ],
+          "source_wall_owners": [],
+          "target_wall_owners": [
+            1
+          ]
+        },
+        {
+          "fps_allows": true,
+          "original_arrival": [
+            619.0,
+            50.0
+          ],
+          "source_point": [
+            20.0,
+            50.0
+          ],
+          "source_wall_owners": [],
+          "target_wall_owners": [
+            1
+          ]
+        },
+        {
+          "fps_allows": true,
+          "original_arrival": [
+            619.0,
+            51.0
+          ],
+          "source_point": [
+            20.0,
+            51.0
+          ],
+          "source_wall_owners": [],
+          "target_wall_owners": [
+            1
+          ]
+        }
+      ]
+    },
+    {
+      "source": 611,
+      "target": 579,
+      "direction": "north",
+      "presentation_source_wall_cells": 0,
+      "presentation_arrival_wall_cells": 526,
+      "presentation_wall_examples": [
+        {
+          "fps_allows": false,
+          "original_arrival": [
+            89.0,
+            399.0
+          ],
+          "source_point": [
+            89.0,
+            0.0
+          ],
+          "source_wall_owners": [],
+          "target_wall_owners": [
+            3
+          ]
+        },
+        {
+          "fps_allows": false,
+          "original_arrival": [
+            90.0,
+            399.0
+          ],
+          "source_point": [
+            90.0,
+            0.0
+          ],
+          "source_wall_owners": [],
+          "target_wall_owners": [
+            3
+          ]
+        },
+        {
+          "fps_allows": false,
+          "original_arrival": [
+            91.0,
+            399.0
+          ],
+          "source_point": [
+            91.0,
+            0.0
+          ],
+          "source_wall_owners": [],
+          "target_wall_owners": [
+            3
+          ]
+        }
+      ]
+    }
+  ]
+}

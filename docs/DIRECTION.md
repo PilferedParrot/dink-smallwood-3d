@@ -2547,3 +2547,17 @@ Pause, after Pause and during menu navigation; an unknown replacement still
 fails without selection. The observed replacement of an already open Pause
 menu is a separate UX finding, not changed by this unit. Route screenshots now
 use actual checkpoint names rather than the similarly named input trace labels.
+
+The subsequent earned replay again crossed131→99→100 and defeated Bonca,
+but showed that this controller fix is incomplete. Increase Attack was focused
+and selected correctly. Once the page returned to game, the closed choice's
+buttons remained in telemetry with no focus. The exact-text recognizer treated
+those hidden widgets as another active choice and failed. Technical cause:
+widget persistence was mistaken for modal ownership. Development cause: the
+mock deleted dismissed widgets and the reasoning stopped at button text instead
+of checking the UI page/dialogue contract. The lead ended route work for this
+unit after two save attempts; no further retry is claimed. The integration
+controller must require active dialogue/modal ownership and test retained
+hidden widgets before continuing the normal-save chain. This is a harness
+failure, with no evidence of a game choice-focus defect. Earned Bonca progress
+is proven; saving that progress and subsequent wizard/Terris legs are not.

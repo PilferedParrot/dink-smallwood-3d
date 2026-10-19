@@ -1,0 +1,6054 @@
+{
+  "raw_report_sha256": "64c8c18343f5ba2ee0dfd6d42bd2b18158299105f2d37b0ca17c999cc0c1dbb9",
+  "setup": "Deliberately injected117\u219285arrival-trap fixture; not an earned gameplay failure. Pytest passes only if the native detector rejects it.",
+  "evidence": {
+    "crossings": 1200,
+    "edge_coverage": {
+      "east": {
+        "candidates": 400,
+        "crossings": 0,
+        "rejected": 398,
+        "walkable": 400,
+        "x_sum": 247600,
+        "y_sum": 79800
+      },
+      "north": {
+        "candidates": 600,
+        "crossings": 600,
+        "rejected": 0,
+        "walkable": 600,
+        "x_sum": 191700,
+        "y_sum": 600
+      },
+      "south": {
+        "candidates": 600,
+        "crossings": 600,
+        "rejected": 0,
+        "walkable": 600,
+        "x_sum": 191700,
+        "y_sum": 239400
+      },
+      "west": {
+        "candidates": 400,
+        "crossings": 0,
+        "rejected": 398,
+        "walkable": 400,
+        "x_sum": 8400,
+        "y_sum": 79800
+      }
+    },
+    "edge_samples": 2000,
+    "failures": [
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          20.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          21.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          22.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          23.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          24.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          25.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          26.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          27.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          28.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          29.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          30.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          31.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          32.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          33.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          34.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          35.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          36.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          37.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          38.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          39.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          40.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          41.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          42.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          43.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          44.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          45.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          46.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          47.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          48.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          49.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          50.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          51.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          52.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          53.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          54.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          55.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          56.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          57.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          58.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          59.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          60.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          61.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          62.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          63.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          64.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          65.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          66.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          67.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          68.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          69.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          70.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          71.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          72.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          73.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          74.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          75.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          76.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          77.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          78.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          79.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          80.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          81.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          82.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          83.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          84.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          85.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          86.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          87.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          88.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          89.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          90.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          91.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          92.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          93.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          94.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          95.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          96.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          97.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          98.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          99.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          100.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          101.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          102.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          103.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          104.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          105.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          106.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          107.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          108.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          109.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          110.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          111.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          112.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          113.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          114.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          115.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          116.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          117.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          118.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          119.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          120.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          121.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          122.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          123.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          124.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          125.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          126.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          127.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          128.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          129.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          130.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          131.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          132.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          133.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          134.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          135.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          136.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          137.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          138.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          139.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          140.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          141.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          142.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          143.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          144.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          145.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          146.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          147.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          148.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          149.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          150.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          151.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          152.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          153.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          154.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          155.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          156.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          157.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          158.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          159.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          160.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          161.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          162.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          163.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          164.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          165.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          166.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          167.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          168.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          169.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          170.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          171.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          172.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          173.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          174.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          175.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          176.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          177.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          178.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          179.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          180.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          181.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          182.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          183.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          184.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          185.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          186.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          187.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          188.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          189.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          190.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          191.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          192.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          193.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          194.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          195.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          196.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          197.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          198.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          199.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          200.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          201.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          202.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          203.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          204.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          205.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          206.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          207.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          208.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          209.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          210.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          211.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          212.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          213.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          214.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          215.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          216.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          217.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          218.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          219.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          220.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          221.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          222.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          223.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          224.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          225.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          226.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          227.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          228.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          229.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          230.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          231.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          232.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          233.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          234.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          235.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          236.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          237.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          238.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          239.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          240.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          241.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          242.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          243.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          244.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          245.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          246.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          247.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          248.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          249.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          250.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          251.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          252.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          253.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          254.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          255.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          256.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          257.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          258.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          259.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          260.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          261.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          262.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          263.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          264.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          265.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          266.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          267.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          268.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          269.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          270.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          271.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          272.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          273.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          274.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          275.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          276.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          277.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          278.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          279.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          280.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          281.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          282.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          283.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          284.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          285.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          286.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          287.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          288.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          289.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          290.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          291.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          292.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          293.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          294.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          295.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          296.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          297.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          298.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          299.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          300.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          301.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          302.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          303.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          304.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          305.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          306.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          307.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          308.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          309.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          310.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          311.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          312.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          313.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          314.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          315.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          316.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          317.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          318.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          319.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          320.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          321.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          322.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          323.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          324.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          325.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          326.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          327.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          328.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          329.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          330.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          331.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          332.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          333.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          334.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          335.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          336.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          337.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          338.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          339.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          340.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          341.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          342.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          343.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          344.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          345.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          346.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          347.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          348.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          349.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          350.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          351.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          352.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          353.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          354.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          355.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          356.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          357.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          358.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          359.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          360.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          361.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          362.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          363.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          364.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          365.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          366.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          367.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          368.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          369.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          370.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          371.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          372.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          373.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          374.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          375.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          376.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          377.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          378.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          379.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          380.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          381.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          382.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          383.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          384.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          385.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          386.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          387.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          388.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          389.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          390.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          391.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          392.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          393.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          394.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          395.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          396.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          397.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          398.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          399.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          400.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          401.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          402.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          403.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          404.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          405.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          406.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          407.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          408.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          409.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          410.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          411.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          412.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          413.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          414.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          415.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          416.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          417.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          418.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          419.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          420.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          421.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          422.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          423.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          424.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          425.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          426.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          427.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          428.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          429.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          430.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          431.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          432.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          433.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          434.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          435.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          436.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          437.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          438.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          439.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          440.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          441.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          442.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          443.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          444.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          445.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          446.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          447.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          448.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          449.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          450.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          451.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          452.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          453.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          454.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          455.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          456.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          457.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          458.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          459.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          460.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          461.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          462.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          463.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          464.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          465.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          466.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          467.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          468.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          469.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          470.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          471.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          472.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          473.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          474.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          475.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          476.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          477.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          478.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          479.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          480.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          481.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          482.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          483.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          484.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          485.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          486.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          487.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          488.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          489.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          490.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          491.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          492.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          493.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          494.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          495.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          496.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          497.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          498.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          499.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          500.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          501.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          502.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          503.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          504.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          505.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          506.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          507.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          508.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          509.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          510.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          511.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          512.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          513.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          514.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          515.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          516.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          517.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          518.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          519.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          520.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          521.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          522.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          523.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          524.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          525.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          526.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          527.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          528.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          529.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          530.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          531.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          532.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          533.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          534.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          535.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          536.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          537.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          538.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          539.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          540.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          541.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          542.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          543.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          544.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          545.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          546.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          547.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          548.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          549.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          550.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          551.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          552.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          553.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          554.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          555.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          556.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          557.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          558.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          559.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          560.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          561.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          562.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          563.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          564.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          565.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          566.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          567.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          568.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          569.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          570.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          571.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          572.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          573.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          574.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          575.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          576.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          577.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          578.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          579.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          580.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          581.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          582.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          583.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          584.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          585.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          586.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          587.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          588.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          589.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          590.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          591.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          592.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          593.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          594.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          595.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          596.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          597.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          598.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          599.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          600.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          601.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          602.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          603.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          604.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          605.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          606.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          607.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          608.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          609.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          610.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          611.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          612.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          613.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          614.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          615.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          616.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          617.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          618.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      },
+      {
+        "indoor": true,
+        "kind": "landing_trap",
+        "p": [
+          619.0,
+          399.0
+        ],
+        "source": 117,
+        "target": 85
+      }
+    ],
+    "fixture": "vision0 editor layer; no startup scripts; outdoor source screens, all admitted target types; every 1px edge cell, 10px interior grid",
+    "grid_samples": 2352,
+    "host": "res://../tests/indoor_landing_trap_host.gd",
+    "indoor_landing_traps": 600,
+    "indoor_landings": 600,
+    "rejected": 796,
+    "requested_sources": [
+      117
+    ],
+    "screens": 1
+  }
+}

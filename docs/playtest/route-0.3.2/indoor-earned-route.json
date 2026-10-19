@@ -1,0 +1,907 @@
+{
+  "runtime": "Godot engine with exported pack resources and external real-input bridge. Normal isolated Continue/save chain, no progression/entity injection. Known ambient-modal Enter workaround retained.",
+  "attempts": [
+    {
+      "ok": false,
+      "phase": "bonca",
+      "verdict": "inconclusive",
+      "failure_class": "harness",
+      "error": "menu focus did not reach Save adventure",
+      "commands": 217,
+      "source_report_sha256": "601f85fd689a01022b5938ffb11fd224917c133f2199faa523932dea6f092b8d",
+      "source_save_sha256": "ca4c7bbeee2e304e819bb129526610e7a95898bacbeee803322bbd316a0fb171",
+      "initial_earned_save_sha256": "5d275b27c644cac8ed569e04533fbcfdc82bcee6a66a7ea381e27a8d5a57f7c3",
+      "final_save_sha256": "f30a6383f447fee0193a1716c1a48a710329016fd0da3ada2ea33c599e2964ba",
+      "pack_sha256": "f46724d152a6658368895153afd0d814a66720c31fa1560a4aab2dd8f493ec1b",
+      "raw_report_sha256": "6dbbc11101883cf9c340ac366816743cc8c79334347225c4f1aaa017380e33e9",
+      "report_name": "bonca-green.json",
+      "setup": "Normal Continue of an unmodified earned campaign checkpoint; no progression or entity injection. Each leg ends with a normal in-game save; reports bind the source report and save hashes back to P1's earned pre-push checkpoint.",
+      "startup_setup": {
+        "death_fixture": false,
+        "load_map_scripts": true,
+        "mode": "campaign",
+        "test_mode": false
+      },
+      "retained_normal_save": {
+        "screen": 277.0,
+        "globals": {
+          "wizard_see": 2.0,
+          "rock_placement": 0.0,
+          "level": 1.0,
+          "strength": 4.0
+        }
+      },
+      "checkpoints": {
+        "title": {
+          "screen": 439,
+          "x": 505.0,
+          "y": 340.0,
+          "playing": false,
+          "page": "title",
+          "frozen": false,
+          "disabled": 0,
+          "nocontrol": 0,
+          "modal": true,
+          "changing": false,
+          "dialogue": false,
+          "recent_dialogue": [],
+          "globals": {},
+          "magic_inventory": []
+        },
+        "resume-earned-bonca": {
+          "screen": 277,
+          "x": 225.000366210938,
+          "y": 180.999481201172,
+          "playing": true,
+          "page": "game",
+          "frozen": false,
+          "disabled": 0,
+          "nocontrol": 0,
+          "modal": false,
+          "changing": false,
+          "dialogue": false,
+          "recent_dialogue": [
+            "Excellent, excellent.",
+            "Where does it dwell?",
+            "In a cave to the west Dink.",
+            "I won't fail you.",
+            "Here Dink, take this.  This red potion will strengthen you."
+          ],
+          "globals": {
+            "exp": 0.0,
+            "gold": 0.0,
+            "letter": 2.0,
+            "level": 1.0,
+            "life": 8.0,
+            "lifemax": 10.0,
+            "rock_placement": 0.0,
+            "s2-aunt": 0.0,
+            "s2-map": 1.0,
+            "story": 6.0,
+            "strength": 4.0,
+            "wizard_see": 2.0
+          },
+          "magic_inventory": []
+        },
+        "wizard-rock-before-push-earned-save": {
+          "screen": 277,
+          "x": 225.000366210938,
+          "y": 180.999481201172,
+          "playing": true,
+          "page": "game",
+          "frozen": false,
+          "disabled": 0,
+          "nocontrol": 0,
+          "modal": false,
+          "changing": false,
+          "dialogue": false,
+          "recent_dialogue": [
+            "Excellent, excellent.",
+            "Where does it dwell?",
+            "In a cave to the west Dink.",
+            "I won't fail you.",
+            "Here Dink, take this.  This red potion will strengthen you."
+          ],
+          "globals": {
+            "exp": 0.0,
+            "gold": 0.0,
+            "letter": 2.0,
+            "level": 1.0,
+            "life": 8.0,
+            "lifemax": 10.0,
+            "rock_placement": 0.0,
+            "s2-aunt": 0.0,
+            "s2-map": 1.0,
+            "story": 6.0,
+            "strength": 4.0,
+            "wizard_see": 2.0
+          },
+          "magic_inventory": []
+        },
+        "wizard-rock-pushed": {
+          "screen": 131,
+          "x": 289.0,
+          "y": 377.0,
+          "playing": true,
+          "page": "game",
+          "frozen": false,
+          "disabled": 0,
+          "nocontrol": 0,
+          "modal": false,
+          "changing": false,
+          "dialogue": false,
+          "recent_dialogue": [
+            "Where does it dwell?",
+            "In a cave to the west Dink.",
+            "I won't fail you.",
+            "Here Dink, take this.  This red potion will strengthen you.",
+            "It's .. it's moving..."
+          ],
+          "globals": {
+            "exp": 0.0,
+            "gold": 0.0,
+            "letter": 2.0,
+            "level": 1.0,
+            "life": 8.0,
+            "lifemax": 10.0,
+            "rock_placement": 1.0,
+            "s2-aunt": 0.0,
+            "s2-map": 1.0,
+            "story": 6.0,
+            "strength": 4.0,
+            "wizard_see": 2.0
+          },
+          "magic_inventory": []
+        },
+        "wizard-bonca-road-99": {
+          "screen": 99,
+          "x": 289.125,
+          "y": 399.001129150391,
+          "playing": true,
+          "page": "dialogue",
+          "frozen": false,
+          "disabled": 0,
+          "nocontrol": 0,
+          "modal": true,
+          "changing": false,
+          "dialogue": true,
+          "recent_dialogue": [
+            "I won't fail you.",
+            "Here Dink, take this.  This red potion will strengthen you.",
+            "It's .. it's moving...",
+            "I'm scared.",
+            "I don't like this one bit..."
+          ],
+          "globals": {
+            "exp": 0.0,
+            "gold": 0.0,
+            "letter": 2.0,
+            "level": 1.0,
+            "life": 8.0,
+            "lifemax": 10.0,
+            "rock_placement": 1.0,
+            "s2-aunt": 0.0,
+            "s2-map": 1.0,
+            "story": 6.0,
+            "strength": 4.0,
+            "wizard_see": 2.0
+          },
+          "magic_inventory": []
+        },
+        "wizard-bonca-road-100": {
+          "screen": 100,
+          "x": 35.3169937133789,
+          "y": 209.972717285156,
+          "playing": true,
+          "page": "game",
+          "frozen": false,
+          "disabled": 0,
+          "nocontrol": 0,
+          "modal": false,
+          "changing": false,
+          "dialogue": false,
+          "recent_dialogue": [
+            "I won't fail you.",
+            "Here Dink, take this.  This red potion will strengthen you.",
+            "It's .. it's moving...",
+            "I'm scared.",
+            "I don't like this one bit..."
+          ],
+          "globals": {
+            "exp": 0.0,
+            "gold": 0.0,
+            "letter": 2.0,
+            "level": 1.0,
+            "life": 8.0,
+            "lifemax": 10.0,
+            "rock_placement": 1.0,
+            "s2-aunt": 0.0,
+            "s2-map": 1.0,
+            "story": 6.0,
+            "strength": 4.0,
+            "wizard_see": 2.0
+          },
+          "magic_inventory": []
+        },
+        "wizard-bonca-defeated": {
+          "screen": 100,
+          "x": 35.3169937133789,
+          "y": 209.972717285156,
+          "playing": true,
+          "page": "game",
+          "frozen": false,
+          "disabled": 0,
+          "nocontrol": 0,
+          "modal": false,
+          "changing": false,
+          "dialogue": false,
+          "recent_dialogue": [
+            "I won't fail you.",
+            "Here Dink, take this.  This red potion will strengthen you.",
+            "It's .. it's moving...",
+            "I'm scared.",
+            "I don't like this one bit..."
+          ],
+          "globals": {
+            "exp": 0,
+            "gold": 0.0,
+            "letter": 2.0,
+            "level": 1.0,
+            "life": 8.0,
+            "lifemax": 10.0,
+            "rock_placement": 1.0,
+            "s2-aunt": 0.0,
+            "s2-map": 1.0,
+            "story": 6.0,
+            "strength": 4.0,
+            "wizard_see": 3.0
+          },
+          "magic_inventory": []
+        }
+      },
+      "selected_input_trace": [
+        {
+          "label": "cross-wizard-bonca-road-99",
+          "after": {
+            "screen": 99,
+            "x": 289.125,
+            "y": 399.001129150391,
+            "playing": true,
+            "page": "dialogue",
+            "frozen": false,
+            "disabled": 0,
+            "nocontrol": 0,
+            "modal": true,
+            "changing": false,
+            "dialogue": true,
+            "recent_dialogue": [
+              "I won't fail you.",
+              "Here Dink, take this.  This red potion will strengthen you.",
+              "It's .. it's moving...",
+              "I'm scared.",
+              "I don't like this one bit..."
+            ],
+            "globals": {
+              "exp": 0.0,
+              "gold": 0.0,
+              "letter": 2.0,
+              "level": 1.0,
+              "life": 8.0,
+              "lifemax": 10.0,
+              "rock_placement": 1.0,
+              "s2-aunt": 0.0,
+              "s2-map": 1.0,
+              "story": 6.0,
+              "strength": 4.0,
+              "wizard_see": 2.0
+            },
+            "magic_inventory": []
+          }
+        },
+        {
+          "label": "cross-wizard-bonca-road-100",
+          "after": {
+            "screen": 100,
+            "x": 35.3169937133789,
+            "y": 209.972717285156,
+            "playing": true,
+            "page": "game",
+            "frozen": false,
+            "disabled": 0,
+            "nocontrol": 0,
+            "modal": false,
+            "changing": false,
+            "dialogue": false,
+            "recent_dialogue": [
+              "I won't fail you.",
+              "Here Dink, take this.  This red potion will strengthen you.",
+              "It's .. it's moving...",
+              "I'm scared.",
+              "I don't like this one bit..."
+            ],
+            "globals": {
+              "exp": 0.0,
+              "gold": 0.0,
+              "letter": 2.0,
+              "level": 1.0,
+              "life": 8.0,
+              "lifemax": 10.0,
+              "rock_placement": 1.0,
+              "s2-aunt": 0.0,
+              "s2-map": 1.0,
+              "story": 6.0,
+              "strength": 4.0,
+              "wizard_see": 2.0
+            },
+            "magic_inventory": []
+          }
+        },
+        {
+          "label": "bonca-complete-pause-save",
+          "after": {
+            "screen": 100,
+            "x": 35.3169937133789,
+            "y": 209.972717285156,
+            "playing": true,
+            "page": "pause",
+            "frozen": false,
+            "disabled": 0,
+            "nocontrol": 0,
+            "modal": true,
+            "changing": false,
+            "dialogue": false,
+            "recent_dialogue": [
+              "I won't fail you.",
+              "Here Dink, take this.  This red potion will strengthen you.",
+              "It's .. it's moving...",
+              "I'm scared.",
+              "I don't like this one bit..."
+            ],
+            "globals": {
+              "exp": 0,
+              "gold": 0.0,
+              "letter": 2.0,
+              "level": 1.0,
+              "life": 8.0,
+              "lifemax": 10.0,
+              "rock_placement": 1.0,
+              "s2-aunt": 0.0,
+              "s2-map": 1.0,
+              "story": 6.0,
+              "strength": 4.0,
+              "wizard_see": 3.0
+            },
+            "magic_inventory": []
+          }
+        }
+      ]
+    },
+    {
+      "ok": false,
+      "phase": "bonca",
+      "verdict": "inconclusive",
+      "failure_class": "harness",
+      "error": "menu has no focused button: Increase Attack",
+      "commands": 219,
+      "source_report_sha256": "601f85fd689a01022b5938ffb11fd224917c133f2199faa523932dea6f092b8d",
+      "source_save_sha256": "ca4c7bbeee2e304e819bb129526610e7a95898bacbeee803322bbd316a0fb171",
+      "initial_earned_save_sha256": "5d275b27c644cac8ed569e04533fbcfdc82bcee6a66a7ea381e27a8d5a57f7c3",
+      "final_save_sha256": "f30a6383f447fee0193a1716c1a48a710329016fd0da3ada2ea33c599e2964ba",
+      "pack_sha256": "f46724d152a6658368895153afd0d814a66720c31fa1560a4aab2dd8f493ec1b",
+      "raw_report_sha256": "bd6abfee39d550cafb4330bcca2509a05a849392103e2909e484b87f00b53f67",
+      "report_name": "bonca-green2.json",
+      "setup": "Normal Continue of an unmodified earned campaign checkpoint; no progression or entity injection. Each leg ends with a normal in-game save; reports bind the source report and save hashes back to P1's earned pre-push checkpoint.",
+      "startup_setup": {
+        "death_fixture": false,
+        "load_map_scripts": true,
+        "mode": "campaign",
+        "test_mode": false
+      },
+      "retained_normal_save": {
+        "screen": 277.0,
+        "globals": {
+          "wizard_see": 2.0,
+          "rock_placement": 0.0,
+          "level": 1.0,
+          "strength": 4.0
+        }
+      },
+      "checkpoints": {
+        "title": {
+          "screen": 439,
+          "x": 505.0,
+          "y": 340.0,
+          "playing": false,
+          "page": "title",
+          "frozen": false,
+          "disabled": 0,
+          "nocontrol": 0,
+          "modal": true,
+          "changing": false,
+          "dialogue": false,
+          "recent_dialogue": [],
+          "globals": {},
+          "magic_inventory": []
+        },
+        "resume-earned-bonca": {
+          "screen": 277,
+          "x": 225.000366210938,
+          "y": 180.999481201172,
+          "playing": true,
+          "page": "game",
+          "frozen": false,
+          "disabled": 0,
+          "nocontrol": 0,
+          "modal": false,
+          "changing": false,
+          "dialogue": false,
+          "recent_dialogue": [
+            "Excellent, excellent.",
+            "Where does it dwell?",
+            "In a cave to the west Dink.",
+            "I won't fail you.",
+            "Here Dink, take this.  This red potion will strengthen you."
+          ],
+          "globals": {
+            "exp": 0.0,
+            "gold": 0.0,
+            "letter": 2.0,
+            "level": 1.0,
+            "life": 8.0,
+            "lifemax": 10.0,
+            "rock_placement": 0.0,
+            "s2-aunt": 0.0,
+            "s2-map": 1.0,
+            "story": 6.0,
+            "strength": 4.0,
+            "wizard_see": 2.0
+          },
+          "magic_inventory": []
+        },
+        "wizard-rock-before-push-earned-save": {
+          "screen": 277,
+          "x": 225.000366210938,
+          "y": 180.999481201172,
+          "playing": true,
+          "page": "game",
+          "frozen": false,
+          "disabled": 0,
+          "nocontrol": 0,
+          "modal": false,
+          "changing": false,
+          "dialogue": false,
+          "recent_dialogue": [
+            "Excellent, excellent.",
+            "Where does it dwell?",
+            "In a cave to the west Dink.",
+            "I won't fail you.",
+            "Here Dink, take this.  This red potion will strengthen you."
+          ],
+          "globals": {
+            "exp": 0.0,
+            "gold": 0.0,
+            "letter": 2.0,
+            "level": 1.0,
+            "life": 8.0,
+            "lifemax": 10.0,
+            "rock_placement": 0.0,
+            "s2-aunt": 0.0,
+            "s2-map": 1.0,
+            "story": 6.0,
+            "strength": 4.0,
+            "wizard_see": 2.0
+          },
+          "magic_inventory": []
+        },
+        "wizard-rock-pushed": {
+          "screen": 131,
+          "x": 289.0,
+          "y": 377.0,
+          "playing": true,
+          "page": "game",
+          "frozen": false,
+          "disabled": 0,
+          "nocontrol": 0,
+          "modal": false,
+          "changing": false,
+          "dialogue": false,
+          "recent_dialogue": [
+            "Where does it dwell?",
+            "In a cave to the west Dink.",
+            "I won't fail you.",
+            "Here Dink, take this.  This red potion will strengthen you.",
+            "It's .. it's moving..."
+          ],
+          "globals": {
+            "exp": 0.0,
+            "gold": 0.0,
+            "letter": 2.0,
+            "level": 1.0,
+            "life": 8.0,
+            "lifemax": 10.0,
+            "rock_placement": 1.0,
+            "s2-aunt": 0.0,
+            "s2-map": 1.0,
+            "story": 6.0,
+            "strength": 4.0,
+            "wizard_see": 2.0
+          },
+          "magic_inventory": []
+        },
+        "wizard-bonca-road-99": {
+          "screen": 99,
+          "x": 289.375,
+          "y": 385.003570556641,
+          "playing": true,
+          "page": "game",
+          "frozen": false,
+          "disabled": 0,
+          "nocontrol": 0,
+          "modal": false,
+          "changing": false,
+          "dialogue": false,
+          "recent_dialogue": [
+            "In a cave to the west Dink.",
+            "I won't fail you.",
+            "Here Dink, take this.  This red potion will strengthen you.",
+            "It's .. it's moving...",
+            "Can we leave now? <shiver>"
+          ],
+          "globals": {
+            "exp": 0.0,
+            "gold": 0.0,
+            "letter": 2.0,
+            "level": 1.0,
+            "life": 8.0,
+            "lifemax": 10.0,
+            "rock_placement": 1.0,
+            "s2-aunt": 0.0,
+            "s2-map": 1.0,
+            "story": 6.0,
+            "strength": 4.0,
+            "wizard_see": 2.0
+          },
+          "magic_inventory": []
+        },
+        "wizard-bonca-road-100": {
+          "screen": 100,
+          "x": 21.31787109375,
+          "y": 209.946960449219,
+          "playing": true,
+          "page": "dialogue",
+          "frozen": false,
+          "disabled": 0,
+          "nocontrol": 0,
+          "modal": true,
+          "changing": false,
+          "dialogue": true,
+          "recent_dialogue": [
+            "I won't fail you.",
+            "Here Dink, take this.  This red potion will strengthen you.",
+            "It's .. it's moving...",
+            "Can we leave now? <shiver>",
+            "Who dares enter my cave?"
+          ],
+          "globals": {
+            "exp": 0.0,
+            "gold": 0.0,
+            "letter": 2.0,
+            "level": 1.0,
+            "life": 8.0,
+            "lifemax": 10.0,
+            "rock_placement": 1.0,
+            "s2-aunt": 0.0,
+            "s2-map": 1.0,
+            "story": 6.0,
+            "strength": 4.0,
+            "wizard_see": 2.0
+          },
+          "magic_inventory": []
+        },
+        "wizard-bonca-defeated": {
+          "screen": 100,
+          "x": 21.31787109375,
+          "y": 209.946960449219,
+          "playing": true,
+          "page": "game",
+          "frozen": false,
+          "disabled": 0,
+          "nocontrol": 0,
+          "modal": false,
+          "changing": false,
+          "dialogue": false,
+          "recent_dialogue": [
+            "I won't fail you.",
+            "Here Dink, take this.  This red potion will strengthen you.",
+            "It's .. it's moving...",
+            "Can we leave now? <shiver>",
+            "Who dares enter my cave?"
+          ],
+          "globals": {
+            "exp": 0,
+            "gold": 0.0,
+            "letter": 2.0,
+            "level": 1.0,
+            "life": 8.0,
+            "lifemax": 10.0,
+            "rock_placement": 1.0,
+            "s2-aunt": 0.0,
+            "s2-map": 1.0,
+            "story": 6.0,
+            "strength": 4.0,
+            "wizard_see": 3.0
+          },
+          "magic_inventory": []
+        }
+      },
+      "selected_input_trace": [
+        {
+          "label": "cross-wizard-bonca-road-99",
+          "after": {
+            "screen": 99,
+            "x": 289.375,
+            "y": 385.003570556641,
+            "playing": true,
+            "page": "game",
+            "frozen": false,
+            "disabled": 0,
+            "nocontrol": 0,
+            "modal": false,
+            "changing": false,
+            "dialogue": false,
+            "recent_dialogue": [
+              "In a cave to the west Dink.",
+              "I won't fail you.",
+              "Here Dink, take this.  This red potion will strengthen you.",
+              "It's .. it's moving...",
+              "Can we leave now? <shiver>"
+            ],
+            "globals": {
+              "exp": 0.0,
+              "gold": 0.0,
+              "letter": 2.0,
+              "level": 1.0,
+              "life": 8.0,
+              "lifemax": 10.0,
+              "rock_placement": 1.0,
+              "s2-aunt": 0.0,
+              "s2-map": 1.0,
+              "story": 6.0,
+              "strength": 4.0,
+              "wizard_see": 2.0
+            },
+            "magic_inventory": []
+          }
+        },
+        {
+          "label": "cross-wizard-bonca-road-100",
+          "after": {
+            "screen": 100,
+            "x": 21.31787109375,
+            "y": 209.946960449219,
+            "playing": true,
+            "page": "dialogue",
+            "frozen": false,
+            "disabled": 0,
+            "nocontrol": 0,
+            "modal": true,
+            "changing": false,
+            "dialogue": true,
+            "recent_dialogue": [
+              "I won't fail you.",
+              "Here Dink, take this.  This red potion will strengthen you.",
+              "It's .. it's moving...",
+              "Can we leave now? <shiver>",
+              "Who dares enter my cave?"
+            ],
+            "globals": {
+              "exp": 0.0,
+              "gold": 0.0,
+              "letter": 2.0,
+              "level": 1.0,
+              "life": 8.0,
+              "lifemax": 10.0,
+              "rock_placement": 1.0,
+              "s2-aunt": 0.0,
+              "s2-map": 1.0,
+              "story": 6.0,
+              "strength": 4.0,
+              "wizard_see": 2.0
+            },
+            "magic_inventory": []
+          }
+        },
+        {
+          "label": "bonca-complete-before-save",
+          "after": {
+            "screen": 100,
+            "x": 21.31787109375,
+            "y": 209.946960449219,
+            "playing": true,
+            "page": "game",
+            "frozen": false,
+            "disabled": 0,
+            "nocontrol": 0,
+            "modal": false,
+            "changing": false,
+            "dialogue": false,
+            "recent_dialogue": [
+              "I won't fail you.",
+              "Here Dink, take this.  This red potion will strengthen you.",
+              "It's .. it's moving...",
+              "Can we leave now? <shiver>",
+              "Who dares enter my cave?"
+            ],
+            "globals": {
+              "exp": 0,
+              "gold": 0.0,
+              "letter": 2.0,
+              "level": 1.0,
+              "life": 8.0,
+              "lifemax": 10.0,
+              "rock_placement": 1.0,
+              "s2-aunt": 0.0,
+              "s2-map": 1.0,
+              "story": 6.0,
+              "strength": 4.0,
+              "wizard_see": 3.0
+            },
+            "magic_inventory": []
+          }
+        },
+        {
+          "label": "bonca-complete-pause-save",
+          "after": {
+            "screen": 100,
+            "x": 21.31787109375,
+            "y": 209.946960449219,
+            "playing": true,
+            "page": "pause",
+            "frozen": false,
+            "disabled": 0,
+            "nocontrol": 0,
+            "modal": true,
+            "changing": false,
+            "dialogue": false,
+            "recent_dialogue": [
+              "I won't fail you.",
+              "Here Dink, take this.  This red potion will strengthen you.",
+              "It's .. it's moving...",
+              "Can we leave now? <shiver>",
+              "Who dares enter my cave?"
+            ],
+            "globals": {
+              "exp": 0,
+              "gold": 0.0,
+              "letter": 2.0,
+              "level": 1.0,
+              "life": 8.0,
+              "lifemax": 10.0,
+              "rock_placement": 1.0,
+              "s2-aunt": 0.0,
+              "s2-map": 1.0,
+              "story": 6.0,
+              "strength": 4.0,
+              "wizard_see": 3.0
+            },
+            "magic_inventory": []
+          }
+        },
+        {
+          "label": "bonca-complete-save-interrupted",
+          "after": {
+            "screen": 100,
+            "x": 21.31787109375,
+            "y": 209.946960449219,
+            "playing": true,
+            "page": "dialogue",
+            "frozen": false,
+            "disabled": 0,
+            "nocontrol": 0,
+            "modal": true,
+            "changing": false,
+            "dialogue": true,
+            "recent_dialogue": [
+              "I won't fail you.",
+              "Here Dink, take this.  This red potion will strengthen you.",
+              "It's .. it's moving...",
+              "Can we leave now? <shiver>",
+              "Who dares enter my cave?"
+            ],
+            "globals": {
+              "exp": 0,
+              "gold": 0.0,
+              "letter": 2.0,
+              "level": 2,
+              "life": 8.0,
+              "lifemax": 10.0,
+              "rock_placement": 1.0,
+              "s2-aunt": 0.0,
+              "s2-map": 1.0,
+              "story": 6.0,
+              "strength": 4.0,
+              "wizard_see": 3.0
+            },
+            "magic_inventory": []
+          }
+        },
+        {
+          "label": "bonca-complete-level-choice-settle",
+          "after": {
+            "screen": 100,
+            "x": 21.31787109375,
+            "y": 209.946960449219,
+            "playing": true,
+            "page": "game",
+            "frozen": false,
+            "disabled": 0,
+            "nocontrol": 0,
+            "modal": false,
+            "changing": false,
+            "dialogue": false,
+            "recent_dialogue": [
+              "I won't fail you.",
+              "Here Dink, take this.  This red potion will strengthen you.",
+              "It's .. it's moving...",
+              "Can we leave now? <shiver>",
+              "Who dares enter my cave?"
+            ],
+            "globals": {
+              "exp": 0,
+              "gold": 0.0,
+              "letter": 2.0,
+              "level": 2,
+              "life": 8.0,
+              "lifemax": 13,
+              "rock_placement": 1.0,
+              "s2-aunt": 0.0,
+              "s2-map": 1.0,
+              "story": 6.0,
+              "strength": 5,
+              "wizard_see": 3.0
+            },
+            "magic_inventory": []
+          }
+        },
+        {
+          "label": "bonca-complete-before-save",
+          "after": {
+            "screen": 100,
+            "x": 21.31787109375,
+            "y": 209.946960449219,
+            "playing": true,
+            "page": "game",
+            "frozen": false,
+            "disabled": 0,
+            "nocontrol": 0,
+            "modal": false,
+            "changing": false,
+            "dialogue": false,
+            "recent_dialogue": [
+              "I won't fail you.",
+              "Here Dink, take this.  This red potion will strengthen you.",
+              "It's .. it's moving...",
+              "Can we leave now? <shiver>",
+              "Who dares enter my cave?"
+            ],
+            "globals": {
+              "exp": 0,
+              "gold": 0.0,
+              "letter": 2.0,
+              "level": 2,
+              "life": 8.0,
+              "lifemax": 13,
+              "rock_placement": 1.0,
+              "s2-aunt": 0.0,
+              "s2-map": 1.0,
+              "story": 6.0,
+              "strength": 5,
+              "wizard_see": 3.0
+            },
+            "magic_inventory": []
+          }
+        }
+      ]
+    }
+  ]
+}

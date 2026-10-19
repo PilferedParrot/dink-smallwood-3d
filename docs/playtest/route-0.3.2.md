@@ -519,3 +519,114 @@ members are 131→99, 99→100, 100→99 and99→131. Every other pair is listed
 outside this route's scope. This inventory does not assert 115 physically open
 seams: source hardness, walls, locks and script state may legitimately stop
 other edges. The 570-screen outdoor static survey does not cover this class.
+
+## Indoor edge crossings: original link rules restored (2026-10-19)
+
+The indoor target bit no longer vetoes a linked screen edge. Missing links,
+locked source screens, row boundaries and fitted source/incoming collision keep
+their existing checks. The arrival check also applies inactive target-door
+clearance, with target screen classification and active unrendered warp support.
+[DIRECTION.md](../DIRECTION.md) records the primary FreeDink source derivation
+and both the technical and development causes.
+
+The [base red binding](route-0.3.2/indoor-crossing-red.json) reuses the prior
+real-input run because its complete game tree is identical to this unit's
+base. It contains 18 nonmodal refused crossing inputs, 8 fully released, staying
+on 131. The [native class red](route-0.3.2/indoor-class-red.json) found all 230
+indoor and 8 outdoor→indoor metadata refusals; unrelated controls held.
+
+The [reviewed green census](route-0.3.2/indoor-class-green.json) reads the original
+Dink.dat link array independently of runtime screen keys. It checks all 2,960
+geometric neighbor relationships, all 768 key/loc equivalences, 230 indoor and 16
+mixed directed links. Deliberately contradictory link fixtures and a deliberately
+wrong original expectation prove that the original-side oracle can fail.
+Physical sampling remains distinct from link eligibility: 77 difference rows,
+five fully closed directions and all 1,336 FPS-free/raw-hard coordinates are
+pinned, so additional closures or openings fail the check.
+
+The [five retained closures](route-0.3.2/indoor-retained-physical.json) arise from
+existing fitted clearance and incoming collision. The bounded
+[connectivity audit](route-0.3.2/indoor-connectivity.json) compares their removal
+on 644 screens and 2,827 raw free-space regions with authored vision 0 hard-warp
+contacts. It finds no lost screen or region from either home seed or any of 82
+confirmed authored warp-destination regions. Scripts, other vision states and
+hard arrivals remain outside that model. The lead accepted retaining these
+specific physical differences.
+
+All1,336 FPS-free/raw-hard points belong to
+[original hard-warp owners](route-0.3.2/indoor-hard-warp-owners.json).
+The [bar exit input matrix](route-0.3.2/indoor-bar-input-summary.json) covers every
+one of its 25 opening columns with straight/left/right diagonal approaches at
+normal and sprint speed: 150 arrivals at authored 498, never geometric 66.
+[Other warp input samples](route-0.3.2/indoor-other-warp-input.json) cover first,
+middle and last coordinates on each remaining 16 affected directions: 48 correct
+authored arrivals. These deliberately start near exits and skip progression;
+they are input fixtures, not earned gameplay.
+
+[Target-door fixtures](route-0.3.2/indoor-arrival-door.json) distinguish inactive
+leaves, active unrendered warps, disabled entities, invalid destinations and
+retreat, with source/cache restoration. The demonstrated red query is injected
+overshoot, not an earned stuck arrival. The
+[presentation inventory](route-0.3.2/indoor-presentation.json) lists 87 directed
+boundaries with native wall/terrain overlaps. Static overlap does not establish
+that a player can reach or see that crossing; it is kept as a presentation
+finding rather than used to recreate an indoor metadata veto.
+
+The packed-resource [earned continuation](route-0.3.2/indoor-earned-route.json)
+crossed 131→99→100 and defeated Bonca twice with normal input, with
+`wizard_see=3` and life 8. It used the unchanged earned pre-push save and retained
+the labelled ambient-dialogue Enter workaround. Both runs stopped later in the
+save controller; the final normal save still predates Bonca, so wizard reward
+and Terris continuation remain incomplete. The lead closed further route work
+for this unit after these two attempts.
+
+The [first save interruption](route-0.3.2/indoor-levelup-ux.json) shows the normal
+one-second delayed level-up choice replacing Pause during navigation. The
+controller follow-up selected Increase Attack correctly, then mistook the
+closed choice's retained hidden buttons for another active choice. Its mock
+had deleted closed widgets and omitted page ownership. This is a **harness
+failure**; the real choice had focus. The controller attempt is not certified
+for combat-save continuation. Before continuing the integration route, require
+active dialogue/modal ownership as well as exact button labels and add a mock
+that retains hidden buttons after dismissal. No game focus change is justified.
+
+![Earned Bonca defeat in Area 100](route-0.3.2/indoor-bonca-defeated.png)
+
+This viewed frame shows the earned Area 100 cave and life 8/10. Immediate arrival
+captures are retained privately: 99's image still shows the previous 131 HUD,
+and 100's image catches the ordinary Bonca conversation. They do not certify
+settled arrival rendering. The victory frame's level HUD also precedes the
+later level-up. Static checks and route telemetry do not certify every indoor
+room's presentation.
+
+The fresh [collision survey](route-0.3.2/indoor-collision-survey.json) passed on
+570 outdoor source screens while checking all admitted target types. It tested
+1,274,749 grid samples and 1,023,956 crossings, including 3,074 indoor landings,
+with zero traps or other failures. Coverage pins every one-pixel edge candidate
+and the coordinate sums for both sides of each axis. This is a static vision0
+editor-layer check without startup scripts; earned gameplay and presentation
+retain their separate evidence.
+
+The [injected trap control](route-0.3.2/indoor-trap-negative.json) deliberately
+blocks escape after the outdoor117→indoor85 seam. The detector rejected all
+600 injected landings; the test passes only when it finds those traps. This
+fixture is evidence that the new indoor-landing check can fail, not a report
+of 600 ordinary gameplay failures.
+
+The [completed full cohort](route-0.3.2/indoor-full-suite.json) covers all 274
+collected tests: 273 passed, one optional local-evidence check skipped, and no
+failures or unrun tests. The skip requires an ignored ray-census JSON that is
+absent on a fresh checkout; native hit-target checks passed. Every changed
+indoor, target-door, warp-input and collision regression passed. The renderer
+traversal also passed within its unchanged 180-second wrapper, without a
+deadline exception.
+
+One queued hut test was stopped before acquiring Godot because the private
+runner had missed its positional helper timeout. The
+[budget audit](route-0.3.2/indoor-suite-budget.json) covers forwarded/default
+helper limits and sequential child totals. The remaining nodes resumed with
+those full allowances, preserving completed XML results. The aborted queue
+entry has no native or pytest verdict. Independent XML checks confirm exactly
+274 distinct covered nodes, with no repeated passed tests. These regression
+results do not change the separately recorded combat-save limitation or certify
+every indoor room's presentation.
