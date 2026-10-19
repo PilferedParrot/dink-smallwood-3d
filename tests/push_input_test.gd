@@ -28,6 +28,7 @@ var records: Array = []
 var report_path := ""
 var rock_only := false
 var review_only := false
+var corner_only := false
 var tick_probe: TickProbe
 
 func _initialize() -> void:
@@ -35,6 +36,7 @@ func _initialize() -> void:
 		if arg.begins_with("--report="): report_path=arg.trim_prefix("--report=")
 		if arg == "--rock-only": rock_only=true
 		if arg == "--review-only": review_only=true
+		if arg == "--corner-only": corner_only=true
 	_run.call_deferred()
 
 func check(ok: bool, message: String) -> void:
@@ -162,6 +164,15 @@ func tile_with_script_control() -> void:
 	check(game.pushes.size()==2 and game.pushes[0].editor==11 and game.pushes[1].editor==4,
 		"Real overlapping rocks dispatch by original draw rank, not native entity id")
 
+func corner_case() -> void:
+	# North-west of the raw box, SE motion keeps pressure on both faces.
+	# NE motion would brush the corner and leave before the source delay.
+	await prepare(277);place(Vector2(232.25,168.25),-3.0*PI/4.0)
+	var started: Vector2=game._position2(1)
+	await hold([KEY_W],60);record("fps-true-corner")
+	check(game._position2(1).is_equal_approx(started),"The corner control sustains blocked contact on both axes for60 ticks")
+	check(game.pushes.is_empty(),"A true raw-box corner retains the original diagonal exclusion")
+
 func review_cases() -> void:
 	# Original rock geometry; speed1 keeps a40-degree tangential approach on
 	# its24px west face long enough for the source delay. No box enlargement.
@@ -173,9 +184,7 @@ func review_cases() -> void:
 		record("fps-face-%d-degrees" % angle)
 		check(game.pushes.size()==1 and game.pushes[0].dir==6 and int(game.vm.globals.rock_placement)==1,
 			"FPS west-face contact at%d degrees pushes east" % angle)
-	await prepare(277);place(Vector2(232.25,168.25),-PI/4.0)
-	await hold([KEY_W],60);record("fps-true-corner")
-	check(game.pushes.is_empty(),"A true raw-box corner retains the original diagonal exclusion")
+	await corner_case()
 	# Composed DinkC fixture: real PUSH freezes, waits, marks completion and
 	# unfreezes without moving the blocker. It exposes repeat cadence directly.
 	await prepare(277);place(Vector2(230.25,181))
@@ -211,11 +220,13 @@ func _run() -> void:
 	# instead observe completed ticks, as the campaign bridge already does.
 	tick_probe=TickProbe.new();tick_probe.process_physics_priority=100;root.add_child(tick_probe)
 	game=ObservedFPS.new();root.add_child(game);await process_frame
-	if review_only:
+	if corner_only:
+		await corner_case()
+	elif review_only:
 		await review_cases()
 	else:
 		await rock_case("fps-strafe-east")
-	if not rock_only and not review_only:
+	if not rock_only and not review_only and not corner_only:
 		await rock_case("fps-forward-east",true)
 		for fixture in [["s1-h1-4",1,0],["s2-idol",579,0],["s3-rock",590,1]]:
 			await class_case(fixture[0],fixture[1],fixture[2])
