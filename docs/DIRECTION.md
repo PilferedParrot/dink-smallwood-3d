@@ -2467,3 +2467,71 @@ another fixture oversight: collision ownership was checked for one wall rather
 than every intersecting owner. The corrected fixture uses x=100 and requires
 native free approach/retreat probes and a blocked forward probe before input,
 recording the sprite owners and tile hardness. The game needs no change for it.
+
+### Independent review corrections
+
+The first class checker compared eligibility with a literal `true` and inferred
+original links from imported screen keys. Its second cause was an oversight:
+reasoning stopped after identifying the indoor bit and did not independently
+verify the import equivalence. The revised checker reads the unmodified raw
+`Dink.dat` loc array from a licensed, hashed fixture, verifies all 768 logical
+slots against imported keys, and checks all 2,960 directed geometric grid
+neighbors. Contradictory fixtures detect both loc-zero/runtime-present and
+loc-positive/runtime-absent cases. A deliberately wrong expectation fails the
+independent comparison. Source data and licensing are pinned in
+`tests/fixtures/indoor-map-provenance.json`.
+
+Previously the physical counts were reported without an enforced bound. The
+second cause was applying the intentional incoming/source-collision exception
+as a general exemption from regression checks. The revised fixture pins the
+exact five completely closed directions, every affected direction's source and
+incoming veto counts, and every one of the 1,336 original-raw-hard/FPS-free
+source points across 17 directions. All1,336 points are owned by original
+hard warp sprites, with no ordinary wall or tile owners. Starting with an empty point exception list
+failed exactly that assertion. The 34→66 south exception is exactly x=311..335
+at y=399; the input fixture covers all 25 columns with straight, both diagonal,
+and sprint variants (150 approaches), requiring the authored 498 redirect and
+never 66. The earlier single x=320 approach reduced this class to one instance;
+that narrow test was the process cause of the review gap. Three straight normal-speed
+samples (first/middle/last point) on each of the other16 warp-edge directions
+extend the authored-destination/never-adjacent control to48 more cases.
+
+The five retained static physical closures are 2→34 south, 34→33 west,
+34→35 east, 34→2 north and 35→34 west. An original raw free-space component
+comparison, with authored vision-0 hard-warp contacts, found zero lost screens
+or regions from original home (1,334,161), P1's outdoor home (439,323,390), or
+any of 82 confirmed authored warp-destination regions. All five have alternate
+screen paths. The outer-shell component of 34 loses exits in this model, but
+is not reached from any of those seeds. Scripts, other vision states and
+hard arrivals are not certified. The lead decided to retain these recorded
+physical differences on that evidence.
+
+Review also found a latent destination-door query inconsistency. The incoming
+path called the base collision predicate, bypassing the FPS inactive-door leaf.
+Its second cause was treating the base predicate as the complete destination
+contract, overlooking source-renderer state and unrendered arrival entities.
+The source66 query (320,-45) from (320,-44) maps to target34 (320,355) from
+(320,356): the inactive door16 plane at y=352 must reject distance3 from the
+previous distance4 boundary. Native red admitted all six inactive cases, while
+active and retreat controls held. This is injected overshoot, not an earned
+campaign failure; loading at355 maps the actual player to348. Ordinary first
+seam steps remain at least47px from all seven fitted door planes. One-pixel
+substeps do not bound cumulative displacement before the transition: an
+injected58px movement can pass the whole plane.
+
+Incoming collision now also checks the target inactive-door predicate during
+the existing save/restore. Interior classification uses the queried screen,
+and active fitted exits recognize a valid live warp without requiring the
+`fps_portal` flag added only by rendering. Cached arrival data is not mutated.
+Tests distinguish inactive, active-unrendered, disabled and invalid warps,
+source/target interior mismatch, retreat, cumulative movement and exact source
+and cache restoration. These are labelled query fixtures, not campaign progress.
+
+The focused review checks are green on the revised game:2,960 link cases,
+230 indoor plus16 mixed physical cases with exact exception pins,150 bar
+approaches, and48 samples across the other16 hard-warp edge directions.
+Every warp sample reached its authored destination instead of the geometric
+neighbor. Native target-door query controls pass, including active unrendered
+portals, inactive leaves, source/cache restoration and cumulative displacement.
+These focused fixtures do not certify the earned route, rendering or full suite;
+those retain their separate evidence gates.

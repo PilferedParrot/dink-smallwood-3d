@@ -1,0 +1,11 @@
+{
+  "source": "freedink-data distro package, /usr/share/games/dink/dink/Dink.dat",
+  "sha256": "7ce0106fab423b52f06c26858a89679a94ede52153d9b4378b3fd31bcc9dba40",
+  "format": "FreeDink109.6 EditorMap.cpp43-63:20-byte header,769 signed little-endian loc values followed by music and indoor arrays; playable logical slots1..768",
+  "license": "zlib/libpng-style permission notice explicitly covers Dink.dat. Verbatim notice retained at licenses/FREEDINK-DATA-COPYRIGHT.txt, Original data pack section. Use/alter/redistribute allowed with attribution of origin, altered versions marked, notice retained.",
+  "purpose": "Independent metadata oracle. Runtime world.screens is checked against this raw loc array, never used to infer it.",
+  "package": "freedink-data 1.08.20190120-2",
+  "upstream_archive": "https://ftp.gnu.org/gnu/freedink/freedink-data-1.08.20080920.tar.gz",
+  "copyright": "Copyright (C)1997,1998,1999,2002,2003 Seth A.Robinson",
+  "unmodified": true
+}

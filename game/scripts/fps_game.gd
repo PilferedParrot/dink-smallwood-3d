@@ -300,7 +300,9 @@ func _portal_can_warp(editor_num: int) -> bool:
 	for id in entities:
 		if id == 1: continue
 		var e: Dictionary = entities[id]
-		if int(e.get("editor_num", 0)) == editor_num and bool(e.get("fps_portal", false)) and e.get("warp") != null \
+		# The caller enumerates fitted exits. Arrival sprites have not yet had
+		# rendering add fps_portal; a matching live warp will be adapted on load.
+		if int(e.get("editor_num", 0)) == editor_num and e.get("warp") != null \
 				and int(e.get("active", 1)) != 0 and world.screens.has(str(int(e.warp.get("map", 0)))):
 			return true
 	return false
@@ -327,7 +329,7 @@ func _closed_door_blocks(ex: Dictionary, pos: Vector2, from: Vector2, clearance:
 	return true
 
 func _inactive_door_blocks(pos: Vector2, from: Vector2) -> bool:
-	if fp_world == null or not fp_world.interior or not fp_world.solids.walls_fitted(current_screen): return false
+	if fp_world == null or not fp_world.is_inside(current_screen) or not fp_world.solids.walls_fitted(current_screen): return false
 	for ex in fp_world.solids.exits(current_screen):
 		if _portal_can_warp(int(ex.editor_num)): continue
 		if _closed_door_blocks(ex, pos, from, float(FOOTPRINT_GROW)): return true
@@ -361,7 +363,8 @@ func _blocked(pos: Vector2, mover: int, from: Vector2 = Vector2.INF) -> bool:
 	footprint_sprites = {}; screen_footprints = []; footprint_tiles = {}
 	_load_footprints(target)
 	var translated_from: Vector2 = from+(destination.position-pos) if from != Vector2.INF else Vector2.INF
-	var blocked := super._blocked(destination.position,mover,translated_from)
+	# Include the target's fitted door before restoring the source state.
+	var blocked := _inactive_door_blocks(destination.position,translated_from) or super._blocked(destination.position,mover,translated_from)
 	current_screen = saved_screen
 	entities = saved_entities
 	footprint_sprites = saved_sprites

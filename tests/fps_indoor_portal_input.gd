@@ -7,22 +7,35 @@ const GAME = preload("res://scripts/fps_game.gd")
 var game
 var failures: Array = []
 var report_path := ""
+var column_start := 311
+var column_stop := 336
 func _initialize() -> void:
 	for arg in OS.get_cmdline_user_args():
+		if arg.begins_with("--column-start="): column_start = int(arg.trim_prefix("--column-start="))
+		if arg.begins_with("--column-stop="): column_stop = int(arg.trim_prefix("--column-stop="))
 		if arg.begins_with("--report="): report_path = arg.trim_prefix("--report=")
 	_run.call_deferred()
+func hold_keys(keys: Array, frames: int, leave_screen: int = -1) -> void:
+	for key in keys:
+		var e := InputEventKey.new(); e.physical_keycode = key; e.pressed = true
+		Input.parse_input_event(e)
+	Input.flush_buffered_events()
+	for _i in frames:
+		await physics_frame
+		if leave_screen >= 0 and game.current_screen != leave_screen: break
+	for key in keys:
+		var e := InputEventKey.new(); e.physical_keycode = key; e.pressed = false
+		Input.parse_input_event(e)
+	Input.flush_buffered_events(); await physics_frame
 func hold(key: int, frames: int) -> void:
-	var e := InputEventKey.new(); e.physical_keycode = key; e.pressed = true
-	Input.parse_input_event(e); Input.flush_buffered_events()
-	for _i in frames: await physics_frame
-	e = InputEventKey.new(); e.physical_keycode = key; e.pressed = false
-	Input.parse_input_event(e); Input.flush_buffered_events(); await physics_frame
+	await hold_keys([key],frames)
 func place(x: float, y: float) -> void:
 	game.vm.cancel_all(); game.ui.cancel_speech(); game.ui.close_menu()
 	game.entities[1].x = x; game.entities[1].y = y
 	game.entities[1].frozen = false; game.entities[1].nocontrol = 0; game.entities[1].disabled = 0
 	game.fps_yaw = PI; game.fps_pitch = -0.08; game._sync_fps_camera()
 	game.playing = true; game.changing = false; game.locked = false; game.warp_cooldown = 0.0
+	game._reset_push()
 func _run() -> void:
 	game = GAME.new(); game.test_mode = true; root.add_child(game); await process_frame
 	await game._new_game(); game.vm.cancel_all(); game.load_map(34,false)
@@ -60,12 +73,48 @@ func _run() -> void:
 	if not reverse: failures.append("reverse must escape the wall stop")
 	print("INDOOR PORTAL WALL RESULT %s reverse=%s" % [str(wall_stop),reverse])
 	game.vm.cancel_all(); game.load_map(34,false); place(320,330)
-	print("INDOOR PORTAL DOOR SETUP")
-	await hold(KEY_W,45)
-	var arrival: int = game.current_screen
-	print("INDOOR PORTAL DOOR RESULT %s" % arrival)
-	if arrival != 498 or game.visited.has(66): failures.append("bar door must redirect to498, never adjacent66")
-	var result := {"setup":"Injected source34 poses with startup/progression skipped; actual W/S events and normal runtime warp transition. Not earned campaign progress.","wall_preconditions":{"approach_free":approach_free,"retreat_free":retreat_free,"forward_blocked":forward_blocked},"wall_owners":wall_owners,"wall_start":[start.x,start.y],"wall_screen":wall_screen,"wall_stop":[wall_stop.x,wall_stop.y],"reverse_works":reverse,"door_arrival":arrival,"visited_screens":game.visited.duplicate(),"failures":failures}
+	var free_columns: Array = []
+	for x in range(20,620):
+		var p := Vector2(x,399)
+		if not game._blocked(p,1) and not game._blocked(Vector2(x,400),1,p): free_columns.append(x)
+	var expected_columns: Array = []
+	for x in range(311,336): expected_columns.append(x)
+	if free_columns != expected_columns: failures.append("bar exit must exercise exactly the25 pinned FPS-free columns311..335")
+	var variants := [
+		{"name":"straight","side":0,"sprint":false},{"name":"straight-sprint","side":0,"sprint":true},
+		{"name":"diagonal-left","side":1,"sprint":false},{"name":"diagonal-right","side":-1,"sprint":false},
+		{"name":"diagonal-left-sprint","side":1,"sprint":true},{"name":"diagonal-right-sprint","side":-1,"sprint":true}]
+	var trial_columns: Array = []
+	for x in free_columns:
+		if int(x) >= column_start and int(x) < column_stop: trial_columns.append(x)
+	if column_start < 311 or column_stop > 336 or column_stop <= column_start: failures.append("invalid column batch")
+	var trials: Array = []
+	var failed_trials := 0
+	for x in trial_columns:
+		for variant in variants:
+			game.vm.cancel_all(); game.load_map(34,false)
+			# Two pixels before the fitted portal's normal tolerance begins.
+			# Diagonal approaches aim at the sampled column at that threshold.
+			var start_door := Vector2(float(x)-2.0*float(variant.side),343)
+			place(start_door.x,start_door.y)
+			var free_start: bool = not game._blocked(start_door,1)
+			var keys: Array = [KEY_W]
+			if int(variant.side) > 0: keys.append(KEY_A)
+			if int(variant.side) < 0: keys.append(KEY_D)
+			if bool(variant.sprint): keys.append(KEY_SHIFT)
+			if free_start: await hold_keys(keys,12,34)
+			var arrival: int = game.current_screen
+			var ok: bool = free_start and arrival == 498 and not game.visited.has(66)
+			trials.append({"column":x,"variant":variant.name,"start":[start_door.x,start_door.y],"start_free":free_start,"arrival":arrival,"never66":not game.visited.has(66),"ok":ok})
+			if not ok:
+				failed_trials += 1
+				failures.append("door column%s %s failed: arrival%s free%s" % [x,variant.name,arrival,free_start])
+			if failed_trials >= 2: break
+		if failed_trials >= 2: break
+		if int(x)%5 == 0: print("INDOOR PORTAL CLASS column%s completed%s" % [x,trials.size()])
+	if trials.size() != (column_stop-column_start)*6: failures.append("every requested column times6 approach/speed variants must run")
+	print("INDOOR PORTAL DOOR CLASS RESULT trials=%s failed=%s" % [trials.size(),failed_trials])
+	var result := {"setup":"Injected source34 poses with startup/progression skipped; actual W/S events and normal runtime warp transition. Not earned campaign progress.","wall_preconditions":{"approach_free":approach_free,"retreat_free":retreat_free,"forward_blocked":forward_blocked},"wall_owners":wall_owners,"wall_start":[start.x,start.y],"wall_screen":wall_screen,"wall_stop":[wall_stop.x,wall_stop.y],"reverse_works":reverse,"door_columns":free_columns,"tested_columns":trial_columns,"batch_range":[column_start,column_stop],"door_trials":trials,"visited_screens":game.visited.duplicate(),"failures":failures}
 	if not report_path.is_empty():
 		var f := FileAccess.open(report_path,FileAccess.WRITE); f.store_string(JSON.stringify(result,"  "))
 	print("INDOOR PORTAL INPUT PASS" if failures.is_empty() else str(failures))

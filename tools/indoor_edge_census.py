@@ -15,6 +15,7 @@ import argparse
 import hashlib
 import json
 from pathlib import Path
+import struct
 import sys
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -71,9 +72,17 @@ def main() -> int:
     args = parser.parse_args()
     world = ROOT / "game/data/world.json"
     sequences = ROOT / "game/data/sequences.json"
-    records = census(json.loads(world.read_text()), json.loads(sequences.read_text())["sequences"])
+    raw_map = ROOT / "tests/fixtures/indoor-map.dat"
+    loc = struct.unpack_from("<769i", raw_map.read_bytes(), 20)
+    imported = json.loads(world.read_text())
+    mismatches = [n for n in range(1, 769)
+                  if (loc[n] > 0) != (str(n) in imported["screens"])]
+    records = census(imported, json.loads(sequences.read_text())["sequences"])
+    for record in records:
+        record["metadata_original_allowed"] = loc[record["target"]] > 0
     result = {"setup": __doc__, "sources": {str(p.relative_to(ROOT)): hashlib.sha256(p.read_bytes()).hexdigest()
-                                            for p in (world, sequences)}, "edges": records}
+                                            for p in (world, sequences, raw_map)}, "edges": records,
+              "raw_loc_world_equivalence": {"slots": 768, "mismatches": mismatches}}
     counts = {}
     for kind in ("indoor_indoor", "mixed"):
         group = [r for r in records if r["kind"] == kind]
@@ -88,7 +97,7 @@ def main() -> int:
         if (delta == -1 and (int(k)-1) % 32 == 0 or delta == 1 and (int(k)-1) % 32 == 31)
         and str(int(k)+delta) in screens
         and (screen["indoor"] or screens[str(int(k)+delta)]["indoor"])]
-    ok = counts["indoor_indoor"]["directed"] == 230
+    ok = counts["indoor_indoor"]["directed"] == 230 and not mismatches
     if args.native:
         native = json.loads(args.native.read_text())
         by_pair = {(e["source"], e["target"]): e for e in native["edges"]}
