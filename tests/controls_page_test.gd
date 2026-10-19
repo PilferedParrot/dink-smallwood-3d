@@ -108,10 +108,14 @@ func activate(token: String) -> bool:
 		check(false,"Visible control exists: "+token)
 		return false
 	if not await reach(target): return false
+	if OS.get_environment("DINK_CONTROLS_TRACE") == "1":
+		print("TRACE before ",token," state=",game.ui.controls_menu.state if is_instance_valid(game.ui.controls_menu) else game.ui.page," rect=",target.get_global_rect())
 	if device == "keyboard": await key(KEY_ENTER)
 	elif device == "pad": await pad(JOY_BUTTON_A)
 	else: await mouse(target.get_global_rect().get_center())
 	await settle()
+	if OS.get_environment("DINK_CONTROLS_TRACE") == "1":
+		print("TRACE after ",token," state=",game.ui.controls_menu.state if is_instance_valid(game.ui.controls_menu) else game.ui.page," pointer=",game.ui.root.get_global_mouse_position())
 	return true
 func new_input(clash := false) -> void:
 	if device == "keyboard": await key(KEY_Q if clash else KEY_K)
@@ -234,12 +238,14 @@ func navigation() -> void:
 	await activate("group_menu")
 	await activate("ui_end_add")
 	check(game.ui.controls_menu.state == "capture","Device-only navigation reaches final menu row")
+	await frame("bottom-capture")
 	if device == "pad":
 		await pad(JOY_BUTTON_B)
 		check(game.ui.controls_menu.state == "proposal","B remains bindable")
 		await pad(JOY_BUTTON_B)
 	elif device == "keyboard": await key(KEY_ESCAPE)
 	else: await activate("cancel")
+	await frame("bottom-after-cancel")
 	check(game.ui.controls_menu.state == "list","Device-only cancellation recovers from the bottom row")
 	await activate("group_2d")
 	await activate("group_global")
