@@ -15,8 +15,10 @@ class ObservedFPS extends "res://scripts/fps_game.gd":
 		super._run_event(id,event)
 class Observed2D extends "res://scripts/game.gd":
 	var pushes: Array = []
+	var touches: Array = []
 	func _run_event(id: int, event: String) -> void:
 		var script := str(entities[id].get("script",""))
+		if event == "touch": touches.append({"id":id,"script":script})
 		if event == "push" and not vm._procedure_code(script,"push").is_empty():
 			pushes.append({"script":script,"id":id,"dir":entities[1].dir,"editor":entities[id].get("editor_num",0)})
 		super._run_event(id,event)
@@ -25,12 +27,14 @@ var failures: Array[String] = []
 var records: Array = []
 var report_path := ""
 var rock_only := false
+var review_only := false
 var tick_probe: TickProbe
 
 func _initialize() -> void:
 	for arg in OS.get_cmdline_user_args():
 		if arg.begins_with("--report="): report_path=arg.trim_prefix("--report=")
 		if arg == "--rock-only": rock_only=true
+		if arg == "--review-only": review_only=true
 	_run.call_deferred()
 
 func check(ok: bool, message: String) -> void:
@@ -158,13 +162,60 @@ func tile_with_script_control() -> void:
 	check(game.pushes.size()==2 and game.pushes[0].editor==11 and game.pushes[1].editor==4,
 		"Real overlapping rocks dispatch by original draw rank, not native entity id")
 
+func review_cases() -> void:
+	# Original rock geometry; speed1 keeps a40-degree tangential approach on
+	# its24px west face long enough for the source delay. No box enlargement.
+	for angle in [10,20,30,40]:
+		await prepare(277)
+		game.entities[1].speed=1
+		place(Vector2(230.25,194),-PI/2.0+deg_to_rad(float(angle)))
+		await hold([KEY_W],60);await ticks(180)
+		record("fps-face-%d-degrees" % angle)
+		check(game.pushes.size()==1 and game.pushes[0].dir==6 and int(game.vm.globals.rock_placement)==1,
+			"FPS west-face contact at%d degrees pushes east" % angle)
+	await prepare(277);place(Vector2(232.25,168.25),-PI/4.0)
+	await hold([KEY_W],60);record("fps-true-corner")
+	check(game.pushes.is_empty(),"A true raw-box corner retains the original diagonal exclusion")
+	# Composed DinkC fixture: real PUSH freezes, waits, marks completion and
+	# unfreezes without moving the blocker. It exposes repeat cadence directly.
+	await prepare(277);place(Vector2(230.25,181))
+	game.vm.story.scripts["push-freeze-regression"]={"procedures":{"push":{"code":[
+		{"op":"call","name":"freeze","args":[{"kind":"literal","value":1}]},
+		{"op":"call","name":"wait","args":[{"kind":"literal","value":800}]},
+		{"op":"set","target":"&rock_placement","expr":{"kind":"binary","op":"+","left":{"kind":"ref","name":"&rock_placement"},"right":{"kind":"literal","value":1}}},
+		{"op":"call","name":"unfreeze","args":[{"kind":"literal","value":1}]}]}}}
+	game.entities[target("s1-roc")].script="push-freeze-regression"
+	key(KEY_D,true)
+	for i in 180:
+		await ticks(1)
+		if int(game.vm.globals.rock_placement)>=1:break
+	await ticks(2)
+	record("freeze-script-repeat")
+	check(game.pushes.size()>=2,"Held contact repeats immediately after a freeze-using PUSH releases control")
+	key(KEY_D,false);await ticks(1)
+	game.vm.cancel_all();game.queue_free();await process_frame
+	game=Observed2D.new();root.add_child(game);await process_frame
+	await prepare(277)
+	var hole:=target("s1-hole")
+	check(hole!=0,"Original cave touch target exists")
+	if hole!=0:
+		place(game._hard_rect(game.entities[hole]).get_center())
+		game.entities[hole].touch_cooldown=0.0
+		key(KEY_SPACE,true);await ticks(1);key(KEY_SPACE,false)
+		record("2d-touch-during-swing")
+		check(int(game.entities[1].nocontrol)!=0 and game.attack_cooldown>=0.2,"The2D control is an actual physical-key attack swing")
+		check(game.touches.is_empty(),"2D touch retains the baseline control gate during a real attack swing")
+
 func _run() -> void:
 	# The SceneTree physics_frame signal precedes game updates. Assertions
 	# instead observe completed ticks, as the campaign bridge already does.
 	tick_probe=TickProbe.new();tick_probe.process_physics_priority=100;root.add_child(tick_probe)
 	game=ObservedFPS.new();root.add_child(game);await process_frame
-	await rock_case("fps-strafe-east")
-	if not rock_only:
+	if review_only:
+		await review_cases()
+	else:
+		await rock_case("fps-strafe-east")
+	if not rock_only and not review_only:
 		await rock_case("fps-forward-east",true)
 		for fixture in [["s1-h1-4",1,0],["s2-idol",579,0],["s3-rock",590,1]]:
 			await class_case(fixture[0],fixture[1],fixture[2])
@@ -194,11 +245,17 @@ func _run() -> void:
 		check(game.pushes.is_empty() and game.entities[1].y>149.0,"Anonymous tile strip dispatches no script")
 		await tile_with_script_control()
 		await prepare(277);place(Vector2(225,181))
-		await hold([KEY_D,KEY_W],120);record("diagonal")
-		check(game.pushes.is_empty(),"Diagonal original direction cannot start PUSH")
+		await hold([KEY_D,KEY_W],120);record("fps-brief-sliding-contact")
+		check(game.pushes.is_empty(),"Brief sliding contact does not complete the PUSH delay")
 		game.vm.cancel_all();game.queue_free();await process_frame
 		game=Observed2D.new();root.add_child(game);await process_frame
 		await rock_case("2d-east")
+		await prepare(277);place(Vector2(225,181))
+		await hold([KEY_D,KEY_W],120);record("2d-diagonal")
+		check(game.pushes.is_empty(),"Original2D diagonal keyboard input cannot start PUSH")
+		game.vm.cancel_all();game.queue_free();await process_frame
+		game=ObservedFPS.new();root.add_child(game);await process_frame
+		await review_cases()
 	game.vm.cancel_all();game.queue_free();await process_frame
 	if not report_path.is_empty():
 		var f:=FileAccess.open(report_path,FileAccess.WRITE)

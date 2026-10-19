@@ -55,6 +55,7 @@ var _push_direction := 0
 var _push_elapsed := 0.0
 var _push_animation := false
 var _collect_push_contact := false
+var _push_use_contact_direction := false
 var _push_block_probe := Vector2.INF
 var footprints: Dictionary = {} # screen -> record written by tools/collision_map.py
 var footprint_sprites: Dictionary = {} # editor index -> [PackedVector2Array]: this screen's buildings
@@ -535,16 +536,21 @@ func _reset_push() -> void:
 	_push_animation = false
 	_push_block_probe = Vector2.INF
 
-func _move_player_input(motion: Vector2, delta: float, speed_scale: float = 1.0) -> bool:
+func _move_player_input(motion: Vector2, delta: float, speed_scale: float = 1.0, contact_direction: bool = false) -> bool:
 	# Both controllers feed source-world movement here. FPS strafing therefore
 	# pushes in the direction of travel, independently of the camera's gaze.
 	var player: Dictionary = entities[1]
 	var direction := _direction(motion.normalized()) if motion != Vector2.ZERO else 0
-	if direction != _push_direction: _reset_push()
+	if contact_direction:
+		# Free camera headings have no source keyboard direction. Preserve a
+		# held face contact while the input still presses towards that face.
+		if motion == Vector2.ZERO or (_push_direction != 0 and motion.dot(_dir_vector(_push_direction)) <= 0.0): _reset_push()
+	elif direction != _push_direction:
+		_reset_push()
 	if player.get("frozen",false):
-		# A PUSH procedure may freeze Dink while moving the rock. Let the
-		# acquired push animation finish normally during that script action.
-		_push_elapsed = 0.0
+		# Original thisTickCount keeps advancing during a script freeze. It
+		# suppresses dispatch, but does not restart an already expired timer.
+		if _push_direction != 0: _push_elapsed += delta
 		return false
 	if int(player.get("disabled",0)) or attack_cooldown >= 0.2:
 		_reset_push()
@@ -563,20 +569,24 @@ func _move_player_input(motion: Vector2, delta: float, speed_scale: float = 1.0)
 	player["dir"] = direction
 	var speed := 105.0 * maxf(0.5,float(player.get("speed",3))/3.0) * speed_scale
 	_push_block_probe = Vector2.INF
-	_collect_push_contact = direction in [2,4,6,8]
+	_collect_push_contact = contact_direction or direction in [2,4,6,8]
+	_push_use_contact_direction = contact_direction
 	_move_entity(1,motion*speed*delta)
 	_collect_push_contact = false
+	_push_use_contact_direction = false
 	_set_animation(1,int(player.get("base_walk",70))+direction)
-	if _push_block_probe == Vector2.INF:
+	var push_direction := _push_contact_direction(_push_block_probe,direction) if contact_direction else direction
+	if _push_block_probe == Vector2.INF or push_direction not in [2,4,6,8]:
 		_reset_push()
-	elif _push_direction != direction:
-		_push_direction = direction
+	elif _push_direction != push_direction:
+		_push_direction = push_direction
 		_push_elapsed = 0.0
 	else:
 		_push_elapsed += delta
 		# Do not turn exactly600ms into >600ms through accumulated float error.
 		if _push_elapsed > PUSH_DELAY and not is_equal_approx(_push_elapsed,PUSH_DELAY):
-			_set_animation(1,PUSH_BASE+direction)
+			player["dir"] = push_direction
+			_set_animation(1,PUSH_BASE+push_direction)
 			player["nocontrol"] = 1
 			_push_animation = true
 			_dispatch_push(_push_block_probe)
@@ -585,10 +595,28 @@ func _move_player_input(motion: Vector2, delta: float, speed_scale: float = 1.0)
 func _record_push_block(probe: Vector2, axis: int) -> void:
 	if not _collect_push_contact: return
 	var direction := int(entities[1].get("dir",0))
-	if (axis == 0) != (direction in [4,6]): return
+	if not _push_use_contact_direction and (axis == 0) != (direction in [4,6]): return
 	# Source hardness 2 (water) does not start the original push timer.
 	if _blocking_sprite(probe,1,_position2(1)) == 0 and _tile_hardness(probe) == 2: return
 	_push_block_probe = probe
+
+func _push_contact_direction(probe: Vector2, fallback: int) -> int:
+	if probe == Vector2.INF: return 0
+	var owner := _blocking_sprite(probe,1,_position2(1))
+	if owner == 0: return fallback # tile/footprint overlap retains the source-foot fallback
+	var raw := _hard_rect(entities[owner])
+	var contact := probe.clamp(raw.position,raw.end)
+	var west := contact.x == raw.position.x
+	var east := contact.x == raw.end.x
+	var north := contact.y == raw.position.y
+	var south := contact.y == raw.end.y
+	# A corner belongs to two faces: retain the original diagonal exclusion.
+	if (west or east) and (north or south): return 0
+	if west: return 6
+	if east: return 4
+	if north: return 2
+	if south: return 8
+	return fallback
 
 func _dispatch_push(probe: Vector2) -> void:
 	var foot := _position2(1)

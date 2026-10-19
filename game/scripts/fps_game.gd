@@ -282,7 +282,7 @@ func _fps_move_player(delta: float) -> void:
 	var right3 := Vector3(camera.global_transform.basis.x.x, 0.0, camera.global_transform.basis.x.z).normalized()
 	var source_direction := Vector2(forward3.x * -input.y + right3.x * input.x, forward3.z * -input.y + right3.z * input.x).normalized()
 	var from := _position2(1)
-	if _move_player_input(source_direction * input.length(), delta, 1.55 if Input.is_action_pressed("sprint") else 1.0):
+	if _move_player_input(source_direction * input.length(), delta, 1.55 if Input.is_action_pressed("sprint") else 1.0, true):
 		_transitions(false,from)
 
 func _edge_destination(pos: Vector2) -> Dictionary:

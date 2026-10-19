@@ -2182,9 +2182,15 @@ Walking into a pushable source object now runs its DinkC `push` procedure after
 (`game.gd`) and the shipped first-person controller (`fps_game.gd`) use the same
 input/timer/dispatch path. The shipped `main.tscn` selects FPS; the overhead
 path is exercised by a direct regression host, not a player-selectable view.
-FPS facing follows movement in source coordinates:
-north-facing D strafe and east-facing W forward both yield native east6.
-Native diagonal directions1/3/7/9 do not start pushing.
+The overhead path retains the source keyboard's cardinal gate; native
+diagonal directions1/3/7/9 do not start pushing. FPS derives a sprite-owned
+push direction from the raw face at the mapped contact: west→6, east→4,
+north→2, south→8. A true corner belongs to two faces and retains the diagonal
+exclusion. Thus a free camera's off-axis heading can press into the same face
+without requiring world-axis alignment. North-facing D strafe and east-facing
+W forward both press the west face and yield east6. This face policy adapts
+the original keyboard rule to a camera heading the original never had; it is
+not claimed as an original analog-input algorithm.
 
 **Both roots.** The technical failure was an absent engine-to-script event:
 `story.json` retained all four PUSH procedures, but neither movement controller
@@ -2207,6 +2213,11 @@ and clears it after free movement or a direction change. `brain_keyboard.cpp:
 selects base310+dir, frame1, nocontrol, and dispatches after strictly more than
 600 ms. `live_sprite.cpp:146–186` releases nocontrol at animation completion;
 the timer is retained, permitting repetition while input remains held.
+`brain_keyboard.cpp:172–250` returns on control/freeze before dispatch but
+does not clear the timer; `freedink.cpp:128` clears it on legal movement.
+The port therefore advances an existing timer across a script freeze and can
+repeat immediately once control returns, while release or movement away still
+ends contact.
 
 The original dispatch (`brain_keyboard.cpp:54–85`) tests Dink's current foot
 point against every active scripted live sprite's raw hardbox grown by2. It
@@ -2229,6 +2240,41 @@ scripted sprite containing the actual foot, as the original permits; a mask
 without a matching sprite runs no PUSH procedure. Source water hardness2 does
 not start a timer.
 
+This contact mapping requires `_blocking_sprite` to identify the sprite that
+owns the rejected probe. If tile hardness stops movement before a sprite owns
+that probe, or a sprite's hardbox has been replaced by a built footprint,
+`_blocking_sprite` can return0. Dispatch then has only the current-foot scan
+against each candidate's raw hardbox grown by2. At the port's four-pixel
+clearance, that foot can remain outside raw+2, so a nearby scripted sprite may
+receive no PUSH. Built footprints and this ownership gap have no direct
+FreeDink analogue. None of the seven screens hosting the four shipped PUSH
+procedures has authored footprint data, and their verified approaches use
+sprite-owned blocks. Tile-overlap approaches outside those tests remain
+unverified; the contact mapping is established for sprite-owned blocks, not
+arbitrary tile/footprint overlaps.
+
+**Follow-up causes and controls.** The first FPS implementation reused the
+existing movement-direction quantizer (`abs(axis)>=0.3`) as its cardinal PUSH
+gate. That made west-face contact at20/30/40 degrees off-axis fail even when
+contact persisted;10 degrees passed. The technical cause was a keyboard
+direction gate applied to a continuous camera heading. The development error
+was reasoning that stopped at perfectly aligned forward/strafe tests and
+misapplied the source's keyboard-only constraint. The face mapping above
+removes that quantizer from sprite-owned FPS PUSH. Tests retain the actual
+rock geometry at10/20/30/40 degrees and a true corner, with a lower scripted
+walking speed so sliding remains on the24px face for the delay. The setup is
+a labelled input scenario, not earned progression.
+
+The first freeze branch also cleared `_push_elapsed`, adding a new600ms
+wait after a freeze-using script returned. The technical cause was that reset;
+the development cause was an oversight: the source's early freeze return was
+not compared with the lifetime of its wall-clock timer. A composed DinkC PUSH
+fixture freezes, waits800ms and unfreezes without moving its blocker; physical
+held input must repeat within two ticks of release. This detects the cadence
+error independently of the cave rock, whose move removes contact. Both this
+case and off-axis contact were red on the reviewed implementation before the
+fix. The overhead touch/transition control gate remains the same as434db5a.
+
 **Order and limits.** Original live slots are not native entity ids. Screen
 main runs before editors (`game_engine.cpp:710–726`); editors are created in
 ascending queue-or-y rank with editor-index ties (`editor_screen.cpp:54–87`),
@@ -2244,6 +2290,17 @@ None of the four PUSH procedures calls `create_sprite`; source text effects do
 not reorder surviving editor candidates. The real editor4/11 overlap
 has source order11 then4, opposite native id order; the input test checks it.
 No global allocator change is needed for this class.
+
+FreeDink also exposes two script switches outside this campaign's dispatch
+path: `push_active` can disable the blocked-movement timer
+(`dinkc_bindings.cpp:1187–1190`, `freedink.cpp:106–123`), and
+`set_dink_base_push` changes the push animation base
+(`dinkc_bindings.cpp:1970–1973`, `brain_keyboard.cpp:253–259`). Their defaults
+are1 and310 (`game_state.cpp:31–32`). The port has neither DinkC handler and
+uses a fixed `PUSH_BASE=310` in `game.gd`. A case-insensitive scan of all381
+files in the shipped `/usr/share/games/dink/dink/Story` found no call to either
+switch. The verified match here is the shipped campaign's four PUSH procedures;
+scripts in other D-Mods that use these switches can behave differently.
 
 | Procedure | Original placement(s) | Result/gate |
 | --- | --- | --- |
