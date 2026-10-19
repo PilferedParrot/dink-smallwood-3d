@@ -1,0 +1,161 @@
+{
+  "source_report_sha256": "a36020abefa1c5680b5c77c5c52923201a1a2f93fde53fe5cc318a6971097392",
+  "evidence": {
+    "actual_load_mapping": [
+      320.0,
+      348.0
+    ],
+    "cases": [
+      {
+        "blocked": true,
+        "cache_restored": true,
+        "expected": true,
+        "mode": "cooldown",
+        "reverse_blocked": false,
+        "source_indoor": true,
+        "source_restored": true
+      },
+      {
+        "blocked": false,
+        "cache_restored": true,
+        "expected": false,
+        "mode": "active-unrendered",
+        "reverse_blocked": false,
+        "source_indoor": true,
+        "source_restored": true
+      },
+      {
+        "blocked": true,
+        "cache_restored": true,
+        "expected": true,
+        "mode": "inactive-entity",
+        "reverse_blocked": false,
+        "source_indoor": true,
+        "source_restored": true
+      },
+      {
+        "blocked": true,
+        "cache_restored": true,
+        "expected": true,
+        "mode": "invalid-warp",
+        "reverse_blocked": false,
+        "source_indoor": true,
+        "source_restored": true
+      },
+      {
+        "blocked": true,
+        "cache_restored": true,
+        "expected": true,
+        "mode": "cooldown",
+        "reverse_blocked": false,
+        "source_indoor": false,
+        "source_restored": true
+      },
+      {
+        "blocked": false,
+        "cache_restored": true,
+        "expected": false,
+        "mode": "active-unrendered",
+        "reverse_blocked": false,
+        "source_indoor": false,
+        "source_restored": true
+      },
+      {
+        "blocked": true,
+        "cache_restored": true,
+        "expected": true,
+        "mode": "inactive-entity",
+        "reverse_blocked": false,
+        "source_indoor": false,
+        "source_restored": true
+      },
+      {
+        "blocked": true,
+        "cache_restored": true,
+        "expected": true,
+        "mode": "invalid-warp",
+        "reverse_blocked": false,
+        "source_indoor": false,
+        "source_restored": true
+      }
+    ],
+    "cumulative_unearned_fixtures": [
+      {
+        "active": false,
+        "source_endpoint": [
+          320.0,
+          -44.0
+        ],
+        "target_endpoint": [
+          320.0,
+          356.0
+        ]
+      },
+      {
+        "active": true,
+        "source_endpoint": [
+          320.0,
+          -57.0
+        ],
+        "target_endpoint": [
+          320.0,
+          343.0
+        ]
+      }
+    ],
+    "doors": [
+      {
+        "editor_index": 25,
+        "screen": 1,
+        "x0": 308.0,
+        "x1": 339.0,
+        "zinner": 352.0
+      },
+      {
+        "editor_index": 13,
+        "screen": 2,
+        "x0": 295.0,
+        "x1": 334.0,
+        "zinner": 352.0
+      },
+      {
+        "editor_index": 16,
+        "screen": 34,
+        "x0": 307.0,
+        "x1": 340.0,
+        "zinner": 352.0
+      },
+      {
+        "editor_index": 21,
+        "screen": 38,
+        "x0": 244.0,
+        "x1": 277.0,
+        "zinner": 352.0
+      },
+      {
+        "editor_index": 16,
+        "screen": 65,
+        "x0": 300.0,
+        "x1": 336.0,
+        "zinner": 352.0
+      },
+      {
+        "editor_index": 16,
+        "screen": 66,
+        "x0": 300.0,
+        "x1": 336.0,
+        "zinner": 352.0
+      },
+      {
+        "editor_index": 16,
+        "screen": 68,
+        "x0": 300.0,
+        "x1": 336.0,
+        "zinner": 352.0
+      }
+    ],
+    "failures": [],
+    "setup": "Static real geometry, injected large overshoot query; no earned progress or ordinary-tick failure claimed. Query34(320,355) from356, load remaps to348.",
+    "target_owner": true
+  }
+}

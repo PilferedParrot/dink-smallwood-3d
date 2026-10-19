@@ -1,0 +1,873 @@
+{
+  "source_report_sha256": "98be4a10730924d6d2709fb7a1e72509268c79365ab869e6d35f6da3a1b52d09",
+  "evidence": {
+    "failures": [],
+    "setup": "End/middle/end samples of each of16 raw-hard warp edge directions other than34\u219266. Injected near-exit fixture, not earned progress. Derived from all1336 pinned points and original raw warp owners.",
+    "trials": [
+      {
+        "adjacent": 33.0,
+        "arrival": 439,
+        "editor_index": 25.0,
+        "expected": 439.0,
+        "ok": true,
+        "owner_valid": true,
+        "sample_point": [
+          312.0,
+          399.0
+        ],
+        "source": 1,
+        "start": [
+          312.0,
+          343.0
+        ],
+        "start_free": true
+      },
+      {
+        "adjacent": 33.0,
+        "arrival": 439,
+        "editor_index": 25.0,
+        "expected": 439.0,
+        "ok": true,
+        "owner_valid": true,
+        "sample_point": [
+          323.0,
+          399.0
+        ],
+        "source": 1,
+        "start": [
+          323.0,
+          343.0
+        ],
+        "start_free": true
+      },
+      {
+        "adjacent": 33.0,
+        "arrival": 439,
+        "editor_index": 25.0,
+        "expected": 439.0,
+        "ok": true,
+        "owner_valid": true,
+        "sample_point": [
+          334.0,
+          399.0
+        ],
+        "source": 1,
+        "start": [
+          334.0,
+          343.0
+        ],
+        "start_free": true
+      },
+      {
+        "adjacent": 2.0,
+        "arrival": 440,
+        "editor_index": 14.0,
+        "expected": 440.0,
+        "ok": true,
+        "owner_valid": true,
+        "sample_point": [
+          20.0,
+          149.0
+        ],
+        "source": 3,
+        "start": [
+          20.0,
+          149.0
+        ],
+        "start_free": true
+      },
+      {
+        "adjacent": 2.0,
+        "arrival": 440,
+        "editor_index": 14.0,
+        "expected": 440.0,
+        "ok": true,
+        "owner_valid": true,
+        "sample_point": [
+          20.0,
+          175.0
+        ],
+        "source": 3,
+        "start": [
+          20.0,
+          175.0
+        ],
+        "start_free": true
+      },
+      {
+        "adjacent": 2.0,
+        "arrival": 440,
+        "editor_index": 14.0,
+        "expected": 440.0,
+        "ok": true,
+        "owner_valid": true,
+        "sample_point": [
+          20.0,
+          200.0
+        ],
+        "source": 3,
+        "start": [
+          20.0,
+          200.0
+        ],
+        "start_free": true
+      },
+      {
+        "adjacent": 70.0,
+        "arrival": 530,
+        "editor_index": 21.0,
+        "expected": 530.0,
+        "ok": true,
+        "owner_valid": true,
+        "sample_point": [
+          248.0,
+          399.0
+        ],
+        "source": 38,
+        "start": [
+          248.0,
+          343.0
+        ],
+        "start_free": true
+      },
+      {
+        "adjacent": 70.0,
+        "arrival": 530,
+        "editor_index": 21.0,
+        "expected": 530.0,
+        "ok": true,
+        "owner_valid": true,
+        "sample_point": [
+          260.0,
+          399.0
+        ],
+        "source": 38,
+        "start": [
+          260.0,
+          343.0
+        ],
+        "start_free": true
+      },
+      {
+        "adjacent": 70.0,
+        "arrival": 530,
+        "editor_index": 21.0,
+        "expected": 530.0,
+        "ok": true,
+        "owner_valid": true,
+        "sample_point": [
+          272.0,
+          399.0
+        ],
+        "source": 38,
+        "start": [
+          272.0,
+          343.0
+        ],
+        "start_free": true
+      },
+      {
+        "adjacent": 97.0,
+        "arrival": 532,
+        "editor_index": 16.0,
+        "expected": 532.0,
+        "ok": true,
+        "owner_valid": true,
+        "sample_point": [
+          304.0,
+          399.0
+        ],
+        "source": 65,
+        "start": [
+          304.0,
+          343.0
+        ],
+        "start_free": true
+      },
+      {
+        "adjacent": 97.0,
+        "arrival": 532,
+        "editor_index": 16.0,
+        "expected": 532.0,
+        "ok": true,
+        "owner_valid": true,
+        "sample_point": [
+          318.0,
+          399.0
+        ],
+        "source": 65,
+        "start": [
+          318.0,
+          343.0
+        ],
+        "start_free": true
+      },
+      {
+        "adjacent": 97.0,
+        "arrival": 532,
+        "editor_index": 16.0,
+        "expected": 532.0,
+        "ok": true,
+        "owner_valid": true,
+        "sample_point": [
+          331.0,
+          399.0
+        ],
+        "source": 65,
+        "start": [
+          331.0,
+          343.0
+        ],
+        "start_free": true
+      },
+      {
+        "adjacent": 98.0,
+        "arrival": 497,
+        "editor_index": 16.0,
+        "expected": 497.0,
+        "ok": true,
+        "owner_valid": true,
+        "sample_point": [
+          304.0,
+          399.0
+        ],
+        "source": 66,
+        "start": [
+          304.0,
+          343.0
+        ],
+        "start_free": true
+      },
+      {
+        "adjacent": 98.0,
+        "arrival": 497,
+        "editor_index": 16.0,
+        "expected": 497.0,
+        "ok": true,
+        "owner_valid": true,
+        "sample_point": [
+          318.0,
+          399.0
+        ],
+        "source": 66,
+        "start": [
+          318.0,
+          343.0
+        ],
+        "start_free": true
+      },
+      {
+        "adjacent": 98.0,
+        "arrival": 497,
+        "editor_index": 16.0,
+        "expected": 497.0,
+        "ok": true,
+        "owner_valid": true,
+        "sample_point": [
+          331.0,
+          399.0
+        ],
+        "source": 66,
+        "start": [
+          331.0,
+          343.0
+        ],
+        "start_free": true
+      },
+      {
+        "adjacent": 100.0,
+        "arrival": 497,
+        "editor_index": 16.0,
+        "expected": 497.0,
+        "ok": true,
+        "owner_valid": true,
+        "sample_point": [
+          304.0,
+          399.0
+        ],
+        "source": 68,
+        "start": [
+          304.0,
+          343.0
+        ],
+        "start_free": true
+      },
+      {
+        "adjacent": 100.0,
+        "arrival": 497,
+        "editor_index": 16.0,
+        "expected": 497.0,
+        "ok": true,
+        "owner_valid": true,
+        "sample_point": [
+          318.0,
+          399.0
+        ],
+        "source": 68,
+        "start": [
+          318.0,
+          343.0
+        ],
+        "start_free": true
+      },
+      {
+        "adjacent": 100.0,
+        "arrival": 497,
+        "editor_index": 16.0,
+        "expected": 497.0,
+        "ok": true,
+        "owner_valid": true,
+        "sample_point": [
+          331.0,
+          399.0
+        ],
+        "source": 68,
+        "start": [
+          331.0,
+          343.0
+        ],
+        "start_free": true
+      },
+      {
+        "adjacent": 101.0,
+        "arrival": 659,
+        "editor_index": 1.0,
+        "expected": 659.0,
+        "ok": true,
+        "owner_valid": true,
+        "sample_point": [
+          454.0,
+          399.0
+        ],
+        "source": 69,
+        "start": [
+          454.0,
+          399.0
+        ],
+        "start_free": true
+      },
+      {
+        "adjacent": 101.0,
+        "arrival": 659,
+        "editor_index": 1.0,
+        "expected": 659.0,
+        "ok": true,
+        "owner_valid": true,
+        "sample_point": [
+          514.0,
+          399.0
+        ],
+        "source": 69,
+        "start": [
+          514.0,
+          399.0
+        ],
+        "start_free": true
+      },
+      {
+        "adjacent": 101.0,
+        "arrival": 659,
+        "editor_index": 1.0,
+        "expected": 659.0,
+        "ok": true,
+        "owner_valid": true,
+        "sample_point": [
+          574.0,
+          399.0
+        ],
+        "source": 69,
+        "start": [
+          574.0,
+          399.0
+        ],
+        "start_free": true
+      },
+      {
+        "adjacent": 133.0,
+        "arrival": 307,
+        "editor_index": 1.0,
+        "expected": 307.0,
+        "ok": true,
+        "owner_valid": true,
+        "sample_point": [
+          457.0,
+          399.0
+        ],
+        "source": 101,
+        "start": [
+          457.0,
+          399.0
+        ],
+        "start_free": true
+      },
+      {
+        "adjacent": 133.0,
+        "arrival": 307,
+        "editor_index": 1.0,
+        "expected": 307.0,
+        "ok": true,
+        "owner_valid": true,
+        "sample_point": [
+          517.0,
+          399.0
+        ],
+        "source": 101,
+        "start": [
+          517.0,
+          399.0
+        ],
+        "start_free": true
+      },
+      {
+        "adjacent": 133.0,
+        "arrival": 307,
+        "editor_index": 1.0,
+        "expected": 307.0,
+        "ok": true,
+        "owner_valid": true,
+        "sample_point": [
+          577.0,
+          399.0
+        ],
+        "source": 101,
+        "start": [
+          577.0,
+          399.0
+        ],
+        "start_free": true
+      },
+      {
+        "adjacent": 134.0,
+        "arrival": 402,
+        "editor_index": 15.0,
+        "expected": 402.0,
+        "ok": true,
+        "owner_valid": true,
+        "sample_point": [
+          220.0,
+          399.0
+        ],
+        "source": 102,
+        "start": [
+          220.0,
+          399.0
+        ],
+        "start_free": true
+      },
+      {
+        "adjacent": 134.0,
+        "arrival": 402,
+        "editor_index": 15.0,
+        "expected": 402.0,
+        "ok": true,
+        "owner_valid": true,
+        "sample_point": [
+          320.0,
+          399.0
+        ],
+        "source": 102,
+        "start": [
+          320.0,
+          399.0
+        ],
+        "start_free": true
+      },
+      {
+        "adjacent": 134.0,
+        "arrival": 402,
+        "editor_index": 16.0,
+        "expected": 402.0,
+        "ok": true,
+        "owner_valid": true,
+        "sample_point": [
+          470.0,
+          399.0
+        ],
+        "source": 102,
+        "start": [
+          470.0,
+          399.0
+        ],
+        "start_free": true
+      },
+      {
+        "adjacent": 163.0,
+        "arrival": 277,
+        "editor_index": 1.0,
+        "expected": 277.0,
+        "ok": true,
+        "owner_valid": true,
+        "sample_point": [
+          200.0,
+          399.0
+        ],
+        "source": 131,
+        "start": [
+          200.0,
+          399.0
+        ],
+        "start_free": true
+      },
+      {
+        "adjacent": 163.0,
+        "arrival": 277,
+        "editor_index": 1.0,
+        "expected": 277.0,
+        "ok": true,
+        "owner_valid": true,
+        "sample_point": [
+          288.0,
+          399.0
+        ],
+        "source": 131,
+        "start": [
+          288.0,
+          399.0
+        ],
+        "start_free": true
+      },
+      {
+        "adjacent": 163.0,
+        "arrival": 277,
+        "editor_index": 1.0,
+        "expected": 277.0,
+        "ok": true,
+        "owner_valid": true,
+        "sample_point": [
+          375.0,
+          399.0
+        ],
+        "source": 131,
+        "start": [
+          375.0,
+          399.0
+        ],
+        "start_free": true
+      },
+      {
+        "adjacent": 164.0,
+        "arrival": 534,
+        "editor_index": 19.0,
+        "expected": 534.0,
+        "ok": true,
+        "owner_valid": true,
+        "sample_point": [
+          256.0,
+          399.0
+        ],
+        "source": 132,
+        "start": [
+          256.0,
+          399.0
+        ],
+        "start_free": true
+      },
+      {
+        "adjacent": 164.0,
+        "arrival": 534,
+        "editor_index": 19.0,
+        "expected": 534.0,
+        "ok": true,
+        "owner_valid": true,
+        "sample_point": [
+          316.0,
+          399.0
+        ],
+        "source": 132,
+        "start": [
+          316.0,
+          399.0
+        ],
+        "start_free": true
+      },
+      {
+        "adjacent": 164.0,
+        "arrival": 534,
+        "editor_index": 19.0,
+        "expected": 534.0,
+        "ok": true,
+        "owner_valid": true,
+        "sample_point": [
+          376.0,
+          399.0
+        ],
+        "source": 132,
+        "start": [
+          376.0,
+          399.0
+        ],
+        "start_free": true
+      },
+      {
+        "adjacent": 196.0,
+        "arrival": 248,
+        "editor_index": 19.0,
+        "expected": 248.0,
+        "ok": true,
+        "owner_valid": true,
+        "sample_point": [
+          256.0,
+          399.0
+        ],
+        "source": 164,
+        "start": [
+          256.0,
+          399.0
+        ],
+        "start_free": true
+      },
+      {
+        "adjacent": 196.0,
+        "arrival": 248,
+        "editor_index": 19.0,
+        "expected": 248.0,
+        "ok": true,
+        "owner_valid": true,
+        "sample_point": [
+          316.0,
+          399.0
+        ],
+        "source": 164,
+        "start": [
+          316.0,
+          399.0
+        ],
+        "start_free": true
+      },
+      {
+        "adjacent": 196.0,
+        "arrival": 248,
+        "editor_index": 19.0,
+        "expected": 248.0,
+        "ok": true,
+        "owner_valid": true,
+        "sample_point": [
+          376.0,
+          399.0
+        ],
+        "source": 164,
+        "start": [
+          376.0,
+          399.0
+        ],
+        "start_free": true
+      },
+      {
+        "adjacent": 197.0,
+        "arrival": 209,
+        "editor_index": 19.0,
+        "expected": 209.0,
+        "ok": true,
+        "owner_valid": true,
+        "sample_point": [
+          256.0,
+          399.0
+        ],
+        "source": 165,
+        "start": [
+          256.0,
+          399.0
+        ],
+        "start_free": true
+      },
+      {
+        "adjacent": 197.0,
+        "arrival": 209,
+        "editor_index": 19.0,
+        "expected": 209.0,
+        "ok": true,
+        "owner_valid": true,
+        "sample_point": [
+          316.0,
+          399.0
+        ],
+        "source": 165,
+        "start": [
+          316.0,
+          399.0
+        ],
+        "start_free": true
+      },
+      {
+        "adjacent": 197.0,
+        "arrival": 209,
+        "editor_index": 19.0,
+        "expected": 209.0,
+        "ok": true,
+        "owner_valid": true,
+        "sample_point": [
+          376.0,
+          399.0
+        ],
+        "source": 165,
+        "start": [
+          376.0,
+          399.0
+        ],
+        "start_free": true
+      },
+      {
+        "adjacent": 198.0,
+        "arrival": 180,
+        "editor_index": 19.0,
+        "expected": 180.0,
+        "ok": true,
+        "owner_valid": true,
+        "sample_point": [
+          256.0,
+          399.0
+        ],
+        "source": 166,
+        "start": [
+          256.0,
+          399.0
+        ],
+        "start_free": true
+      },
+      {
+        "adjacent": 198.0,
+        "arrival": 180,
+        "editor_index": 19.0,
+        "expected": 180.0,
+        "ok": true,
+        "owner_valid": true,
+        "sample_point": [
+          316.0,
+          399.0
+        ],
+        "source": 166,
+        "start": [
+          316.0,
+          399.0
+        ],
+        "start_free": true
+      },
+      {
+        "adjacent": 198.0,
+        "arrival": 180,
+        "editor_index": 19.0,
+        "expected": 180.0,
+        "ok": true,
+        "owner_valid": true,
+        "sample_point": [
+          376.0,
+          399.0
+        ],
+        "source": 166,
+        "start": [
+          376.0,
+          399.0
+        ],
+        "start_free": true
+      },
+      {
+        "adjacent": 259.0,
+        "arrival": 710,
+        "editor_index": 1.0,
+        "expected": 710.0,
+        "ok": true,
+        "owner_valid": true,
+        "sample_point": [
+          457.0,
+          399.0
+        ],
+        "source": 227,
+        "start": [
+          457.0,
+          399.0
+        ],
+        "start_free": true
+      },
+      {
+        "adjacent": 259.0,
+        "arrival": 710,
+        "editor_index": 1.0,
+        "expected": 710.0,
+        "ok": true,
+        "owner_valid": true,
+        "sample_point": [
+          517.0,
+          399.0
+        ],
+        "source": 227,
+        "start": [
+          517.0,
+          399.0
+        ],
+        "start_free": true
+      },
+      {
+        "adjacent": 259.0,
+        "arrival": 710,
+        "editor_index": 1.0,
+        "expected": 710.0,
+        "ok": true,
+        "owner_valid": true,
+        "sample_point": [
+          577.0,
+          399.0
+        ],
+        "source": 227,
+        "start": [
+          577.0,
+          399.0
+        ],
+        "start_free": true
+      },
+      {
+        "adjacent": 290.0,
+        "arrival": 350,
+        "editor_index": 19.0,
+        "expected": 350.0,
+        "ok": true,
+        "owner_valid": true,
+        "sample_point": [
+          619.0,
+          125.0
+        ],
+        "source": 289,
+        "start": [
+          619.0,
+          125.0
+        ],
+        "start_free": true
+      },
+      {
+        "adjacent": 290.0,
+        "arrival": 350,
+        "editor_index": 19.0,
+        "expected": 350.0,
+        "ok": true,
+        "owner_valid": true,
+        "sample_point": [
+          619.0,
+          150.0
+        ],
+        "source": 289,
+        "start": [
+          619.0,
+          150.0
+        ],
+        "start_free": true
+      },
+      {
+        "adjacent": 290.0,
+        "arrival": 350,
+        "editor_index": 19.0,
+        "expected": 350.0,
+        "ok": true,
+        "owner_valid": true,
+        "sample_point": [
+          619.0,
+          175.0
+        ],
+        "source": 289,
+        "start": [
+          619.0,
+          175.0
+        ],
+        "start_free": true
+      }
+    ]
+  }
+}

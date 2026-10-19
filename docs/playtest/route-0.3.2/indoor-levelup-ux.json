@@ -1,0 +1,145 @@
+{
+  "setup": "Report-only UX observation from normal earned Bonca combat and a save attempt; no level-up request was issued. LRAISE waits1000ms before opening the attribute choice. Game behavior unchanged.",
+  "source_report_sha256": "6dbbc11101883cf9c340ac366816743cc8c79334347225c4f1aaa017380e33e9",
+  "failure_class": "harness",
+  "error": "menu focus did not reach Save adventure",
+  "inputs_and_observations": [
+    {
+      "label": "bonca-complete-pause-save",
+      "page": "pause",
+      "level": 1.0,
+      "buttons": [
+        {
+          "disabled": false,
+          "focused": true,
+          "text": "Return to adventure"
+        },
+        {
+          "disabled": false,
+          "focused": false,
+          "text": "Save adventure"
+        },
+        {
+          "disabled": false,
+          "focused": false,
+          "text": "Load saved adventure"
+        },
+        {
+          "disabled": false,
+          "focused": false,
+          "text": "Equipment"
+        },
+        {
+          "disabled": false,
+          "focused": false,
+          "text": "Adventure journal"
+        },
+        {
+          "disabled": false,
+          "focused": false,
+          "text": "World map"
+        },
+        {
+          "disabled": false,
+          "focused": false,
+          "text": "Settings & controls"
+        },
+        {
+          "disabled": false,
+          "focused": false,
+          "text": "Credits & support"
+        },
+        {
+          "disabled": false,
+          "focused": false,
+          "text": "Title screen"
+        },
+        {
+          "disabled": false,
+          "focused": false,
+          "text": "Quit game"
+        }
+      ]
+    },
+    {
+      "label": "menu-before-Save adventure",
+      "page": "pause",
+      "level": 1.0,
+      "buttons": [
+        {
+          "disabled": false,
+          "focused": true,
+          "text": "Return to adventure"
+        },
+        {
+          "disabled": false,
+          "focused": false,
+          "text": "Save adventure"
+        },
+        {
+          "disabled": false,
+          "focused": false,
+          "text": "Load saved adventure"
+        },
+        {
+          "disabled": false,
+          "focused": false,
+          "text": "Equipment"
+        },
+        {
+          "disabled": false,
+          "focused": false,
+          "text": "Adventure journal"
+        },
+        {
+          "disabled": false,
+          "focused": false,
+          "text": "World map"
+        },
+        {
+          "disabled": false,
+          "focused": false,
+          "text": "Settings & controls"
+        },
+        {
+          "disabled": false,
+          "focused": false,
+          "text": "Credits & support"
+        },
+        {
+          "disabled": false,
+          "focused": false,
+          "text": "Title screen"
+        },
+        {
+          "disabled": false,
+          "focused": false,
+          "text": "Quit game"
+        }
+      ]
+    },
+    {
+      "label": "menu-down",
+      "page": "dialogue",
+      "level": 2,
+      "buttons": [
+        {
+          "disabled": false,
+          "focused": false,
+          "text": "Increase Attack"
+        },
+        {
+          "disabled": false,
+          "focused": true,
+          "text": "Increase Defense"
+        },
+        {
+          "disabled": false,
+          "focused": false,
+          "text": "Increase Magic"
+        }
+      ]
+    }
+  ],
+  "screenshot_sha256": "26af1b3303f32bb5412a5446adeeb451f32d2a35383d1959b9aca70042b6d78a"
+}

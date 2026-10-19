@@ -1,0 +1,49 @@
+{
+  "verified_code_candidate": "8a663b0bbac4a1e4e45df2f451a2ff60bc6da06d",
+  "game_tree": "3cc399d55ad6a5bbe1b993b378b6453ceffad255",
+  "export": {
+    "candidate": "b45d5e7e9fde220805e406f943bdedfdf20b3c4c",
+    "game_tree": "3cc399d55ad6a5bbe1b993b378b6453ceffad255",
+    "export_sha256": "f46724d152a6658368895153afd0d814a66720c31fa1560a4aab2dd8f493ec1b",
+    "size_bytes": 152716688,
+    "godot": "4.6.1-stable.14d19694e",
+    "preset": "Linux release, embeddedPCK, frozen source, isolated export profile",
+    "checked_utc": "2026-10-19T20:17:41.415001+00:00",
+    "export_result": {
+      "Result": "success",
+      "ExecMainStatus": 0
+    },
+    "source_sha256": {
+      "game/data/world.json": "3e643839d6c287f757d9a65ccd773f1d4313de645ab944c54700e1a88a011be1",
+      "game/scripts/fp_world.gd": "51d30660c5187a6d9222c0eb834d4dd40c86b520cb287fd1fd45fce64436204f",
+      "game/scripts/fps_game.gd": "6a45c12610a43f30701a6f27cafa3ed31d4c06d3f22829b065d70629b50e21e2",
+      "game/scripts/game.gd": "e5e5c1ed9790741f1ec5ae73788c3c10bf536aa4e41217402575056ca7bc5ae0"
+    },
+    "compatible_harness_candidate": "8a663b0bbac4a1e4e45df2f451a2ff60bc6da06d",
+    "compatibility_basis": "Only controller/tests/documentation changed; exact game tree unchanged."
+  },
+  "source_sha256": {
+    "game/scripts/fps_game.gd": "6a45c12610a43f30701a6f27cafa3ed31d4c06d3f22829b065d70629b50e21e2",
+    "game/scripts/fp_world.gd": "51d30660c5187a6d9222c0eb834d4dd40c86b520cb287fd1fd45fce64436204f",
+    "game/scripts/game.gd": "e5e5c1ed9790741f1ec5ae73788c3c10bf536aa4e41217402575056ca7bc5ae0",
+    "game/data/world.json": "3e643839d6c287f757d9a65ccd773f1d4313de645ab944c54700e1a88a011be1",
+    "tests/fps_indoor_edges_test.gd": "0e53858e83f9e6955f5380151ca55abd9facd9ac452600daca27f380341a860c",
+    "tests/fps_indoor_arrival_door.gd": "0b1080c3df5a9fa6497c305c338fa616b9a6c01eee4c705659ba57b818d22618",
+    "tests/fps_indoor_portal_input.gd": "fa2ac039b672aa1b566c46b06bea23fb939ccc55089f99b11b923690e8c5b510",
+    "tests/fps_indoor_warp_edges.gd": "df8191addf6e0876df321a1a6639b0eedccc535e732c96fe91c43250cebdd532",
+    "tests/fps_collision_sweep.gd": "da7457e5c060157fd9fdbebcb60f3f074089a9cb84aeaaf07504e78439e14b32",
+    "tests/test_fps_collision_sweep.py": "ddf97fbd30fa825eb6e4901242afc51b32c791960bf81f4e331f5ced5c430751",
+    "tests/fixtures/indoor-map.dat": "7ce0106fab423b52f06c26858a89679a94ede52153d9b4378b3fd31bcc9dba40",
+    "tests/fixtures/indoor-map-provenance.json": "dcf94785eae07a1a82b7ad308ef2d0ffc3a1a5149cd4ad96343f888ecde32c7b",
+    "tests/fixtures/indoor-physical-expected.json": "ac0d4de96a0550a324346b7810df3cfda41081a9bb9d3424d81f06ea8cb6c544",
+    "tests/fixtures/indoor-warp-edge-samples.json": "3330fef53ddbe62db8acfa98b799304a2eca45b9b0a173d08618552ab837f9ca",
+    "tools/playtest_campaign.py": "e390f30d34b3aa045dd4c8abc34d51832f69f7cab421163f2aa03696c95de2f1",
+    "tools/playtest_push_route.py": "c0c8eda19189b1182b2aed6b05183e51f45c0f38001398cb07b24a5dede86da8"
+  },
+  "primary_engine_source": {
+    "url": "https://deb.debian.org/debian/pool/main/f/freedink/freedink_109.6.orig.tar.gz",
+    "archive_md5": "cdec0ef4db6d15b767f696745ef0ae2f",
+    "version": "GNU FreeDink109.6"
+  },
+  "limits": "Export built atb45d5e7.8a663b0 changes only controller/tests/docs; exact game tree unchanged. Controller combat-save attempt remains uncertified; do not use mock success as earned-save proof."
+}

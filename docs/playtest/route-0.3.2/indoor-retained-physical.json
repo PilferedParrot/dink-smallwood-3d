@@ -1,0 +1,297 @@
+{
+  "source_report_sha256": "659068f31fc40cb32638e454b119c72fdfa2edc0a0216fa446bf52efc4b6d409",
+  "evidence": {
+    "setup": "CPU source-frame box audit of native census veto witnesses; original source hardness rechecked independently. No new gameplay or arbitrary script-state claim.",
+    "original_sources": "FreeDink109.6 freedink.cpp80-129,132-242; live_screen.cpp132-169,216-239",
+    "differences": [
+      {
+        "source": 2,
+        "target": 34,
+        "direction": "south",
+        "original_open": 179,
+        "fps_open": 0,
+        "fps_source_veto": 17,
+        "fps_incoming_veto": 162,
+        "examples": [
+          {
+            "veto": "incoming",
+            "source_point": [
+              20.0,
+              399.0
+            ],
+            "original_source_hard": false,
+            "original_raw_source_owners": [],
+            "original_arrival": [
+              20.0,
+              0
+            ],
+            "fps_owner_screen": 34,
+            "fps_owner_probe": [
+              20.0,
+              0
+            ],
+            "source_frame_boxes_with4px_clearance": [
+              {
+                "editor_index": 7,
+                "rect": [
+                  5,
+                  2,
+                  120,
+                  57
+                ],
+                "path": "assets/graphics/inside/innwalls/Walls/inn-22.png",
+                "raw_contains": false
+              }
+            ],
+            "native_owners": [
+              {
+                "editor_index": 7,
+                "kind": "sprite_hardbox_and_clearance",
+                "path": "assets/graphics/inside/innwalls/Walls/inn-22.png"
+              }
+            ]
+          },
+          {
+            "veto": "source",
+            "source_point": [
+              101.0,
+              399.0
+            ],
+            "original_source_hard": false,
+            "original_raw_source_owners": [],
+            "original_arrival": [
+              101.0,
+              0
+            ],
+            "fps_owner_screen": 2,
+            "fps_owner_probe": [
+              101.0,
+              399.0
+            ],
+            "source_frame_boxes_with4px_clearance": [
+              {
+                "editor_index": 15,
+                "rect": [
+                  105,
+                  299,
+                  153,
+                  399
+                ],
+                "path": "assets/graphics/inside/innwalls/Walls/inn-23.png",
+                "raw_contains": false
+              }
+            ],
+            "native_owners": [
+              {
+                "editor_index": 15,
+                "kind": "sprite_hardbox_and_clearance",
+                "path": "assets/graphics/inside/innwalls/Walls/inn-23.png"
+              }
+            ]
+          }
+        ],
+        "classification": "Intentional FPS physical difference: original source point is free and unlocked loc rule crosses; native rejects source or arrival clearance around recorded wall. FreeDink has no incoming-solid precheck. Raw openness does not establish reachability from a spawn."
+      },
+      {
+        "source": 34,
+        "target": 33,
+        "direction": "west",
+        "original_open": 2,
+        "fps_open": 0,
+        "fps_source_veto": 2,
+        "fps_incoming_veto": 0,
+        "examples": [
+          {
+            "veto": "source",
+            "source_point": [
+              20.0,
+              0.0
+            ],
+            "original_source_hard": false,
+            "original_raw_source_owners": [],
+            "original_arrival": [
+              619,
+              0.0
+            ],
+            "fps_owner_screen": 34,
+            "fps_owner_probe": [
+              20.0,
+              0.0
+            ],
+            "source_frame_boxes_with4px_clearance": [
+              {
+                "editor_index": 7,
+                "rect": [
+                  5,
+                  2,
+                  120,
+                  57
+                ],
+                "path": "assets/graphics/inside/innwalls/Walls/inn-22.png",
+                "raw_contains": false
+              }
+            ],
+            "native_owners": [
+              {
+                "editor_index": 7,
+                "kind": "sprite_hardbox_and_clearance",
+                "path": "assets/graphics/inside/innwalls/Walls/inn-22.png"
+              }
+            ]
+          }
+        ],
+        "classification": "Intentional FPS physical difference: original source point is free and unlocked loc rule crosses; native rejects source or arrival clearance around recorded wall. FreeDink has no incoming-solid precheck. Raw openness does not establish reachability from a spawn."
+      },
+      {
+        "source": 34,
+        "target": 35,
+        "direction": "east",
+        "original_open": 50,
+        "fps_open": 0,
+        "fps_source_veto": 50,
+        "fps_incoming_veto": 0,
+        "examples": [
+          {
+            "veto": "source",
+            "source_point": [
+              619.0,
+              0.0
+            ],
+            "original_source_hard": false,
+            "original_raw_source_owners": [],
+            "original_arrival": [
+              20,
+              0.0
+            ],
+            "fps_owner_screen": 34,
+            "fps_owner_probe": [
+              619.0,
+              0.0
+            ],
+            "source_frame_boxes_with4px_clearance": [
+              {
+                "editor_index": 4,
+                "rect": [
+                  520,
+                  2,
+                  617,
+                  57
+                ],
+                "path": "assets/graphics/inside/innwalls/Walls/inn-21.png",
+                "raw_contains": false
+              }
+            ],
+            "native_owners": [
+              {
+                "editor_index": 4,
+                "kind": "sprite_hardbox_and_clearance",
+                "path": "assets/graphics/inside/innwalls/Walls/inn-21.png"
+              }
+            ]
+          }
+        ],
+        "classification": "Intentional FPS physical difference: original source point is free and unlocked loc rule crosses; native rejects source or arrival clearance around recorded wall. FreeDink has no incoming-solid precheck. Raw openness does not establish reachability from a spawn."
+      },
+      {
+        "source": 34,
+        "target": 2,
+        "direction": "north",
+        "original_open": 600,
+        "fps_open": 0,
+        "fps_source_veto": 600,
+        "fps_incoming_veto": 0,
+        "examples": [
+          {
+            "veto": "source",
+            "source_point": [
+              20.0,
+              0.0
+            ],
+            "original_source_hard": false,
+            "original_raw_source_owners": [],
+            "original_arrival": [
+              20.0,
+              399
+            ],
+            "fps_owner_screen": 34,
+            "fps_owner_probe": [
+              20.0,
+              0.0
+            ],
+            "source_frame_boxes_with4px_clearance": [
+              {
+                "editor_index": 7,
+                "rect": [
+                  5,
+                  2,
+                  120,
+                  57
+                ],
+                "path": "assets/graphics/inside/innwalls/Walls/inn-22.png",
+                "raw_contains": false
+              }
+            ],
+            "native_owners": [
+              {
+                "editor_index": 7,
+                "kind": "sprite_hardbox_and_clearance",
+                "path": "assets/graphics/inside/innwalls/Walls/inn-22.png"
+              }
+            ]
+          }
+        ],
+        "classification": "Intentional FPS physical difference: original source point is free and unlocked loc rule crosses; native rejects source or arrival clearance around recorded wall. FreeDink has no incoming-solid precheck. Raw openness does not establish reachability from a spawn."
+      },
+      {
+        "source": 35,
+        "target": 34,
+        "direction": "west",
+        "original_open": 400,
+        "fps_open": 0,
+        "fps_source_veto": 0,
+        "fps_incoming_veto": 400,
+        "examples": [
+          {
+            "veto": "incoming",
+            "source_point": [
+              20.0,
+              0.0
+            ],
+            "original_source_hard": false,
+            "original_raw_source_owners": [],
+            "original_arrival": [
+              619,
+              0.0
+            ],
+            "fps_owner_screen": 34,
+            "fps_owner_probe": [
+              619,
+              0.0
+            ],
+            "source_frame_boxes_with4px_clearance": [
+              {
+                "editor_index": 4,
+                "rect": [
+                  520,
+                  2,
+                  617,
+                  57
+                ],
+                "path": "assets/graphics/inside/innwalls/Walls/inn-21.png",
+                "raw_contains": false
+              }
+            ],
+            "native_owners": [
+              {
+                "editor_index": 4,
+                "kind": "sprite_hardbox_and_clearance",
+                "path": "assets/graphics/inside/innwalls/Walls/inn-21.png"
+              }
+            ]
+          }
+        ],
+        "classification": "Intentional FPS physical difference: original source point is free and unlocked loc rule crosses; native rejects source or arrival clearance around recorded wall. FreeDink has no incoming-solid precheck. Raw openness does not establish reachability from a spawn."
+      }
+    ]
+  }
+}

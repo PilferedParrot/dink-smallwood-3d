@@ -1,0 +1,50 @@
+{
+  "raw_report_sha256": "50ee39481cad2d05b0c86bfffbff308db7ff98ad8523926c656f4c4b8ba149cc",
+  "evidence": {
+    "crossings": 1023956,
+    "edge_coverage": {
+      "east": {
+        "candidates": 228000,
+        "crossings": 205287,
+        "rejected": 15362,
+        "walkable": 220649,
+        "x_sum": 141132000,
+        "y_sum": 45486000
+      },
+      "north": {
+        "candidates": 342000,
+        "crossings": 305804,
+        "rejected": 26786,
+        "walkable": 332590,
+        "x_sum": 109269000,
+        "y_sum": 342000
+      },
+      "south": {
+        "candidates": 342000,
+        "crossings": 306360,
+        "rejected": 24982,
+        "walkable": 331342,
+        "x_sum": 109269000,
+        "y_sum": 136458000
+      },
+      "west": {
+        "candidates": 228000,
+        "crossings": 206505,
+        "rejected": 14176,
+        "walkable": 220681,
+        "x_sum": 4788000,
+        "y_sum": 45486000
+      }
+    },
+    "edge_samples": 1105262,
+    "failures": [],
+    "fixture": "vision0 editor layer; no startup scripts; outdoor source screens, all admitted target types; every 1px edge cell, 10px interior grid",
+    "grid_samples": 1274749,
+    "host": "res://../tests/collision_survey_host.gd",
+    "indoor_landing_traps": 0,
+    "indoor_landings": 3074,
+    "rejected": 81306,
+    "requested_sources": [],
+    "screens": 570
+  }
+}

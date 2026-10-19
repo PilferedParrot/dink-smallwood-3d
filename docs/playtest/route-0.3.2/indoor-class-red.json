@@ -1,0 +1,18 @@
+{
+  "source_report_sha256": "99e2ae23e3959bcbddb145bdf42e5fad731c913ca13a60f00d7f1b3a09dab55e",
+  "evidence": {
+    "counts": {
+      "indoor_indoor": 230,
+      "mixed": 16
+    },
+    "failures": 238,
+    "non_metadata_failures": [],
+    "negative_controls": {
+      "locked": true,
+      "missing_link": true,
+      "original_fully_hard_edges": 1,
+      "row_wrap": true
+    },
+    "report_sha256": "ef1bb4a5f37f5b23e613d2e56c8d9d0bb041c2bc072d8e0c23ca9c7459c507d3"
+  }
+}
