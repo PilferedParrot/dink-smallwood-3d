@@ -2535,3 +2535,15 @@ neighbor. Native target-door query controls pass, including active unrendered
 portals, inactive leaves, source/cache restoration and cumulative displacement.
 These focused fixtures do not certify the earned route, rendering or full suite;
 those retain their separate evidence gates.
+
+The earned Bonca victory also exposed a controller assumption: normal LRAISE
+waits one second, so its attribute choice can replace Pause while the save
+controller navigates. The game crossing and victory succeeded; the save attempt
+was a harness failure. The process cause was assuming the menu stayed stable
+across input ticks after combat. Saving now recognizes only the exact three
+level-up choices, selects Increase Attack through normal keyboard input, then
+retries the normal save with a bound. Mock red/green checks cover choices before
+Pause, after Pause and during menu navigation; an unknown replacement still
+fails without selection. The observed replacement of an already open Pause
+menu is a separate UX finding, not changed by this unit. Route screenshots now
+use actual checkpoint names rather than the similarly named input trace labels.

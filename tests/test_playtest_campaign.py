@@ -570,3 +570,69 @@ def test_walk_uses_normal_enter_workaround_for_nonfrozen_modal_text(monkeypatch,
     assert state["y"] == 340 and session.enters == 1
     assert state["frozen"] is False and state["nocontrol"] == 0
     assert any(entry["label"] == "dialogue-enter" for entry in campaign.trace)
+
+
+class SaveLevelChoiceSession:
+    """Earned combat level-up can replace a menu on the next input tick."""
+    level_buttons = ['Increase Attack', 'Increase Defense', 'Increase Magic']
+    pause_buttons = ['Return', 'Save adventure', 'Title screen']
+
+    def __init__(self, arrival, unknown=False):
+        self.arrival = arrival
+        self.unknown = unknown
+        self.page = 'choice' if arrival == 'before' else 'game'
+        self.focus = 1 if self.page == 'choice' else 0
+        self.triggered = arrival == 'before'
+        self.saved = False
+        self.selected = None
+
+    def observe(self):
+        names = self.level_buttons if self.page == 'choice' else self.pause_buttons if self.page == 'pause' else []
+        if self.unknown and self.page == 'choice':
+            names = ['Accept mysterious offer', 'Leave']
+        return {'ok': True, 'telemetry': {'page': 'pause' if self.page == 'pause' else 'game',
+                'ui': {'buttons': [{'text': text, 'focused': i == self.focus} for i, text in enumerate(names)]}}}
+
+    def pause(self):
+        self.page = 'game' if self.page == 'pause' else 'pause'
+        self.focus = 0
+        if self.arrival == 'after-pause' and not self.triggered:
+            self.page = 'choice'
+            self.triggered = True
+        return self.observe()
+
+    def menu_key(self, key):
+        if self.arrival == 'during-menu' and not self.triggered:
+            self.page, self.focus, self.triggered = 'choice', 1, True
+            return self.observe()
+        if key == 'enter':
+            if self.page == 'choice':
+                self.selected = self.level_buttons[self.focus]
+                self.page = 'game'
+            else:
+                assert self.page == 'pause' and self.focus == 1
+                self.saved = True
+        else:
+            self.focus += 1 if key == 'down' else -1
+        return self.observe()
+
+    def wait(self, frames):
+        return self.observe()
+
+
+@pytest.mark.parametrize('arrival', ['before', 'after-pause', 'during-menu'])
+def test_earned_save_handles_only_recognized_level_choice_through_input(arrival):
+    session = SaveLevelChoiceSession(arrival)
+    campaign = Campaign(session)
+    result = campaign.earned_save('combat')
+    assert session.saved and session.selected == 'Increase Attack'
+    assert result['page'] == 'game'
+    assert 'combat-earned-save' in campaign.checkpoints
+
+
+def test_earned_save_rejects_unknown_menu_replacement_without_selecting_it():
+    session = SaveLevelChoiceSession('during-menu', unknown=True)
+    with pytest.raises(RouteFailure) as exc:
+        Campaign(session).earned_save('combat')
+    assert exc.value.kind == 'harness'
+    assert not session.saved and session.selected is None

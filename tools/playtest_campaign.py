@@ -306,7 +306,7 @@ class Campaign:
             "title", "opening", "sack-collected", "to-pig-farm", "pig-story", "save-reload",
             "letter-complete", "wizard-training-earned-save", "wizard-rock-pushed",
             "wizard-bonca-defeated", "wizard-reward-earned-save", "terris-toll-complete",
-            "cross-wizard-bonca-road-99", "cross-wizard-bonca-road-100",
+            "wizard-bonca-road-99", "wizard-bonca-road-100",
             "terris-arrival-complete",
         }:
             self._call("screenshot-" + name, lambda: self.session.screenshot(name + ".png"))
@@ -733,10 +733,29 @@ class Campaign:
         return state
 
     def earned_save(self, label: str) -> dict[str, Any]:
-        self._call(label + "-pause-save", self.session.pause)
-        self.menu_button("Save adventure")
-        self._call(label + "-resume-save", self.session.pause)
-        return self.checkpoint(label + "-earned-save")
+        # LRAISE waits one second before opening its attribute choice. It can
+        # replace Pause during navigation after an earned combat victory.
+        def level_choice(state: dict[str, Any]) -> bool:
+            return [b.get("text") for b in state.get("ui", {}).get("buttons", [])] == [
+                "Increase Attack", "Increase Defense", "Increase Magic"]
+
+        for _ in range(3):
+            state = self.observe(label + "-before-save")
+            if not level_choice(state):
+                try:
+                    if not any(b.get("text") == "Save adventure" for b in state.get("ui", {}).get("buttons", [])):
+                        self._call(label + "-pause-save", self.session.pause)
+                    self.menu_button("Save adventure")
+                except RouteFailure:
+                    state = self.observe(label + "-save-interrupted")
+                    if not level_choice(state):
+                        raise
+                else:
+                    self._call(label + "-resume-save", self.session.pause)
+                    return self.checkpoint(label + "-earned-save")
+            self.menu_button("Increase Attack")
+            self._call(label + "-level-choice-settle", lambda: self.session.wait(3))
+        raise RouteFailure("level-up repeatedly interrupted earned save", "harness")
 
     def _warp(self, screen: int, target: int, point: tuple[float, float], label: str) -> dict[str, Any]:
         """Use a map's ordinary scripted door/edge warp and require its target."""
