@@ -160,6 +160,16 @@ func run() -> void:
 		await navigation()
 		await finish()
 		return
+	if phase == "pointer_footer":
+		await activate("attack_0")
+		await activate("remove")
+		check(game.ui.controls_menu.state == "confirm","Pointer Remove uses the event's coordinates")
+		await activate("cancel")
+		await activate("attack_add")
+		await activate("cancel")
+		check(game.ui.controls_menu.state == "list","Pointer Cancel uses the event's coordinates")
+		await finish()
+		return
 	if phase == "read":
 		check(game.bindings.events("attack").has(expected_record()),"Restart restores saved "+device+" attack binding")
 		var text: String = game.bindings.event_label(expected_record())

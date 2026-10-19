@@ -9,12 +9,12 @@ GODOT = os.environ.get('GODOT', str(Path.home()/'.local/bin/Godot_v4.6.1-stable_
 LOCK = Path.home()/'.local/state/dink-godot.lock'
 
 
-def run(profile, device, phase):
+def run(profile, device, phase, *extra):
     env = dict(os.environ, XDG_DATA_HOME=str(profile/'data'),
                XDG_CONFIG_HOME=str(profile/'config'), XDG_CACHE_HOME=str(profile/'cache'))
     return subprocess.run(['flock',str(LOCK),'timeout','120s','nice','-n','10','xvfb-run','-a',GODOT,
         '--headless','--audio-driver','Dummy','--path',str(ROOT/'game'),
-        '--script',str(ROOT/'tests/controls_page_test.gd'),'--','--device='+device,'--phase='+phase],
+        '--script',str(ROOT/'tests/controls_page_test.gd'),'--','--device='+device,'--phase='+phase,*extra],
         env=env,capture_output=True,text=True)
 
 
@@ -22,6 +22,13 @@ def run(profile, device, phase):
 def test_each_device_navigates_all_groups_captures_and_cancels(tmp_path, device):
     result = run(tmp_path,device,'navigation')
     assert result.returncode == 0 and 'CONTROLS PASS '+device+' navigation' in result.stdout and 'SCRIPT ERROR' not in result.stderr, result.stdout+result.stderr
+
+
+@pytest.mark.parametrize('large',[False,True])
+@pytest.mark.parametrize('scale',['1.0','1.3'])
+def test_pointer_capture_footer_uses_event_coordinates_at_each_size(tmp_path, large, scale):
+    result = run(tmp_path,'mouse','pointer_footer','--scale='+scale,*(['--1080'] if large else []))
+    assert result.returncode == 0 and 'CONTROLS PASS mouse pointer_footer' in result.stdout and 'SCRIPT ERROR' not in result.stderr, result.stdout+result.stderr
 
 
 @pytest.mark.parametrize('device',['keyboard','mouse','pad'])
