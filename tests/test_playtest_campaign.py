@@ -536,3 +536,37 @@ def test_cave_route_rejects_unexpected_transition_during_push(monkeypatch):
     with pytest.raises(RouteFailure, match="outside the cave") as failure:
         campaign.cave_from_rock()
     assert failure.value.kind == "harness"
+
+
+@pytest.mark.parametrize("initial_dialogue", [False, True])
+def test_walk_uses_normal_enter_workaround_for_nonfrozen_modal_text(monkeypatch, initial_dialogue):
+    class AmbientSession:
+        def __init__(self):
+            self.state = {"screen": 131, "x": 289.0, "y": 377.0, "dialogue": initial_dialogue,
+                          "frozen": False, "nocontrol": 0}
+            self.interrupted = initial_dialogue
+            self.enters = 0
+        def observe(self):
+            return {"ok": True, "telemetry": dict(self.state)}
+        def hold(self, action, frames):
+            assert action == "forward"
+            if not self.interrupted:
+                self.state["dialogue"] = True
+                self.interrupted = True
+            elif not self.state["dialogue"]:
+                self.state["y"] = 340.0
+            return self.observe()
+        def menu_key(self, key):
+            assert key == "enter" and self.state["dialogue"]
+            self.enters += 1
+            self.state["dialogue"] = False
+            return self.observe()
+        def wait(self, frames):
+            return self.observe()
+    session = AmbientSession()
+    campaign = Campaign(session)
+    monkeypatch.setattr(campaign, "_aim", lambda state, *a: state)
+    state = campaign._walk_point(131, (289, 340), 2.0, "ambient-cave")
+    assert state["y"] == 340 and session.enters == 1
+    assert state["frozen"] is False and state["nocontrol"] == 0
+    assert any(entry["label"] == "dialogue-enter" for entry in campaign.trace)

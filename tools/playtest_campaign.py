@@ -500,6 +500,12 @@ class Campaign:
         state = self.observe("approach-" + label)
         stalled = 0
         for _ in range(90):
+            if state.get("dialogue", state.get("ui", {}).get("dialogue", False)):
+                # Native say_stop currently blocks input even without freeze
+                # (unlike FreeDink). Normal Enter is a labelled workaround for
+                # that game fidelity defect, not proof of a physical obstacle.
+                state = self.dialogue(require_release=True)
+                stalled = 0
             if int(state.get("screen", -1)) != screen:
                 return state
             distance = math.hypot(float(state["x"]) - target[0], float(state["y"]) - target[1])
@@ -510,6 +516,9 @@ class Campaign:
             after = self._call("walk-" + label, lambda: self.session.hold("forward", frames))
             if int(after.get("screen", -1)) != screen:
                 return after
+            if after.get("dialogue", after.get("ui", {}).get("dialogue", False)):
+                state = after
+                continue
             new_distance = math.hypot(float(after["x"]) - target[0], float(after["y"]) - target[1])
             stalled = stalled + 1 if new_distance >= distance - 0.2 else 0
             # This reports the live blocked position.  It never rewinds Python

@@ -2274,3 +2274,26 @@ without accepting the accompanying normal transition. The controller now
 accepts either277 or the authored destination131, then continues the cave route;
 a regression covers both outcomes and rejects unexpected screens. The initial
 failed trace is retained in the private evidence ledger.
+
+The next cave stop exposed a pre-existing **game dialogue fidelity defect**.
+`S1-CAVES.noise` waits4 seconds and can call `say_stop` (line42: “This cave
+sucks, let's leave...”) without `freeze`. FreeDink's `dc_say_stop`
+(`dinkc_bindings.cpp:766–788`) yields the calling script until its text sprite
+expires, without changing player freeze/nocontrol. `dc_say` at748–764 does not
+yield; `say_stop_npc` at790–807 also yields without freezing. `text.cpp:45–65`
+creates a non-hard text sprite with a lifetime; `brain_text.cpp:26–29` follows
+its moving owner, and `update_frame.cpp:295–300` resumes the suspended script
+on expiry. Human movement is gated by nocontrol, choice or explicit freeze
+(`brain_keyboard.cpp:216–241`); explicit freeze is a separate binding
+(`dinkc_bindings.cpp:552–559`). Speech alone does not stop original movement.
+
+Our `_dialogue` makes every `say_stop` a blocking card (`fps_game.gd:687–740`,
+`game_ui.gd:580–600`); the global modal gate then skips movement. On131 at
+(289,354.25), all four collision probes were free, frozen=false and nocontrol=0,
+while the cave-noise card owned the stop. The technical cause is treating script
+suspension as player-input blocking. The development error was conflating those
+two engine semantics and omitting non-frozen speech/movement coverage. This
+unit retains the production UI behavior. The continuation presses ordinary
+Enter when initial or mid-walk text appears, an explicit workaround for the
+game defect; its tests cover both timings. The first stalled trace remains
+recorded with its original classification and the source-based reassessment.
