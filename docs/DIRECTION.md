@@ -2397,3 +2397,40 @@ and source hashes. It tags the current planned route 131→99→100 and reverse
 certified irrelevant to the wider campaign. Adjacency is not proof of a
 physically open seam: source hardness, walls, locks and arrival state still
 need their own checks. Only 131→99 has the live ownership intervention here.
+
+
+### PUSH verification follow-up: launcher lifecycle and corner control (2026-10-19)
+
+The private suite launcher nested a 3600-second `timeout` underneath pytest's
+own subprocess deadline. When pytest killed that wrapper, the Godot child
+survived and was reparented inside the named service. This is a harness failure,
+not a game assertion. Technical root: two deadline owners with wrapper-only
+termination. Development root: an oversight that repeated the known wrapper
+kill hazard instead of checking ownership through the entire process tree.
+The launcher now directly `exec`s Godot; per-test and outer cohort deadlines
+remain. Two bounded user-space leaf fixtures verify PID identity and no
+surviving child after the caller deadline. The observed original orphan and
+all logs are retained privately; the named cohort was stopped and verified
+empty. Earlier timeout failures predate that observed orphan, so it cannot
+explain all 11 failures without additional evidence. Each is a harness timeout
+with the game outcome inconclusive; the full-suite gate remains incomplete.
+
+The committed raw-corner negative also has a test-quality bug: from northwest
+of the rock, yaw -PI/4 moves northeast, away from sustained contact. Technical
+root: the wrong quadrant permits a no-PUSH result without exercising the
+corner branch. Development root: a visual direction assumption was accepted
+without asserting that both coordinates remain blocked or checking mutation
+sensitivity. The corrected proposal uses -3PI/4, asserts unchanged position
+under 60 real-input ticks and removes only the corner-return branch in a
+private mutant. Its native runs timed out, producing no reports; it is retained
+privately and not substituted for verified tests. Existing 23-case results
+therefore carry this explicit weak-negative limitation. The production corner
+rule is unchanged and its class still needs this stronger check.
+
+The exact shared verification partition is in
+`docs/playtest/route-0.3.2/push-suite-partial.json`: 146 passed, one optional skip,
+11 deadline failures, 106 unrun of 264 collected nodes. The 570-screen outdoor
+walker passed with zero traps and must not be repeated merely to finish the
+remaining suite. Original and current opening-walk controls both exceeded
+40 seconds; this does not isolate a PUSH regression or establish an underlying
+performance cause. No timeout is counted as a green game result.

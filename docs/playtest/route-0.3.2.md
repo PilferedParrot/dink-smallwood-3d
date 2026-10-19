@@ -519,3 +519,34 @@ members are 131→99, 99→100, 100→99 and99→131. Every other pair is listed
 outside this route's scope. This inventory does not assert 115 physically open
 seams: source hardness, walls, locks and script state may legitimately stop
 other edges. The 570-screen outdoor static survey does not cover this class.
+
+
+### Verification limit recorded 2026-10-19
+
+The [suite outcome inventory](route-0.3.2/push-suite-partial.json) contains the
+exact disjoint partition of 264 collected nodes: **146 passed, one optional
+local-evidence skip, 11 timeout failures, and 106 unrun**. The resumed 180-node
+cohort contributed 63 passes, 11 failures and 106 unrun. Both cohorts ended
+with intentional SIGINT, exit 2; the full-suite gate is incomplete. The completed
+outdoor walker passed in 421.093 seconds over 570 screens, 1,274,749 grid samples,
+1,105,262 edge samples and 1,020,882 crossings, with zero traps.
+
+Each of the 11 failures is a harness deadline failure with an inconclusive
+game outcome. No completed game assertion identifies a PUSH regression. The
+opening walk also timed out after 40 seconds on both original 434db5a controllers
+and current controllers in fresh, direct-timeout runs. This shared failure does
+not explain every timeout. A nested timeout in the private suite launcher left
+a Godot child running after pytest killed its wrapper; the whole named service
+was stopped and the orphan was verified gone. The launcher now directly execs
+the engine, so the caller owns its PID and deadline. Two user-space lifecycle
+fixtures verify that timeout kills leave no leaf process; native failures remain
+unresolved rather than being converted into passes.
+
+A final audit found the committed corner negative weak: its northwest start
+and yaw -PI/4 move away from the raw corner. Production excludes two-face
+contacts, but this negative does not prove that branch matters. A proposed
+yaw -3PI/4 held-pressure check, with unchanged-position assertion and a
+one-branch mutation, remains private and unverified: all three follow-up
+launches timed out before producing reports. The tracked test was restored
+to the version bound by the existing 23-case evidence. Those earlier passing
+results remain valid observations, with this explicit coverage limitation.
