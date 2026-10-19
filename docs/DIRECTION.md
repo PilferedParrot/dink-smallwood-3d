@@ -2261,6 +2261,16 @@ for short contact, no PUSH procedure, a bare mask and diagonal movement.
 The earned-save export and continuation are separate campaign evidence.
 
 The scripted mover already completes at a gap below1px, so the moved rock can
-finish at349.58 rather than exactly350. Tests check script completion, its
+finish at349.17 rather than exactly350. Tests check script completion, its
 flag and that existing tolerance. Original integer-endpoint fidelity for other
 scripts comparing `sp_x` is outside this dispatch change.
+
+The first earned packed continuation pushed the rock and completed the normal
+`S1-HOLE` transition to131 before the push controller returned. Its next
+hardcoded277 navigation was therefore a harness failure. The technical cause
+was assuming the action's starting screen remained current after a held input
+and an asynchronous cutscene; the development error was checking quest success
+without accepting the accompanying normal transition. The controller now
+accepts either277 or the authored destination131, then continues the cave route;
+a regression covers both outcomes and rejects unexpected screens. The initial
+failed trace is retained in the private evidence ledger.

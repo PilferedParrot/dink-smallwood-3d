@@ -510,3 +510,29 @@ def test_landing_probe_requires_all_directions_blocked_and_released_controls(can
     else:
         campaign.probe_blocked_landing(377, "forest")
     assert keys == ["forward", "back", "left", "right"]
+
+
+@pytest.mark.parametrize("push_end_screen", [277, 131])
+def test_cave_route_accepts_entrance_reached_during_held_push(monkeypatch, push_end_screen):
+    # A successful held push can finish S1-HOLE before the controller's next
+    # observation. Both valid outcomes must continue to Bonca with real route
+    # stages, rather than trying to navigate on the departed screen.
+    session = DelayedDialogue([{"screen": 131}])
+    campaign = Campaign(session)
+    stages = []
+    monkeypatch.setattr(campaign, "push_cave_rock", lambda: {"screen": push_end_screen})
+    monkeypatch.setattr(campaign, "navigate", lambda screen, *a, **kw: stages.append(("navigate", screen)))
+    monkeypatch.setattr(campaign, "dialogue", lambda **kw: stages.append(("released", kw["require_release"])))
+    monkeypatch.setattr(campaign, "travel_route", lambda screens, label: stages.append(("road", screens)))
+    monkeypatch.setattr(campaign, "fight_bonca", lambda: {"screen": 100, "bonca": "completed"})
+    assert campaign.cave_from_rock() == {"screen": 100, "bonca": "completed"}
+    assert ("navigate", 277) in stages if push_end_screen == 277 else ("navigate", 277) not in stages
+    assert ("released", True) in stages and ("road", [99, 100]) in stages
+
+
+def test_cave_route_rejects_unexpected_transition_during_push(monkeypatch):
+    campaign = Campaign(DelayedDialogue([{"screen": 132}]))
+    monkeypatch.setattr(campaign, "push_cave_rock", lambda: {"screen": 132})
+    with pytest.raises(RouteFailure, match="outside the cave") as failure:
+        campaign.cave_from_rock()
+    assert failure.value.kind == "harness"

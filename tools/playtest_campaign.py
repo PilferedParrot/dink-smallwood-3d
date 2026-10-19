@@ -943,8 +943,11 @@ class Campaign:
 
     def cave_from_rock(self) -> dict[str, Any]:
         """Continue from an earned map277 checkpoint with the same real inputs."""
-        self.push_cave_rock()
-        self.navigate(277, (275.0, 162.0), "wizard-cave-hole", transition=131)
+        state = self.push_cave_rock()
+        if int(state.get("screen", -1)) == 277:
+            self.navigate(277, (275.0, 162.0), "wizard-cave-hole", transition=131)
+        elif int(state.get("screen", -1)) != 131:
+            raise RouteFailure("push ended outside the cave approach or entrance", "harness")
         # S1-HOLE moves/animates Dink and loads 131. The runner only waits.
         for _ in range(30):
             state = self._call("wizard-hole-wait", lambda: self.session.wait(15))
