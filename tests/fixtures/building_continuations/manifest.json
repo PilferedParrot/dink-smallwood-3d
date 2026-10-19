@@ -1,0 +1,32 @@
+{
+  "baseline_commit": "95ec8d6",
+  "baseline_pack_sha256": "e4a3b2d74a429856b0e23a9a5fec95cb47a8880caf49da104ad98d14fc84875c",
+  "reference_pack_sha256": "964516408f133cec1e3bf291fc5bae0a44fe737b8418b006db5f12b632d9a376",
+  "continuation_map_sha256": "4c7458ae6883ad212fecbd7905a9711fa0516accbfb27d561fcf7438028d022a",
+  "engine": "Godot4.6.1",
+  "render_resolution": [
+    1280,
+    800
+  ],
+  "output_size": [
+    600,
+    400
+  ],
+  "scripts": false,
+  "actor_frozen": true,
+  "neighbour_seed": 20261019,
+  "player_hotspot": [
+    505,
+    340
+  ],
+  "mask": "Boolean union of native source-mask samples in Godot4.6.1 Lanczos3 kernel windows; no observed image diff used",
+  "kernel_source": "https://github.com/godotengine/godot/blob/4.6.1-stable/core/io/image.cpp#L1099",
+  "files": {
+    "439-mask.png": "a12a30d3c836686fcb7dfba51711f2daa46a6ef7eff31034bb3a5d5d17d278ba",
+    "440-before.png": "c615fd5821a7e1d07e1d162ea28da10caa10a5c28ae1b746fd3728d60914efd0",
+    "439-before.png": "5e7167cc32ad6e307178a50c7b5161fa05df1c9d6301a4639c080e3d7228d592",
+    "537-before.png": "a27647216253ec47e74705b0747a156fcfa08fa66b78409c87a651af7810186f",
+    "537-mask.png": "2b544a951731c1160be8f68fb605d4a74c513386853b0344c4eae60df4115e08",
+    "440-mask.png": "57f1f336625231891ab7b0f88c7709597ade29710ab1f30ffda08b37d073f587"
+  }
+}

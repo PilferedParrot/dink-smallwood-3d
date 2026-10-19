@@ -17,6 +17,8 @@
 # (pixel offset) * S; the caller places it.
 extends RefCounted
 
+const CONTINUATION := preload("res://scripts/building_continuation.gd")
+var continuation
 var S := 0.025 # metres per source pixel
 var sequences: Dictionary
 var world: Dictionary
@@ -40,6 +42,7 @@ func _init(seqs: Dictionary, map: Dictionary, fits: Dictionary, scale: float) ->
 	world = map
 	facades = fits
 	S = scale
+	continuation = CONTINUATION.new(S)
 
 func origin(n: int) -> Vector2:
 	return Vector2(((n-1)%32)*600, int((n-1)/32)*400)
@@ -155,17 +158,25 @@ func house(path: String, rect: Rect2, parts: Dictionary, cache_key: String = "",
 		# The original's shadow: the isolated black dither pixels, which lie on the ground
 		# in this projection, for the ground at 50% like the engine's blend.
 		if want_shade: shade = _shade(made[1], dither_mask(made[1]))
+	var textures: Array = []
+	for img in imgs: textures.append(_texture(img))
+	if not continuation.faces.is_empty():
+		var sources: Array = house_canvases(path,rect,parts)[0]
+		var donor: Image = image(path)
+		var body_count := 3 if fit.has("polys") else 2
+		for i in textures.size():
+			continuation.register_source(textures[i],sources[i],dither_mask(sources[i]),donor if i < body_count else sources[i])
 	var surfaces: Array = []
 	var k := 2
 	if fit.has("polys"):
-		_uv_house(surfaces, fit, [_texture(imgs[0]), _texture(imgs[1]), _texture(imgs[2])])
+		_uv_house(surfaces, fit, textures.slice(0,3), path)
 		k = 3
-	else: _block_house(surfaces, fit, _texture(imgs[0]), _texture(imgs[1]))
+	else: _block_house(surfaces, fit, textures[0], textures[1], path)
 	for r in parts.roof:
-		_roof_piece(surfaces, r, fit, _texture(imgs[k]))
+		_roof_piece(surfaces, r, fit, textures[k])
 		k += 1
 	for g in parts.ground:
-		_ground_piece(surfaces, g, rect.position, _texture(imgs[k]))
+		_ground_piece(surfaces, g, rect.position, textures[k])
 		k += 1
 	if not cache_key.is_empty(): surface_cache[cache_key] = [surfaces, shade]
 	return {"node": node_from(surfaces), "shade": shade, "hull": hull}
@@ -185,6 +196,10 @@ func hull_of(fit: Dictionary, rect: Rect2) -> PackedVector2Array:
 # of a parts building), then one per roof piece and one per ground piece; and the composed canvas.
 # This is the costly part, and what the bake stores.
 func house_images(path: String, rect: Rect2, parts: Dictionary) -> Array:
+	var made := house_canvases(path,rect,parts)
+	return [fill_all(made[0]),made[1]]
+
+func house_canvases(path: String, rect: Rect2, parts: Dictionary) -> Array:
 	var fit: Dictionary = facades[path]
 	var canvas := image(path)
 	# Details drawn over the house in the original, in its draw order (type 0 first).
@@ -211,7 +226,7 @@ func house_images(path: String, rect: Rect2, parts: Dictionary) -> Array:
 		srcs = [_without(canvas, occ), _without(back, occ), canvas]
 	for r in parts.roof: srcs.append(_roof_piece_image(r))
 	for g in parts.ground: srcs.append(image(str(sprite_frame(g[0]).path)))
-	return [fill_all(srcs), canvas]
+	return [srcs, canvas]
 
 # The baked images of a house (tools/bake_houses.gd), or [] if it is not in a current bake.
 var houses_baked: Variant = null # the manifest's "houses" when current, else {}
@@ -273,6 +288,7 @@ func node_from(surfaces: Array) -> Node3D:
 			m.albedo_texture = sf[1]
 			m.texture_filter = BaseMaterial3D.TEXTURE_FILTER_NEAREST_WITH_MIPMAPS
 			m.cull_mode = BaseMaterial3D.CULL_DISABLED
+			if str(sf[1].resource_name).begins_with("inferred_continuation"): m.texture_repeat = false
 			material = m
 		material.render_priority = surface_index
 		mi.set_surface_override_material(0, material)
@@ -357,13 +373,15 @@ func filled(src: Image) -> Image:
 
 # A house of hip-roofed blocks (and a kit building): `back`, if given, textures the faces the
 # original camera never saw.
-func _block_house(surfaces: Array, fit: Dictionary, t: ImageTexture, back: ImageTexture = null) -> void:
+func _block_house(surfaces: Array, fit: Dictionary, t: ImageTexture, back: ImageTexture = null, continuation_key: String = "") -> void:
 	var size := Vector2(t.get_width(), t.get_height())
 	var st := SurfaceTool.new()
 	st.begin(Mesh.PRIMITIVE_TRIANGLES)
 	var st_back := SurfaceTool.new()
 	st_back.begin(Mesh.PRIMITIVE_TRIANGLES)
 	var n_back := 0
+	var n_front := 0
+	var inferred: Array = []
 	var roofed := {} # blocks with a roof: their walls stand under an eave, not a jetty
 	for f in fit.faces:
 		if int(f.label) == 2: roofed[int(f.block)] = true
@@ -409,21 +427,29 @@ func _block_house(surfaces: Array, fit: Dictionary, t: ImageTexture, back: Image
 			if roofed.has(int(f.block)): polys = [[lo, INF, 0.0], [hi, INF, minf(2.0*(top - hs), hs - y0)]]
 			else: polys = [[lo, INF, 0.0], [hi, hs, 0.0]]
 		var out: SurfaceTool = st if seen_by_camera or back == null else st_back
-		if out == st_back: n_back += 1
 		for poly in polys:
 			var ps: Array[Vector3] = poly[0]
 			var mirror: float = poly[1]
 			var shift: float = poly[2]
+			var uvs: Array[Vector2] = []
+			for p in ps:
+				var q: Vector3 = p if seen_by_camera else Vector3(2*centre.x - p.x, p.y, 2*centre.z - p.z)
+				if mirror != INF: q.y = 2*mirror - q.y
+				q.y -= shift
+				uvs.append(Vector2(q.x,q.z-q.y))
+			var source := continuation_key + "#" + ("1" if out == st_back else "0") if not continuation_key.is_empty() else ""
+			var repaired: Array = continuation.face(ps,uvs,back if out == st_back else t,source,"block%d-label%d" % [int(f.block),int(f.label)])
+			if not repaired.is_empty(): inferred.append(repaired); continue
+			if out == st_back: n_back += 1
+			else: n_front += 1
 			for i in range(1, ps.size()-1):
-				for p in [ps[0], ps[i], ps[i+1]]:
-					var q: Vector3 = p if seen_by_camera else Vector3(2*centre.x - p.x, p.y, 2*centre.z - p.z)
-					if mirror != INF: q.y = 2*mirror - q.y
-					q.y -= shift
-					out.set_uv(Vector2(q.x, q.z - q.y) / size)
-					out.add_vertex(p*S)
+				for j in [0,i,i+1]:
+					out.set_uv(uvs[j]/size)
+					out.add_vertex(ps[j]*S)
 	if face_id: return
-	surfaces.append([st.commit(), t])
+	if n_front > 0: surfaces.append([st.commit(), t])
 	if n_back > 0: surfaces.append([st_back.commit(), back])
+	continuation.append_merged(surfaces,inferred)
 
 # A building described by parts (tools/facade_fit.py, "General buildings": the cabin, the
 # church): every face carries its texture coordinates, and faces the original camera never saw
@@ -431,9 +457,10 @@ func _block_house(surfaces: Array, fit: Dictionary, t: ImageTexture, back: Image
 # are cleared from the body's texture, which is filled from its own pixels there, so the wall
 # behind a chimney does not wear the chimney; the pieces keep the full sprite.
 # `texs`: the body without its pieces, its back without them, and the full sprite (house_images).
-func _uv_house(surfaces: Array, fit: Dictionary, texs: Array) -> void:
+func _uv_house(surfaces: Array, fit: Dictionary, texs: Array, continuation_key: String = "") -> void:
 	var sts: Array = []
 	var used := [false, false, false]
+	var inferred: Array = []
 	for k in 3:
 		var st := SurfaceTool.new()
 		st.begin(Mesh.PRIMITIVE_TRIANGLES)
@@ -441,15 +468,23 @@ func _uv_house(surfaces: Array, fit: Dictionary, texs: Array) -> void:
 	var size := Vector2(texs[0].get_width(), texs[0].get_height())
 	for f in fit.polys:
 		var k := 2 if bool(f.piece) else (1 if bool(f.back) else 0)
-		used[k] = true
 		var pts: Array = f.pts
 		var uv: Array = f.uv
+		var positions: Array[Vector3] = []
+		var uvs: Array[Vector2] = []
+		for q in pts: positions.append(Vector3(float(q[0]),float(q[1]),float(q[2])))
+		for q in uv: uvs.append(Vector2(float(q[0]),float(q[1])))
+		var source := continuation_key + "#" + str(k) if not continuation_key.is_empty() else ""
+		var repaired: Array = continuation.face(positions,uvs,texs[k],source,"polys")
+		if not repaired.is_empty(): inferred.append(repaired); continue
+		used[k] = true
 		for i in range(1, pts.size()-1):
 			for j in [0, i, i+1]:
 				sts[k].set_uv(Vector2(float(uv[j][0]), float(uv[j][1])) / size)
 				sts[k].add_vertex(Vector3(float(pts[j][0]), float(pts[j][1]), float(pts[j][2]))*S)
 	for k in 3:
 		if used[k]: surfaces.append([sts[k].commit(), texs[k]])
+	continuation.append_merged(surfaces,inferred)
 
 # The image with the pixels inside any of the polygons cleared.
 func _without(img: Image, polys: Array) -> Image:
@@ -633,16 +668,25 @@ func _ground_piece(surfaces: Array, g: Array, house_tl: Vector2, t: ImageTexture
 	var off := Vector3(tl.x - house_tl.x, 0.0, tl.y - house_tl.y)
 	var st := SurfaceTool.new()
 	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	var inferred: Array = []
+	var ordinary := 0
 	for face in faces:
 		var pts: Array[Vector3] = face
 		var n := _nrm(pts) if pts.size() > 2 else Vector3.UP
 		if n.dot(_ctr(pts) - Vector3(cen.x, h/2.0, cen.z)) < 0: n = -n
-		for i in range(1, pts.size()-1):
-			for q in [pts[0], pts[i], pts[i+1]]:
-				var m: Vector3 = q if n.z >= -1e-3 else Vector3(2*cen.x - q.x, q.y, 2*cen.z - q.z)
-				st.set_uv(Vector2(m.x, m.z - m.y) / size)
-				st.add_vertex((off + q)*S)
-	surfaces.append([st.commit(), t])
+		var positions: Array[Vector3] = []
+		var uvs: Array[Vector2] = []
+		for q in pts:
+			var m: Vector3 = q if n.z >= -1e-3 else Vector3(2*cen.x-q.x,q.y,2*cen.z-q.z)
+			positions.append(off+q); uvs.append(Vector2(m.x,m.z-m.y))
+		var repaired: Array = continuation.face(positions,uvs,t,str(sprite_frame(g[0]).path)+"#0","chimney")
+		if not repaired.is_empty(): inferred.append(repaired); continue
+		ordinary += 1
+		for i in range(1,pts.size()-1):
+			for j in [0,i,i+1]:
+				st.set_uv(uvs[j]/size); st.add_vertex(positions[j]*S)
+	if ordinary > 0: surfaces.append([st.commit(),t])
+	continuation.append_merged(surfaces,inferred)
 
 # A roof piece's sprite without its roof-lying parts (its foot's thatch and shadow, painted on the
 # roof), for its texture: stone is extended over the gaps when it is filled.
@@ -675,19 +719,26 @@ func _roof_piece(surfaces: Array, r: Array, fit: Dictionary, t: ImageTexture) ->
 		faces.append([Vector3(a.x, yb, a.z), Vector3(b.x, yb, b.z), b, a] as Array[Vector3])
 	var st := SurfaceTool.new()
 	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	var inferred: Array = []
+	var ordinary := 0
 	for face in faces:
 		var pts: Array[Vector3] = face
 		var normal := (pts[1]-pts[0]).cross(pts[2]-pts[0]).normalized()
 		var mid := Vector3.ZERO
 		for p in pts: mid += p / pts.size()
 		if normal.dot(mid - Vector3(centre.x, (yt + yb) / 2.0, centre.z)) < 0: normal = -normal
-		for i in range(1, pts.size()-1):
-			for p in [pts[0], pts[i], pts[i+1]]:
-				# Faces the original camera never saw take the point-mirrored front faces.
-				var q: Vector3 = p if normal.z >= -1e-3 else Vector3(2*centre.x - p.x, p.y, 2*centre.z - p.z)
-				st.set_uv((Vector2(q.x, q.z - q.y) - at) / size)
-				st.add_vertex(p*S)
-	surfaces.append([st.commit(), t])
+		var uvs: Array[Vector2] = []
+		for p in pts:
+			var q: Vector3 = p if normal.z >= -1e-3 else Vector3(2*centre.x-p.x,p.y,2*centre.z-p.z)
+			uvs.append(Vector2(q.x,q.z-q.y)-at)
+		var repaired: Array = continuation.face(pts,uvs,t,str(sprite_frame(r[0]).path)+"#0","chimney")
+		if not repaired.is_empty(): inferred.append(repaired); continue
+		ordinary += 1
+		for i in range(1,pts.size()-1):
+			for j in [0,i,i+1]:
+				st.set_uv(uvs[j]/size); st.add_vertex(pts[j]*S)
+	if ordinary > 0: surfaces.append([st.commit(),t])
+	continuation.append_merged(surfaces,inferred)
 
 # --- Kit buildings (the inn) ---------------------------------------------------------
 # The original assembles some buildings from modular sprites (seq 33: the stone ground
@@ -761,7 +812,10 @@ func kit(b: Dictionary) -> Node3D:
 		var sides := baked_kit(b)
 		if sides.is_empty(): sides = kit_canvases(b)
 		var surfaces: Array = []
-		_block_house(surfaces, b, _texture(sides[0]), _texture(sides[1]))
+		var front := _texture(sides[0])
+		var back := _texture(sides[1])
+		if not continuation.faces.is_empty(): continuation.register_donor(front,sides[1])
+		_block_house(surfaces,b,front,back,"kit:"+str(b.name))
 		# Roof panels on neighbouring source screens can describe the same
 		# dormer. Keep its complete geometry/UV/texture once; member ids alone
 		# are source placements, not distinct solids.
@@ -867,14 +921,25 @@ func _dormer(surfaces: Array, dm: Dictionary) -> void:
 	img.generate_mipmaps()
 	var st := SurfaceTool.new()
 	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	var inferred: Array = []
+	var ordinary := 0
+	var texture := ImageTexture.create_from_image(img)
 	for f in dm.faces:
 		var pts: Array = f.pts
 		var uv: Array = f.uv
+		var positions: Array[Vector3] = []
+		var uvs: Array[Vector2] = []
+		for p in pts: positions.append(Vector3(float(p[0]),float(p[1]),float(p[2])))
+		for p in uv: uvs.append(Vector2(float(p[0]),float(p[1])))
+		var repaired: Array = continuation.face(positions,uvs,texture,"dormer:"+str(dm.path)+"#0","dormer")
+		if not repaired.is_empty(): inferred.append(repaired); continue
+		ordinary += 1
 		for i in range(1, pts.size()-1):
 			for k in [0, i, i+1]:
 				st.set_uv(Vector2(float(uv[k][0]), float(uv[k][1])) / size)
 				st.add_vertex(Vector3(float(pts[k][0]), float(pts[k][1]), float(pts[k][2]))*S)
-	surfaces.append([st.commit(), ImageTexture.create_from_image(img)])
+	if ordinary > 0: surfaces.append([st.commit(),texture])
+	continuation.append_merged(surfaces,inferred)
 
 # --- The castle (docs/DIRECTION.md, tenth pass) --------------------------------------------------
 # A castle sprite (struct/Castle, frames 1-4 and 6-9; M3: the gatehouse 5 and the corner 12) is a piece of wall, a
@@ -1328,6 +1393,8 @@ func hut_surfaces(path: String) -> Array:
 	var k := float(fit.k)
 	var n := HUT_SEGMENTS
 	var uvs := _hut_uvs(fit)
+	var inferred: Array = []
+	var source_texture := _texture(hut_image(path))
 	var verts := PackedVector3Array()
 	var tex_uv := PackedVector2Array()
 	var index := PackedInt32Array()
@@ -1345,14 +1412,22 @@ func hut_surfaces(path: String) -> Array:
 			var b := a + 1
 			var d := (i + 1)*cols + c
 			var e := d + 1
-			index.append_array(PackedInt32Array([a, b, e, a, e, d]))
+			var positions: Array[Vector3] = [verts[a],verts[b],verts[e],verts[d]]
+			var face_uv: Array[Vector2] = [uvs[i][c],uvs[i][c+1],uvs[i+1][c+1],uvs[i+1][c]]
+			var repaired: Array = continuation.face(positions,face_uv,source_texture,path+"#0","hutrow%d" % i,1.0)
+			if not repaired.is_empty(): inferred.append(repaired)
+			else: index.append_array(PackedInt32Array([a, b, e, a, e, d]))
 	# The apex: a fan to the axis over the last ring.
 	var top := nodes.size() - 1
 	var apex := verts.size()
 	verts.append(Vector3(cx, float(nodes[top][0]), cz)*S)
 	tex_uv.append(Vector2(cx, cz - float(nodes[top][0]))/size)
 	for c in n:
-		index.append_array(PackedInt32Array([apex, top*cols + c + 1, top*cols + c]))
+		var positions: Array[Vector3] = [verts[apex],verts[top*cols+c+1],verts[top*cols+c]]
+		var face_uv: Array[Vector2] = [tex_uv[apex]*size,tex_uv[top*cols+c+1]*size,tex_uv[top*cols+c]*size]
+		var repaired: Array = continuation.face(positions,face_uv,source_texture,path+"#0","hutrow%d" % top,1.0)
+		if not repaired.is_empty(): inferred.append(repaired)
+		else: index.append_array(PackedInt32Array([apex, top*cols + c + 1, top*cols + c]))
 	var arrays := []
 	arrays.resize(Mesh.ARRAY_MAX)
 	arrays[Mesh.ARRAY_VERTEX] = verts
@@ -1360,7 +1435,8 @@ func hut_surfaces(path: String) -> Array:
 	arrays[Mesh.ARRAY_INDEX] = index
 	var mesh := ArrayMesh.new()
 	mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays)
-	var surfaces: Array = [[mesh, _texture(hut_image(path))]]
+	var surfaces: Array = [[mesh, source_texture]]
+	continuation.append_merged(surfaces,inferred)
 	hut_cache[path] = surfaces
 	return surfaces
 
