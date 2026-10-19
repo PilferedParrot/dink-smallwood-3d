@@ -2523,6 +2523,29 @@ The second cause was treating P2's reading rule as overflow-only during the
 source-lifetime rewrite. The complete literal census and both deadline modes
 check the class.
 
+The full suite exposed stale fixture contracts as well. Milder's test subclass
+still overrode the old three-argument, void `_dialogue`; the migration audited
+production calls but missed test inheritance. Its override now forwards the
+optional binding and returned handle. An audit of every changed signature and
+test caller found the same stale override in the PUSH, INDOOR and P4a trees;
+their integration must use the compatible fixture.
+
+The opening and speaker-occlusion fixtures assumed that every line frames the
+camera and that different speakers queue globally. Paired runs pass on9395488,
+but those assumptions conflict with `dinkc_bindings.cpp:766–788` and
+`brain_keyboard.cpp:216–241`: a speech wait does not freeze player input.
+The actual `S1-BUL.main:14` and `S1-H1-M.main:57` sequences explicitly freeze
+Dink. The fixtures now use that freeze for their unchanged full-body, ray,
+heading and feed checks, and separately check that unfrozen speech preserves
+the exact camera. Independent speakers also check that an older caller's
+completion cannot restore over the current camera. The second cause was
+stopping the test audit at the speech table rather than its presentation callers.
+
+The FPS attack fixture also fails unchanged9395488: P3b renamed the trigger
+label from `RT+` to the readable `RT press`, while P3a's assertion retained the
+old spelling. Its label expectation now follows that established wording;
+the real projectile, cooldown, recoil and held-fire checks are unchanged.
+
 ## Campaign PUSH dispatch (2026-10-19)
 
 Walking into a pushable source object now runs its DinkC `push` procedure after

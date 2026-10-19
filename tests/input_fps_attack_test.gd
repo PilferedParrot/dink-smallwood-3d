@@ -59,7 +59,9 @@ func _run() -> void:
 	await game._new_game()
 	var expected_toast: String = "A travel bow is ready. %s to fire." % game.bindings.label("attack", false, "", true)
 	check(game.ui.toast.text == expected_toast, "Opening bow toast uses the restarted Attack label")
-	check(game.ui.toast.text.contains("K") and game.ui.toast.text.contains("X") and game.ui.toast.text.contains("RT+") and not game.ui.toast.text.contains("Left click"), "Toast names all live Attack devices and omits replaced mouse slot")
+	# P3b renamed trigger edges to readable words (InputBindings.event_label);
+	# the P3a fixture's RT+ spelling already fails unchanged base9395488.
+	check(game.ui.toast.text.contains("K") and game.ui.toast.text.contains("X") and game.ui.toast.text.contains("RT press") and not game.ui.toast.text.contains("Left click"), "Toast names all live Attack devices and omits replaced mouse slot")
 	check(game.items.any(func(item: Dictionary): return str(item.get("script", "")) == "item-b1"), "Real opening equips starter bow")
 
 	# The opening can keep a delayed dialogue freeze alive. Retire that instance

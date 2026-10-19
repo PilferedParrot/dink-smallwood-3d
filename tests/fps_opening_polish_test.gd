@@ -84,9 +84,22 @@ func _run() -> void:
 	game.fps_yaw = 0.0
 	game.fps_pitch = 1.0
 	game._sync_fps_camera()
-	var before: float = game.fps_yaw
-	game._dialogue("A Milder line", milder, {"sprite_id":milder})
+	# FreeDink109.6 brain_keyboard.cpp:216-241 and dinkc_bindings.cpp:766-788:
+	# text does not freeze Dink. Unfrozen speech must leave the player's view.
+	var free_view: Transform3D = game.camera.global_transform
+	game._dialogue("An unfrozen Milder line", milder, {"sprite_id":milder})
 	await _wait_for_dialogue_layout()
+	check(is_equal_approx(game.fps_yaw, 0.0) and is_equal_approx(game.fps_pitch, 1.0) and game.camera.global_transform.is_equal_approx(free_view), "Unfrozen NPC speech preserves the player's exact camera")
+	check(not game.ui.modal and not game.entities[1].get("frozen",false), "Unfrozen speech takes no modal input ownership")
+	_end_line()
+	for _i in 3: await process_frame
+	# Real S1-BUL.main:14 freezes Dink before Milder's lines. Framing is our
+	# frozen-dialogue presentation adaptation; retain the full visibility bar.
+	await game.dink_call("freeze", [1], {})
+	var before: float = game.fps_yaw
+	game._dialogue("A Milder line stays visible while the measured camera settles and captures the complete actor.", milder, {"sprite_id":milder})
+	await _wait_for_dialogue_layout()
+	var milder_speech: int = game.ui.active_speech_id
 	check(not is_equal_approx(before, game.fps_yaw), "Off-camera NPC dialogue frames the camera on the speaker")
 	check(game.fps_pitch < 0.2, "NPC framing recovers from looking at the ceiling")
 	_assert_actor_fit(milder, "Milder")
@@ -97,15 +110,21 @@ func _run() -> void:
 	var ethel: int = 900102
 	game.entities[ethel] = {"x":440.0,"y":130.0,"active":1,"script":"s1-h2-o","type":1,"pseq":231,"pframe":1,"seq":0,"frame":1,"base_walk":230,"brain":0,"size":100,"hard":1,"runtime_created":true}
 	game._create_visual(ethel)
-	game._dialogue("An Ethel line", ethel, {"sprite_id":ethel})
-	await process_frame
-	check(is_equal_approx(framed_yaw, game.fps_yaw), "Queued dialogue cannot frame a later speaker before its line")
-	_end_line()
+	# say_stop yields only its caller (dinkc_bindings.cpp:766-788): a different
+	# speaker starts independently, rather than queuing on a global modal lock.
+	game._dialogue("An Ethel line starts independently while the previous speaker still has its own text lifetime.", ethel, {"sprite_id":ethel})
 	await _wait_for_dialogue_layout()
-	check(not is_equal_approx(framed_yaw, game.fps_yaw), "Next speaker is framed when its queued line begins")
+	var ethel_speech: int = game.ui.active_speech_id
+	check(ethel_speech != milder_speech and game.ui.heading.text == "Ethel" and game.ui.is_speech_active(milder_speech), "Independent speaker starts while the previous caller still waits")
+	check(not is_equal_approx(framed_yaw, game.fps_yaw), "Explicitly frozen next speaker receives its own framing")
 	_assert_actor_fit(ethel, "Ethel")
+	var ethel_view: Transform3D = game.camera.global_transform
+	game.ui.cancel_speech_id(milder_speech)
+	for _i in 3: await process_frame
+	check(game.ui.active_speech_id == ethel_speech and game.camera.global_transform.is_equal_approx(ethel_view), "Older caller completion cannot restore over the current speaker's camera")
 	_end_line()
 	await process_frame
+	await game.dink_call("unfreeze", [1], {})
 	await process_frame
 	framed_yaw = game.fps_yaw
 	game._dialogue("A Dink line", 1, {"sprite_id": 1})
@@ -160,5 +179,4 @@ func _assert_actor_fit(id: int, label: String) -> void:
 	check(game._fps_subject_rays_clear(source, game._fps_points_center(points), points, id, false), "%s head and torso rays are clear" % label)
 
 func _end_line() -> void:
-	game.ui.hide_dialogue()
-	game.ui.dialogue_finished.emit(0)
+	game.ui.cancel_speech()

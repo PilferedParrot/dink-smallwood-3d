@@ -37,6 +37,18 @@ func _run() -> void:
 			game.fps_yaw = 0.0
 			game.fps_pitch = 0.0
 			game._sync_fps_camera()
+			# FreeDink109.6 brain_keyboard.cpp:216-241: text alone does not
+			# freeze input. Free speech must preserve the player's own viewpoint.
+			var free_view: Transform3D = game.camera.global_transform
+			game._dialogue("An unfrozen Mother line",mother,{})
+			for _i in 4: await process_frame
+			check(game.camera.global_transform.is_equal_approx(free_view) and not game.ui.modal, "Unfrozen Mother speech preserves the player camera")
+			game.ui.cancel_speech()
+			for _i in 3: await process_frame
+			# S1-H1-M.main:57 freezes Dink before the actual pig-feed request;
+			# freeze is explicit (dinkc_bindings.cpp:552-559). Keep the independent
+			# floor/top projection checks for that framed presentation.
+			await game.dink_call("freeze",[1],{})
 			game._dialogue("Dink, would you go feed the pigs?",mother,{})
 			for _i in 8: await process_frame
 			# Independent projection contract, deliberately not the fitter's
@@ -52,8 +64,9 @@ func _run() -> void:
 				"Speaker's floor is above the actual dialogue card: %s foot=%s card_top=%s" % [size,projected_foot,top])
 			check(not game.camera.is_position_behind(head) and projected_head.y >= 0,
 				"Speaker's drawn top remains in the viewport")
-			game.ui._continue_dialogue()
+			game.ui.cancel_speech()
 			for _i in 4: await process_frame
+			await game.dink_call("unfreeze",[1],{})
 	game.vm.cancel_all()
 	game.queue_free()
 	await process_frame
