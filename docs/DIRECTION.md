@@ -2363,3 +2363,33 @@ The static negative control stores the original bow-hint literal directly;
 depending on a work-branch Git object would break shallow or cherry-picked
 checkouts. That portability oversight was caught during integration, while the
 full old-source failure evidence remains local.
+
+## Controls page — October 19, P3b
+
+Prior art read before implementation (2026-10-19):
+[Game Accessibility Guidelines](https://gameaccessibilityguidelines.com/allow-controls-to-be-remapped-reconfigured/)
+recommends in-game remapping and hints that follow it.
+[Xbox Accessibility Guideline 107](https://learn.microsoft.com/en-us/xbox/accessibility/xbox-accessibility-guidelines/107)
+requires equivalent digital navigation and describes single-press menu operation.
+Its Grounded screenshot shows a scrollable action list, two binding columns and
+fixed defaults/close actions; its Gears 5 screenshot shows named pad inputs in
+rows with a visible selected target and fixed defaults/back. Both source images
+were inspected. Naughty Dog's [PC feature announcement](https://www.naughtydog.com/blog/the_last_of_us_part_2_remastered_pc_features_new_no_return)
+documents primary/secondary bindings and combined device support for The Last
+of Us Part II Remastered. These sources establish rows, alternate bindings and
+device parity; the capture timeout and clash dialog below are our design, not
+claims about those games. OpenAlex's public remapping/accessibility search again
+returned broader accessibility research, not a closer implementation.
+
+Reuse the official Godot [input mapping demo](https://github.com/godotengine/godot-demo-projects/tree/master/gui/input_mapping)
+capture pattern and native focus/scroll containers, with P3a as the sole binding
+owner. Keep the existing Dink textures, vines, palette and font. Walking, First
+person, Menus and Always groups expose every storage context. Each action has
+individually editable binding slots (including all existing alternates), Add
+and Reset. Pad slots identify Xbox button positions. Back and Reset all stay
+outside the scrolling list. Capture suppresses menu/game shortcuts, ignores
+the activation release and already-held axes, offers pointer Cancel/Remove,
+Escape cancellation and a visible 15-second timeout. A clash names
+the other action before offering Swap/Cancel; P3a still validates the entire
+transaction. Reset asks before changing one action or all actions. Unusual
+keys get readable names or a numeric key code. Changes save immediately.

@@ -449,13 +449,41 @@ func gameplay_actions() -> Array[String]:
 		if actions[action].contexts.has(context) and action not in ["escape","bug_report","fullscreen"]: result.append(action)
 	return result
 
+static func key_display_name(code: int) -> String:
+	var names := {
+		KEY_KP_ENTER:"Numpad Enter", KEY_KP_MULTIPLY:"Numpad ×", KEY_KP_DIVIDE:"Numpad /",
+		KEY_KP_SUBTRACT:"Numpad −", KEY_KP_ADD:"Numpad +", KEY_KP_PERIOD:"Numpad .",
+		KEY_BACKTAB:"Shift+Tab", KEY_PRINT:"Print Screen", KEY_CAPSLOCK:"Caps Lock",
+		KEY_NUMLOCK:"Num Lock", KEY_SCROLLLOCK:"Scroll Lock", KEY_PAGEUP:"Page Up", KEY_PAGEDOWN:"Page Down",
+		KEY_VOLUMEDOWN:"Volume down", KEY_VOLUMEUP:"Volume up", KEY_VOLUMEMUTE:"Mute",
+		KEY_MEDIAPLAY:"Media play", KEY_MEDIASTOP:"Media stop", KEY_MEDIAPREVIOUS:"Previous track",
+		KEY_MEDIANEXT:"Next track", KEY_MEDIARECORD:"Media record", KEY_HOMEPAGE:"Browser home",
+		KEY_BACK:"Browser back", KEY_FORWARD:"Browser forward", KEY_REFRESH:"Browser refresh",
+		KEY_STOP:"Browser stop", KEY_SEARCH:"Search", KEY_FAVORITES:"Favorites",
+		KEY_LAUNCHMAIL:"Open mail", KEY_LAUNCHMEDIA:"Open media", KEY_STANDBY:"Sleep",
+		KEY_GLOBE:"Globe", KEY_KEYBOARD:"Keyboard", KEY_JIS_EISU:"Eisu", KEY_JIS_KANA:"Kana"
+	}
+	if names.has(code): return names[code]
+	if code >= KEY_KP_0 and code <= KEY_KP_9: return "Numpad %d" % (code-KEY_KP_0)
+	if code >= KEY_LAUNCH0 and code <= KEY_LAUNCHF: return "Application key %d" % (code-KEY_LAUNCH0+1)
+	var text := OS.get_keycode_string(code)
+	# Future engine identifiers must not leak camel-case/raw tokens to players.
+	if text.is_empty(): return "Key 0x%X" % code
+	for i in range(1,text.length()):
+		if text[i] == text[i].to_upper() and text[i] != text[i].to_lower() and text[i-1] != text[i-1].to_upper():
+			return "Key 0x%X" % code
+	return text
+
+static func is_modifier(record: Dictionary) -> bool:
+	return record.get("type","") == "key" and int(record.get("physical",0)) in [KEY_SHIFT,KEY_CTRL,KEY_ALT,KEY_META]
+
 static func event_label(record: Dictionary) -> String:
 	if record.type == "key":
 		var code := int(record.physical)
 		if DisplayServer.get_name() != "headless":
 			var local := DisplayServer.keyboard_get_label_from_physical(code)
 			if local != 0: code = local
-		var label := OS.get_keycode_string(code)
+		var label := key_display_name(code)
 		for modifier in ["shift","ctrl","alt","meta"]:
 			if record.get(modifier,false): label = modifier.capitalize()+"+"+label
 		return label
@@ -463,7 +491,15 @@ static func event_label(record: Dictionary) -> String:
 		return {1:"Left click",2:"Right click",3:"Middle click",4:"Wheel up",5:"Wheel down",6:"Wheel left",7:"Wheel right",8:"Mouse 4",9:"Mouse 5"}.get(int(record.button),"Mouse %d" % int(record.button))
 	if record.type == "pad":
 		return {JOY_BUTTON_A:"A",JOY_BUTTON_B:"B",JOY_BUTTON_X:"X",JOY_BUTTON_Y:"Y",JOY_BUTTON_BACK:"Back",JOY_BUTTON_START:"Start",JOY_BUTTON_LEFT_STICK:"LS click",JOY_BUTTON_RIGHT_STICK:"RS click",JOY_BUTTON_LEFT_SHOULDER:"LB",JOY_BUTTON_RIGHT_SHOULDER:"RB",JOY_BUTTON_DPAD_UP:"D-pad up",JOY_BUTTON_DPAD_DOWN:"D-pad down",JOY_BUTTON_DPAD_LEFT:"D-pad left",JOY_BUTTON_DPAD_RIGHT:"D-pad right"}.get(int(record.button),"Pad %d" % int(record.button))
-	return {JOY_AXIS_LEFT_X:"LS",JOY_AXIS_LEFT_Y:"LS",JOY_AXIS_RIGHT_X:"RS",JOY_AXIS_RIGHT_Y:"RS",JOY_AXIS_TRIGGER_LEFT:"LT",JOY_AXIS_TRIGGER_RIGHT:"RT"}.get(int(record.axis),"Axis %d" % int(record.axis))+({-1:"−",1:"+"}.get(int(record.direction),""))
+	var axis_id := int(record.axis)
+	var direction := int(record.direction)
+	if axis_id in [JOY_AXIS_LEFT_X,JOY_AXIS_LEFT_Y,JOY_AXIS_RIGHT_X,JOY_AXIS_RIGHT_Y]:
+		var stick := "LS" if axis_id in [JOY_AXIS_LEFT_X,JOY_AXIS_LEFT_Y] else "RS"
+		var horizontal := axis_id in [JOY_AXIS_LEFT_X,JOY_AXIS_RIGHT_X]
+		return stick + " " + (("left" if direction < 0 else "right") if horizontal else ("up" if direction < 0 else "down"))
+	if axis_id in [JOY_AXIS_TRIGGER_LEFT,JOY_AXIS_TRIGGER_RIGHT]:
+		return ("LT" if axis_id == JOY_AXIS_TRIGGER_LEFT else "RT") + (" release" if direction < 0 else " press")
+	return "Pad axis %d %s" % [axis_id+1, "−" if direction < 0 else "+"]
 
 func label(action: String, controller := false, scope: String = "", all_devices := false) -> String:
 	var preferred: Array[String] = []

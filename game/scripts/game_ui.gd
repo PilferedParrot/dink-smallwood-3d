@@ -1,6 +1,8 @@
 # Copyright 2026 PilferedParrot contributors. SPDX-License-Identifier: Apache-2.0
 extends CanvasLayer
 const INPUT_BINDINGS = preload("res://scripts/input_bindings.gd")
+const CONTROLS_MENU = preload("res://scripts/controls_menu.gd")
+var controls_menu: VBoxContainer
 var bindings
 var control_primer_label: Label
 var controls_label: Label
@@ -521,6 +523,9 @@ func _update_hint() -> void:
 	if is_instance_valid(control_primer_label): control_primer_label.text = _control_primer()
 	if is_instance_valid(controls_label): controls_label.text = _controls_text()
 	if not is_instance_valid(hint): return
+	if page == "controls":
+		hint.text = ""
+		return
 	if page == "dialogue" and not dialogue_mode:
 		# Timed speech shares the card; gameplay help must not cover its name.
 		hint.text = ""
@@ -548,6 +553,11 @@ func _update_hint() -> void:
 	hint.text = _gameplay_hint()
 
 func _clear(title: String, next_page: String) -> void:
+	if is_instance_valid(controls_menu):
+		controls_menu.get_parent().remove_child(controls_menu)
+		controls_menu.queue_free()
+		controls_menu = null
+	menu_scroll.show()
 	control_primer_label = null
 	controls_label = null
 	_clear_toast()
@@ -612,6 +622,9 @@ func _button(text: String, action: String, value: Variant = null) -> Button:
 	return button
 
 func _button_pressed(action: String, value: Variant) -> void:
+	if action == "controls":
+		show_controls()
+		return
 	if action == "new_game":
 		_clear("Beginning your adventure…", "loading")
 		_label("Loading Stonebrook. Your adventure will begin shortly.", 22)
@@ -882,6 +895,12 @@ func cancel_speech() -> void:
 
 func request_back() -> void:
 	if dialogue_mode or page in ["title", "loading"]: return
+	if page == "controls":
+		if controls_menu.back(): return
+		var parent_page := return_page
+		show_settings(bindings.settings)
+		return_page = parent_page
+		return
 	var action := "pause" if return_page == "pause" else ("title" if return_page == "title" else "resume")
 	action_requested.emit(action, null)
 
@@ -948,7 +967,7 @@ func show_journal(text: String) -> void:
 
 func show_settings(settings: Dictionary) -> void:
 	_clear("Settings & controls", "settings")
-	controls_label = _label(_controls_text(), 18)
+	_button("Controls", "controls")
 	for setting in [["master", "Master volume", 0.0, 1.0, 0.1, 0.8], ["music", "Music volume", 0.0, 1.0, 0.05, 0.55], ["sfx", "Sound effects", 0.0, 1.0, 0.1, 0.8], ["text_scale", "Text size", 0.85, 1.3, 0.05, 1.0], ["mouse_sensitivity", "Mouse sensitivity", 0.0005, 0.006, 0.0005, 0.002], ["fov", "Field of view", 60.0, 105.0, 1.0, 80.0], ["controller_sensitivity", "Controller look sensitivity", 0.5, 4.0, 0.1, 2.0], ["controller_deadzone", "Controller stick dead zone", 0.05, 0.4, 0.05, 0.2]]:
 		var key: String = setting[0]
 		var value_label := _label(setting[1], 18)
@@ -989,6 +1008,15 @@ func show_settings(settings: Dictionary) -> void:
 	column.add_child(reduced)
 	_button("Done", "back")
 	_focus()
+
+func show_controls() -> void:
+	var parent_page := return_page
+	_clear("Controls", "controls")
+	return_page = parent_page
+	menu_scroll.hide()
+	controls_menu = CONTROLS_MENU.new()
+	controls_menu.ui = self
+	panel.get_child(0).add_child(controls_menu)
 
 func _setting_changed(value: float, key: String) -> void:
 	action_requested.emit("setting", {"key": key, "value": value})

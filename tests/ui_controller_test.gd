@@ -76,6 +76,8 @@ func _init() -> void:
 		if node is HSlider and node.get_meta("setting_key", "") == "music": music_slider = node
 		if node is Label and node.text.begins_with("Music volume"): music_readout = node
 	check(music_slider != null and is_equal_approx(music_slider.value, 0.55) and music_readout.text.contains("55%"), "Music readout preserves the actual 55% default instead of rounding to 60%")
+	check(root.gui_get_focus_owner() is Button and root.gui_get_focus_owner().text == "Controls", "Settings focuses its Controls entry")
+	await _button(JOY_BUTTON_DPAD_DOWN)
 	var first_slider: HSlider = root.gui_get_focus_owner() as HSlider
 	check(first_slider != null, "Settings focuses its first slider")
 	if first_slider != null:
