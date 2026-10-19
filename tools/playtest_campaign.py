@@ -735,15 +735,24 @@ class Campaign:
     def earned_save(self, label: str) -> dict[str, Any]:
         # LRAISE waits one second before opening its attribute choice. It can
         # replace Pause during navigation after an earned combat victory.
+        def owned_buttons(state: dict[str, Any], page: str) -> list[dict[str, Any]]:
+            ui = state.get("ui", {})
+            if not (state.get("modal") and ui.get("modal")
+                    and state.get("page") == page and ui.get("page") == page):
+                return []
+            return [b for b in ui.get("buttons", [])
+                    if b.get("visible") and not b.get("disabled", False)]
+
         def level_choice(state: dict[str, Any]) -> bool:
-            return [b.get("text") for b in state.get("ui", {}).get("buttons", [])] == [
+            return bool(state.get("ui", {}).get("choice")) and [
+                b.get("text") for b in owned_buttons(state, "dialogue")] == [
                 "Increase Attack", "Increase Defense", "Increase Magic"]
 
         for _ in range(3):
             state = self.observe(label + "-before-save")
             if not level_choice(state):
                 try:
-                    if not any(b.get("text") == "Save adventure" for b in state.get("ui", {}).get("buttons", [])):
+                    if not any(b.get("text") == "Save adventure" for b in owned_buttons(state, "pause")):
                         self._call(label + "-pause-save", self.session.pause)
                     self.menu_button("Save adventure")
                 except RouteFailure:

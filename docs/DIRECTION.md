@@ -2967,6 +2967,25 @@ fails without selection. The observed replacement of an already open Pause
 menu is a separate UX finding, not changed by this unit. Route screenshots now
 use actual checkpoint names rather than the similarly named input trace labels.
 
+### Integration: visible ownership for earned-save controls — October 19
+
+The second earned combat-save attempt selected Increase Attack normally, then
+mistook its surviving hidden buttons for a new level choice. The technical
+cause was recognizing text without modal/page/visibility ownership. The process
+cause was an incomplete telemetry contract and a mock that deleted closed
+widgets, unlike `game_ui.gd`'s `close_menu`, which hides their parent.
+
+The bridge now reports each button's `is_visible_in_tree` result separately
+from waiting-script dialogue. Earned-save navigation accepts only visible,
+enabled controls owned by the current modal page; a level choice additionally
+requires the choice flag and the exact three attribute labels. Pause navigation
+uses the same ownership rule so hidden Save adventure labels cannot prevent
+opening Pause. Keyboard selection and the bounded retry count stay intact.
+Three stale-widget timing controls fail on the old recognizer with the observed
+missing-focus failure and pass with the fix. Individual ownership-signal negative
+controls, stale Pause widgets and the unknown-choice refusal test the wider
+class. These controller mocks do not certify the integrated native route.
+
 ## Native material in unsupported fitted strips — October 19
 
 What broke: a fitted plane sometimes extends a few texels beyond the original

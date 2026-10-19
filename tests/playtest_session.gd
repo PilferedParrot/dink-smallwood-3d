@@ -274,11 +274,11 @@ func _telemetry() -> Dictionary:
 	if is_instance_valid(game.ui.column):
 		for child in game.ui.column.get_children():
 			if child is Control and child.has_focus(): focused = str(child.name)
-			if child is BaseButton: buttons.append({"text": child.text, "disabled": child.disabled, "focused": child.has_focus()})
+			if child is BaseButton: buttons.append({"text": child.text, "disabled": child.disabled, "visible": child.is_visible_in_tree(), "focused": child.has_focus()})
 	# 0.3.2 pins equipment selection and Back outside the scrolling column.
 	# Read these visible controls without invoking their handlers.
 	if is_instance_valid(ui.menu_footer) and ui.menu_footer.is_visible_in_tree():
-		buttons.append({"text": ui.menu_footer.text, "disabled": ui.menu_footer.disabled, "focused": ui.menu_footer.has_focus()})
+		buttons.append({"text": ui.menu_footer.text, "disabled": ui.menu_footer.disabled, "visible": ui.menu_footer.is_visible_in_tree(), "focused": ui.menu_footer.has_focus()})
 	var entity_state: Array = []
 	for id in game.entities:
 		var entity: Dictionary = game.entities[id]

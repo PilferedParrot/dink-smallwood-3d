@@ -577,9 +577,10 @@ class SaveLevelChoiceSession:
     level_buttons = ['Increase Attack', 'Increase Defense', 'Increase Magic']
     pause_buttons = ['Return', 'Save adventure', 'Title screen']
 
-    def __init__(self, arrival, unknown=False):
+    def __init__(self, arrival, unknown=False, stale_hidden=False):
         self.arrival = arrival
         self.unknown = unknown
+        self.stale_hidden = stale_hidden
         self.page = 'choice' if arrival == 'before' else 'game'
         self.focus = 1 if self.page == 'choice' else 0
         self.triggered = arrival == 'before'
@@ -590,8 +591,18 @@ class SaveLevelChoiceSession:
         names = self.level_buttons if self.page == 'choice' else self.pause_buttons if self.page == 'pause' else []
         if self.unknown and self.page == 'choice':
             names = ['Accept mysterious offer', 'Leave']
-        return {'ok': True, 'telemetry': {'page': 'pause' if self.page == 'pause' else 'game',
-                'ui': {'buttons': [{'text': text, 'focused': i == self.focus} for i, text in enumerate(names)]}}}
+        visible = True
+        if self.stale_hidden and self.page == 'game' and self.triggered:
+            # close_menu hides the column's parent; its button children survive.
+            names, visible = self.level_buttons, False
+        page = 'dialogue' if self.page == 'choice' else self.page
+        modal = self.page in {'choice', 'pause'}
+        return {'ok': True, 'telemetry': {'page': page, 'modal': modal,
+                'dialogue': self.page == 'choice',
+                'ui': {'page': page, 'modal': modal, 'choice': self.page == 'choice',
+                       'buttons': [{'text': text, 'visible': visible,
+                                    'focused': visible and i == self.focus}
+                                   for i, text in enumerate(names)]}}}
 
     def pause(self):
         self.page = 'game' if self.page == 'pause' else 'pause'
@@ -636,3 +647,55 @@ def test_earned_save_rejects_unknown_menu_replacement_without_selecting_it():
         Campaign(session).earned_save('combat')
     assert exc.value.kind == 'harness'
     assert not session.saved and session.selected is None
+
+
+@pytest.mark.parametrize('arrival', ['before', 'after-pause', 'during-menu'])
+def test_earned_save_ignores_stale_hidden_level_buttons_after_choice(arrival):
+    session = SaveLevelChoiceSession(arrival, stale_hidden=True)
+    campaign = Campaign(session)
+    result = campaign.earned_save('combat')
+    assert session.saved and session.selected == 'Increase Attack'
+    assert result['page'] == 'game' and not result['modal']
+    assert result['ui']['buttons']  # The widgets really persist after closure.
+    assert all(not button['visible'] for button in result['ui']['buttons'])
+    assert 'combat-earned-save' in campaign.checkpoints
+
+
+@pytest.mark.parametrize('broken', ['modal', 'ui-modal', 'page', 'ui-page', 'choice', 'visible', 'disabled'])
+def test_earned_save_requires_each_level_choice_ownership_signal(broken):
+    class StaleChoice(SaveLevelChoiceSession):
+        def observe(self):
+            result = super().observe()
+            if self.page == 'game' and not self.saved:
+                state = result['telemetry']
+                state.update(page='dialogue', modal=True)
+                state['ui'].update(page='dialogue', modal=True, choice=True,
+                    buttons=[{'text': text, 'visible': True, 'focused': i == 0}
+                             for i, text in enumerate(self.level_buttons)])
+                if broken == 'modal': state['modal'] = False
+                elif broken == 'ui-modal': state['ui']['modal'] = False
+                elif broken == 'page': state['page'] = 'game'
+                elif broken == 'ui-page': state['ui']['page'] = 'game'
+                elif broken == 'choice': state['ui']['choice'] = False
+                elif broken == 'visible': state['ui']['buttons'][0]['visible'] = False
+                elif broken == 'disabled': state['ui']['buttons'][0]['disabled'] = True
+            return result
+
+    session = StaleChoice('none')
+    Campaign(session).earned_save('stale-choice')
+    assert session.saved and session.selected is None
+
+
+def test_earned_save_opens_pause_when_hidden_pause_buttons_survive():
+    class StalePause(SaveLevelChoiceSession):
+        def observe(self):
+            result = super().observe()
+            if self.page == 'game' and not self.saved:
+                result['telemetry']['ui']['buttons'] = [
+                    {'text': text, 'visible': False, 'focused': False}
+                    for text in self.pause_buttons]
+            return result
+
+    session = StalePause('none')
+    Campaign(session).earned_save('stale-pause')
+    assert session.saved and session.selected is None
