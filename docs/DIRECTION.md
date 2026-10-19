@@ -3093,3 +3093,19 @@ These are labelled scenarios and event probes, not earned campaign progression
 or rendering certification. The red's short three-tick first-talk drain was
 insufficient; the corrected harness drains boundedly before its exact checks.
 Seven other red assertions directly establish the continuation defect.
+
+
+### Screen construction versus event entry — INTEGRATE follow-up
+
+The first integrated gate caught one missed constructor call: force_vision's
+screen rebuild re-entered the same source/0 key and cancelled the old aftermath
+before fade_up/unfreeze/kill_this_task. The source loads a NEW screen script
+(`game_engine.cpp:710–721`), preserving force_vision's caller on pseudo-sprite1000
+(`dinkc_bindings.cpp:1321–1326`, `dinkc.cpp:872–892`). The process cause was
+extending the event-instance identity heuristic to construction without tracing
+this call site. Screen main now requests a fresh instance; force_vision retains
+its caller's source attachment. A constructor/local/attachment class fixture and
+the unchanged original aftermath regression cover it, alongside event re-entry
+controls. See [Script instances](SCRIPT_INSTANCES.md). The interrupted old gate
+and its failure remain separate evidence; only a new frozen gate can certify
+this corrected candidate.

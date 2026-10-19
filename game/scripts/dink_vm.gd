@@ -91,7 +91,7 @@ func clear_sprite_locals(sprite_id: int) -> void:
 
 ## Runs one procedure asynchronously. Each sprite gets persistent local storage for
 ## a script, so event procedures such as talk/hit can share its declared variables.
-## new_instance is reserved for external() calls with independent local storage.
+## Newly loaded screen/external scripts request independent instances and locals.
 func run(script: String, procedure: String, sprite_id: int = 0, new_instance: bool = false) -> Variant:
 	var canonical: String = _script_name(script)
 	# FreeDink109.6 dinkc.cpp:402-470 relocates the existing script cursor.
@@ -226,6 +226,9 @@ func _execute(script: String, procedure: String, sprite_id: int, task_id: int, g
 				else:
 					if command.to_lower() == "script_attach" and not args.is_empty():
 						_set_task_sprite(task_id, _number(args[0]))
+					elif command.to_lower() == "force_vision":
+						# FreeDink109.6 dinkc_bindings.cpp:1321-1326 keeps this caller.
+						_set_task_sprite(task_id, 1000)
 					var result: Variant = await _host_call(command, args, script, procedure, current_sprite, task_id, generation, locals)
 					if generation != _generation or not _live_tasks.has(task_id): return null
 					if instruction.has("target"): _set_ref(instruction["target"], result, locals, current_sprite)

@@ -79,3 +79,29 @@ controls retain different owners/scripts, external and spawned instances sharing
 the NPC, failed procedure lookup, private external locals, spawned locals across
 a named callback, and cancellation of an awaited expression before its write.
 The fixture skips startup/progression and does not certify rendering.
+
+
+## Screen construction is a new instance
+
+A screen load is a constructor call, not an event on a previously loaded script.
+FreeDink109.6 `game_engine.cpp:710–721` loads the screen script afresh before
+locating main. `dinkc_bindings.cpp:1321–1326` attaches a force_vision caller to
+pseudo-sprite1000 before rebuilding; `dinkc.cpp:872–892` preserves that owner.
+The old caller can therefore execute its fade-up/unfreeze tail after the new
+screen instance runs, even when both use the same source filename.
+
+The first integrated suite exposed a missed constructor call: screen main still
+used normal re-entry, so a force_vision reload cancelled the old aftermath tail.
+The process cause was applying the source-name/owner identity heuristic to a
+newly loaded instance. The prior event audit distinguished external/spawn but
+stopped before screen construction; a reviewer also considered sprite0 re-entry
+intended without reading this constructor path. That heuristic is appropriate
+for event entry, not a substitute for classifying each script-load call.
+
+Screen main now requests a fresh instance, and force_vision marks its caller's
+source attachment before rebuilding. The original aftermath regression proves
+the exact fade/vision/unfreeze/kill tail. A synthetic source-map constructor
+fixture separately requires two constructors, one completed old tail, private
+locals surviving the rebuild and the caller's1000 attachment. Existing repeated
+event tests retain the single-cursor negative control. These fixtures do not
+claim complete original callback/loader emulation.

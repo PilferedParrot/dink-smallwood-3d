@@ -217,7 +217,8 @@ func load_map(number: int, run_scripts: bool = true) -> void:
 		var script := str(screen.get("script", ""))
 		if not script.is_empty() and not vm._procedure_code(script.to_lower(), "main").is_empty():
 			_startup_random_active = true
-			vm.run(script, "main", 0)
+			# FreeDink109.6 game_engine.cpp:710-721 loads a new screen instance.
+			vm.run(script, "main", 0, true)
 			if generation == expected: _startup_random_active = false
 		if generation != expected: return
 	var editor_entities: Array[int] = []
