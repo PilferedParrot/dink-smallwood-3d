@@ -2286,3 +2286,25 @@ physics and yielding a render frame before manually polling jump loses
 Jump coverage now lets the real physics loop consume its physical input event;
 held-input probes retain deterministic manual stepping. Engine semantics:
 [Input.is_action_just_pressed](https://docs.godotengine.org/en/stable/classes/class_input.html#class-input-method-is-action-just-pressed).
+
+The prompt-scroll consumer deliberately polls action strengths on its process
+tick, allowing any registered axis to drive it. Native actions release as soon
+as an axis returns inside the deadzone; the UI's cached direction updates within
+one process tick. The old prompt test read that private cache immediately after
+the input callback and failed despite scrolling having stopped. What broke was
+an implementation-coupled assertion; why made: the polling refactor was checked
+for activation without revisiting the old callback-timing assumption. The test
+now observes the scroll position and answer focus for thirty frames after one
+tick. Paired baseline/candidate probes verify both directions, neutral and an
+inside-deadzone value. A retained twenty-row registry census covers activation,
+inside-deadzone release and neutral release for every default axis/action/context
+binding. No production change was needed for this harness failure.
+
+The unchanged all-screen native traversal passes all644 screens on both the
+candidate (294.98s) and baseline95ec8d6 (372.45s) in separate bounded software
+runs. The existing Python test's180s deadline expired. The defect is a deadline
+that is insufficient for the baseline workload on this machine. Why we made
+the assumption in this run: an oversight reused the fixed deadline without
+measuring the644-screen workload first; the original budget's calibration has
+not been established. Its limit is intentionally unchanged in this input unit;
+the timeout and the successful native controls are recorded separately.

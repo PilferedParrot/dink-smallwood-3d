@@ -84,7 +84,14 @@ func _run() -> void:
 					check(prompt_view.scroll_vertical == 0 and root.gui_get_focus_owner() == focus, "Right stick reads prompt independently")
 					stick = stick.duplicate(); stick.axis_value = 0
 					Input.parse_input_event(stick); Input.flush_buffered_events()
-					check(is_zero_approx(ui.get("choice_prompt_axis")), "Neutral right stick stops prompt scrolling")
+					# Action strengths are consumed on the process tick. Observe the
+					# scroll owner rather than its cache before that tick occurs.
+					ui._process(1.0/60.0)
+					var stopped := prompt_view.scroll_vertical
+					for _i in 30:
+						ui._process(1.0/60.0)
+						await process_frame
+						check(prompt_view.scroll_vertical == stopped and root.gui_get_focus_owner() == focus, "Neutral right stick stops prompt scrolling and preserves answer focus for thirty frames")
 				var count := choices.size()
 				if device == "keyboard":
 					var enter := InputEventKey.new()

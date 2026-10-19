@@ -68,3 +68,14 @@ def test_fps_consumers_follow_persisted_bindings(tmp_path):
             '--',phase],env=env,capture_output=True,text=True)
         assert result.returncode == 0 and 'SCRIPT ERROR' not in result.stderr, result.stdout+result.stderr
     assert 'FPS REMAP PASS' in result.stdout
+
+
+def test_every_axis_binding_releases_inside_deadzone_and_at_neutral(tmp_path):
+    env = dict(os.environ, XDG_DATA_HOME=str(tmp_path/'data'),
+               XDG_CONFIG_HOME=str(tmp_path/'config'), XDG_CACHE_HOME=str(tmp_path/'cache'))
+    result = subprocess.run(['flock',str(LOCK),'timeout','60s','nice','-n','10',
+        'xvfb-run','-a',GODOT,'--headless','--audio-driver','Dummy',
+        '--path',str(ROOT/'game'),'--script',str(ROOT/'tests/input_axis_neutral_test.gd')],
+        env=env,capture_output=True,text=True)
+    assert result.returncode == 0 and 'SCRIPT ERROR' not in result.stdout+result.stderr, result.stdout+result.stderr
+    assert 'AXIS_ROWS=20' in result.stdout and 'AXIS NEUTRAL PASS' in result.stdout
