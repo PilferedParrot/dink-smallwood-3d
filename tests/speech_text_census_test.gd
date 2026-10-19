@@ -6,6 +6,8 @@ const SPEECH := ["say", "say_xy", "say_stop", "say_stop_npc", "say_stop_xy"]
 var ui
 var cases: Array[Dictionary] = []
 var counts: Dictionary = {}
+var choice_groups: Array[Dictionary] = []
+var checked_answers := 0
 var failures: Array[String] = []
 var checked := 0
 
@@ -15,8 +17,8 @@ func _initialize() -> void:
 func collect(value: Variant, script: String, source_line: int = 0) -> void:
 	if value is Dictionary:
 		source_line = int(value.get("line", source_line))
-		var command := str(value.get("name", ""))
-		if (value.get("op") == "call" or value.get("kind") == "call") and command in SPEECH:
+		var command := str(value.get("name", "")).to_lower()
+		if (str(value.get("op", "")).to_lower() == "call" or str(value.get("kind", "")).to_lower() == "call") and command in SPEECH:
 			var first: Dictionary = value.args[0]
 			if first.get("kind") != "literal" or not first.get("value") is String:
 				failures.append("Census needs a policy for nonliteral speech in " + script)
@@ -30,9 +32,29 @@ func collect(value: Variant, script: String, source_line: int = 0) -> void:
 	elif value is Array:
 		for child in value: collect(child, script, source_line)
 
+func collect_choices(value: Variant) -> void:
+	if value is Dictionary:
+		for child in value.values(): collect_choices(child)
+	elif value is Array:
+		var group := {}
+		for child in value:
+			if child is Dictionary:
+				match child.get("op", ""):
+					"choice_start":
+						group = {"prompt":"", "options":[]}
+						choice_groups.append(group)
+					"choice_title":
+						if not group.is_empty(): group.prompt = child.text
+					"choice_option":
+						if not group.is_empty(): group.options.append(child.text)
+					"choice_end": group = {}
+			collect_choices(child)
+
 func _run() -> void:
 	var story: Dictionary = JSON.parse_string(FileAccess.get_file_as_string("res://data/story.json"))
 	for script in story.scripts: collect(story.scripts[script], script)
+	collect_choices(story.scripts)
+	if choice_groups.size() != 115: failures.append("Choice group census changed")
 	# Validate the instrument on known source cases, plus the full owner set.
 	var source_count := cases.size()
 	collect({"kind": "literal", "name": "say", "value": "Not an executable call."}, "inert")
@@ -44,6 +66,9 @@ func _run() -> void:
 		failures.append("Census missed BUTTON6 negative ownership line")
 	if not cases.any(func(row): return row.text == "The best in bows" and row.owner == "say_xy"):
 		failures.append("Census missed speech inside a DinkC expression")
+	if not cases.any(func(row): return row.script == "escape" and row.owner == "say"):
+		failures.append("Census missed mixed-case Say source command")
+	if source_count != 2539: failures.append("Source census count changed: review completeness before updating expected count")
 	ui = UI.new()
 	root.add_child(ui)
 	await process_frame
@@ -63,6 +88,7 @@ func _run() -> void:
 				else: ui.show_dialogue(row.text, "Conversation", row.owner.begins_with("say_stop"))
 				for _i in 6: await process_frame
 				var displayed := [ui.heading.text]
+				if ui.get("choice_prompt") != null: displayed.append(ui.get("choice_prompt").text)
 				for child in ui.column.get_children(): displayed.append(child.text)
 				if not row.text in displayed or not ui.panel.visible:
 					failures.append("Census measured the wrong card for %s:%s" % [row.script, row.line])
@@ -73,9 +99,26 @@ func _run() -> void:
 				for decoration in [ui.panel_underlay, ui.vines_left, ui.vines_right]: bounds = bounds.merge(decoration.get_global_rect())
 				if bounds.intersects(art) or bounds.position.y < 0 or ui.panel.size.y > ui.root.size.y * 0.35 + 1:
 					failures.append("%s:%s %s %s scale=%s bounds=%s art=%s" % [row.script, row.line, row.owner, size, scale, bounds, art])
+				if row.owner.begins_with("choice_"):
+					var focus: Control = root.gui_get_focus_owner()
+					if focus == null or not ui.menu_scroll.get_global_rect().grow(1).encloses(focus.get_global_rect()):
+						failures.append("Focused answer clipped: %s:%s %s scale=%s" % [row.script,row.line,size,scale])
 				checked += 1
+			# All 115 real groups, including every conditional option as a superset.
+			# Check each focus target, not only the first action in synthetic pairs.
+			for group in choice_groups:
+				ui.cancel_speech()
+				ui.show_choices(group.prompt, group.options)
+				for _i in 6: await process_frame
+				for answer in ui.column.get_children():
+					answer.grab_focus()
+					for _i in 4: await process_frame
+					if not ui.menu_scroll.get_global_rect().grow(1).encloses(answer.get_global_rect()):
+						failures.append("Real choice answer clipped: %s %s scale=%s" % [answer.text,size,scale])
+					if ui.panel.size.y > ui.root.size.y * 0.35 + 1: failures.append("Real choice exceeds cap")
+					checked_answers += 1
 			print("SPEECH CENSUS progress size=", size, " scale=", scale, " checked=", checked, " failures=", failures.size())
-	print("SPEECH CENSUS ", JSON.stringify({"counts": counts, "source_cases": cases.size(), "checked": checked, "failures": failures}))
+	print("SPEECH CENSUS ", JSON.stringify({"counts": counts, "source_cases": cases.size(), "checked": checked, "choice_groups":choice_groups.size(),"checked_answers":checked_answers,"failures": failures}))
 	ui.cancel_speech()
 	ui.queue_free()
 	for _i in 3: await process_frame

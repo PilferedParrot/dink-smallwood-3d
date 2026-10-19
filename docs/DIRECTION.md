@@ -2178,35 +2178,52 @@ See `docs/rc5/render-determinism.md` for evidence, verification, costs and limit
 
 ## Speech leaves the status artwork clear — October 19, P2
 
-What broke: every speech card ended at 93% of the viewport while the status
-artwork scaled independently from its original 640×80 pixels. Actual M input
-ran BUTTON6's “I don't own a map yet.” and covered 56.5 logical pixels of the
-bar: 56 image rows at 1280×800 and 76 at 1920×1080. The vines extended farther
-down outside the bar's horizontal span. Why we made it: an integration
-oversight reused the blocking card for timed speech while restoring the HUD;
-height and ownership checks never tested their simultaneous screen occupancy.
+Timed speech restored the HUD under a card whose bottom was fixed at93% of
+viewport height. Real M input ran BUTTON6's “I don't own a map yet.” and covered
+56.5 logical pixels of status artwork:56 image rows at1280×800,76 at1920×1080.
+What broke was simultaneous card/HUD occupancy; why made was an integration
+oversight whose tests measured card height and ownership separately.
 
-The status owner now exposes the same local artwork rectangle it draws.
-Every timed, blocking and choice card reserves that rectangle, with the existing
-VBox spacing as the gap and both vines included in its vertical footprint.
-Placement follows the scaled art on resize, including while a card stays open.
-Short cards still shrink to their content; long text retains the 35% height cap,
-scrolling body and independent Continue. Timed speech retains its timer and
-nonmodal behavior. Notification height ownership is unchanged.
+The status owner exposes the artwork rectangle it draws. Timed speech, blocking
+speech and choices share its upper boundary, the existing8px VBox gap and a
+footprint that includes both vines. Short cards shrink; long cards retain the
+35% cap and blocking speech retains its independent Continue. Notifications keep
+the toast-height fix.
 
-The census also exposed a pre-existing cap exception: long choice prompts were
-pinned heading chrome, whose minimum height overruled the cap at enlarged text
-sizes. Treating dialogue content as a heading was the second layout oversight.
-Choice prompts now enter the scrolling body at the common body text size.
-The first option still owns focus/confirmation, its accessibility name reports
-the prompt before the answer, and page entry starts at the prompt. No prompt
-text is removed and no extra Continue is introduced.
+Long choice prompts had another exception: fixed heading chrome could override
+the cap. Moving that text into the answer scroll body fixed height but review
+caught an invisible focused answer. That was a second oversight: bounds tests
+did not check whether the confirmation target was visible. Prompt and answers
+now have independent scroll viewports; the focused answer receives its full
+height first, and the prompt receives the remaining space. PgUp/PgDn, the right
+stick or the pointer scroll the prompt. The first option still owns confirmation
+and reports the full prompt before its answer to assistive apps.
 
-The regression drives M and Enter through normal viewport input, exercises all
-five DinkC speech commands and choices, and checks both resolutions at every
-supported text-scale endpoint and the default. A separate UI-only census checks
-all 2,065 source speech calls and 410 choice texts at those sizes/scales using
-fixed steps; it makes no timing or campaign reachability claim. Synthetic long
-text covers interpolation growth. Before/after geometry, pixels and packed
-frames are retained locally in `tmp/p2-evidence/`; fixtures explicitly skip
-campaign progression. Existing camera, ownership and toast checks remain gates.
+A capped timed paragraph also expired after4s with unread lines below the fold.
+The missing rule was reading coverage, missed by sizing-only tests. Natural
+expiry now allows at least4s and a reading budget of170 words/minute with a
+17 character/second ceiling for long tokens. It holds the first viewport, scrolls
+with overlapping pages, then holds the final viewport. Reflow starts reading at
+the top.170wpm is an editorial default informed by BBC R&D WHP306's scrolling
+study, not a universal accessibility guarantee. Presentation duration never
+blocks a `say`/`say_xy` VM call or changes explicit script waits.
+
+The source audit found one stored timed-speech return: S3-ST2's wall label.
+The old host returned0 and discarded its `sp_kill` control; why made was a
+simplification that treated speech as notification and never tested returned
+text-sprite ownership. Positive text handles now support FreeDink's semantics:
+`sp_kill(id,0)` disables natural expiry, positive TTL sets expiry from creation,
+and `sp_active(id,0)` removes immediately. Old handles cannot cancel replacement
+speech. Source: FreeDink `dinkc_bindings.cpp:483–486,748–764,820–824` and
+`live_sprite.cpp:88–97`. This is a UI handle bridge, not a complete text-sprite
+physics implementation.
+
+Tests drive M/Enter and keyboard/controller choice input at both resolutions and
+all three text scales. The case-insensitive census checks2,129 speech calls and
+410 choice texts (15,234 layouts), all115 real choice groups and every focused
+answer, plus reading coverage for all348 timed literals and synthetic overflow.
+The initial census missed64 mixed-case commands by wrongly assuming compiler
+normalization; dispatch-consistent matching and source controls correct that
+instrument error. Fixtures skip campaign progression. The unrelated title parser
+residue is recorded separately and remains unfixed. Raw packed frames, negative
+controls and native logs stay locally in `tmp/p2-evidence/`.

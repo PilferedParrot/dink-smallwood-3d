@@ -452,9 +452,9 @@ func _apply_settings() -> void:
 	if is_instance_valid(ui) and is_instance_valid(ui.root): ui.set_text_scale(float(settings.text_scale))
 	_sync_fps_camera()
 
-func _show_nonblocking_speech(line: String, speaker: int, context: Dictionary) -> void:
+func _show_nonblocking_speech(line: String, speaker: int, context: Dictionary) -> int:
 	var identity := speaker if speaker != 0 else int(context.get("sprite_id", 0))
-	ui.show_dialogue(line, _fps_speaker_name(identity, context), false)
+	return ui.show_dialogue(line, _fps_speaker_name(identity, context), false)
 
 func _fps_update_controller_look(delta: float) -> void:
 	if ui.modal: return

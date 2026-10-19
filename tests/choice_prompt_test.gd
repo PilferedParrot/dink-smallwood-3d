@@ -57,15 +57,34 @@ func _run() -> void:
 				print("CHOICE PROMPT ", source, " ", size, " ", device, " height=", ui.panel.size.y)
 				check(ui.panel.size.y <= ui.root.size.y * 0.35 + 1, "Long source prompt retains the 35% cap")
 				check(ui.menu_scroll.scroll_vertical == 0, "Choice opens with its prompt at the top")
-				var prompt: Label = ui.column.get_node_or_null("ChoicePrompt")
-				check(prompt != null and prompt.text == title, "Complete source prompt belongs to the scrolling body")
-				if prompt != null:
-					check(absf(prompt.get_global_rect().position.y - ui.menu_scroll.get_global_rect().position.y) <= 1, "Prompt is the first visible scroll content")
+				var prompt: Label = ui.get("choice_prompt")
+				var prompt_view: ScrollContainer = ui.get("choice_prompt_scroll")
+				check(prompt != null and prompt.text == title, "Complete source prompt belongs to its independent viewport")
+				if prompt != null and prompt_view != null:
+					check(absf(prompt.get_global_rect().position.y - prompt_view.get_global_rect().position.y) <= 1, "Prompt is the first visible scroll content")
 				var focus := root.gui_get_focus_owner() as Button
 				check(focus != null and focus.text == "First", "First option retains keyboard/controller focus")
 				if focus != null:
+					var answer_rect := focus.get_global_rect()
+					var viewport_rect: Rect2 = ui.menu_scroll.get_global_rect().grow(1)
+					check(viewport_rect.encloses(answer_rect), "Focused answer is fully visible on entry")
 					check(focus.accessibility_name == title + "\nFirst", "First focused option reports prompt before answer to assistive apps")
 				check(not ui.dialogue_continue.visible, "Choice options alone own confirmation")
+				if prompt_view != null and prompt_view.get_v_scroll_bar().max_value > prompt_view.size.y:
+					var pagedown := InputEventKey.new()
+					pagedown.keycode = KEY_PAGEDOWN; pagedown.physical_keycode = KEY_PAGEDOWN
+					await press(pagedown)
+					check(prompt_view.scroll_vertical > 0 and root.gui_get_focus_owner() == focus, "PageDown reads prompt without moving the answer owner")
+					check(ui.menu_scroll.get_global_rect().grow(1).encloses(focus.get_global_rect()), "Prompt scrolling keeps focused answer fully visible")
+				if prompt_view != null and device == "controller":
+					var stick := InputEventJoypadMotion.new()
+					stick.device = 3; stick.axis = JOY_AXIS_RIGHT_Y; stick.axis_value = -1
+					Input.parse_input_event(stick); Input.flush_buffered_events()
+					ui._process(1.0)
+					check(prompt_view.scroll_vertical == 0 and root.gui_get_focus_owner() == focus, "Right stick reads prompt independently")
+					stick = stick.duplicate(); stick.axis_value = 0
+					Input.parse_input_event(stick); Input.flush_buffered_events()
+					check(is_zero_approx(ui.get("choice_prompt_axis")), "Neutral right stick stops prompt scrolling")
 				var count := choices.size()
 				if device == "keyboard":
 					var enter := InputEventKey.new()

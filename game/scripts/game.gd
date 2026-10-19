@@ -4,6 +4,8 @@ const VM = preload("res://scripts/dink_vm.gd")
 const UI = preload("res://scripts/game_ui.gd")
 const NEIGHBOUR_SANDBOX = preload("res://scripts/neighbour_script_sandbox.gd")
 const STARTUP_CUT_COMMANDS := ["wait", "say_stop", "say_stop_npc", "say_stop_xy", "move_stop", "freeze", "freeeze", "choice", "fade_down", "fade_up", "load_screen", "force_vision", "show_bmp", "activate_bow", "stop_entire_game", "restart_game", "kill_game", "load_game"]
+# Text sprite handles occupy a separate range from world sprite ids.
+const TEXT_SPRITE_BASE := 1000000000
 const UNIT := 0.025
 const DEPTH := 0.035
 var vm
@@ -1020,8 +1022,8 @@ func _record_dialogue(line: String, speaker_name: String = "") -> void:
 	if dialogue_log.size() > 100: dialogue_log.pop_front()
 	if journal_log.size() > 100: journal_log.pop_front()
 
-func _show_nonblocking_speech(line: String, _speaker: int, _context: Dictionary) -> void:
-	ui.notify(line)
+func _show_nonblocking_speech(line: String, _speaker: int, _context: Dictionary) -> int:
+	return ui.show_dialogue(line, "Conversation", false)
 
 func _script_move_destination(_id: int, _dir: int, destination: float) -> float:
 	return destination
@@ -1071,6 +1073,10 @@ func dink_call(command: String, args: Array, context: Dictionary) -> Variant:
 	var sid := int(context.get("sprite_id",0))
 	if cmd.begins_with("sp_") and cmd not in ["sp_kill","sp_kill_wait","sp_script","sp_prop"]:
 		var id := int(a)
+		if id >= TEXT_SPRITE_BASE and cmd == "sp_active":
+			var text_id := id - TEXT_SPRITE_BASE
+			if args.size() > 1 and int(b) == 0: ui.cancel_speech_id(text_id)
+			return int(ui.is_speech_active(text_id))
 		if not entities.has(id): return 0
 		var key := cmd.substr(3)
 		if key == "editor_num": return int(entities[id].get("editor_num",0))
@@ -1106,7 +1112,7 @@ func dink_call(command: String, args: Array, context: Dictionary) -> Variant:
 		"say", "say_xy":
 			var line := _interpolate(a,context)
 			var speaker_id := int(b) if cmd == "say" else 0
-			_show_nonblocking_speech(line, speaker_id, context)
+			var text_id: int = _show_nonblocking_speech(line, speaker_id, context)
 			if speaker_id == 1:
 				_record_dialogue(line, "Dink")
 			elif has_method("_fps_speaker_name"):
@@ -1114,7 +1120,7 @@ func dink_call(command: String, args: Array, context: Dictionary) -> Variant:
 				_record_dialogue(line, "" if speaker_name == "Conversation" else speaker_name)
 			else:
 				_record_dialogue(line)
-			return 0
+			return TEXT_SPRITE_BASE + text_id
 		"choice":
 			var options: Array = b if b is Array else []
 			if options.is_empty(): return 0
@@ -1273,6 +1279,10 @@ func _callback(procedure: String, minimum: int, maximum: int, context: Dictionar
 
 func _kill_after(id: int, milliseconds: float) -> void:
 	var expected := generation
+	# FreeDink sp_kill sets TTL from creation; zero disables expiry.
+	if id >= TEXT_SPRITE_BASE:
+		ui.set_speech_ttl(id - TEXT_SPRITE_BASE, int(milliseconds))
+		return
 	await get_tree().create_timer(maxf(0.001,milliseconds/1000.0)).timeout
 	if generation == expected and entities.has(id): entities[id]["active"] = 0
 

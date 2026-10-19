@@ -58,6 +58,15 @@ func inspect_card(tag: String) -> void:
 		"card_with_decorations": rect_data(bounds), "status_art": rect_data(dock),
 		"overlap": rect_data(overlap), "part_intersections": intersections, "status_visible": ui.status_dock.visible,
 		"continue_visible": ui.dialogue_continue.visible, "modal": ui.modal}
+	if ui.dialogue_mode and not ui.dialogue_continue.visible:
+		var focus: Control = root.gui_get_focus_owner()
+		row["answer_viewport"] = rect_data(ui.menu_scroll.get_global_rect())
+		if focus != null:
+			row["focused_answer"] = rect_data(focus.get_global_rect())
+			row["answer_fully_visible"] = ui.menu_scroll.get_global_rect().grow(1).encloses(focus.get_global_rect())
+			check(row.answer_fully_visible, tag + ": focused answer fully visible")
+		if ui.get("choice_prompt_scroll") != null:
+			row["prompt_viewport"] = rect_data(ui.get("choice_prompt_scroll").get_global_rect())
 	records.append(row)
 	print("SPEECH LAYOUT ", JSON.stringify(row))
 	check(not bounds.intersects(dock), tag + ": complete card leaves status artwork clear")
@@ -161,6 +170,33 @@ func _run() -> void:
 			inspect_card(tag)
 			await frame(tag)
 			await key(KEY_ENTER)
+		# Rendering proof of start/middle/final viewports. Deliberately accelerated
+		# UI time; normal reading speed/coverage is checked by timed_reading_test.
+		game.ui.set_text_scale(1.3)
+		var reading_text := "FIRST: the beginning stays readable.\n"
+		for i in 24: reading_text += "Line %02d: every line gets a visible turn.\n" % (i + 1)
+		reading_text += "FINAL: the last line gets reading time."
+		game.ui.show_dialogue(reading_text, "Dink", false)
+		await settle()
+		inspect_card("reading-start")
+		await frame("05-reading-start")
+		var middle := false
+		var final_view := false
+		for _tick in 400:
+			game.ui._process(0.5)
+			await process_frame
+			var bar: VScrollBar = game.ui.menu_scroll.get_v_scroll_bar()
+			if not middle and game.ui.menu_scroll.scroll_vertical >= (bar.max_value - bar.page) * 0.5:
+				middle = true
+				inspect_card("reading-middle")
+				await frame("05-reading-middle")
+			if game.ui.get("timed_phase") == 2:
+				final_view = true
+				inspect_card("reading-final")
+				await frame("05-reading-final")
+				break
+		check(middle and final_view, "Accelerated render fixture reaches middle and final text viewports")
+		game.ui.cancel_speech()
 	# Invalidate placement while the same card remains alive, not just on reopen.
 	game.ui.show_dialogue("Resize a live timed card.", "Dink", false)
 	await settle()
@@ -180,6 +216,7 @@ func _run() -> void:
 			"project_source_present": FileAccess.file_exists("res://project.godot"),
 			"ui_source_present": FileAccess.file_exists("res://scripts/game_ui.gd"),
 			"resource_root": ProjectSettings.globalize_path("res://"),
+			"reading_frames": "05-* accelerates UI time in explicit0.5s steps; not a real-time playback capture.",
 			"setup": "Scenario skips progression/startup scripts. M runs original BUTTON6. All five DinkC speech calls and choice traverse game owners; Enter advances via viewport input. Physics frozen for stable screenshots."}, "\t"))
 	game.queue_free()
 	await process_frame

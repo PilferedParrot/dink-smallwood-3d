@@ -18,6 +18,10 @@ var toast_timer: Timer
 var dialogue_mode := false
 var dialogue_layout_key := Vector4.INF
 var speech_request := 0
+var active_speech_id := 0
+var speech_born_msec := 0
+# -1: readable natural expiry; 0: persistent; positive: explicit script deadline.
+var speech_deadline_msec := -1
 var pending_speech: Dictionary = {}
 var page := "title"
 var text_scale := 1.0
@@ -30,6 +34,17 @@ var status_dock: Control
 var equipment_stats: Dictionary = {}
 var dialogue_continue: Button
 var menu_scroll: ScrollContainer
+var choice_prompt_scroll: ScrollContainer
+var choice_prompt: Label
+var choice_prompt_axis := 0.0
+var timed_text := ""
+var timed_layout_key := Vector4.INF
+var timed_phase := 0
+var timed_phase_elapsed := 0.0
+var timed_hold := 0.0
+var timed_last_hold := 0.0
+var timed_scroll_speed := 0.0
+var timed_scroll_offset := 0.0
 var page_serial := 0
 var return_page := "title"
 var toast_backing: PanelContainer
@@ -46,6 +61,10 @@ var gameplay_hint_used := false
 var gameplay_hint_deadline_msec := 0
 const GAMEPLAY_HINT_SECONDS := 8.0
 const SPEECH_VINE_SIZE := Vector2(80, 140)
+# Display policy, not VM time: 170 words/minute, with a 17 character/second
+# ceiling for long tokens. BBC R&D WHP306 reports a scrolling peak near171wpm.
+const SPEECH_WORDS_PER_SECOND := 170.0 / 60.0
+const SPEECH_CHARACTERS_PER_SECOND := 17.0
 const CREAM := Color("f6ebcb")
 const GOLD := Color("ffdc79")
 const INK := Color("292019")
@@ -241,6 +260,16 @@ func _ready() -> void:
 	modal_feedback_text.clip_text = true
 	modal_feedback.add_child(modal_feedback_text)
 	modal_feedback.hide()
+	choice_prompt_scroll = ScrollContainer.new()
+	choice_prompt_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	choice_prompt_scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	contents.add_child(choice_prompt_scroll)
+	choice_prompt = Label.new()
+	choice_prompt.name = "ChoicePrompt"
+	choice_prompt.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	choice_prompt.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	choice_prompt_scroll.add_child(choice_prompt)
+	choice_prompt_scroll.hide()
 	equipment_name = Label.new()
 	equipment_name.add_theme_color_override("font_color", CREAM)
 	equipment_name.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
@@ -284,6 +313,11 @@ func _vine(path: String) -> TextureRect:
 
 func _process(_delta: float) -> void:
 	if page == "dialogue": _fit_dialogue_panel()
+	if page == "dialogue" and not dialogue_mode: _advance_timed_speech(_delta)
+	if page == "dialogue" and choice_prompt_scroll.visible:
+		if not is_zero_approx(choice_prompt_axis):
+			choice_prompt_scroll.scroll_vertical += roundi(choice_prompt_axis * choice_prompt_scroll.size.y * _delta)
+		_update_hint()
 	# A top-level Container grows to a wrapped Label's minimum but does not
 	# shrink when that minimum falls. Startup can wrap before width settles;
 	# keep the anchored width and own the content height on every layout pass.
@@ -361,7 +395,22 @@ func _layout_for(next_page: String) -> void:
 func _fit_dialogue_panel() -> void:
 	var chrome := panel.get_combined_minimum_size().y-menu_scroll.get_combined_minimum_size().y
 	var body := column.get_combined_minimum_size().y
+	if choice_prompt_scroll.visible:
+		chrome -= choice_prompt_scroll.get_combined_minimum_size().y
+		body += choice_prompt.get_combined_minimum_size().y
 	var height := minf(chrome+body,maxf(chrome,root.size.y*0.35))
+	if choice_prompt_scroll.visible:
+		var answer: Control = get_viewport().gui_get_focus_owner()
+		if answer == null or not column.is_ancestor_of(answer):
+			answer = column.get_child(0) if column.get_child_count() > 0 else null
+		var answer_height := answer.get_combined_minimum_size().y if answer != null else 0.0
+		var available := maxf(0, height - chrome)
+		# Give the focused answer its full height first. The prompt has its own
+		# viewport and cannot push the selected action below the fold.
+		var prompt_height := minf(choice_prompt.get_combined_minimum_size().y, maxf(0, available - answer_height))
+		if choice_prompt_scroll.custom_minimum_size.y != prompt_height:
+			choice_prompt_scroll.custom_minimum_size.y = prompt_height
+			_keep_choice_visible.call_deferred(answer, page_serial)
 	# All speech and choices share one footprint, even when blocking speech
 	# hides the HUD. Include the vines, which can outgrow a short timed card.
 	var bottom: float = status_dock.position.y + status_dock.art_rect().position.y - column.get_theme_constant("separation")
@@ -373,6 +422,10 @@ func _fit_dialogue_panel() -> void:
 	panel.anchor_bottom = 0
 	panel.offset_top = top
 	panel.offset_bottom = top + height
+
+func _keep_choice_visible(answer: Control, serial: int) -> void:
+	if serial == page_serial and is_instance_valid(answer) and answer.is_inside_tree():
+		menu_scroll.ensure_control_visible(answer)
 
 func _ensure_controller_navigation() -> void:
 	var buttons := {"ui_accept": JOY_BUTTON_A, "ui_cancel": JOY_BUTTON_B, "ui_up": JOY_BUTTON_DPAD_UP, "ui_down": JOY_BUTTON_DPAD_DOWN, "ui_left": JOY_BUTTON_DPAD_LEFT, "ui_right": JOY_BUTTON_DPAD_RIGHT}
@@ -392,6 +445,16 @@ func _ensure_controller_navigation() -> void:
 		if not InputMap.action_has_event(action, event): InputMap.action_add_event(action, event)
 
 func _input(event: InputEvent) -> void:
+	if event is InputEventJoypadMotion and event.axis == JOY_AXIS_RIGHT_Y:
+		choice_prompt_axis = event.axis_value if absf(event.axis_value) > 0.25 else 0.0
+	if page == "dialogue" and choice_prompt_scroll.visible:
+		var direction := int(event.is_action_pressed("ui_page_down")) - int(event.is_action_pressed("ui_page_up"))
+		if direction != 0:
+			controller_active = false
+			choice_prompt_scroll.scroll_vertical += roundi(direction * choice_prompt_scroll.size.y)
+			get_viewport().set_input_as_handled()
+			_update_hint()
+			return
 	if not modal and event is InputEventKey and event.pressed and not event.echo and event.physical_keycode == KEY_F1:
 		gameplay_hint_used = true
 		gameplay_hint_deadline_msec = Time.get_ticks_msec() + roundi(GAMEPLAY_HINT_SECONDS * 1000)
@@ -435,6 +498,8 @@ func _update_hint() -> void:
 				dialogue_continue.text = "Continue   ·   A" if controller_active else "Continue   ·   Enter"
 			else:
 				hint.text = "D-pad / LS  Choose     A  Confirm" if controller_active else "Arrows  Choose     Enter or click  Confirm"
+				if choice_prompt_scroll.visible and choice_prompt_scroll.get_v_scroll_bar().max_value > choice_prompt_scroll.size.y:
+					hint.text += "     RS  Read prompt" if controller_active else "     PgUp / PgDn  Read prompt"
 		else:
 			var back := "Resume" if return_page == "game" else "Back"
 			hint.text = "D-pad / LS  Choose     A  Confirm" if controller_active else "Arrows  Choose     Enter or click  Confirm"
@@ -457,6 +522,12 @@ func _clear(title: String, next_page: String) -> void:
 		return_page = page if page in ["pause", "title"] else "game"
 	page_serial += 1
 	dialogue_layout_key = Vector4.INF
+	timed_text = ""
+	timed_layout_key = Vector4.INF
+	choice_prompt_axis = 0.0
+	choice_prompt_scroll.hide()
+	choice_prompt_scroll.custom_minimum_size.y = 0
+	choice_prompt_scroll.scroll_vertical = 0
 	menu_scroll.scroll_vertical = 0
 	for child in column.get_children():
 		column.remove_child(child)
@@ -586,14 +657,17 @@ func show_hud(stats: Dictionary) -> void:
 	compass_label.text = str(stats.get("location", ""))
 	_update_hint()
 
-func show_dialogue(text: String, speaker: String = "Dink", blocking: bool = true) -> void:
-	if not blocking and modal:
-		# Latest ambient line wins; a modal request always owns its card.
-		pending_speech = {"text":text,"speaker":speaker,"expires":Time.get_ticks_msec()+int(toast_timer.wait_time*1000)}
-		return
-	_clear(speaker, "dialogue")
+func show_dialogue(text: String, speaker: String = "Dink", blocking: bool = true) -> int:
 	speech_request += 1
 	var request := speech_request
+	if not blocking and modal:
+		# Latest ambient line wins; a modal request always owns its card.
+		pending_speech = {"text":text,"speaker":speaker,"expires":Time.get_ticks_msec()+int(toast_timer.wait_time*1000),"id":request,"born":Time.get_ticks_msec(),"deadline":-1}
+		return request
+	_clear(speaker, "dialogue")
+	active_speech_id = request
+	speech_born_msec = Time.get_ticks_msec()
+	speech_deadline_msec = -1
 	dialogue_mode = blocking
 	_label(text)
 	if blocking:
@@ -604,20 +678,64 @@ func show_dialogue(text: String, speaker: String = "Dink", blocking: bool = true
 		root.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		overlay.hide()
 		_set_playing_visuals(true)
-		_expire_speech(request, page_serial)
+		timed_text = text
+		timed_layout_key = Vector4.INF
 	_update_hint()
 	if blocking: _grab_current_focus.call_deferred(dialogue_continue, page_serial)
+	return request
 
-func _expire_speech(request: int, serial: int) -> void:
-	await get_tree().create_timer(toast_timer.wait_time).timeout
-	if request == speech_request and serial == page_serial and page == "dialogue" and not dialogue_mode:
+func _advance_timed_speech(delta: float) -> void:
+	if speech_deadline_msec > 0 and Time.get_ticks_msec() >= speech_deadline_msec:
 		close_menu()
+		return
+	var bar := menu_scroll.get_v_scroll_bar()
+	var extent := maxf(0, bar.max_value - bar.page)
+	var label: Label = column.get_child(0) if column.get_child_count() > 0 else null
+	if label == null: return
+	var line_step := float(label.get_line_height() + label.get_theme_constant("line_spacing"))
+	var key := Vector4(column.get_combined_minimum_size().y, menu_scroll.size.y, extent, line_step)
+	if key != timed_layout_key:
+		# Reflow starts reading again at the top; a resize never skips text.
+		timed_layout_key = key
+		var words := timed_text.replace("\n", " ").replace("\t", " ").replace("\r", " ").split(" ", false).size()
+		var reading := maxf(float(words) / SPEECH_WORDS_PER_SECOND, float(timed_text.length()) / SPEECH_CHARACTERS_PER_SECOND)
+		var visible_fraction := minf(1, menu_scroll.size.y / maxf(1, key.x))
+		timed_hold = maxf(toast_timer.wait_time, reading * visible_fraction if extent > 0 else reading)
+		timed_last_hold = reading * visible_fraction
+		timed_scroll_speed = key.x / reading if reading > 0 else 0.0
+		timed_scroll_offset = 0
+		timed_phase_elapsed = 0
+		timed_phase = 0
+		menu_scroll.scroll_vertical = 0
+		return
+	if timed_phase == 0:
+		timed_phase_elapsed += delta
+		if timed_phase_elapsed >= timed_hold:
+			if extent <= 0:
+				if speech_deadline_msec == -1: close_menu()
+			else: timed_phase = 1; timed_phase_elapsed = 0
+	elif timed_phase == 1:
+		# Even a stalled render may advance at most one overlapping text page.
+		# Each line must be fully visible in some frame before normal expiry.
+		var step := minf(timed_scroll_speed * delta, maxf(1, menu_scroll.size.y - line_step))
+		timed_scroll_offset = minf(extent, timed_scroll_offset + step)
+		menu_scroll.scroll_vertical = ceili(timed_scroll_offset)
+		if timed_scroll_offset >= extent:
+			timed_phase = 2
+			timed_phase_elapsed = 0
+	else:
+		timed_phase_elapsed += delta
+		if timed_phase_elapsed >= timed_last_hold and speech_deadline_msec == -1: close_menu()
 
 func _show_pending_speech() -> void:
 	if modal or pending_speech.is_empty(): return
 	var line := pending_speech
 	pending_speech = {}
-	if int(line.expires) > Time.get_ticks_msec(): show_dialogue(str(line.text), str(line.speaker), false)
+	if int(line.deadline) == 0 or (int(line.deadline) > Time.get_ticks_msec()) or (int(line.deadline) == -1 and int(line.expires) > Time.get_ticks_msec()):
+		show_dialogue(str(line.text), str(line.speaker), false)
+		active_speech_id = int(line.id)
+		speech_born_msec = int(line.born)
+		speech_deadline_msec = int(line.deadline)
 
 func prepare_dialogue_layout() -> bool:
 	var serial := page_serial
@@ -657,11 +775,11 @@ func _continue_dialogue() -> void:
 func show_choices(title: String, options: Array) -> void:
 	_clear("What will you do?", "dialogue")
 	dialogue_mode = true
-	# A choice prompt is content, not fixed chrome. It must scroll with its
-	# answers so a paragraph cannot enlarge the card beyond the speech cap.
+	# The prompt scrolls independently so the focused answer stays visible
+	# while the entire card retains the speech height cap.
 	if not title.is_empty():
-		var prompt := _label(title)
-		prompt.name = "ChoicePrompt"
+		choice_prompt.text = title
+		choice_prompt_scroll.show()
 	_update_hint()
 	for i in range(options.size()):
 		var button := Button.new()
@@ -693,10 +811,30 @@ func close_menu() -> void:
 	overlay.hide()
 	title_art.hide(); vines_left.hide(); vines_right.hide()
 	page = "game"
+	timed_text = ""
+	choice_prompt_axis = 0.0
 	_set_playing_visuals(true)
 	_update_hint()
 	_sync_feedback()
 	_show_pending_speech.call_deferred()
+
+func is_speech_active(id: int) -> bool:
+	if id <= 0: return false
+	return int(pending_speech.get("id", 0)) == id or (page == "dialogue" and not dialogue_mode and active_speech_id == id)
+
+func set_speech_ttl(id: int, milliseconds: int) -> void:
+	if id <= 0: return
+	if int(pending_speech.get("id", 0)) == id:
+		pending_speech.deadline = 0 if milliseconds <= 0 else int(pending_speech.born) + milliseconds
+	if page == "dialogue" and not dialogue_mode and active_speech_id == id:
+		speech_deadline_msec = 0 if milliseconds <= 0 else speech_born_msec + milliseconds
+		if speech_deadline_msec > 0 and Time.get_ticks_msec() >= speech_deadline_msec: close_menu()
+
+func cancel_speech_id(id: int) -> void:
+	if id <= 0: return
+	if int(pending_speech.get("id", 0)) == id: pending_speech = {}
+	if active_speech_id == id and page == "dialogue" and not dialogue_mode:
+		close_menu()
 
 func cancel_speech() -> void:
 	var was_blocking := dialogue_mode
