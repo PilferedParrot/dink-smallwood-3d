@@ -25,10 +25,30 @@ def digest(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
+def continuation_checkpoint(source: dict, phase: str) -> dict:
+    name = {"all": "wizard-rock-before-push-earned-save", "bonca": "wizard-rock-before-push-earned-save",
+            "reward": "bonca-complete-earned-save", "terris": "wizard-reward-earned-save"}[phase]
+    expected = source["checkpoints"][name]
+    globals_ = expected["globals"]
+    if phase in {"all", "bonca"}:
+        valid = (expected["screen"] == 277 and globals_["strength"] >= 4
+                 and globals_["wizard_see"] == 2 and globals_["rock_placement"] == 0)
+    elif phase == "reward":
+        valid = expected["screen"] == 100 and globals_["wizard_see"] == 3 and globals_["rock_placement"] == 1
+    else:
+        valid = (expected["screen"] == 6 and globals_["wizard_see"] == 4
+                 and any(item.get("script") == "item-fb" for item in expected["magic_inventory"]))
+    if not valid:
+        raise ValueError("source lacks the earned checkpoint for " + phase)
+    return expected
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--source-report", type=Path, required=True)
     parser.add_argument("--report", type=Path, required=True)
+    parser.add_argument("--phase", choices=("all", "bonca", "reward", "terris"), default="all",
+                        help="Finish one normal-save leg, then release the Godot lock before the next Continue")
     args = parser.parse_args()
     report = args.source_report.resolve()
     source = json.loads(report.read_text())
@@ -36,10 +56,7 @@ def main() -> int:
     if not (setup.get("mode") == "campaign" and setup.get("test_mode") is False
             and setup.get("load_map_scripts") is True):
         raise ValueError("source is not an earned campaign session")
-    expected = source["checkpoints"]["wizard-rock-before-push-earned-save"]
-    if not (expected["screen"] == 277 and expected["globals"]["strength"] >= 4
-            and expected["globals"]["wizard_see"] == 2 and expected["globals"]["rock_placement"] == 0):
-        raise ValueError("source is not the earned pre-push checkpoint")
+    expected = continuation_checkpoint(source, args.phase)
     session_path = Path(source["session_dir"]).resolve()
     if session_path.parent != report.with_suffix(".session"):
         raise ValueError("source save lies outside its recorded isolated session")
@@ -50,23 +67,28 @@ def main() -> int:
     os.environ.update(DINK_CAMPAIGN_GODOT=engine, DINK_CAMPAIGN_ENGINE="1",
                       GODOT=str(ROOT / "tools/run_campaign_route.sh"))
     pack = Path(os.environ["DINK_CAMPAIGN_PACK"]).resolve() if os.environ.get("DINK_CAMPAIGN_PACK") else None
-    result = {"ok": False, "source_report_sha256": digest(report), "source_save_sha256": digest(saved),
+    result = {"ok": False, "phase": args.phase, "source_report_sha256": digest(report), "source_save_sha256": digest(saved),
+              "initial_earned_save_sha256": source.get("initial_earned_save_sha256", digest(saved)),
               "pack_sha256": digest(pack) if pack else None,
-              "setup": "Normal Continue of unmodified earned P1 pre-push save; no progression or entity injection. Same campaign controller and cave, combat, reward and Terris route."}
+              "setup": "Normal Continue of an unmodified earned campaign checkpoint; no progression or entity injection. Each leg ends with a normal in-game save; reports bind the source report and save hashes back to P1's earned pre-push checkpoint."}
     with PlaytestSession(args.report.with_suffix(".session"), rendered=True, mode="campaign",
                          save_source=saved, timeout=60) as session:
         campaign = CaveRoute(session, rendered=True, max_commands=18000)
         try:
             campaign.checkpoint("title")
             campaign.menu_button("Continue adventure")
-            loaded = campaign._call("resume-earned-rock", lambda: session.wait(3))
+            loaded = campaign._call("resume-earned-" + args.phase, lambda: session.wait(3))
             if not saved_state_matches(expected, loaded):
-                raise RouteFailure("Continue did not restore the earned pre-push save", "harness")
-            campaign.checkpoint("resume-earned-rock", loaded)
-            campaign.cave_from_rock()
-            campaign.wizard_reward()
-            campaign.finish_terris()
-            campaign.earned_save("terris-complete")
+                raise RouteFailure("Continue did not restore the earned " + args.phase + " checkpoint", "harness")
+            campaign.checkpoint("resume-earned-" + args.phase, loaded)
+            if args.phase in {"all", "bonca"}:
+                campaign.cave_from_rock()
+                if args.phase == "bonca": campaign.earned_save("bonca-complete")
+            if args.phase in {"all", "reward"}:
+                campaign.wizard_reward()
+            if args.phase in {"all", "terris"}:
+                campaign.finish_terris()
+                campaign.earned_save("terris-complete")
             result.update(ok=True, verdict="pass")
         except RouteFailure as failure:
             session.screenshot("failure.png")
