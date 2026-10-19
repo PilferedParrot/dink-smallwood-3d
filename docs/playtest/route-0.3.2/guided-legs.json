@@ -1,0 +1,80 @@
+{
+  "base": "9e0a51f",
+  "census": "docs/rc5/census-rc5-current.json.gz",
+  "census_sha256": "e1b8ef736164f4057d0468d4360f00b76c79c584fdf1db74f86b7c79539c0cbf",
+  "derivation": "Midpoint of widest common seam run that belongs to the requested source/target components and supports3px approach clearance on both sides. Source masks only; live motion still uses native probes/input.",
+  "legs": [
+    {
+      "source": [
+        341,
+        14
+      ],
+      "target": [
+        340,
+        3
+      ],
+      "approach": [
+        25,
+        345
+      ],
+      "cross": [
+        -50,
+        345
+      ]
+    },
+    {
+      "source": [
+        340,
+        3
+      ],
+      "target": [
+        341,
+        1
+      ],
+      "approach": [
+        615,
+        70
+      ],
+      "cross": [
+        650,
+        70
+      ]
+    },
+    {
+      "source": [
+        341,
+        1
+      ],
+      "target": [
+        309,
+        1
+      ],
+      "approach": [
+        155,
+        5
+      ],
+      "cross": [
+        155,
+        -50
+      ]
+    },
+    {
+      "source": [
+        309,
+        1
+      ],
+      "target": [
+        277,
+        2
+      ],
+      "approach": [
+        320,
+        5
+      ],
+      "cross": [
+        320,
+        -50
+      ]
+    }
+  ]
+}

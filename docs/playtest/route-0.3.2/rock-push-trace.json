@@ -1,0 +1,405 @@
+{
+  "source_report_sha256": "b2706b40e73059502592594cbf091fc1ddd86e0a48da06021b88f8cccb724a0c",
+  "report_outcome": {
+    "ok": false,
+    "verdict": "game suspected",
+    "failure_class": "game suspected",
+    "error": "ordinary east-facing push did not run S1-ROC.push or set rock_placement=1 after 360 frames",
+    "commands": 1283
+  },
+  "input": "Three forward120 holds, re-aiming at rock through ordinary mouse input between them; back12 control. Movement dir6 inferred from recorded yaw and unchanged FPS direction mapping, not native dir telemetry.",
+  "trace": [
+    {
+      "label": "wizard-rock-forward-push",
+      "ok": true,
+      "error": null,
+      "before": {
+        "screen": 277,
+        "x": 225.000366210938,
+        "y": 180.999481201172,
+        "yaw": -7.83732506149799,
+        "frame_count": 5168,
+        "dialogue": false,
+        "frozen": false,
+        "disabled": 0,
+        "nocontrol": 0,
+        "page": "game",
+        "globals": {
+          "story": 6.0,
+          "letter": 2.0,
+          "s2-map": 1.0,
+          "s2-aunt": 0.0,
+          "wizard_see": 2.0,
+          "strength": 4.0,
+          "life": 8,
+          "gold": 0.0,
+          "rock_placement": 0.0
+        },
+        "vm_live_tasks": 0,
+        "entities": [
+          {
+            "active": 1,
+            "brain": 0,
+            "editor_num": 2,
+            "frozen": false,
+            "id": 1983,
+            "script": "s1-hole",
+            "x": 275.0,
+            "y": 162.0
+          },
+          {
+            "active": 1,
+            "brain": 0,
+            "editor_num": 3,
+            "frozen": false,
+            "id": 1984,
+            "script": "s1-roc",
+            "x": 285.0,
+            "y": 180.0
+          }
+        ]
+      },
+      "after": {
+        "screen": 277,
+        "x": 230.249633789062,
+        "y": 177.502166748047,
+        "yaw": -7.83732506149799,
+        "frame_count": 5288,
+        "dialogue": false,
+        "frozen": false,
+        "disabled": 0,
+        "nocontrol": 0,
+        "page": "game",
+        "globals": {
+          "story": 6.0,
+          "letter": 2.0,
+          "s2-map": 1.0,
+          "s2-aunt": 0.0,
+          "wizard_see": 2.0,
+          "strength": 4.0,
+          "life": 8,
+          "gold": 0.0,
+          "rock_placement": 0.0
+        },
+        "vm_live_tasks": 0,
+        "entities": [
+          {
+            "active": 1,
+            "brain": 0,
+            "editor_num": 2,
+            "frozen": false,
+            "id": 1983,
+            "script": "s1-hole",
+            "x": 275.0,
+            "y": 162.0
+          },
+          {
+            "active": 1,
+            "brain": 0,
+            "editor_num": 3,
+            "frozen": false,
+            "id": 1984,
+            "script": "s1-roc",
+            "x": 285.0,
+            "y": 180.0
+          }
+        ]
+      },
+      "inferred_movement_dir": 6
+    },
+    {
+      "label": "wizard-rock-forward-push",
+      "ok": true,
+      "error": null,
+      "before": {
+        "screen": 277,
+        "x": 230.249633789062,
+        "y": 177.502166748047,
+        "yaw": -7.89957224243671,
+        "frame_count": 5289,
+        "dialogue": false,
+        "frozen": false,
+        "disabled": 0,
+        "nocontrol": 0,
+        "page": "game",
+        "globals": {
+          "story": 6.0,
+          "letter": 2.0,
+          "s2-map": 1.0,
+          "s2-aunt": 0.0,
+          "wizard_see": 2.0,
+          "strength": 4.0,
+          "life": 8,
+          "gold": 0.0,
+          "rock_placement": 0.0
+        },
+        "vm_live_tasks": 0,
+        "entities": [
+          {
+            "active": 1,
+            "brain": 0,
+            "editor_num": 2,
+            "frozen": false,
+            "id": 1983,
+            "script": "s1-hole",
+            "x": 275.0,
+            "y": 162.0
+          },
+          {
+            "active": 1,
+            "brain": 0,
+            "editor_num": 3,
+            "frozen": false,
+            "id": 1984,
+            "script": "s1-roc",
+            "x": 285.0,
+            "y": 180.0
+          }
+        ]
+      },
+      "after": {
+        "screen": 277,
+        "x": 230.249633789062,
+        "y": 187.071258544922,
+        "yaw": -7.89957224243671,
+        "frame_count": 5409,
+        "dialogue": false,
+        "frozen": false,
+        "disabled": 0,
+        "nocontrol": 0,
+        "page": "game",
+        "globals": {
+          "story": 6.0,
+          "letter": 2.0,
+          "s2-map": 1.0,
+          "s2-aunt": 0.0,
+          "wizard_see": 2.0,
+          "strength": 4.0,
+          "life": 8,
+          "gold": 0.0,
+          "rock_placement": 0.0
+        },
+        "vm_live_tasks": 0,
+        "entities": [
+          {
+            "active": 1,
+            "brain": 0,
+            "editor_num": 2,
+            "frozen": false,
+            "id": 1983,
+            "script": "s1-hole",
+            "x": 275.0,
+            "y": 162.0
+          },
+          {
+            "active": 1,
+            "brain": 0,
+            "editor_num": 3,
+            "frozen": false,
+            "id": 1984,
+            "script": "s1-roc",
+            "x": 285.0,
+            "y": 180.0
+          }
+        ]
+      },
+      "inferred_movement_dir": 6
+    },
+    {
+      "label": "wizard-rock-forward-push",
+      "ok": true,
+      "error": null,
+      "before": {
+        "screen": 277,
+        "x": 230.249633789062,
+        "y": 187.071258544922,
+        "yaw": -7.72553813904315,
+        "frame_count": 5410,
+        "dialogue": false,
+        "frozen": false,
+        "disabled": 0,
+        "nocontrol": 0,
+        "page": "game",
+        "globals": {
+          "story": 6.0,
+          "letter": 2.0,
+          "s2-map": 1.0,
+          "s2-aunt": 0.0,
+          "wizard_see": 2.0,
+          "strength": 4.0,
+          "life": 8,
+          "gold": 0.0,
+          "rock_placement": 0.0
+        },
+        "vm_live_tasks": 0,
+        "entities": [
+          {
+            "active": 1,
+            "brain": 0,
+            "editor_num": 2,
+            "frozen": false,
+            "id": 1983,
+            "script": "s1-hole",
+            "x": 275.0,
+            "y": 162.0
+          },
+          {
+            "active": 1,
+            "brain": 0,
+            "editor_num": 3,
+            "frozen": false,
+            "id": 1984,
+            "script": "s1-roc",
+            "x": 285.0,
+            "y": 180.0
+          }
+        ]
+      },
+      "after": {
+        "screen": 277,
+        "x": 230.249633789062,
+        "y": 168.018371582031,
+        "yaw": -7.72553813904315,
+        "frame_count": 5530,
+        "dialogue": false,
+        "frozen": false,
+        "disabled": 0,
+        "nocontrol": 0,
+        "page": "game",
+        "globals": {
+          "story": 6.0,
+          "letter": 2.0,
+          "s2-map": 1.0,
+          "s2-aunt": 0.0,
+          "wizard_see": 2.0,
+          "strength": 4.0,
+          "life": 8,
+          "gold": 0.0,
+          "rock_placement": 0.0
+        },
+        "vm_live_tasks": 0,
+        "entities": [
+          {
+            "active": 1,
+            "brain": 0,
+            "editor_num": 2,
+            "frozen": false,
+            "id": 1983,
+            "script": "s1-hole",
+            "x": 275.0,
+            "y": 162.0
+          },
+          {
+            "active": 1,
+            "brain": 0,
+            "editor_num": 3,
+            "frozen": false,
+            "id": 1984,
+            "script": "s1-roc",
+            "x": 285.0,
+            "y": 180.0
+          }
+        ]
+      },
+      "inferred_movement_dir": 6
+    },
+    {
+      "label": "rock-back-control",
+      "ok": true,
+      "error": null,
+      "before": {
+        "screen": 277,
+        "x": 230.249633789062,
+        "y": 168.018371582031,
+        "yaw": -7.72553813904315,
+        "frame_count": 5530,
+        "dialogue": false,
+        "frozen": false,
+        "disabled": 0,
+        "nocontrol": 0,
+        "page": "game",
+        "globals": {
+          "story": 6.0,
+          "letter": 2.0,
+          "s2-map": 1.0,
+          "s2-aunt": 0.0,
+          "wizard_see": 2.0,
+          "strength": 4.0,
+          "life": 8,
+          "gold": 0.0,
+          "rock_placement": 0.0
+        },
+        "vm_live_tasks": 0,
+        "entities": [
+          {
+            "active": 1,
+            "brain": 0,
+            "editor_num": 2,
+            "frozen": false,
+            "id": 1983,
+            "script": "s1-hole",
+            "x": 275.0,
+            "y": 162.0
+          },
+          {
+            "active": 1,
+            "brain": 0,
+            "editor_num": 3,
+            "frozen": false,
+            "id": 1984,
+            "script": "s1-roc",
+            "x": 285.0,
+            "y": 180.0
+          }
+        ]
+      },
+      "after": {
+        "screen": 277,
+        "x": 224.175048828125,
+        "y": 170.708190917969,
+        "yaw": -7.72553813904315,
+        "frame_count": 5542,
+        "dialogue": false,
+        "frozen": false,
+        "disabled": 0,
+        "nocontrol": 0,
+        "page": "game",
+        "globals": {
+          "story": 6.0,
+          "letter": 2.0,
+          "s2-map": 1.0,
+          "s2-aunt": 0.0,
+          "wizard_see": 2.0,
+          "strength": 4.0,
+          "life": 8,
+          "gold": 0.0,
+          "rock_placement": 0.0
+        },
+        "vm_live_tasks": 0,
+        "entities": [
+          {
+            "active": 1,
+            "brain": 0,
+            "editor_num": 2,
+            "frozen": false,
+            "id": 1983,
+            "script": "s1-hole",
+            "x": 275.0,
+            "y": 162.0
+          },
+          {
+            "active": 1,
+            "brain": 0,
+            "editor_num": 3,
+            "frozen": false,
+            "id": 1984,
+            "script": "s1-roc",
+            "x": 285.0,
+            "y": 180.0
+          }
+        ]
+      },
+      "inferred_movement_dir": 4
+    }
+  ]
+}

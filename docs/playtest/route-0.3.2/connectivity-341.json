@@ -1,0 +1,30 @@
+[
+  {
+    "clearance": 0,
+    "start_component": 14,
+    "north_candidates": [],
+    "east_count": 20,
+    "west_count": 20
+  },
+  {
+    "clearance": 1,
+    "start_component": 14,
+    "north_candidates": [],
+    "east_count": 20,
+    "west_count": 20
+  },
+  {
+    "clearance": 2,
+    "start_component": 14,
+    "north_candidates": [],
+    "east_count": 20,
+    "west_count": 20
+  },
+  {
+    "clearance": 3,
+    "start_component": 14,
+    "north_candidates": [],
+    "east_count": 20,
+    "west_count": 20
+  }
+]

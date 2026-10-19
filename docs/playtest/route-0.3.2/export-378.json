@@ -1,0 +1,42 @@
+{
+  "setup": "Scenario: skips campaign progression/map startup; starts378 at75,160 facing north. Save and movement use normal input.",
+  "grid_seconds": 8.784311930998228,
+  "native_x75_y145_150": [
+    false,
+    true,
+    true,
+    true,
+    false,
+    false
+  ],
+  "before": [
+    75.0,
+    160.0
+  ],
+  "after_forward12": [
+    75.0,
+    149.5
+  ],
+  "after_back12": [
+    75.0,
+    170.5
+  ],
+  "fixture_sha256": "3bf7664706e7ae1c7e96a68c036176d09153d31353e983a66d4263ec09dd9baf",
+  "export": {
+    "sha256": "27f9b8e782eba15179de29790222f5366ec98349865dcde27afe63dea011ff43",
+    "blocked": {
+      "dir": 8,
+      "x": 75.0,
+      "y": 149.5
+    },
+    "escaped": {
+      "dir": 2,
+      "x": 75.0,
+      "y": 205.5
+    },
+    "records": [
+      "export-378-0.json",
+      "export-378-1.json"
+    ]
+  }
+}

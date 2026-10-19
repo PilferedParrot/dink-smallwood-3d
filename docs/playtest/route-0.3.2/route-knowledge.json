@@ -1,0 +1,54 @@
+{
+  "basis": "Existing RC5 current effective source-mask census, four-connected integer free pixels and same-coordinate outdoor seams; no warps, quests, scripts, or runtime state injected. This is route knowledge, not a live playthrough.",
+  "start": [
+    341,
+    34.7529296875,
+    385.016784667969
+  ],
+  "census_vs_full_native_341_mismatches": 0,
+  "path_to_309": [
+    [
+      341,
+      14
+    ],
+    [
+      340,
+      3
+    ],
+    [
+      341,
+      1
+    ],
+    [
+      309,
+      1
+    ]
+  ],
+  "path_to_rock_approach_277": [
+    [
+      341,
+      14
+    ],
+    [
+      340,
+      3
+    ],
+    [
+      341,
+      1
+    ],
+    [
+      309,
+      1
+    ],
+    [
+      277,
+      2
+    ]
+  ],
+  "visited_component_counts": [
+    15,
+    31
+  ],
+  "loaded_screen_count": 30
+}

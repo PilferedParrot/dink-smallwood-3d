@@ -1,0 +1,183 @@
+{
+  "screen": 277,
+  "basis": "Static evaluation of shipped F9 entities and current source collision rules; no new Godot run. Proposed next half-physics displacement from unchanged camera yaw at105px/s/60Hz (ceil displacement gives2 substeps).",
+  "stopped_player": {
+    "dir": 6,
+    "x": 230.250366210938,
+    "y": 180.287567138672
+  },
+  "camera_yaw": -6.28151762741595,
+  "next_substep": [
+    231.12536499418263,
+    180.2861079195552
+  ],
+  "player_collision": "Native mover is a point against owner Rect2.grow(4), equivalent to square foot clearance +/-4; player animation hardbox is not used by this movement query.",
+  "player_clearance_xyxy": [
+    226.250366210938,
+    176.287567138672,
+    234.250366210938,
+    184.287567138672
+  ],
+  "next_clearance_xyxy": [
+    227.12536499418263,
+    176.2861079195552,
+    235.12536499418263,
+    184.2861079195552
+  ],
+  "animation_hardbox_unused": [
+    -11,
+    -9,
+    11,
+    9
+  ],
+  "sprite_owners": [
+    {
+      "id": "1982",
+      "script": "",
+      "active": 1.0,
+      "hard": 0.0,
+      "pseq": 179.0,
+      "pframe": 4.0,
+      "size": 100.0,
+      "origin": [
+        444.0,
+        335.0
+      ],
+      "offsets": [
+        -53,
+        -25,
+        28,
+        13
+      ],
+      "box_xyxy": [
+        391.0,
+        310.0,
+        472.0,
+        348.0
+      ],
+      "grown4_xyxy": [
+        387.0,
+        306.0,
+        476.0,
+        352.0
+      ],
+      "blocks_next": false
+    },
+    {
+      "id": "1983",
+      "script": "s1-hole",
+      "active": 1.0,
+      "hard": 0.0,
+      "pseq": 89.0,
+      "pframe": 9.0,
+      "size": 100.0,
+      "origin": [
+        275.0,
+        162.0
+      ],
+      "offsets": [
+        -15,
+        -10,
+        15,
+        14
+      ],
+      "box_xyxy": [
+        260.0,
+        152.0,
+        290.0,
+        176.0
+      ],
+      "grown4_xyxy": [
+        256.0,
+        148.0,
+        294.0,
+        180.0
+      ],
+      "blocks_next": false
+    },
+    {
+      "id": "1984",
+      "script": "s1-roc",
+      "active": 1.0,
+      "hard": 0.0,
+      "pseq": 95.0,
+      "pframe": 10.0,
+      "size": 100.0,
+      "origin": [
+        285.0,
+        180.0
+      ],
+      "offsets": [
+        -50,
+        -9,
+        52,
+        15
+      ],
+      "box_xyxy": [
+        235.0,
+        171.0,
+        337.0,
+        195.0
+      ],
+      "grown4_xyxy": [
+        231.0,
+        167.0,
+        341.0,
+        199.0
+      ],
+      "blocks_next": true
+    }
+  ],
+  "tile": {
+    "index": 40,
+    "tile_id": 700,
+    "custom_mask": 0,
+    "default_mask": 249,
+    "blocked_at_stop": false,
+    "blocked_at_next": false,
+    "region_bounds_inclusive": [
+      225,
+      170,
+      240,
+      190
+    ],
+    "region_hard_pixels": 5,
+    "region_hard_coordinates": [
+      [
+        234,
+        170
+      ],
+      [
+        235,
+        170
+      ],
+      [
+        236,
+        170
+      ],
+      [
+        237,
+        170
+      ],
+      [
+        238,
+        170
+      ]
+    ]
+  },
+  "footprint_record": null,
+  "stone_wall_record": null,
+  "visible_fir_rectangles_on277": 0,
+  "fir_owners_at_next": [],
+  "block_owner": "s1-roc editor3, pseq95/pframe10; no tile, other sprite, footprint, stone or fir owner at this next step",
+  "original_push_reach": {
+    "raw_box_grow2_xyxy": [
+      233,
+      169,
+      339,
+      197
+    ],
+    "contains_native_stopped_foot": false,
+    "integration_note": "Original point-mover reaches its unexpanded hardbox boundary; port grow4 stops outside original grow2 push selection. A future dispatcher must account for actual blocked owner/contact rather than copy the old reach unchanged."
+  }
+}

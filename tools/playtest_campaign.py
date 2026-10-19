@@ -1,4 +1,4 @@
-"""Deterministic, input-only opening campaign playtest.
+"""Deterministic, input-only campaign playtest through Terris arrival.
 
 The campaign bridge owns the real game process and save directory.  This file
 only sends allowlisted keys, observes telemetry, and writes a retained report.
@@ -7,8 +7,12 @@ It intentionally has no test-mode, teleport, or state-injection path.
 from __future__ import annotations
 
 import argparse
+from collections import deque
+import heapq
+import hashlib
 import json
 import math
+import struct
 from pathlib import Path
 from typing import Any
 
@@ -19,6 +23,12 @@ except ModuleNotFoundError:  # direct ``python tools/playtest_campaign.py``
 
 ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_REPORT = ROOT / "builds/playtests/campaign/report.json"
+SAVE_GLOBALS = (
+    "story", "pig_story", "old_womans_duck", "nuttree", "wizard_again",
+    "letter", "s2-map", "s2-aunt", "wizard_see", "rock_placement",
+    "gold", "strength", "magic", "life", "lifemax", "defense", "exp",
+    "level", "speed", "cur_weapon", "cur_magic", "magic_level", "magic_cost",
+)
 
 
 class RouteFailure(RuntimeError):
@@ -27,11 +37,148 @@ class RouteFailure(RuntimeError):
         self.kind = kind
 
 
+def clearance_grid(grid: dict[str, Any], radius: float = 2.0) -> dict[str, Any]:
+    """Reserve waypoint tolerance plus one native sample around each node.
+
+    A summed-area table makes square clearance queries constant time. This is
+    only a conservative planning mask: movement still uses native collision.
+    """
+    rows = grid["rows"]
+    step = grid["step"]
+    ox, oy = grid["origin"]
+    height, width = len(rows), len(rows[0])
+    grow = math.ceil(radius / step) + 1
+    sums = [[0] * (width + 1)]
+    for y, row in enumerate(rows):
+        above = sums[-1]
+        current = [0]
+        count = 0
+        for x, value in enumerate(row):
+            count += value == "#" or not (20 <= ox + x * step < 620 and 0 <= oy + y * step < 400)
+            current.append(above[x + 1] + count)
+        sums.append(current)
+    planned = []
+    for y in range(height):
+        row = []
+        for x in range(width):
+            x0, y0, x1, y1 = x - grow, y - grow, x + grow + 1, y + grow + 1
+            clear = (x0 >= 0 and y0 >= 0 and x1 <= width and y1 <= height
+                     and sums[y1][x1] - sums[y0][x1] - sums[y1][x0] + sums[y0][x0] == 0)
+            row.append("." if clear else "#")
+        planned.append("".join(row))
+    # One flood fill avoids running a full failed A* for each candidate edge
+    # on the other side of a screen's forest or building barrier.
+    components = [0] * (width * height)
+    component = 0
+    for y, row in enumerate(planned):
+        for x, value in enumerate(row):
+            index = y * width + x
+            if value != "." or components[index]:
+                continue
+            component += 1
+            components[index] = component
+            pending = deque([index])
+            while pending:
+                current = pending.popleft()
+                cy, cx = divmod(current, width)
+                for nx, ny in ((cx - 1, cy), (cx + 1, cy), (cx, cy - 1), (cx, cy + 1)):
+                    if not (0 <= nx < width and 0 <= ny < height):
+                        continue
+                    neighbor = ny * width + nx
+                    if not components[neighbor] and planned[ny][nx] == ".":
+                        components[neighbor] = component
+                        pending.append(neighbor)
+    return {**grid, "rows": planned, "start_search": grow + 1,
+            "waypoint_radius": radius, "planning_clearance": grow * step,
+            "_components": components}
+
+
+def grid_path(grid: dict[str, Any], start: tuple[float, float],
+              target: tuple[float, float]) -> list[tuple[float, float]]:
+    """Plan on the bridge's read-only collision probes; never move the player.
+
+    Cardinal grid steps avoid cutting solid corners. Penalize cells beside
+    solids: a sampled boundary can be open while a player's subpixel approach
+    stops just beside it. Keep only turns for ordinary forward holds.
+    """
+    rows = grid["rows"]
+    step = int(grid["step"])
+    ox, oy = grid["origin"]
+    def cell(point: tuple[float, float]) -> tuple[int, int]:
+        return round((point[0] - ox) / step), round((point[1] - oy) / step)
+    def open_cell(p: tuple[int, int]) -> bool:
+        x, y = p
+        # The probes extend beyond the map. Those open columns are transition
+        # space, not a corridor around obstacles on the current screen.
+        inside_map = 20 <= ox + x * step < 620 and 0 <= oy + y * step < 400
+        return inside_map and 0 <= y < len(rows) and 0 <= x < len(rows[y]) and rows[y][x] == "."
+    first, goal = cell(start), cell(target)
+    prefix = []
+    if not open_cell(first) and 20 <= start[0] < 620 and 0 <= start[1] < 400:
+        # A subpixel landing can round onto a solid sample while standing in
+        # its escapable clearance band. Include the neighboring open sample
+        # as a real walking waypoint; never pretend the player moved there.
+        reach = int(grid.get("start_search", 1))
+        nearby = [(first[0] + dx, first[1] + dy)
+                  for dx in range(-reach, reach + 1) for dy in range(-reach, reach + 1)
+                  if open_cell((first[0] + dx, first[1] + dy))]
+        if nearby:
+            first = min(nearby, key=lambda p: (math.hypot(ox + p[0] * step - start[0], oy + p[1] * step - start[1]), p))
+            prefix = [(ox + first[0] * step, oy + first[1] * step)]
+    if not open_cell(first) or not open_cell(goal):
+        raise RouteFailure("navigation endpoint is blocked", "bot/incomplete")
+    components = grid.get("_components")
+    if components is not None:
+        width = len(rows[0])
+        if components[first[1] * width + first[0]] != components[goal[1] * width + goal[0]]:
+            raise RouteFailure("collision grid has no route to waypoint", "bot/incomplete")
+    frontier = [(0, first)]
+    costs = {first: 0}
+    parents = {}
+    wall_costs = {}
+    def wall_cost(p: tuple[int, int]) -> int:
+        if p not in wall_costs:
+            x, y = p
+            near_wall = any(0 <= y + dy < len(rows) and 0 <= x + dx < len(rows[y + dy])
+                            and rows[y + dy][x + dx] == "#"
+                            for dx in (-1, 0, 1) for dy in (-1, 0, 1))
+            wall_costs[p] = 12 if near_wall else 0
+        return wall_costs[p]
+    while frontier:
+        _, current = heapq.heappop(frontier)
+        if current == goal:
+            break
+        for dx, dy in ((1, 0), (0, 1), (-1, 0), (0, -1)):
+            neighbor = current[0] + dx, current[1] + dy
+            cost = costs[current] + 1 + wall_cost(neighbor)
+            if open_cell(neighbor) and cost < costs.get(neighbor, math.inf):
+                costs[neighbor] = cost
+                parents[neighbor] = current
+                distance = abs(goal[0] - neighbor[0]) + abs(goal[1] - neighbor[1])
+                heapq.heappush(frontier, (cost + distance, neighbor))
+    if goal not in costs:
+        raise RouteFailure("collision grid has no route to waypoint", "bot/incomplete")
+    path = [goal]
+    while path[-1] != first:
+        path.append(parents[path[-1]])
+    path.reverse()
+    turns = []
+    for i in range(1, len(path)):
+        if i == len(path) - 1 or (path[i][0] - path[i - 1][0], path[i][1] - path[i - 1][1]) != (path[i + 1][0] - path[i][0], path[i + 1][1] - path[i][1]):
+            turns.append((ox + path[i][0] * step, oy + path[i][1] * step))
+    return prefix + turns
+
+
 def _telemetry(session: PlaytestSession) -> dict[str, Any]:
     result = session.observe()
     if not result.get("ok") or not isinstance(result.get("telemetry"), dict):
         raise RouteFailure("observe failed: " + str(result.get("error", "invalid telemetry")), "harness")
     return result["telemetry"]
+
+
+def saved_state_matches(expected: dict[str, Any], actual: dict[str, Any]) -> bool:
+    return (all(actual.get(k) == expected.get(k) for k in ("screen", "x", "y", "inventory", "magic_inventory"))
+            and all(actual.get("globals", {}).get(k) == expected.get("globals", {}).get(k) for k in SAVE_GLOBALS))
 
 
 class Campaign:
@@ -65,6 +212,42 @@ class Campaign:
         "Hey!  A map was enclosed!",
         "(Press M or button 6 for map toggle)",
     ]
+    TERRIS_LINES = [
+        "Hello.", "Who the hell are you?",
+        "I'm.. I'm Dink Smallwood.  I got a letter and...",
+        "I ain't sent no letter to nobody nohow.", "But I...",
+        "Git outta my house.", "Dink!  You made it!", "Auntie Maria!",
+        "What the? How do you know my wife?  You two been cheatin' on me?",
+        "Jack, this is my nephew from Stonebrook.",
+        "He's going to be staying with us a while.",
+        "Huh?  Since when? Gawd dammit!",
+        "Dink, I've prepared a room for you upstairs.",
+        "Thanks, I'm sure it will be fine.", "Just ask if you need anything.",
+    ]
+    WIZARD_PROOF_LINES = [
+        "Martridge, I .. I can handle it.  I'm prepared.",
+        "I promise I'll be honorable and learn to use it right.",
+        "Well Dink, you must prove yourself.", "Ah man, how do I do that?",
+        "Well in a cave on these hills, there lies a beast.",
+        "It's called a Bonca.  Slay it and return.",
+        "I'll do it, I can fight the beast.", "Excellent, excellent.",
+        "Where does it dwell?", "In a cave to the west Dink.",
+        "I won't fail you.",
+        "Here Dink, take this.  This red potion will strengthen you.",
+    ]
+    WIZARD_REWARD_LINES = [
+        "Hey, it's a scroll from Martridge!", "Let's see ...", "Dear Dink,",
+        "If you're able to see this then it means you",
+        "truly do possess the ability for magic.",
+        "I unfortunately have been called away and cannot",
+        "instruct you any further.  But there are many",
+        "teachers out there, you will find one and further", "your training.",
+        "There are 200 gold pieces enclosed, spend them wisely.",
+        "For now I leave you with this, your first spell.",
+        "Enjoy it Dink, you've earned it.",
+        "All right, my first spell! Maybe I can burn down some trees...",
+        "I now have fireball magic!",
+    ]
     # Named checkpoints make the retained trace useful when route steering gets
     # obstructed.  Coordinates are source-map coordinates, as requested by the
     # campaign task; transition waypoints are deliberately broad.
@@ -75,7 +258,9 @@ class Campaign:
         "cottage_exit": (1, [(420.0, 200.0), (325.0, 365.0),
                                (325.0, 437.0)], 28.0),
         "cottage_inside": (439, [(365.0, 307.0)], 30.0),
-        "pig_farm": (407, [(110.0, 300.0), (110.0, 270.0), (220.0, 270.0)], 25.0),
+        # ITEM-PIG accepts x>=200. A radius larger than 20 around x=220
+        # can stop short of that source-defined feed zone after a seam crossing.
+        "pig_farm": (407, [(110.0, 300.0), (110.0, 270.0), (220.0, 270.0)], 20.0),
     }
 
     def __init__(self, session: PlaytestSession, rendered: bool = False,
@@ -85,9 +270,11 @@ class Campaign:
         self.max_commands = max_commands
         self.milestone = "opening"
         self.commands = 0
+        self.look_gain = 0.002
         self.trace: list[dict[str, Any]] = []
         self.checkpoints: dict[str, Any] = {}
         self.captured: set[str] = set()
+        self.resume_letter: dict[str, Any] | None = None
 
     def _call(self, label: str, fn: Any) -> dict[str, Any]:
         self.commands += 1
@@ -99,6 +286,8 @@ class Campaign:
         if not isinstance(after, dict): after = _telemetry(self.session)
         self.trace.append({"label": label, "before": before, "after": after,
                            "ok": bool(result.get("ok", False)), "error": result.get("error")})
+        if "navigation_grid" in result:
+            self.trace[-1]["navigation_grid"] = result["navigation_grid"]
         if not result.get("ok", False):
             raise RouteFailure(label + ": " + str(result.get("error", "bridge command failed")), "harness")
         return after
@@ -113,7 +302,12 @@ class Campaign:
         self.checkpoints[name] = state
         # Keep visual review focused on actual gameplay milestones; the full
         # input/telemetry trace still contains every navigation command.
-        if self.rendered and name in {"title", "opening", "sack-collected", "to-pig-farm", "pig-story", "save-reload"}:
+        if self.rendered and name in {
+            "title", "opening", "sack-collected", "to-pig-farm", "pig-story", "save-reload",
+            "letter-complete", "wizard-training-earned-save", "wizard-rock-pushed",
+            "wizard-bonca-defeated", "wizard-reward-earned-save", "terris-toll-complete",
+            "terris-arrival-complete",
+        }:
             self._call("screenshot-" + name, lambda: self.session.screenshot(name + ".png"))
         return state
 
@@ -159,6 +353,41 @@ class Campaign:
             if not active and (not require_release or controlled):
                 return state
         raise RouteFailure("dialogue did not finish within bounded Enter steps")
+
+    def equip_item(self, script: str, name: str) -> dict[str, Any]:
+        """Select opening equipment through the actual inventory keyboard UI.
+
+        The chest's nested icon buttons are absent from the bridge's shallow
+        button list, but its focused item's full description is observable.
+        These opening items occupy the first row; never infer focus from the
+        currently equipped slot or inject an equipment action.
+        """
+        state = self.observe("equip-" + script)
+        slot = next((i + 1 for i, item in enumerate(state.get("inventory", []))
+                     if str(item.get("script", "")).lower() == script), None)
+        if slot is None:
+            raise RouteFailure("earned inventory lacks " + script, "game suspected")
+        if any(button.get("text") == name for button in state.get("ui", {}).get("buttons", [])):
+            state = self.menu_button(name)
+        else:
+            selected = False
+            for direction in ("right", "left"):
+                for _ in range(16):
+                    labels = state.get("ui", {}).get("labels", [])
+                    back_focused = any(button.get("focused") for button in state.get("ui", {}).get("buttons", []))
+                    focused_item = any(str(label).removeprefix("Selected: ").split("\n")[0].split(" · ")[0].casefold() == ("Item: " + name).casefold() for label in labels)
+                    if not back_focused and focused_item:
+                        selected = True
+                        break
+                    state = self._call("equipment-" + direction, lambda direction=direction: self.session.menu_key(direction))
+                if selected:
+                    break
+            if not selected:
+                raise RouteFailure("inventory focus did not expose " + name, "harness")
+            state = self._call("equipment-enter-" + script, lambda: self.session.menu_key("enter"))
+        if int(state.get("globals", {}).get("cur_weapon", -1)) != slot or state.get("page") != "game":
+            raise RouteFailure("normal equipment input did not equip " + name, "game suspected")
+        return state
 
     def await_button(self, text: str, limit: int = 100) -> dict[str, Any]:
         """Advance delayed dialogue until a specific normal choice is visible."""
@@ -237,22 +466,35 @@ class Campaign:
         return (angle + math.pi) % (2 * math.pi) - math.pi
 
     def _aim(self, state: dict[str, Any], target: tuple[float, float], label: str) -> dict[str, Any]:
-        target_yaw = math.atan2(-(target[0] - float(state["x"])), -(target[1] - float(state["y"])))
-        delta = self._wrap(target_yaw - float(state["yaw"]))
-        # fps_game consumes mouse yaw as -relative.x * 0.002.
-        aimed = self._call("aim-" + label, lambda: self.session.look(-delta / 0.002, 0.0))
-        if abs(delta) > 0.02 and abs(self._wrap(float(aimed["yaw"]) - float(state["yaw"]))) < 0.002:
-            # Closing an equipment menu changes mouse capture at the end of a
-            # physics tick.  Let that real tick occur, then retry the same
-            # ordinary mouse input once before calling the bridge unusable.
-            self._call("aim-capture-tick-" + label, lambda: self.session.wait(1))
-            refreshed = self.observe("aim-capture-state-" + label)
-            target_yaw = math.atan2(-(target[0] - float(refreshed["x"])), -(target[1] - float(refreshed["y"])))
-            retry = self._wrap(target_yaw - float(refreshed["yaw"]))
-            aimed = self._call("aim-retry-" + label, lambda: self.session.look(-retry / 0.002, 0.0))
-            if abs(retry) > 0.02 and abs(self._wrap(float(aimed["yaw"]) - float(refreshed["yaw"]))) < 0.002:
-                raise RouteFailure("ordinary look input did not change yaw at " + label, "harness")
-        return aimed
+        # Mouse-relative events are transformed by Godot's viewport stretch.
+        # Measure the real input gain and close the loop before any walking;
+        # nonzero yaw movement alone does not prove we face the waypoint.
+        gain = self.look_gain
+        capture_retry = False
+        for _ in range(8):
+            target_yaw = math.atan2(-(target[0] - float(state["x"])), -(target[1] - float(state["y"])))
+            delta = self._wrap(target_yaw - float(state["yaw"]))
+            if abs(delta) <= 0.002:
+                self.look_gain = gain
+                return state
+            # Limit the first turn so a scaled event cannot hide a whole
+            # rotation in the wrapped yaw measurement.
+            turn = max(-math.pi / 4, min(math.pi / 4, delta))
+            dx = max(-2000.0, min(2000.0, -turn / gain))
+            aimed = self._call("aim-" + label, lambda dx=dx: self.session.look(dx, 0.0))
+            actual = self._wrap(float(aimed["yaw"]) - float(state["yaw"]))
+            if abs(actual) < 0.0001:
+                if capture_retry:
+                    raise RouteFailure("ordinary look input did not change yaw at " + label, "harness")
+                capture_retry = True
+                state = self._call("aim-capture-tick-" + label, lambda: self.session.wait(1))
+                continue
+            measured = -actual / dx
+            if measured <= 0 or abs(actual) >= math.pi - 0.01:
+                raise RouteFailure("ambiguous mouse input gain at " + label, "harness")
+            gain = measured
+            state = aimed
+        raise RouteFailure("ordinary look input did not converge at " + label, "harness")
 
     def _walk_point(self, screen: int, target: tuple[float, float], radius: float, label: str) -> dict[str, Any]:
         state = self.observe("approach-" + label)
@@ -390,19 +632,116 @@ class Campaign:
                                    (label, state.get("screen"), target), "bot/incomplete")
         raise RouteFailure("could not cross into map %d at %s" % (target, label))
 
+    def navigate(self, screen: int, point: tuple[float, float], label: str,
+                 transition: int | None = None) -> dict[str, Any]:
+        """Use live collision observations to steer normal inputs around props."""
+        state = self._call("grid-" + label, lambda: self.session.navigation_grid(step=1))
+        grid = clearance_grid(self.trace[-1]["navigation_grid"])
+        self.trace[-1]["planning_clearance"] = grid["planning_clearance"]
+        if int(state.get("screen", -1)) != screen or int(grid["screen"]) != screen:
+            raise RouteFailure("navigation screen mismatch at " + label, "harness")
+        path = grid_path(grid, (float(state["x"]), float(state["y"])), point)
+        return self._follow_path(screen, path, label, transition)
+
+    def _follow_path(self, screen: int, path: list[tuple[float, float]], label: str,
+                     transition: int | None = None) -> dict[str, Any]:
+        state = self.observe("path-" + label)
+        for i, target in enumerate(path):
+            start = float(state["x"]), float(state["y"])
+            distance = math.hypot(target[0] - start[0], target[1] - start[1])
+            # The normal opening speed is only 35 source pixels/second.
+            # A map-wide straight leg can exceed _walk_point's fixed budget;
+            # subdivide it without changing the planned corridor.
+            pieces = max(1, math.ceil(distance / 220.0))
+            for piece in range(1, pieces + 1):
+                point = (start[0] + (target[0] - start[0]) * piece / pieces,
+                         start[1] + (target[1] - start[1]) * piece / pieces)
+                state = self._walk_point(screen, point, 2.0, label + "-%d-%d" % (i, piece))
+                if int(state.get("screen", -1)) != screen:
+                    if int(state.get("screen", -1)) == transition:
+                        return state
+                    raise RouteFailure("planned path %s unexpectedly entered map %s" % (label, state.get("screen")))
+        return state
+
+    def travel(self, target: int, label: str) -> dict[str, Any]:
+        """Choose a reachable ordinary edge from the live collision grid."""
+        state = self._call("edge-grid-" + label, lambda: self.session.navigation_grid(step=1))
+        screen = int(state["screen"])
+        delta = target - screen
+        if delta not in (-32, -1, 1, 32):
+            raise RouteFailure("travel requires adjacent maps", "harness")
+        grid = clearance_grid(self.trace[-1]["navigation_grid"])
+        self.trace[-1]["planning_clearance"] = grid["planning_clearance"]
+        start = float(state["x"]), float(state["y"])
+        horizontal = abs(delta) == 1
+        # Cross horizontally at x<20 / x>620, vertically at y<0 / y>400.
+        # Plan just inside the boundary, then keep walking through that edge.
+        values = range(10, 391, 5) if horizontal else range(25, 616, 5)
+        preferred = start[1] if horizontal else start[0]
+        for value in sorted(values, key=lambda value: (abs(value - preferred), value)):
+            point = ((615.0 if delta == 1 else 25.0), float(value)) if horizontal else (float(value), 5.0 if delta == -32 else 395.0)
+            try:
+                path = grid_path(grid, start, point)
+            except RouteFailure:
+                continue
+            moved = self._follow_path(screen, path, label + "-approach", target)
+            if int(moved["screen"]) == target:
+                return self.checkpoint(label, moved)
+            edge = ((650.0 if delta == 1 else -50.0), float(value)) if horizontal else (float(value), -50.0 if delta == -32 else 650.0)
+            return self._cross(target, label, edge)
+        # Rounding onto a blocked probe alone is inconclusive. Test the real
+        # input path in all four directions before calling a landing stuck.
+        cell_x, cell_y = round(start[0] / grid["step"]), round(start[1] / grid["step"])
+        if grid["rows"][cell_y][cell_x] == "#":
+            self.probe_blocked_landing(screen, label)
+        raise RouteFailure("no observed collision-grid path to map %d from %d" % (target, screen))
+
+    def probe_blocked_landing(self, screen: int, label: str) -> dict[str, Any]:
+        """Probe actual movement without restoring or inventing Python state."""
+        state = self.observe(label + "-landing-probe-start")
+        origin = float(state["x"]), float(state["y"])
+        moved = False
+        controlled = True
+        for action in ("forward", "back", "left", "right"):
+            state = self._call(label + "-landing-probe-" + action,
+                               lambda action=action: self.session.hold(action, 12))
+            moved = moved or int(state.get("screen", -1)) != screen or math.hypot(float(state["x"]) - origin[0], float(state["y"]) - origin[1]) > 0.2
+            controlled = controlled and state.get("playing", False) and state.get("page") == "game" and not any(state.get(k, False) for k in ("modal", "changing", "frozen", "disabled", "nocontrol"))
+        if not moved and controlled:
+            self.checkpoint("blocked-landing-all-directions", state)
+            raise RouteFailure("map %d landing at (%.2f, %.2f) is blocked: four normal movement directions produced no displacement with controls released" % (screen, origin[0], origin[1]), "game suspected")
+        return state
+
+    def travel_route(self, screens: list[int], label: str) -> dict[str, Any]:
+        state = self.observe(label + "-start")
+        for target in screens:
+            state = self.travel(target, label + "-%d" % target)
+            # A map can contain its own startup conversation. Advance it
+            # through the same bounded Enter path before more movement.
+            self._call(label + "-arrival-tick", lambda: self.session.wait(3))
+            state = self.dialogue(require_release=True)
+        return state
+
+    def earned_save(self, label: str) -> dict[str, Any]:
+        self._call(label + "-pause-save", self.session.pause)
+        self.menu_button("Save adventure")
+        self._call(label + "-resume-save", self.session.pause)
+        return self.checkpoint(label + "-earned-save")
+
     def _warp(self, screen: int, target: int, point: tuple[float, float], label: str) -> dict[str, Any]:
         """Use a map's ordinary scripted door/edge warp and require its target."""
-        # The Ethel door is approached from the open southeast path; a direct
-        # diagonal can hit the cottage's decorative collision.
+        approaches = []
         if screen == 409 and point == (397.0, 301.0):
-            # The road arrival sits west of a solid roadside prop at x~320.
-            # Go below it before turning east; the former y=330 line drove
-            # directly into that collider.
-            self._walk_point(screen, (250.0, 390.0), 24.0, label + "-southwest")
-            self._walk_point(screen, (500.0, 390.0), 24.0, label + "-southeast")
-            self._walk_point(screen, (500.0, 330.0), 20.0, label + "-door-east")
-            self._walk_point(screen, (397.0, 330.0), 18.0, label + "-door-line")
-        self._walk_point(screen, point, 5.0, label + "-approach")
+            # Approach below the roadside prop, then along the cottage's
+            # open southeast side; a direct diagonal crosses its footprint.
+            approaches = [((250.0, 390.0), 24.0), ((500.0, 390.0), 24.0),
+                          ((500.0, 330.0), 20.0), ((397.0, 330.0), 18.0)]
+        for index, (position, radius) in enumerate(approaches + [(point, 5.0)]):
+            state = self._walk_point(screen, position, radius, label + "-approach-%d" % index)
+            if int(state.get("screen", -1)) == target:
+                return self.checkpoint(label, state)
+            if int(state.get("screen", -1)) != screen:
+                raise RouteFailure("door approach %s entered unexpected map %s" % (label, state.get("screen")), "harness")
         for _ in range(10):
             state = self.observe(label + "-wait")
             if int(state.get("screen", -1)) == target:
@@ -540,6 +879,150 @@ class Campaign:
         self.letter_guard()
         return self.letter_home()
 
+    def run_terris(self) -> dict[str, Any]:
+        """Earn the bridge toll, then complete S2-AUNTP's real arrival.
+
+        S1-MH-F awards 200 gold after Martridge's Bonca proof quest. S1-BRG2
+        spends 100 and advances story to 7; Maria's arrival sets s2-aunt=1.
+        Every door and cave entrance below runs its ordinary map script.
+        """
+        state = self.observe("terris-prerequisites")
+        expected = {"story": 6, "letter": 2, "s2-map": 1, "s2-aunt": 0}
+        if int(state.get("screen", -1)) != 439 or any(int(state.get("globals", {}).get(k, -1)) != v for k, v in expected.items()):
+            raise RouteFailure("Terris route requires completed LETTER on map 439")
+        self.earned_save("terris-letter")
+        self.wizard_training()
+        self.wizard_cave()
+        self.wizard_reward()
+        # Return along the source-map corridor to the Stonebrook bridge.
+        self._warp(6, 251, (467.0, 387.0), "terris-wizard-leave")
+        self.travel_route([283, 315, 314, 346, 378, 377, 376, 375, 407, 406, 405, 404], "terris-bridge-road")
+        state = self.observe("terris-toll-before")
+        gold = int(state.get("globals", {}).get("gold", 0))
+        if gold < 100:
+            raise RouteFailure("earned wizard reward cannot cover bridge toll", "game suspected")
+        self.navigate(404, (430.0, 250.0), "terris-toll-approach")
+        self.talk_to_script("s1-brg2", "terris-toll")
+        self.await_button("Pay the toll")
+        self.menu_button("Pay the toll")
+        state = self.await_lines(["Thanks.  Have a nice day."], limit=180, capture="terris-toll-paid")
+        state = self.await_scripts_clear(state, "terris-toll")
+        if int(state.get("globals", {}).get("story", 0)) != 7 or int(state.get("globals", {}).get("gold", -1)) != gold - 100:
+            raise RouteFailure("bridge payment did not spend 100 gold and advance story=7", "game suspected")
+        self.checkpoint("terris-toll-complete", state)
+        self.travel_route([403, 435, 467, 499, 500], "terris-town-road")
+        self.navigate(500, (261.0, 350.0), "terris-maria-door")
+        self._warp(500, 36, (261.0, 329.0), "terris-enter-maria")
+        return self.terris_arrival()
+
+    def wizard_training(self) -> dict[str, Any]:
+        # This corridor avoids the ridge's closed edges. Map 346's barrier
+        # allows story>=3; the introductory 376 scene was earned before LETTER.
+        self.travel_route([440, 408, 376, 377, 378, 346, 314, 315, 283, 251], "wizard-cabin-road")
+        self.navigate(251, (264.0, 345.0), "wizard-cabin-door")
+        self._warp(251, 6, (264.0, 319.0), "wizard-enter-cabin")
+        self.navigate(6, (440.0, 195.0), "wizard-teacher-approach")
+        self.talk_to_script("s1-mh-m", "wizard-teacher")
+        self.await_button("Tell him you're worthy", limit=200)
+        self.menu_button("Tell him you're worthy")
+        state = self.await_lines(self.WIZARD_PROOF_LINES, limit=200, capture="wizard-proof-request")
+        state = self.await_scripts_clear(state, "wizard-proof-request")
+        if int(state.get("globals", {}).get("wizard_see", 0)) != 2:
+            raise RouteFailure("Martridge did not assign Bonca proof quest", "game suspected")
+        strength = int(state.get("globals", {}).get("strength", 0))
+        self.navigate(6, (187.0, 157.0), "wizard-strength-potion")
+        state = self.observe("wizard-potion-collected")
+        if int(state.get("globals", {}).get("strength", 0)) != strength + 1:
+            raise RouteFailure("ordinary potion pickup did not increase strength", "game suspected")
+        return self.earned_save("wizard-training")
+
+    def wizard_cave(self) -> dict[str, Any]:
+        self._warp(6, 251, (467.0, 387.0), "wizard-leave-cabin")
+        self.travel_route([283, 315, 314, 346, 378, 377, 376, 375, 374, 373, 372, 340, 341, 309, 277], "wizard-cave-road")
+        self.push_cave_rock()
+        self.navigate(277, (275.0, 162.0), "wizard-cave-hole", transition=131)
+        # S1-HOLE moves/animates Dink and loads 131. The runner only waits.
+        for _ in range(30):
+            state = self._call("wizard-hole-wait", lambda: self.session.wait(15))
+            if int(state.get("screen", -1)) == 131:
+                break
+        if int(state.get("screen", -1)) != 131:
+            raise RouteFailure("S1-HOLE did not enter cave map 131", "game suspected")
+        self.dialogue(require_release=True)
+        self.travel_route([99, 100], "wizard-bonca-road")
+        return self.fight_bonca()
+
+    def push_cave_rock(self) -> dict[str, Any]:
+        state = self.observe("wizard-rock-prerequisites")
+        rock = self._entity("s1-roc", state)
+        if int(state.get("screen", -1)) != 277 or int(state.get("globals", {}).get("strength", 0)) < 4 or rock is None:
+            raise RouteFailure("cave push requires live rock on 277 and earned strength>=4")
+        self.navigate(277, (225.0, 180.0), "wizard-rock-west-side")
+        self.earned_save("wizard-rock-before-push")
+        if self.rendered:
+            self._call("wizard-rock-before-frame", lambda: self.session.screenshot("wizard-rock-before.png"))
+        for attempt in range(3):
+            state = self.observe("wizard-rock-push-%d" % attempt)
+            rock = self._entity("s1-roc", state)
+            if rock is None:
+                raise RouteFailure("rock disappeared during push", "game suspected")
+            self._aim(state, (float(rock["x"]), float(rock["y"])), "wizard-rock-east-facing")
+            state = self._call("wizard-rock-forward-push", lambda: self.session.hold("forward", 120))
+            if int(state.get("globals", {}).get("rock_placement", 0)) == 1:
+                state = self.dialogue(require_release=True)
+                return self.checkpoint("wizard-rock-pushed", state)
+        # This is a source-defined interaction, not a complaint that one
+        # direction is obstructed: strength and east-side approach are checked,
+        # then six seconds of normal forward input must invoke S1-ROC.push.
+        raise RouteFailure("ordinary east-facing push did not run S1-ROC.push or set rock_placement=1 after 360 frames", "game suspected")
+
+    def fight_bonca(self) -> dict[str, Any]:
+        """Use the game's starter bow, live aiming, and bounded attack presses."""
+        self._call("bonca-open-equipment", lambda: self.session.hold("inventory", 1))
+        self.equip_item("item-b1", "Bow")
+        for shot in range(60):
+            state = self.observe("bonca-live-%d" % shot)
+            if int(state.get("globals", {}).get("wizard_see", 0)) == 3:
+                return self.checkpoint("wizard-bonca-defeated", state)
+            if int(state.get("globals", {}).get("life", 0)) < 1 or state.get("page") == "dead":
+                raise RouteFailure("Bonca fight killed the player; combat route incomplete")
+            enemy = self._entity("s1-cavem", state)
+            if enemy is None:
+                raise RouteFailure("Bonca absent before its source death flag", "game suspected")
+            target = float(enemy["x"]), float(enemy["y"])
+            self._aim(state, target, "bonca-live")
+            distance = math.hypot(float(state["x"]) - target[0], float(state["y"]) - target[1])
+            if distance < 80:
+                self._call("bonca-retreat", lambda: self.session.hold("back", 12))
+            self._call("bonca-shot", lambda: self.session.hold("attack", 1))
+            self._call("bonca-flight", lambda: self.session.wait(30))
+            self.dialogue(require_release=True)
+        raise RouteFailure("bounded normal bow route did not defeat Bonca")
+
+    def wizard_reward(self) -> dict[str, Any]:
+        self.travel_route([99, 131], "wizard-cave-return")
+        self._warp(131, 277, (288.0, 397.0), "wizard-leave-cave")
+        self.travel_route([309, 341, 340, 372, 373, 374, 375, 376, 377, 378, 346, 314, 315, 283, 251], "wizard-reward-road")
+        self.navigate(251, (264.0, 345.0), "wizard-reward-door")
+        self._warp(251, 6, (264.0, 319.0), "wizard-reward-enter")
+        self.navigate(6, (346.0, 220.0), "wizard-scroll-approach")
+        before = self.observe("wizard-reward-before")
+        self.talk_to_script("s1-mh-f", "wizard-scroll")
+        state = self.await_lines(self.WIZARD_REWARD_LINES, limit=200, capture="wizard-scroll-reward")
+        state = self.await_scripts_clear(state, "wizard-reward")
+        globals_ = state.get("globals", {})
+        if int(globals_.get("wizard_see", 0)) != 4 or int(globals_.get("gold", 0)) != int(before["globals"].get("gold", 0)) + 200 or not any(item.get("script") == "item-fb" for item in state.get("magic_inventory", [])):
+            raise RouteFailure("wizard scroll did not grant earned 200 gold and fireball", "game suspected")
+        return self.earned_save("wizard-reward")
+
+    def terris_arrival(self) -> dict[str, Any]:
+        state = self.await_lines(self.TERRIS_LINES, limit=300, capture="terris-maria-arrival")
+        state = self.await_scripts_clear(state, "terris-arrival")
+        expected = {"story": 7, "s2-aunt": 1, "letter": 2, "s2-map": 1}
+        if int(state.get("screen", -1)) != 36 or any(int(state.get("globals", {}).get(k, -1)) != v for k, v in expected.items()):
+            raise RouteFailure("Maria arrival did not finish on map 36 with story=7 and s2-aunt=1", "game suspected")
+        return self.checkpoint("terris-arrival-complete", state)
+
     def letter_guard(self) -> dict[str, Any]:
         current = self.observe("letter-entry")
         if int(current.get("screen", -1)) != 439 or int(current.get("globals", {}).get("story", 0)) != 5:
@@ -653,10 +1136,7 @@ class Campaign:
         # tree only creates a nut from its hit procedure; walking into it or
         # carrying a later weapon is not evidence that this procedure ran.
         self._call("alktree-open-inventory", lambda: self.session.hold("inventory", 1))
-        inventory = self.observe("alktree-inventory-open")
-        if not any(str(button.get("text", "")) == "Fists" for button in inventory.get("ui", {}).get("buttons", [])):
-            raise RouteFailure("inventory does not expose Fists for AlkTree hit", "game suspected")
-        self.menu_button("Fists")
+        self.equip_item("item-fst", "Fists")
         equipped = self.observe("alktree-fists-equipped")
         # item-fst is equipment slot 1 in the imported original inventory.
         if int(equipped.get("globals", {}).get("cur_weapon", -1)) != 1:
@@ -831,10 +1311,7 @@ class Campaign:
             self._call("screenshot-aftermath-complete", lambda: self.session.screenshot("aftermath-complete.png"))
         return aftermath
 
-    def run(self) -> dict[str, Any]:
-        state = self.checkpoint("title")
-        if not state.get("ui", {}).get("title", False):
-            raise RouteFailure("campaign did not start at title screen", "harness")
+    def run_from_title(self) -> None:
         self.menu_button("Begin adventure")
         self.dialogue(require_release=True, capture="opening-dialogue")
         opening = self.checkpoint("opening")
@@ -852,17 +1329,14 @@ class Campaign:
         # Inventory is opened with the ordinary I key.  The bridge reports the
         # equipment buttons, allowing selection without injecting cur_weapon.
         self._call("open-inventory", lambda: self.session.hold("inventory", 1))
-        inv = self.observe("inventory-open")
-        if not any("pig" in str(b.get("text", "")).lower() for b in inv.get("ui", {}).get("buttons", [])):
-            raise RouteFailure("inventory does not show Pig feed", "game suspected")
-        self.menu_button("Pig Feed")
+        self.equip_item("item-pig", "Pig Feed")
         self.seek_screen(407, "to-pig-farm")
         self.move_to("pig_farm")
         # The item-pig script accepts the feed only from its in-world box. Aim
         # north from the live point, with the source script's (+8, -50) offset.
         state = self.observe("pig-feed-position")
         if not (200.0 <= float(state["x"]) <= 400.0 and 180.0 <= float(state["y"]) <= 306.0):
-            raise RouteFailure("did not reach the item-pig feed box")
+            raise RouteFailure("did not reach the item-pig feed box", "harness")
         self._aim(state, (float(state["x"]) + 8.0, float(state["y"]) - 50.0), "pig-feed-north")
         # Attack is an ordinary left-click equivalent in the bridge.  Hold
         # briefly, then allow the scripted bully dialogue to finish normally.
@@ -889,12 +1363,31 @@ class Campaign:
         if not any("finished with my chores" in line.lower() for line in completion) or not any("good boy" in line.lower() for line in completion):
             raise RouteFailure("mother conversation did not complete the fed-pigs path", "game suspected")
         self.checkpoint("mother-fed-pigs")
-        if self.milestone in {"ethel", "alktree", "letter"}:
+        if self.milestone in {"ethel", "alktree", "letter", "terris"}:
             self.run_ethel()
-        if self.milestone in {"alktree", "letter"}:
+        if self.milestone in {"alktree", "letter", "terris"}:
             self.run_alktree()
-        if self.milestone == "letter":
+        if self.milestone in {"letter", "terris"}:
             self.run_letter()
+        if self.milestone == "terris":
+            self.run_terris()
+
+    def run(self) -> dict[str, Any]:
+        state = self.checkpoint("title")
+        if not state.get("ui", {}).get("title", False):
+            raise RouteFailure("campaign did not start at title screen", "harness")
+        if self.resume_letter is None:
+            self.run_from_title()
+        else:
+            self.menu_button("Continue adventure")
+            state = self._call("resume-letter-settle", lambda: self.session.wait(3))
+            expected = self.resume_letter.get("resume_checkpoint")
+            if expected is None:
+                expected = self.resume_letter["checkpoints"]["save-reload"]
+            if not saved_state_matches(expected, state):
+                raise RouteFailure("normal Load did not restore the recorded earned LETTER save", "harness")
+            self.checkpoint("resume-earned-letter", state)
+            self.run_terris()
         # Stable point: use pause menu save, then load, and verify state survives.
         before_save = self.observe("save-before")
         if self.rendered:
@@ -910,14 +1403,9 @@ class Campaign:
         self.menu_button("Load saved adventure")
         self._call("settle-after-load", lambda: self.session.wait(1))
         reloaded = self.checkpoint("save-reload")
-        if not before_save.get("render_geometry", {}).get("structural_models") or reloaded.get("render_geometry") != before_save.get("render_geometry"):
+        if (self.milestone != "terris" and not before_save.get("render_geometry", {}).get("structural_models")) or reloaded.get("render_geometry") != before_save.get("render_geometry"):
             raise RouteFailure("save/reload changed structural meshes or colliders", "game suspected")
-        if (int(reloaded.get("globals", {}).get("pig_story", 0)) != int(before_save.get("globals", {}).get("pig_story", 0)) or
-                int(reloaded.get("globals", {}).get("story", 0)) != int(before_save.get("globals", {}).get("story", 0)) or
-                int(reloaded.get("globals", {}).get("old_womans_duck", 0)) != int(before_save.get("globals", {}).get("old_womans_duck", 0)) or
-                any(reloaded.get("globals", {}).get(key) != before_save.get("globals", {}).get(key) for key in ("nuttree", "wizard_again", "letter", "s2-map")) or
-                reloaded.get("inventory") != before_save.get("inventory") or
-                (reloaded.get("x"), reloaded.get("y")) != (before_save.get("x"), before_save.get("y")) or
+        if (not saved_state_matches(before_save, reloaded) or
                 (moved_after_save.get("x"), moved_after_save.get("y")) == (before_save.get("x"), before_save.get("y"))):
             raise RouteFailure("save/reload did not restore actual position, inventory, and quest state", "game suspected")
         self._call("pause-check", self.session.pause)
@@ -955,27 +1443,107 @@ class Campaign:
                 "trace": self.trace, "commands": self.commands}
 
 
-def run(rendered: bool, report: Path, max_commands: int, milestone: str = "opening") -> dict[str, Any]:
+def earned_letter_source(report: Path) -> tuple[dict[str, Any], Path, dict[str, Any]]:
+    """Continue recorded normal play, never accept a standalone save fixture."""
+    source = json.loads(report.read_text())
+    if not isinstance(source, dict):
+        raise ValueError("continuation report must be a JSON object")
+    setup = source.get("startup", {}).get("setup", {})
+    checkpoints = source.get("checkpoints", {})
+    partial = (source.get("ok") is False and source.get("milestone") == "terris"
+               and "terris-letter-earned-save" in checkpoints)
+    if (source.get("ok") is not True and not partial) or setup.get("mode") != "campaign" or setup.get("test_mode") is not False or setup.get("load_map_scripts") is not True:
+        raise ValueError("continuation requires a real campaign report with an earned LETTER save")
+    checkpoint_name = "terris-letter-earned-save" if partial else "save-reload"
+    if "letter-complete" not in checkpoints or checkpoint_name not in checkpoints:
+        raise ValueError("continuation lacks earned LETTER and its recorded save checkpoint")
+    state = checkpoints[checkpoint_name]
+    required = {"story": 6, "letter": 2, "s2-map": 1, "s2-aunt": 0}
+    if int(state.get("screen", -1)) != 439 or any(int(state.get("globals", {}).get(k, -1)) != v for k, v in required.items()):
+        raise ValueError("continuation save is not the completed LETTER state")
+    session = Path(source["session_dir"]).resolve()
+    if session.parent != report.with_suffix(".session").resolve():
+        raise ValueError("continuation save must belong to the report's isolated session")
+    save = session / "xdg/data/godot/app_userdata/Dink Smallwood 3D/adventure.json"
+    if not save.is_file() or not save.resolve().is_relative_to(session):
+        raise ValueError("earned campaign save is absent from the isolated session")
+    digest = hashlib.sha256(save.read_bytes()).hexdigest()
+    if source.get("earned_save_sha256") is not None and source["earned_save_sha256"] != digest:
+        raise ValueError("earned campaign save no longer matches its recorded hash")
+    if partial:
+        # A later route failure does not invalidate its earlier earned save.
+        # Bind the actual serialized state before allowing normal Load, and
+        # preserve the source report's failed outcome in provenance.
+        data = json.loads(save.read_text())
+        player = data.get("entities", {}).get("1", {})
+        coordinates = [player.get("x"), player.get("y")]
+        if any(isinstance(v, bool) or not isinstance(v, (int, float)) or not math.isfinite(v) for v in coordinates):
+            raise ValueError("partial route save has invalid player coordinates")
+        # The bridge emits a Vector2 (float32), while saved entities retain
+        # their scalar double precision. Compare in the bridge's representation.
+        x, y = [struct.unpack("<f", struct.pack("<f", v))[0] for v in coordinates]
+        saved = {"screen": data.get("screen"), "x": x, "y": y,
+                 "inventory": data.get("items"), "magic_inventory": data.get("magic_items"),
+                 "globals": data.get("vm", {}).get("globals", {})}
+        observed = dict(state)
+        for key in ("x", "y"):
+            observed[key] = struct.unpack("<f", struct.pack("<f", float(state[key])))[0]
+        if not saved_state_matches(observed, saved):
+            raise ValueError("partial route save does not match its earned LETTER checkpoint")
+        source["resume_checkpoint"] = state
+    return source, save, {"source_report": str(report.resolve()),
+                          "source_report_sha256": hashlib.sha256(report.read_bytes()).hexdigest(),
+                          "earned_save": str(save),
+                          "earned_save_sha256": digest,
+                          "source_ok": source.get("ok"), "earned_checkpoint": checkpoint_name,
+                          "digest_binding": "recorded" if source.get("earned_save_sha256") else "legacy; verify loaded checkpoint"}
+
+
+def run(rendered: bool, report: Path, max_commands: int, milestone: str = "opening",
+        resume_letter_report: Path | None = None) -> dict[str, Any]:
     session_dir = report.with_suffix(".session")
     campaign: Campaign | None = None
     session: PlaytestSession | None = None
+    provenance = None
     try:
-        with PlaytestSession(session_dir=session_dir, rendered=rendered, mode="campaign") as session:
+        source = None
+        save_source = None
+        if resume_letter_report is not None:
+            if milestone != "terris":
+                raise ValueError("earned LETTER continuation requires --milestone terris")
+            source, save_source, provenance = earned_letter_source(resume_letter_report)
+        with PlaytestSession(session_dir=session_dir, rendered=rendered, mode="campaign", save_source=save_source, timeout=60.0) as session:
             campaign = Campaign(session, rendered, max_commands)
             campaign.milestone = milestone
-            result = campaign.run()
+            campaign.resume_letter = source
+            try:
+                result = campaign.run()
+            except RouteFailure:
+                if rendered:
+                    try:
+                        session.screenshot("failure.png")
+                    except (RuntimeError, TimeoutError, OSError, ValueError) as frame_error:
+                        campaign.trace.append({"label": "failure-frame", "ok": False, "error": str(frame_error)})
+                raise
             result["startup"] = session.startup
+            result["milestone"] = milestone
+            result["continuation"] = provenance
             result["session_dir"] = str(session.session_dir)
-            return result
+        saved = session.session_dir / "xdg/data/godot/app_userdata/Dink Smallwood 3D/adventure.json"
+        if saved.is_file():
+            result["earned_save_sha256"] = hashlib.sha256(saved.read_bytes()).hexdigest()
+        return result
     except RouteFailure as exc:
         return {"ok": False, "verdict": "game suspected" if exc.kind == "game suspected" else "inconclusive",
-                "failure_class": exc.kind, "error": str(exc),
+                "failure_class": exc.kind, "error": str(exc), "milestone": milestone,
+                "continuation": provenance, "startup": session.startup if session else None,
                 "trace": campaign.trace if campaign else [],
                 "checkpoints": campaign.checkpoints if campaign else {},
                 "commands": campaign.commands if campaign else 0,
                 "session_dir": str(session.session_dir) if session else str(session_dir)}
     except (RuntimeError, TimeoutError, OSError, ValueError, KeyError) as exc:
-        return {"ok": False, "verdict": "inconclusive", "failure_class": "harness", "error": str(exc),
+        return {"ok": False, "verdict": "inconclusive", "failure_class": "harness", "error": str(exc), "milestone": milestone,
+                "continuation": provenance, "startup": session.startup if session else None,
                 "trace": campaign.trace if campaign else [],
                 "checkpoints": campaign.checkpoints if campaign else {},
                 "commands": campaign.commands if campaign else 0,
@@ -986,11 +1554,15 @@ def main() -> int:
     parser = argparse.ArgumentParser(description="Run a deterministic campaign milestone")
     parser.add_argument("--rendered", action="store_true", help="retain selected rendered screenshots")
     parser.add_argument("--report", type=Path, default=DEFAULT_REPORT)
-    parser.add_argument("--max-commands", type=int, default=900)
-    parser.add_argument("--milestone", choices=("opening", "ethel", "alktree", "letter"), default="opening",
-                        help="opening, Ethel's duck route, AlkTree nut/aftermath, or letter route")
+    parser.add_argument("--max-commands", type=int,
+                        help="input command budget (default 12000 for Terris, 900 otherwise)")
+    parser.add_argument("--milestone", choices=("opening", "ethel", "alktree", "letter", "terris"), default="opening",
+                        help="opening, Ethel, AlkTree, letter, or Terris arrival (allow ~12000 commands)")
+    parser.add_argument("--resume-letter-report", type=Path,
+                        help="normal Load of an earned LETTER save, including a later failed Terris route")
     args = parser.parse_args()
-    result = run(args.rendered, args.report, max(1, args.max_commands), args.milestone)
+    budget = args.max_commands if args.max_commands is not None else (12000 if args.milestone == "terris" else 900)
+    result = run(args.rendered, args.report, max(1, budget), args.milestone, args.resume_letter_report)
     args.report.parent.mkdir(parents=True, exist_ok=True)
     args.report.write_text(json.dumps(result, indent=2) + "\n", encoding="utf-8")
     # The report retains the complete telemetry trace.  Keep stdout compact so

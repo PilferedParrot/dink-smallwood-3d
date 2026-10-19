@@ -1,0 +1,729 @@
+{
+  "base": "9e0a51f",
+  "scripts": {
+    "s1-h1-4": {
+      "push": {
+        "code": [
+          {
+            "op": "call",
+            "name": "wait",
+            "args": [
+              {
+                "kind": "literal",
+                "value": 500
+              }
+            ],
+            "line": 43
+          },
+          {
+            "op": "if",
+            "condition": {
+              "kind": "binary",
+              "op": ">=",
+              "left": {
+                "kind": "ref",
+                "name": "&story"
+              },
+              "right": {
+                "kind": "literal",
+                "value": 3
+              }
+            },
+            "then": [
+              {
+                "op": "call",
+                "name": "say",
+                "args": [
+                  {
+                    "kind": "literal",
+                    "value": "It's too big too move!"
+                  },
+                  {
+                    "kind": "literal",
+                    "value": 1
+                  }
+                ],
+                "line": 47
+              },
+              {
+                "op": "return",
+                "line": 48
+              }
+            ],
+            "else": [],
+            "line": 45
+          },
+          {
+            "op": "call",
+            "name": "say",
+            "args": [
+              {
+                "kind": "literal",
+                "value": "This table must be bolted to the ground."
+              },
+              {
+                "kind": "literal",
+                "value": 1
+              }
+            ],
+            "line": 50
+          }
+        ]
+      },
+      "placements": [
+        {
+          "screen": 1,
+          "index": 22,
+          "x": 319,
+          "y": 243,
+          "seq": 87,
+          "frame": 9,
+          "vision": 0,
+          "type": 1,
+          "hard": 0
+        },
+        {
+          "screen": 414,
+          "index": 2,
+          "x": 169,
+          "y": 516,
+          "seq": 32,
+          "frame": 3,
+          "vision": 0,
+          "type": 1,
+          "hard": 0
+        },
+        {
+          "screen": 446,
+          "index": 1,
+          "x": 447,
+          "y": 111,
+          "seq": 65,
+          "frame": 4,
+          "vision": 0,
+          "type": 0,
+          "hard": 1
+        },
+        {
+          "screen": 446,
+          "index": 2,
+          "x": 169,
+          "y": 116,
+          "seq": 32,
+          "frame": 3,
+          "vision": 0,
+          "type": 1,
+          "hard": 0
+        },
+        {
+          "screen": 446,
+          "index": 3,
+          "x": 159,
+          "y": 293,
+          "seq": 65,
+          "frame": 6,
+          "vision": 0,
+          "type": 0,
+          "hard": 1
+        },
+        {
+          "screen": 446,
+          "index": 5,
+          "x": 499,
+          "y": 318,
+          "seq": 179,
+          "frame": 1,
+          "vision": 0,
+          "type": 1,
+          "hard": 0
+        },
+        {
+          "screen": 446,
+          "index": 6,
+          "x": 434,
+          "y": 267,
+          "seq": 179,
+          "frame": 2,
+          "vision": 0,
+          "type": 1,
+          "hard": 0
+        },
+        {
+          "screen": 446,
+          "index": 7,
+          "x": 469,
+          "y": 378,
+          "seq": 179,
+          "frame": 4,
+          "vision": 0,
+          "type": 1,
+          "hard": 0
+        }
+      ]
+    },
+    "s1-roc": {
+      "push": {
+        "code": [
+          {
+            "op": "if",
+            "condition": {
+              "kind": "binary",
+              "op": "<",
+              "left": {
+                "kind": "ref",
+                "name": "&strength"
+              },
+              "right": {
+                "kind": "literal",
+                "value": 4
+              }
+            },
+            "then": [
+              {
+                "op": "call",
+                "name": "say_stop",
+                "args": [
+                  {
+                    "kind": "literal",
+                    "value": "It's too heavy for me.  If I was a little stronger..."
+                  },
+                  {
+                    "kind": "literal",
+                    "value": 1
+                  }
+                ],
+                "line": 22
+              },
+              {
+                "op": "return",
+                "line": 23
+              }
+            ],
+            "else": [],
+            "line": 20
+          },
+          {
+            "op": "set",
+            "target": "&mydir",
+            "expr": {
+              "kind": "call",
+              "name": "sp_dir",
+              "args": [
+                {
+                  "kind": "literal",
+                  "value": 1
+                },
+                {
+                  "kind": "unary",
+                  "op": "-",
+                  "expr": {
+                    "kind": "literal",
+                    "value": 1
+                  }
+                }
+              ]
+            },
+            "line": 26
+          },
+          {
+            "op": "if",
+            "condition": {
+              "kind": "binary",
+              "op": "==",
+              "left": {
+                "kind": "ref",
+                "name": "&rock_placement"
+              },
+              "right": {
+                "kind": "literal",
+                "value": 0
+              }
+            },
+            "then": [
+              {
+                "op": "if",
+                "condition": {
+                  "kind": "binary",
+                  "op": "==",
+                  "left": {
+                    "kind": "ref",
+                    "name": "&mydir"
+                  },
+                  "right": {
+                    "kind": "literal",
+                    "value": 6
+                  }
+                },
+                "then": [
+                  {
+                    "op": "call",
+                    "name": "say",
+                    "args": [
+                      {
+                        "kind": "literal",
+                        "value": "It's .. it's moving..."
+                      },
+                      {
+                        "kind": "literal",
+                        "value": 1
+                      }
+                    ],
+                    "line": 34
+                  },
+                  {
+                    "op": "call",
+                    "name": "freeze",
+                    "args": [
+                      {
+                        "kind": "literal",
+                        "value": 1
+                      }
+                    ],
+                    "line": 35
+                  },
+                  {
+                    "op": "call",
+                    "name": "move_stop",
+                    "args": [
+                      {
+                        "kind": "ref",
+                        "name": "&current_sprite"
+                      },
+                      {
+                        "kind": "literal",
+                        "value": 6
+                      },
+                      {
+                        "kind": "literal",
+                        "value": 350
+                      },
+                      {
+                        "kind": "literal",
+                        "value": 1
+                      }
+                    ],
+                    "line": 36
+                  },
+                  {
+                    "op": "call",
+                    "name": "unfreeze",
+                    "args": [
+                      {
+                        "kind": "literal",
+                        "value": 1
+                      }
+                    ],
+                    "line": 37
+                  },
+                  {
+                    "op": "call",
+                    "name": "draw_hard_map",
+                    "args": [],
+                    "line": 38
+                  },
+                  {
+                    "op": "set",
+                    "target": "&rock_placement",
+                    "expr": {
+                      "kind": "literal",
+                      "value": 1
+                    },
+                    "line": 39
+                  },
+                  {
+                    "op": "return",
+                    "line": 40
+                  }
+                ],
+                "else": [],
+                "line": 32
+              }
+            ],
+            "else": [],
+            "line": 28
+          },
+          {
+            "op": "if",
+            "condition": {
+              "kind": "binary",
+              "op": "==",
+              "left": {
+                "kind": "ref",
+                "name": "&rock_placement"
+              },
+              "right": {
+                "kind": "literal",
+                "value": 1
+              }
+            },
+            "then": [
+              {
+                "op": "if",
+                "condition": {
+                  "kind": "binary",
+                  "op": "==",
+                  "left": {
+                    "kind": "ref",
+                    "name": "&mydir"
+                  },
+                  "right": {
+                    "kind": "literal",
+                    "value": 4
+                  }
+                },
+                "then": [
+                  {
+                    "op": "call",
+                    "name": "say",
+                    "args": [
+                      {
+                        "kind": "literal",
+                        "value": "..heavy..heavy.."
+                      },
+                      {
+                        "kind": "literal",
+                        "value": 1
+                      }
+                    ],
+                    "line": 50
+                  },
+                  {
+                    "op": "call",
+                    "name": "freeze",
+                    "args": [
+                      {
+                        "kind": "literal",
+                        "value": 1
+                      }
+                    ],
+                    "line": 51
+                  },
+                  {
+                    "op": "call",
+                    "name": "move_stop",
+                    "args": [
+                      {
+                        "kind": "ref",
+                        "name": "&current_sprite"
+                      },
+                      {
+                        "kind": "literal",
+                        "value": 4
+                      },
+                      {
+                        "kind": "literal",
+                        "value": 285
+                      },
+                      {
+                        "kind": "literal",
+                        "value": 1
+                      }
+                    ],
+                    "line": 52
+                  },
+                  {
+                    "op": "call",
+                    "name": "unfreeze",
+                    "args": [
+                      {
+                        "kind": "literal",
+                        "value": 1
+                      }
+                    ],
+                    "line": 53
+                  },
+                  {
+                    "op": "call",
+                    "name": "draw_hard_map",
+                    "args": [],
+                    "line": 54
+                  },
+                  {
+                    "op": "set",
+                    "target": "&rock_placement",
+                    "expr": {
+                      "kind": "literal",
+                      "value": 0
+                    },
+                    "line": 55
+                  },
+                  {
+                    "op": "return",
+                    "line": 56
+                  }
+                ],
+                "else": [],
+                "line": 48
+              }
+            ],
+            "else": [],
+            "line": 44
+          },
+          {
+            "op": "call",
+            "name": "say",
+            "args": [
+              {
+                "kind": "literal",
+                "value": "It won't budge from this angle."
+              },
+              {
+                "kind": "literal",
+                "value": 1
+              }
+            ],
+            "line": 60
+          }
+        ]
+      },
+      "placements": [
+        {
+          "screen": 277,
+          "index": 3,
+          "x": 285,
+          "y": 180,
+          "seq": 95,
+          "frame": 10,
+          "vision": 0,
+          "type": 1,
+          "hard": 0
+        },
+        {
+          "screen": 601,
+          "index": 8,
+          "x": 315,
+          "y": 253,
+          "seq": 95,
+          "frame": 1,
+          "vision": 0,
+          "type": 1,
+          "hard": 0
+        }
+      ]
+    },
+    "s2-idol": {
+      "push": {
+        "code": [
+          {
+            "op": "call",
+            "name": "say",
+            "args": [
+              {
+                "kind": "literal",
+                "value": "Uh, darn thing won't budge!!"
+              },
+              {
+                "kind": "literal",
+                "value": 1
+              }
+            ],
+            "line": 17
+          }
+        ]
+      },
+      "placements": [
+        {
+          "screen": 579,
+          "index": 22,
+          "x": 361,
+          "y": 218,
+          "seq": 80,
+          "frame": 24,
+          "vision": 0,
+          "type": 1,
+          "hard": 0
+        }
+      ]
+    },
+    "s3-rock": {
+      "push": {
+        "code": [
+          {
+            "op": "call",
+            "name": "say_stop",
+            "args": [
+              {
+                "kind": "literal",
+                "value": "Ugh, stupid rocks."
+              },
+              {
+                "kind": "literal",
+                "value": 1
+              }
+            ],
+            "line": 7
+          }
+        ]
+      },
+      "placements": [
+        {
+          "screen": 590,
+          "index": 1,
+          "x": 323,
+          "y": 149,
+          "seq": 95,
+          "frame": 10,
+          "vision": 1,
+          "type": 1,
+          "hard": 0
+        },
+        {
+          "screen": 590,
+          "index": 2,
+          "x": 318,
+          "y": 166,
+          "seq": 95,
+          "frame": 9,
+          "vision": 1,
+          "type": 1,
+          "hard": 0
+        },
+        {
+          "screen": 590,
+          "index": 3,
+          "x": 307,
+          "y": 194,
+          "seq": 95,
+          "frame": 4,
+          "vision": 1,
+          "type": 1,
+          "hard": 0
+        },
+        {
+          "screen": 590,
+          "index": 4,
+          "x": 308,
+          "y": 291,
+          "seq": 95,
+          "frame": 3,
+          "vision": 1,
+          "type": 1,
+          "hard": 0
+        },
+        {
+          "screen": 590,
+          "index": 9,
+          "x": 310,
+          "y": 213,
+          "seq": 95,
+          "frame": 8,
+          "vision": 1,
+          "type": 1,
+          "hard": 0
+        },
+        {
+          "screen": 590,
+          "index": 10,
+          "x": 310,
+          "y": 242,
+          "seq": 95,
+          "frame": 5,
+          "vision": 1,
+          "type": 1,
+          "hard": 0
+        },
+        {
+          "screen": 590,
+          "index": 11,
+          "x": 309,
+          "y": 266,
+          "seq": 95,
+          "frame": 4,
+          "vision": 1,
+          "type": 1,
+          "hard": 0
+        }
+      ]
+    }
+  },
+  "production_event_calls": [
+    {
+      "file": "game/scripts/game.gd",
+      "line": 741,
+      "code": "_run_event(id,\"touch\")"
+    },
+    {
+      "file": "game/scripts/game.gd",
+      "line": 773,
+      "code": "func _run_event(id: int, event: String) -> void:"
+    },
+    {
+      "file": "game/scripts/game.gd",
+      "line": 794,
+      "code": "_run_event(nearest,\"talk\")"
+    },
+    {
+      "file": "game/scripts/game.gd",
+      "line": 821,
+      "code": "_run_event(id,\"hit\")"
+    },
+    {
+      "file": "game/scripts/game.gd",
+      "line": 853,
+      "code": "_run_event(id,\"die\")"
+    },
+    {
+      "file": "game/scripts/game.gd",
+      "line": 940,
+      "code": "_run_event(id,\"attack\")"
+    },
+    {
+      "file": "game/scripts/game.gd",
+      "line": 946,
+      "code": "_run_event(id,\"touch\")"
+    },
+    {
+      "file": "game/scripts/game.gd",
+      "line": 958,
+      "code": "else: _run_event(id,\"damage\")"
+    },
+    {
+      "file": "game/scripts/game.gd",
+      "line": 978,
+      "code": "if not vm._procedure_code(str(e.get(\"script\",\"\")).to_lower(),\"damage\").is_empty(): _run_event(id,\"damage\")"
+    },
+    {
+      "file": "game/scripts/game.gd",
+      "line": 980,
+      "code": "_run_event(target,\"hit\")"
+    },
+    {
+      "file": "game/scripts/fps_game.gd",
+      "line": 628,
+      "code": "if candidate: _run_event(candidate, \"talk\")"
+    },
+    {
+      "file": "game/scripts/fps_game.gd",
+      "line": 1215,
+      "code": "_run_event(id, \"hit\")"
+    }
+  ],
+  "upstream_reference": [
+    {
+      "file": "freedink.cpp",
+      "sha256": "65d0749694d7c4c3e584dbaec35b424360bd95d66fe843d03ad3226cdea3fa52",
+      "lines_inclusive": [
+        [
+          106,
+          120
+        ]
+      ],
+      "source": "Retained GNU FreeDink source snapshot; upstream repository https://git.savannah.gnu.org/cgit/freedink.git/"
+    },
+    {
+      "file": "brain_keyboard.cpp",
+      "sha256": "31f978a84c9e425a986b3322b2911591b31e90f0653ba97cac7f2101df2921b8",
+      "lines_inclusive": [
+        [
+          53,
+          79
+        ],
+        [
+          253,
+          260
+        ]
+      ],
+      "source": "Retained GNU FreeDink source snapshot; upstream repository https://git.savannah.gnu.org/cgit/freedink.git/"
+    }
+  ]
+}

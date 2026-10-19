@@ -1,0 +1,80 @@
+{
+  "setup": "Normal Continue of an unmodified earned map277 pre-push save; no scenario/progression injection. OS D4s moves and faces east, A0.3s escapes; F9 records actual executable state.",
+  "source_report_sha256": "b2706b40e73059502592594cbf091fc1ddd86e0a48da06021b88f8cccb724a0c",
+  "earned_save_sha256": "5d275b27c644cac8ed569e04533fbcfdc82bcee6a66a7ea381e27a8d5a57f7c3",
+  "export_sha256": "27f9b8e782eba15179de29790222f5366ec98349865dcde27afe63dea011ff43",
+  "records": [
+    "export-rock-0.json",
+    "export-rock-1.json",
+    "export-rock-2.json"
+  ],
+  "states": [
+    {
+      "player": {
+        "dir": 8,
+        "x": 225.000366210938,
+        "y": 180.999481201172
+      },
+      "camera": {
+        "pitch": -0.08,
+        "yaw": -6.28151762741595
+      },
+      "rock": {
+        "x": 285.0,
+        "y": 180.0,
+        "active": 1.0,
+        "script": "s1-roc"
+      },
+      "globals": {
+        "strength": 4.0,
+        "wizard_see": 2.0,
+        "rock_placement": 0.0
+      }
+    },
+    {
+      "player": {
+        "dir": 6,
+        "x": 230.250366210938,
+        "y": 180.287567138672
+      },
+      "camera": {
+        "pitch": -0.08,
+        "yaw": -6.28151762741595
+      },
+      "rock": {
+        "x": 285.0,
+        "y": 180.0,
+        "active": 1.0,
+        "script": "s1-roc"
+      },
+      "globals": {
+        "strength": 4.0,
+        "wizard_see": 2.0,
+        "rock_placement": 0.0
+      }
+    },
+    {
+      "player": {
+        "dir": 4,
+        "x": 197.000366210938,
+        "y": 180.343231201172
+      },
+      "camera": {
+        "pitch": -0.08,
+        "yaw": -6.28151762741595
+      },
+      "rock": {
+        "x": 285.0,
+        "y": 180.0,
+        "active": 1.0,
+        "script": "s1-roc"
+      },
+      "globals": {
+        "strength": 4.0,
+        "wizard_see": 2.0,
+        "rock_placement": 0.0
+      }
+    }
+  ],
+  "reproduced_missing_push": true
+}

@@ -137,7 +137,11 @@ func _handle(command: Dictionary) -> void:
 	if kind == "observe":
 		result["telemetry"] = _telemetry()
 	elif kind == "navigation_grid":
-		result["navigation_grid"] = _navigation_grid()
+		var step: Variant = command.get("step", 5)
+		if not (step is int or step is float) or float(step) != floor(float(step)) or int(step) not in [1, 5]:
+			result = {"ok": false, "error": "navigation step must be 1 or 5 pixels"}
+		else:
+			result["navigation_grid"] = _navigation_grid(int(step))
 	elif kind == "hold":
 		result = await _hold(command)
 	elif kind == "wait":
@@ -175,16 +179,16 @@ func _wait(command: Dictionary) -> Dictionary:
 	paused = true
 	return {"ok": true, "frames": frames}
 
-func _navigation_grid() -> Dictionary:
+func _navigation_grid(step: int = 5) -> Dictionary:
 	# Read-only planning evidence. The scene remains paused; scripts, position,
 	# inventory, and simulated frame count are untouched by these collision probes.
 	var rows: Array = []
-	for y in range(0, 401, 5):
+	for y in range(0, 401, step):
 		var row := ""
-		for x in range(0, 641, 5):
+		for x in range(0, 641, step):
 			row += "#" if game._blocked(Vector2(x, y), 1) else "."
 		rows.append(row)
-	return {"screen": game.current_screen, "step": 5, "origin": [0, 0], "rows": rows}
+	return {"screen": game.current_screen, "step": step, "origin": [0, 0], "rows": rows}
 
 func _hold(command: Dictionary) -> Dictionary:
 	var action := str(command.get("action", ""))
@@ -271,6 +275,10 @@ func _telemetry() -> Dictionary:
 		for child in game.ui.column.get_children():
 			if child is Control and child.has_focus(): focused = str(child.name)
 			if child is BaseButton: buttons.append({"text": child.text, "disabled": child.disabled, "focused": child.has_focus()})
+	# 0.3.2 pins equipment selection and Back outside the scrolling column.
+	# Read these visible controls without invoking their handlers.
+	if is_instance_valid(ui.menu_footer) and ui.menu_footer.is_visible_in_tree():
+		buttons.append({"text": ui.menu_footer.text, "disabled": ui.menu_footer.disabled, "focused": ui.menu_footer.has_focus()})
 	var entity_state: Array = []
 	for id in game.entities:
 		var entity: Dictionary = game.entities[id]
@@ -317,6 +325,8 @@ func _render_geometry() -> Dictionary:
 
 func _ui_labels() -> Array:
 	var labels: Array = []
+	if is_instance_valid(game.ui.equipment_name) and game.ui.equipment_name.is_visible_in_tree():
+		labels.append(str(game.ui.equipment_name.text))
 	if is_instance_valid(game.ui.column):
 		for child in game.ui.column.get_children():
 			if child is Label: labels.append(str(child.text))
