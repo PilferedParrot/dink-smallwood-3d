@@ -8,7 +8,6 @@ device nickname; the runtime tests verify the bow toast's actual binding data.
 
 from pathlib import Path
 import re
-import subprocess
 import pytest
 
 
@@ -119,10 +118,10 @@ def test_game_scripts_use_binding_labels_in_control_prose():
 
 
 def test_historical_bow_hint_is_caught_without_replacing_source():
-    frozen = subprocess.check_output(
-        ["git", "show", "7fa270e:game/scripts/fps_game.gd"], cwd=ROOT, text=True
-    )
-    assert (91, "A travel bow is ready. Left click or RT to fire.") in hardcoded_control_hints(frozen)
+    # Literal from fps_game.gd:91 at 7fa270e. Keep the negative control portable
+    # to shallow checkouts and cherry-picks without that historical Git object.
+    frozen = 'ui.notify("A travel bow is ready. Left click or RT to fire.")'
+    assert (1, "A travel bow is ready. Left click or RT to fire.") in hardcoded_control_hints(frozen)
     with pytest.raises(AssertionError, match="Left click"):
         assert not hardcoded_control_hints(frozen), hardcoded_control_hints(frozen)
 

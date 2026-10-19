@@ -2359,3 +2359,7 @@ An initial combined fixture inherited a delayed opening freeze after one
 unfreeze; assuming that state would remain clear was a harness oversight.
 Opening/toast and outdoor combat now use separate instances with explicit
 combat preconditions, rather than changing production attack behavior.
+The static negative control stores the original bow-hint literal directly;
+depending on a work-branch Git object would break shallow or cherry-picked
+checkouts. That portability oversight was caught during integration, while the
+full old-source failure evidence remains local.
