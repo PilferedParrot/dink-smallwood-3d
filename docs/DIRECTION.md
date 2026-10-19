@@ -2423,3 +2423,26 @@ Application/media keys now have readable names or a numeric key code; stick
 labels retain their horizontal/vertical direction. A census covers defaults,
 unusual keys and actual slot text in every context. Even reserved-key prose
 queries the registry, preserving one source of binding names.
+
+P3b blind-review correction (2026-10-19): listening now teaches Escape or a
+one-countdown-tick hold of the pad's menu-cancel binding. A tap still captures
+that pad input. Listening has no keyboard/pad focus ring; its mouse footer
+remains clickable, and removal remains accessible through non-clashing review.
+The earlier B-twice test encoded a workaround instead of discoverability
+(reasoning stopped short); the same oversight let focus promise activation
+while capture consumed the activating key. Separate physical keyboard/pad gates
+now test the prompt, direct cancellation, tap capture, and absence of false focus.
+
+Controls chrome reuses the Settings detail font and native font/style minima.
+At largest text the list must show three complete action rows; its viewport
+and scroll increments follow whole rows, while oversized custom rows retain
+native scrolling. The earlier bounds-only gate assumed scrollability was enough
+(a misapplied heuristic); the new gate counts visible whole rows and checks a
+wheel scroll at both player sizes. Capture/review panels fit their contents
+within the existing panel cap. Axis names now receive the same Pad prefix as
+buttons, and clashes offer Swap/Cancel without removal. These were omissions
+from the earlier presentation branch and indiscriminate reuse of list layout.
+
+Unknown key names retain a numeric hexadecimal fallback (`Key 0x…`) when the
+engine cannot supply readable text. This is a safety label, not a claim of a
+complete naming table; its number follows the engine's key identifiers.

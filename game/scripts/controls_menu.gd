@@ -3,6 +3,10 @@
 extends VBoxContainer
 
 const CAPTURE_SECONDS := 15.0
+# The existing countdown advances in whole seconds. A cancel hold is one tick.
+const COUNTDOWN_TICK_SECONDS := 1.0
+const CANCEL_HOLD_SECONDS := COUNTDOWN_TICK_SECONDS
+const DETAIL_FONT_SIZE := 18 # Existing Settings detail text size.
 const GROUPS := {"2d":"Walking", "fps":"First person", "menu":"Menus", "global":"Always"}
 var ui
 var bindings
@@ -25,16 +29,27 @@ var capture_deadline := 0
 var layout_serial := 0
 var restore_token := ""
 var pending_modifier: Dictionary = {}
+var cancel_pressed_msec := -1
+var pending_cancel: Dictionary = {}
+var intro: Label
+var spacer: Control
+var rows: Array[Control] = []
+var snapping_scroll := false
+var previous_scroll := 0.0
 
 func _ready() -> void:
 	bindings = ui.bindings
 	scope = bindings.context
 	size_flags_vertical = Control.SIZE_EXPAND_FILL
-	add_theme_constant_override("separation", 12)
+	add_theme_constant_override("separation", ui.column.get_theme_constant("separation"))
+	ui.heading.add_theme_font_size_override("font_size",ui.menu_theme.default_font_size)
+	intro = _label("Pad buttons are named as on an Xbox controller",self)
+	intro.add_theme_font_size_override("font_size",roundi(DETAIL_FONT_SIZE*ui.text_scale))
 	tabs = HBoxContainer.new()
 	add_child(tabs)
 	for area in GROUPS:
 		var tab := _button(GROUPS[area], "group_"+area, tabs)
+		_compact_button(tab)
 		tab.toggle_mode = true
 		# Selection stays visible without relying on the gold text colour.
 		var selected: StyleBoxFlat = ui.menu_theme.get_stylebox("focus","Button").duplicate()
@@ -45,14 +60,19 @@ func _ready() -> void:
 		tab.add_theme_stylebox_override("pressed",selected)
 		tab.pressed.connect(_select_group.bind(area))
 	scroll = ScrollContainer.new()
-	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	scroll.size_flags_vertical = Control.SIZE_FILL
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	scroll.follow_focus = true
 	add_child(scroll)
+	scroll.get_v_scroll_bar().value_changed.connect(_snap_scroll)
 	body = VBoxContainer.new()
 	body.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	body.add_theme_constant_override("separation", 12)
+	body.add_theme_constant_override("separation",ui.column.get_theme_constant("separation"))
 	scroll.add_child(body)
+	spacer = Control.new()
+	spacer.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	spacer.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(spacer)
 	footer = HBoxContainer.new()
 	add_child(footer)
 	_build_list()
@@ -62,7 +82,7 @@ func _button(text: String, token: String, parent: Node) -> Button:
 	button.text = text
 	button.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	button.focus_mode = Control.FOCUS_ALL
-	button.custom_minimum_size.y = ui.menu_footer.custom_minimum_size.y
+	button.custom_minimum_size.y = 0 # Native font/style minima respect text size.
 	button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	button.set_meta("controls_token", token)
 	parent.add_child(button)
@@ -71,6 +91,11 @@ func _button(text: String, token: String, parent: Node) -> Button:
 	button.custom_minimum_size.x = minf(text_width+insets,ui.root.size.x*0.5)
 	buttons[token] = button
 	return button
+
+func _compact_button(button: Button) -> void:
+	button.add_theme_font_size_override("font_size",roundi(DETAIL_FONT_SIZE*ui.text_scale))
+	var width := button.get_theme_font("font").get_string_size(button.text,HORIZONTAL_ALIGNMENT_LEFT,-1,button.get_theme_font_size("font_size")).x
+	button.custom_minimum_size.x = width+button.get_theme_stylebox("normal").get_minimum_size().x
 
 func _label(text: String, parent: Node = null, gold := false) -> Label:
 	var label := Label.new()
@@ -91,8 +116,16 @@ func _clear_body() -> void:
 		if not token.begins_with("group_"): buttons.erase(token)
 	countdown = null
 	cancel_button = null
+	cancel_pressed_msec = -1
+	pending_cancel = {}
+	rows.clear()
 	tabs.visible = state == "list"
+	intro.visible = state == "list"
+	spacer.visible = state == "list"
+	scroll.custom_minimum_size.y = 0
 	scroll.scroll_vertical = 0
+	previous_scroll = 0
+	if state == "list": ui._layout_for("controls")
 
 func _select_group(area: String) -> void:
 	scope = area
@@ -101,7 +134,7 @@ func _select_group(area: String) -> void:
 
 func _event_name(value: Dictionary) -> String:
 	var text: String = bindings.event_label(value)
-	return "Pad " + text if value.type == "pad" and not text.begins_with("Pad ") else text
+	return "Pad " + text if value.type in ["pad","axis"] and not text.begins_with("Pad ") else text
 
 func _reserved_reason(id: String) -> String:
 	var key_name: String = bindings.label(id,false,"global" if id == "escape" else "fps")
@@ -113,7 +146,6 @@ func _build_list() -> void:
 	for area in GROUPS:
 		buttons["group_"+area].set_pressed_no_signal(area == scope)
 		buttons["group_"+area].add_theme_color_override("font_pressed_color", ui.GOLD)
-	_label("Select a binding to change it. Pad names use Xbox positions.", body)
 	# Combat first; all registry actions remain visible in their own context.
 	var ids: Array = ["attack", "magic", "talk"]
 	for id in bindings.actions:
@@ -125,11 +157,13 @@ func _build_list() -> void:
 		var row := VBoxContainer.new()
 		row.add_theme_constant_override("separation", 4)
 		body.add_child(row)
+		rows.append(row)
 		var title := HBoxContainer.new()
 		row.add_child(title)
 		_label(entry.name, title, true)
 		if not entry.reserved:
 			var reset := _button("Reset…", id+"_reset", title)
+			_compact_button(reset)
 			reset.size_flags_horizontal = Control.SIZE_SHRINK_END
 			reset.pressed.connect(_ask_reset.bind(id))
 		var slots := HFlowContainer.new()
@@ -179,16 +213,66 @@ func _capture(id: String, index: int) -> void:
 		for axis in range(10):
 			if absf(Input.get_joy_axis(device,axis)) > 0.5: blocked_axes[str(device)+":"+str(axis)] = 1.0
 	cancel_button = _button("Cancel", "cancel", footer)
+	cancel_button.focus_mode = Control.FOCUS_NONE
 	cancel_button.pressed.connect(_build_list)
 	if slot >= 0:
-		_button("Remove binding", "remove", footer).pressed.connect(_ask_remove)
-	_focus_later("cancel",layout_serial)
+		var remove := _button("Remove binding", "remove", footer)
+		remove.focus_mode = Control.FOCUS_NONE
+		remove.pressed.connect(_ask_remove)
+	var focus := get_viewport().gui_get_focus_owner()
+	if focus != null: focus.release_focus()
 
 func _process(_delta: float) -> void:
+	if state == "list":
+		_fit_rows()
+		return
+	_fit_prompt()
 	if state != "capture": return
+	if cancel_pressed_msec >= 0 and Time.get_ticks_msec()-cancel_pressed_msec >= roundi(CANCEL_HOLD_SECONDS*1000):
+		_build_list()
+		return
 	var seconds := maxi(0, ceili(float(capture_deadline-Time.get_ticks_msec())/1000.0))
-	countdown.text = "%s to cancel · %d s remaining" % [bindings.label("escape",false,"global"),seconds]
+	countdown.text = "%s or hold %s to cancel · %d s remaining" % [bindings.label("escape",false,"global"),bindings.label("ui_cancel",true,"menu"),seconds]
 	if seconds == 0: _build_list()
+
+func _snap_scroll(value: float) -> void:
+	if state != "list" or snapping_scroll or rows.is_empty(): return
+	var index := 0
+	for i in rows.size():
+		if rows[i].position.y <= value: index = i
+	var target: float = rows[index].position.y
+	if rows[index].size.y > scroll.size.y:
+		# A large user-created action keeps native within-row scrolling.
+		target = value
+	elif value > previous_scroll and value > target and index+1 < rows.size():
+		target = rows[index+1].position.y
+	snapping_scroll = true
+	scroll.get_v_scroll_bar().set_value_no_signal(target)
+	previous_scroll = scroll.scroll_vertical
+	snapping_scroll = false
+
+func _fit_rows() -> void:
+	if rows.is_empty() or size.y <= 0: return
+	var gap := get_theme_constant("separation")
+	var available := size.y-intro.get_combined_minimum_size().y-tabs.get_combined_minimum_size().y-footer.get_combined_minimum_size().y-gap*4
+	var start := 0
+	for i in rows.size():
+		if rows[i].position.y <= scroll.scroll_vertical+1: start=i
+	var extent := 0.0
+	for i in range(start,rows.size()):
+		var candidate := rows[i].position.y+rows[i].size.y-rows[start].position.y
+		if candidate > available: break
+		extent = candidate
+	# Oversize custom actions retain native scrolling so every slot stays reachable.
+	scroll.custom_minimum_size.y = maxf(1,minf(available,extent if extent>0 else available))
+
+func _fit_prompt() -> void:
+	var chrome: float = ui.panel.get_combined_minimum_size().y-scroll.get_combined_minimum_size().y
+	var maximum: float = ui.root.size.y*(0.90-0.07)
+	scroll.custom_minimum_size.y = minf(body.get_combined_minimum_size().y,maxf(0,maximum-chrome))
+	ui.panel.anchor_bottom = ui.panel.anchor_top
+	ui.panel.offset_bottom = chrome+scroll.custom_minimum_size.y
+	ui.panel.size.y = chrome+scroll.custom_minimum_size.y
 
 func _input(event: InputEvent) -> void:
 	var axis_token := ""
@@ -208,6 +292,19 @@ func _input(event: InputEvent) -> void:
 			get_viewport().set_input_as_handled()
 		return
 	if event is InputEventMouseMotion: return
+	if event is InputEventJoypadButton or event is InputEventJoypadMotion:
+		if event.is_action_pressed("ui_cancel"):
+			if cancel_pressed_msec < 0:
+				cancel_pressed_msec = Time.get_ticks_msec()
+				pending_cancel = bindings.from_event(event)
+			get_viewport().set_input_as_handled()
+			return
+		if cancel_pressed_msec >= 0 and event.is_action_released("ui_cancel"):
+			get_viewport().set_input_as_handled()
+			record = pending_cancel
+			cancel_pressed_msec = -1
+			if not record.is_empty(): _propose()
+			return
 	if event is InputEventMouseButton:
 		# Native pointer activation is still available on Cancel/Remove.
 		for button in footer.get_children():
@@ -254,7 +351,7 @@ func _propose() -> void:
 	else:
 		_label("Save this binding?")
 		_button("Bind", "bind", footer).pressed.connect(_save.bind("refuse"))
-	if slot >= 0:
+	if slot >= 0 and clashes.is_empty():
 		_button("Remove binding", "remove", footer).pressed.connect(_ask_remove)
 	_button("Cancel", "cancel", footer).pressed.connect(_build_list)
 	_focus_later("swap" if buttons.has("swap") else ("bind" if buttons.has("bind") else "retry"), layout_serial)

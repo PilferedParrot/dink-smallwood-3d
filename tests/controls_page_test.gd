@@ -223,10 +223,11 @@ func run() -> void:
 	if device == "keyboard": await key(KEY_ESCAPE)
 	elif device == "mouse": await activate("cancel")
 	else:
-		# B is a valid candidate; the next B cancels its review without saving.
-		await pad(JOY_BUTTON_B)
-		check(game.ui.controls_menu.state == "proposal" and game.ui.controls_menu.record == {"type":"pad","button":JOY_BUTTON_B},"Pad B can be captured as a candidate")
-		await pad(JOY_BUTTON_B)
+		var hold := InputEventJoypadButton.new()
+		hold.device=3; hold.button_index=JOY_BUTTON_B; hold.pressed=true
+		Input.parse_input_event(hold)
+		await create_timer(1.1).timeout
+		hold.pressed=false; Input.parse_input_event(hold); await settle()
 	check(game.ui.controls_menu.state == "list" and game.bindings.events("attack") == before,"G1 cancel leaves bindings unchanged with "+device)
 	await activate("reset_all")
 	await activate("confirm")
