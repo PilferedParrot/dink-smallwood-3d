@@ -179,5 +179,9 @@
     ],
     "contains_native_stopped_foot": false,
     "integration_note": "Original point-mover reaches its unexpanded hardbox boundary; port grow4 stops outside original grow2 push selection. A future dispatcher must account for actual blocked owner/contact rather than copy the old reach unchanged."
-  }
+  },
+  "limitations": [
+    "Static evaluation plus executable repro; no intervention control removes the rock.",
+    "Missing PUSH dispatch and grow4 stop versus original grow2 target reach are candidates; this evidence does not isolate a fix."
+  ]
 }

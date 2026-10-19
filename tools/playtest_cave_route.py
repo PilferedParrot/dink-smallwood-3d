@@ -70,7 +70,7 @@ class CaveRoute(Campaign):
     def finish_terris(self) -> dict:
         # The remaining route is the same input sequence as run_terris(),
         # starting after the cave proof and wizard reward have been earned.
-        self._warp(6, 251, (467, 387), "terris-wizard-leave")
+        self._walk_to_authored_door_trigger(6, 251, (467, 387), "terris-wizard-leave")
         self.travel_route([283, 315, 314, 346, 378, 377, 376, 375, 407, 406, 405, 404], "terris-bridge-road")
         gold = int(self.observe("toll-before")["globals"]["gold"])
         if gold < 100:
@@ -86,7 +86,7 @@ class CaveRoute(Campaign):
         self.checkpoint("terris-toll-complete", state)
         self.travel_route([403, 435, 467, 499, 500], "terris-town-road")
         self.navigate(500, (261, 350), "terris-maria-door")
-        self._warp(500, 36, (261, 329), "terris-enter-maria")
+        self._walk_to_authored_door_trigger(500, 36, (261, 329), "terris-enter-maria")
         return self.terris_arrival()
 
 

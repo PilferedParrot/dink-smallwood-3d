@@ -6,224 +6,224 @@
       "sheet": "01-opening.jpg",
       "slot": 0,
       "caption": "Opening: ordinary Begin adventure",
-      "source": "tmp/p1-route/source-4.session/session-17ik873e/opening-dialogue.png",
+      "source": "docs/playtest/route-0.3.2/frames/source4-opening-dialogue.png",
       "source_sha256": "ab7f4359ad67d4f799ea8b6673a0b29eb47ad4f56ecb9fab3b7a3fb95d204816"
     },
     {
       "sheet": "01-opening.jpg",
       "slot": 1,
       "caption": "Pig feed collected by walking",
-      "source": "tmp/p1-route/source-4.session/session-17ik873e/sack-collected.png",
+      "source": "docs/playtest/route-0.3.2/frames/source4-sack-collected.png",
       "source_sha256": "8be79f0d55bf05bb6130721e27db3d84f9ea8138d82eee4c8e1305f5658b4be0"
     },
     {
       "sheet": "01-opening.jpg",
       "slot": 2,
       "caption": "Pigs fed, bully scene completed",
-      "source": "tmp/p1-route/source-4.session/session-17ik873e/pig-story.png",
+      "source": "docs/playtest/route-0.3.2/frames/source4-pig-story.png",
       "source_sha256": "1a52f37b7534c2ae89e58f0cc7166ba45a639aa11f9a981b56c7b4116620bc16"
     },
     {
       "sheet": "01-opening.jpg",
       "slot": 3,
       "caption": "Return home: completed-chores conversation",
-      "source": "tmp/p1-route/source-4.session/session-17ik873e/home-completion.png",
+      "source": "docs/playtest/route-0.3.2/frames/source4-home-completion.png",
       "source_sha256": "308ab4e972a8c3b8707ec7c5784737ea5e4d0336447fcc3b52ea66700c1973b5"
     },
     {
       "sheet": "02-ethel.jpg",
       "slot": 0,
       "caption": "Ethel requests Quackers",
-      "source": "tmp/p1-route/source-4.session/session-17ik873e/ethel-request.png",
+      "source": "docs/playtest/route-0.3.2/frames/source4-ethel-request.png",
       "source_sha256": "d4861a7c12994f0f615e1893718477109d27ead72c6c577a014e938951ace6ab"
     },
     {
       "sheet": "02-ethel.jpg",
       "slot": 1,
       "caption": "Quackers return conversation",
-      "source": "tmp/p1-route/source-4.session/session-17ik873e/duck-returned.png",
+      "source": "docs/playtest/route-0.3.2/frames/source4-duck-returned.png",
       "source_sha256": "7deee26074360fee6277cf4e360c66561d9ad3f70b0f7d6901edc187601670f4"
     },
     {
       "sheet": "02-ethel.jpg",
       "slot": 2,
       "caption": "Ethel acknowledges his return",
-      "source": "tmp/p1-route/source-4.session/session-17ik873e/ethel-acknowledgment.png",
+      "source": "docs/playtest/route-0.3.2/frames/source4-ethel-acknowledgment.png",
       "source_sha256": "1d9cbf62a5e30091c45430f8418f1e1978887e38bf9c07f23cad23f85f3c8635"
     },
     {
       "sheet": "02-ethel.jpg",
       "slot": 3,
       "caption": "Mother assigns AlkTree nuts",
-      "source": "tmp/p1-route/source-4.session/session-17ik873e/home-alktree.png",
+      "source": "docs/playtest/route-0.3.2/frames/source4-home-alktree.png",
       "source_sha256": "371c35ddb58a9d4ee65f16880ee6efad97b65f1cb0e5e5bec0a365288e565190"
     },
     {
       "sheet": "03-alktree.jpg",
       "slot": 0,
       "caption": "Wizard introduction, normal map startup",
-      "source": "tmp/p1-route/source-4.session/session-17ik873e/wizard-introduction.png",
+      "source": "docs/playtest/route-0.3.2/frames/source4-wizard-introduction.png",
       "source_sha256": "8e19b3f0ff9ce51a9c3ca2b683286813545569ddc6c62275bcba79c0864564e8"
     },
     {
       "sheet": "03-alktree.jpg",
       "slot": 1,
       "caption": "Ordinary attack on AlkTree",
-      "source": "tmp/p1-route/source-4.session/session-17ik873e/alktree-hit.png",
+      "source": "docs/playtest/route-0.3.2/frames/source4-alktree-hit.png",
       "source_sha256": "e20277becc3215745480a545e53db4e5a31814965414fc3253c1ac9cbfa0d8d5"
     },
     {
       "sheet": "03-alktree.jpg",
       "slot": 2,
       "caption": "Nut earned through S1-NUT",
-      "source": "tmp/p1-route/source-4.session/session-17ik873e/nut-collected.png",
+      "source": "docs/playtest/route-0.3.2/frames/source4-nut-collected.png",
       "source_sha256": "646846fcedb0d28a6eeb518e0d94af3c31e333ac277ac125e003cefcf74f1d29"
     },
     {
       "sheet": "03-alktree.jpg",
       "slot": 3,
       "caption": "Observed Milder/Lyna return scene",
-      "source": "tmp/p1-route/source-4.session/session-17ik873e/lyna-speaking.png",
+      "source": "docs/playtest/route-0.3.2/frames/source4-lyna-speaking.png",
       "source_sha256": "5ae763431cd0048ed4490e7967b1178caf3cd62fb55d90345f02d8be32f9ddf9"
     },
     {
       "sheet": "04-letter.jpg",
       "slot": 0,
       "caption": "Interior fire conversation",
-      "source": "tmp/p1-route/source-4.session/session-17ik873e/mother-fire-interior.png",
+      "source": "docs/playtest/route-0.3.2/frames/source4-mother-fire-interior.png",
       "source_sha256": "68a8d0397a671ba21ebe4b0e995810a32a18e7b0f55281e5f7d4d73a52fc0c9d"
     },
     {
       "sheet": "04-letter.jpg",
       "slot": 1,
       "caption": "Neighbors after the evacuation",
-      "source": "tmp/p1-route/source-4.session/session-17ik873e/neighbors-aftermath.png",
+      "source": "docs/playtest/route-0.3.2/frames/source4-neighbors-aftermath.png",
       "source_sha256": "003419de73017a9bc2f148ae8067c324f2cb920836481df3265b47255143c268"
     },
     {
       "sheet": "04-letter.jpg",
       "slot": 2,
       "caption": "Aunt Maria letter conversation",
-      "source": "tmp/p1-route/source-4.session/session-17ik873e/letter-dialogue.png",
+      "source": "docs/playtest/route-0.3.2/frames/source4-letter-dialogue.png",
       "source_sha256": "fe6f81d57b3666a15bcb932f00c3bd2bc4215c1bea93542de23f7b63de303336"
     },
     {
       "sheet": "04-letter.jpg",
       "slot": 3,
       "caption": "Letter finished, control released",
-      "source": "tmp/p1-route/source-4.session/session-17ik873e/letter-complete.png",
+      "source": "docs/playtest/route-0.3.2/frames/source4-letter-complete.png",
       "source_sha256": "57c81d430d79426cf8a98543319c3232c23b4e5c6d550175e7b942b84b9bfc1a"
     },
     {
       "sheet": "07-wizard-road.jpg",
       "slot": 0,
       "caption": "Wizard requests the Bonca proof, normal campaign",
-      "source": "tmp/p1-route/source-7.session/session-m7zigq2h/wizard-proof-request.png",
+      "source": "docs/playtest/route-0.3.2/frames/07-wizard-road-wizard-proof-request.png",
       "source_sha256": "bb7b7d97e6118e2463ca888e04fb87d0f5aaaf021ac65bf4dc80ba0b72734e2b"
     },
     {
       "sheet": "07-wizard-road.jpg",
       "slot": 1,
       "caption": "Strength potion earned: strength4, wizard_see2",
-      "source": "tmp/p1-route/source-7.session/session-m7zigq2h/wizard-training-earned-save.png",
+      "source": "docs/playtest/route-0.3.2/frames/07-wizard-road-wizard-training-earned-save.png",
       "source_sha256": "039c05725ec16f0310c28293126834c4ec6c93a5d0c32543abc6d90806e7d591"
     },
     {
       "sheet": "07-wizard-road.jpg",
       "slot": 2,
       "caption": "Source run: bounded planner stop on341",
-      "source": "tmp/p1-route/source-7.session/session-m7zigq2h/failure.png",
+      "source": "docs/playtest/route-0.3.2/frames/07-wizard-road-failure.png",
       "source_sha256": "6f437afab0bbcab193f90e32616219b6dc9f0c0717d393a4fab7143365e8387c"
     },
     {
       "sheet": "07-wizard-road.jpg",
       "slot": 3,
       "caption": "Packed resources: same planner stop on341",
-      "source": "tmp/p1-route/packed.session/session-wwp2iw2q/failure.png",
+      "source": "docs/playtest/route-0.3.2/frames/07-wizard-road-e0a7a45dc8-failure.png",
       "source_sha256": "e0a7a45dc88f5cb4a6cac87ad6864f6c9e822cd62a875f6e22e26b2a91f7900c"
     },
     {
       "sheet": "08-export-378.jpg",
       "slot": 0,
       "caption": "Export0.3.2: W stops at75,149.5; F9 capture",
-      "source": "tmp/p1-route/export-repro378-2/export/profile/data/godot/app_userdata/Dink Smallwood 3D/bug_reports/report-2026-10-19T14-55-14-12826314-0.png",
+      "source": "docs/playtest/route-0.3.2/08-export-378-0.png",
       "source_sha256": "0a77e9819ea4fc47d8548bad07fa969406aa1b201f4d17ab9fca1553e5feb6f9"
     },
     {
       "sheet": "08-export-378.jpg",
       "slot": 1,
       "caption": "Export0.3.2: S escapes to75,205.5; F9 capture",
-      "source": "tmp/p1-route/export-repro378-2/export/profile/data/godot/app_userdata/Dink Smallwood 3D/bug_reports/report-2026-10-19T14-55-22-21044787-1.png",
+      "source": "docs/playtest/route-0.3.2/08-export-378-1.png",
       "source_sha256": "ac3b18c8648cedf26041cb37e6160071c61124c98b86089e23ea519ada245e9c"
     },
     {
       "sheet": "09-cave-rock.jpg",
       "slot": 0,
       "caption": "Earned map277: approach west of rock",
-      "source": "tmp/p1-route/guided.session/session-j21j9r4a/wizard-rock-before.png",
+      "source": "docs/playtest/route-0.3.2/frames/09-cave-rock-d9420384e3-wizard-rock-before.png",
       "source_sha256": "d9420384e3aecb5c4124267de9951e06c3bba8ce1dc590bd87258de0e44056de"
     },
     {
       "sheet": "09-cave-rock.jpg",
       "slot": 1,
       "caption": "After360 forward frames: rock unchanged",
-      "source": "tmp/p1-route/guided.session/session-j21j9r4a/failure.png",
+      "source": "docs/playtest/route-0.3.2/frames/09-cave-rock-4761907b33-failure.png",
       "source_sha256": "4761907b33cea08d453988304302f2fa16256793662553575e622c1161896e95"
     },
     {
       "sheet": "09-cave-rock.jpg",
       "slot": 2,
       "caption": "Back12 moves away: controls remain released",
-      "source": "tmp/p1-route/guided.session/session-j21j9r4a/rock-back-control.png",
+      "source": "docs/playtest/route-0.3.2/frames/09-cave-rock-95bdb7cce7-rock-back-control.png",
       "source_sha256": "95bdb7cce769c9a923e0e8ae3af5c403daf024e249acd66f87bfa7c0eff4d9a9"
     },
     {
       "sheet": "10-export-rock.jpg",
       "slot": 0,
       "caption": "Actual export: normal Continue, earned277 save",
-      "source": "tmp/p1-route/export-rock/capture/profile/data/godot/app_userdata/Dink Smallwood 3D/bug_reports/report-2026-10-19T15-08-31-10693736-0.png",
+      "source": "docs/playtest/route-0.3.2/export-rock-0.png",
       "source_sha256": "32992e2cbf521c4fbf5f858844892e278c22006f5cae26339d164e6b71ca07c1"
     },
     {
       "sheet": "10-export-rock.jpg",
       "slot": 1,
       "caption": "D4s: native dir6 east, rock unchanged",
-      "source": "tmp/p1-route/export-rock/capture/profile/data/godot/app_userdata/Dink Smallwood 3D/bug_reports/report-2026-10-19T15-08-42-21638792-1.png",
+      "source": "docs/playtest/route-0.3.2/export-rock-1.png",
       "source_sha256": "7acb1627f599c138895f7c09405d6376947d8acc61b846b37551185140c79171"
     },
     {
       "sheet": "10-export-rock.jpg",
       "slot": 2,
       "caption": "A0.3s: native dir4 west, escape control",
-      "source": "tmp/p1-route/export-rock/capture/profile/data/godot/app_userdata/Dink Smallwood 3D/bug_reports/report-2026-10-19T15-08-50-28897391-2.png",
+      "source": "docs/playtest/route-0.3.2/export-rock-2.png",
       "source_sha256": "a7ecaf330dc3d14d60bb925071266474522a9314e704cf4c02ec19af51070251"
     },
     {
       "sheet": "05-forest-mask-378.jpg",
       "slot": 0,
       "caption": "Scenario:378 at75,160, facing north",
-      "source": "tmp/p1-route/probe378/sessions/session-hxqcf1v9/before.png",
+      "source": "docs/playtest/route-0.3.2/frames/05-forest-mask-378-4ecd6eada9-before.png",
       "source_sha256": "4ecd6eada9820e977c6944e64409e3208db35628a2652f8cd6f93933427bc7bb"
     },
     {
       "sheet": "05-forest-mask-378.jpg",
       "slot": 1,
       "caption": "W12 stops75,149.5; flat ground ahead",
-      "source": "tmp/p1-route/probe378/sessions/session-hxqcf1v9/blocked.png",
+      "source": "docs/playtest/route-0.3.2/frames/05-forest-mask-378-c98ce1f10d-blocked.png",
       "source_sha256": "c98ce1f10d108ab5697c2ae762f67759237f593491579c344daafd37bb8ec583"
     },
     {
       "sheet": "05-forest-mask-378.jpg",
       "slot": 2,
       "caption": "S12 backs away to75,170.5",
-      "source": "tmp/p1-route/probe378/sessions/session-hxqcf1v9/escaped.png",
+      "source": "docs/playtest/route-0.3.2/frames/05-forest-mask-378-04f68ebaf5-escaped.png",
       "source_sha256": "04f68ebaf5c19e87745935b811b409c08791e3eb35ea1814b35838308bd7b463"
     },
     {
       "sheet": "05-forest-mask-378.jpg",
       "slot": 3,
       "caption": "Earned campaign: same strip stops5px planner",
-      "source": "tmp/p1-route/source-5.session/session-yvz96ydo/failure.png",
+      "source": "docs/playtest/route-0.3.2/frames/05-forest-mask-378-abb0310d88-failure.png",
       "source_sha256": "abb0310d888fe7c728b77e885f0eb7bea431e3c0c043239b619eab603b44f2fa"
     }
   ],
@@ -268,5 +268,6 @@
       "sha256": "390e9e442af5fd890da5144d38273bfc9fe356b6e51e1ff65f030c18e5236fa3",
       "kind": "native captures with caption layout"
     }
-  ]
+  ],
+  "source_paths": "Repository-relative committed originals; source_sha256 verifies original capture bytes."
 }

@@ -7,9 +7,11 @@ The source and packed-resource runs initially stopped on map 341 because the
 controller chose the wrong connected region for its next northward leg.
 An explicit component detour then reached the cave rock on **map 277**.
 Its ordinary push failed despite earned strength 4; the actual 0.3.2 Linux
-executable reproduces the failure with native direction 6 and the rock proven
-as the collision owner. **Bonca and Terris were not reached.** This is a
-suspected game interaction failure, not evidence that Dink is trapped.
+executable reproduces the failure with native direction 6. Static evaluation
+plus executable repro attributes the stop to the rock; no intervention control
+was run. Missing PUSH dispatch and the contact margin are candidate mechanisms.
+**Bonca and Terris were not reached.** This is a suspected game interaction
+failure, not evidence that Dink is trapped.
 
 No production game files changed. This unit restores the campaign harness from
 `3fd67d1` onto `9e0a51f` and corrects its observation, steering and planning drift.
@@ -28,8 +30,10 @@ Campaign sessions begin at the actual title screen, use Begin/Continue,
 keyboard equipment selection, mouse look, movement, talk, attack and ordinary
 dialogue/menu input. Native collision grids are read-only observations: their
 query leaves player state and simulated frame count unchanged. Coordinates
-below use the original 640×400 map space. A helper named `_warp` walks into
-ordinary authored door triggers; it does not inject a transition.
+below use the original 640×400 map space. The helper
+`_walk_to_authored_door_trigger` uses ordinary movement to enter authored door
+triggers and requires the expected destination; it does not
+inject a transition.
 
 Retained campaign runs use Dummy audio, isolated XDG data/config/cache,
 `nice -n 10`, timeouts and the shared `dink-godot.lock`. Long runs were named
@@ -52,8 +56,15 @@ save from the real campaign continuation; no scenario setup is involved.
 The compact [checkpoint ledger](route-0.3.2/checkpoints.json) preserves failed
 run outcomes and selected quest/control observations. The
 [frame ledger](route-0.3.2/frames.json) binds the native captures to their hashes.
-Full input traces and isolated earned saves remain local under `tmp/p1-route/`;
-they contain machine-specific paths and are not publication artifacts.
+The committed [full title-to-letter input trace](route-0.3.2/source-4-title-letter.jsonl.gz)
+contains every native protocol command and response from startup through the
+earned letter save (10,193 records, 5,096 commands, 331,348 bytes compressed).
+The [trace manifest](route-0.3.2/source-4-title-letter.json) records the range,
+hashes, endpoint, command counts and sanitization: only the isolated session
+path and screenshot-response paths change; every input command is unchanged.
+All frame-ledger source paths now name committed original capture bytes, with
+SHA-256 checks. Unsanitized later traces and isolated earned saves remain local
+under `tmp/p1-route/`.
 
 | Leg | Observed completion | Evidence |
 | --- | --- | --- |
@@ -64,10 +75,12 @@ they contain machine-specific paths and are not publication artifacts.
 | Earned letter → cabin → Bonca request | Normal Continue, outdoor traversal and cabin entry; `wizard_see=2`, `strength=4`; normal save | [Wizard/road sheet](route-0.3.2/07-wizard-road.jpg) |
 | Cabin → western cave road | Source and packed resources reach 341 at (34.752930,385.016785); initial route cannot reach north from that component | [Wizard/road sheet](route-0.3.2/07-wizard-road.jpg) |
 | Component detour → cave rock | Ordinary crossings reach 277; strength 4, `wizard_see=2`; three forward120 holds leave rock unchanged; back12 escapes | [Cave-rock sheet](route-0.3.2/09-cave-rock.jpg) |
-| Actual executable: cave-rock continuation | Normal Continue; D4s sets native direction 6 and hits the rock; A0.3s escapes; all F9 states retain `rock_placement=0` | [Exported rock sheet](route-0.3.2/10-export-rock.jpg) |
+| Actual executable: cave-rock continuation | Normal Continue; D4s sets native direction 6 and stops west of the rock; A0.3s escapes; all F9 states retain `rock_placement=0` | [Exported rock sheet](route-0.3.2/10-export-rock.jpg) |
 
-The uninterrupted title-to-letter run (`source-4`, 2,478 controller commands)
-earned its letter save at frame 19,666, map 439 (362.416656,303).
+The uninterrupted title-to-letter prefix (`source-4`, 2,276 controller calls;
+5,096 native protocol commands including observations) earned its letter save
+at frame 19,666, map 439 (362.416656,303). The complete later-failing run has
+2,478 controller calls; these are not all part of the published letter prefix.
 Save SHA-256:
 `df74d45f9dc7c62b7d35150c0f2a74ffa7df215483ff9c2785d2af3e3c6445ec`.
 The requested Terris run still has `ok=false`: its later navigation failure is
@@ -80,78 +93,21 @@ serialized coordinates. Source failure/provenance remains visible. The earned
 wizard-training save has SHA-256
 `7c62c9387f48de4622a2e714077ebfab0a4938b79b08139dbc30c580d04962f7`.
 
-## Blockers and controls
+## Route blockers and controls
 
 | Finding | Position/input | Classification and result |
 | --- | --- | --- |
 | Inventory observation omitted pinned selection/footer | 439 (363.163269,311.918213), normal inventory navigation | Harness failure; bridge telemetry updated, later runs equip feed/fists normally |
 | Pig approach tolerance permitted stopping outside feed box | 407 (195.585342,273.545532), waypoint (220,270) with radius 25 | Harness failure; radius 20 now implies membership in the script's feed box |
 | Mouse turn overshot at scaled viewport | 409 near (268.5724,392.6345), then forward crossed south to 441 instead of reaching Ethel | Harness failure; measured closed-loop yaw and immediate wrong-map rejection |
-| Rounded collision sample rejected a valid landing | 377 (28.946228,385.033264), rounded sample (30,385) blocked | Harness failure/inconclusive exploration; real back for 12 frames crossed to 376 (607.946228,385.033264), so no trapped-player claim |
-| Five-pixel sampling missed thin forest hardness | 378 (74.959999,149.793518), forward toward (75,135) | Harness aliasing plus known game art/mask disagreement; native 1px planning routes around it |
-| Flat-looking forest ground stops northward movement | 378 scenario (75,160), W12 stops (75,149.5), S12 escapes (75,170.5) | Game presentation/collision failure; not a trap. Actual export W stops identically, S escapes to (75,205.5) |
-| Greedy map sequence enters wrong region | 341 (34.752930,385.016785), desired north to 309 | Harness route knowledge/inconclusive exploration; both source and packed runs agree. No north exit from this region, but east/west exits exist |
-| Cave rock never receives PUSH | 277, source starts (225.000366,180.999481), three forward120 holds; actual export D4s stops (230.250366,180.287567), native direction 6 | Suspected game failure; rock alone owns the blocked next step; strength 4 and controls released; rock remains (285,180), flag 0. A/back escape succeeds |
+| Rounded collision sample rejected a valid landing | 377 (28.946228,385.033264), rounded sample (30,385) blocked | Harness failure; real back for 12 frames crossed to 376 (607.946228,385.033264), so no trapped-player claim |
+| Greedy map sequence enters wrong region | 341 (34.752930,385.016785), desired north to 309 | Harness failure; the route lacks component-aware knowledge. Both source and packed runs agree. No north exit from this region, but east/west exits exist |
+| Cave-rock push fails | 277, source starts (225.000366,180.999481), three forward120 holds; actual export D4s stops (230.250366,180.287567), native direction 6 | Game failure (suspected). Candidates: missing PUSH dispatch and contact-margin mismatch (grow4 stop x230.25 versus original grow2 push-selection boundary x233). Static evaluation plus executable repro attributes the stop to the rock; no intervention control isolates the candidates. Strength4, rock (285,180)/flag0 unchanged; A/back escape succeeds |
 
 The source-4 four-direction probe changes the final trace position after its
 377 planning failure. The failed approach position above precedes that probe;
 the final retained player position is on 376. The back control is real input,
 not a restored Python position.
-
-### Map 378: exact extent and owners
-
-At x=75, native y=145 is free, y=146–148 are hard, and y=149–150 are free. Five-pixel
-samples skip the three-pixel strip. The initial native 1px query took 9.90s,
-advanced no simulation, and all 10,449 downsampled samples matched the earned
-campaign state's 5px grid. The repeated focused test and actual executable
-also stop at y=149.5. The saved F9 screenshots show flat ground ahead of the
-player rather than a standing barrier at that boundary.
-
-![Native scenario and earned-campaign witness](route-0.3.2/05-forest-mask-378.jpg)
-
-![Exact component over original overhead art](route-0.3.2/06-mask-378-topdown.png)
-
-The witness seed (75,146) belongs to original tile index 25, tile ID 85, the
-`ts01` forest/grass atlas family, default `Hard.dat` mask 131. It is tile
-hardness, not a sprite or custom override at that seed. Its complete
-four-connected source tile-hard component has **4,557 pixels**, inclusive
-bounds **x=20–269, y=0–149**; all 4,557 are native-blocked. The adjoining complete
-native blocked component has 11,394 pixels, bounds x=20–325, y=0–151.
-[Exact inclusive row runs and owners](route-0.3.2/hardness-378.json) preserve
-both extents; the [compressed native grid](route-0.3.2/native-grid-378.json.gz)
-preserves the complete probe.
-
-| Tile index | Tile ID | Mask provenance | Pixels in source component |
-| --- | --- | --- | ---: |
-| 4 | 40 | custom 796 | 1,250 |
-| 16 | 40 | custom 796 | 1,250 |
-| 24 | 84 | default 33 | 200 |
-| 25 | 85 | default 131 | 182 |
-| 26 | 86 | default 19 | 200 |
-| 27 | 87 | default 32 | 200 |
-| 28 | 40 | custom 793 | 1,275 |
-
-Both causes are the existing forest mismatch documented in
-[DIRECTION.md](../DIRECTION.md#rc5-open-issue-natural-forms-disagree-with-source-hardness-2026-10-11):
-original 2D tile masks remain movement barriers while the outdoor renderer
-rebuilds forest separately and does not reconstruct this ground mask as a
-standing form (`fp_world.gd`, outdoor terrain branch). The development error
-was treating source hardness/art attribution as proof of agreement with the
-built form at player eye height. This is a fresh witness of that known class;
-no new forest mechanism or game fix is claimed here.
-
-![Actual executable: blocked and escaped F9 captures](route-0.3.2/08-export-378.jpg)
-
-The [export summary](route-0.3.2/export-378.json), full
-[blocked F9 record](route-0.3.2/export-378-0.json) and
-[escaped F9 record](route-0.3.2/export-378-1.json) include build/script hashes,
-input and state. Their saved images precede the path-bearing F9 notification.
-Published F9 JSON rewrites only the screenshot basename; the
-[record manifest](route-0.3.2/f9-records.json) binds original and published hashes.
-The first executable repro attempt selected Begin instead of Continue, landed
-on map 1 and failed its screen assertion: that was a harness failure, excluded
-from the witness. The corrected second attempt used the already-focused
-Continue option and passed both movement assertions.
 
 ### Map 341 and component-guided continuation
 
@@ -231,8 +187,10 @@ not use Dink's animation hardbox [-11,-9,11,9]. The stopped point's clearance
 ends at x234.250366; the next 0.875px substep would reach x231.125365, whose
 clearance reaches x235.125365, overlapping the rock.
 
-[Complete owner evaluation](route-0.3.2/rock-block-owner.json) identifies the
-rock as the **only** blocker of that next step. Tile 40, ID700, default mask 249
+[Static owner evaluation](route-0.3.2/rock-block-owner.json) attributes that
+next step to the rock alone. This is a static evaluation plus executable repro,
+not an intervention control: the executable shows the stop, but no run removes
+the rock to isolate its causal role. Tile 40, ID700, default mask 249
 with no custom mask is free at the stop and next point. Five hard cells in
 the surrounding x225–240/y170–190 region are at y170,x234–238; none is on this
 approach. The hole's grown box is [256,148,294,180], and the other prop's
@@ -244,12 +202,17 @@ footprint record, structural-stone record or visible fitted-fir rectangle.
 Both cause hypotheses, supported by the observed reproduction and static
 comparison:
 
-1. **What broke:** the port blocks ordinary movement on the rock but has no
-   physical PUSH dispatcher. The imported `S1-ROC.push` requires strength ≥4
+1. **What broke (candidates):** the port has no physical PUSH dispatcher, and
+   its grow4 collision stop lies outside the original grow2 selection margin.
+   The executable repro does not isolate which contact/dispatch change would
+   restore the interaction. The imported `S1-ROC.push` requires strength ≥4
    and direction 6 to move the rock to x350 and set `rock_placement=1`; neither
-   happens. All production `_run_event` call sites cover talk, hit, die,
-   touch, attack or damage, with no push equivalent.
-2. **Why we made it:** an engine-port omission. Importing/compiling procedures
+   happens. Those script conditions alone do not demonstrate that the original
+   engine would select the owner from this port's stopped position. All production
+   `_run_event` call sites cover talk, hit, die, touch, attack or damage, with no
+   push equivalent.
+2. **Why we made it (hypothesis):** an engine-port omission of the combined
+   collision/contact/dispatch contract. Importing/compiling procedures
    was treated as sufficient interaction coverage without verifying the
    blocked-cardinal-input event contract end to end. This is an inference
    about development reasoning, not a claim about a particular author's intent.
@@ -279,7 +242,84 @@ direction changes, release, owner selection and repeated dispatch behavior.
 No game fix was made here. The intended cave interaction halted this route;
 alternative cave access or other ways to earn the bridge toll were not tested.
 
+## Known-class witness (scenario): map 378
+
+This is an instance of the existing forest presentation/collision disagreement,
+separate from the route-blocker table. The focused witness skips progression
+and map startup scripts. It does not establish an earned-campaign game blocker
+or a trapped player. The earlier source-5 stop was a sampling failure in the
+controller; source-7 subsequently traversed this screen with native 1px planning.
+
+| Finding | Single class | Evidence and control |
+| --- | --- | --- |
+| Five-pixel planner missed a thin strip on 378 | Harness failure | Source-5 stopped at (74.959999,149.793518) while targeting (75,135); native 1px planning later routes around it |
+| Flat-looking ground stops northward movement in the focused fixture | Game failure (known-class presentation witness, scenario) | Scenario W12 stops (75,149.5); S12 escapes (75,170.5). Actual export scenario stops identically and S escapes to (75,205.5) |
+
+### Exact extent and owners
+
+At x=75, native y=145 is free, y=146–148 are hard, and y=149–150 are free. Five-pixel
+samples skip the three-pixel strip. The initial native 1px query took 9.90s,
+advanced no simulation, and all 10,449 downsampled samples matched the earned
+campaign state's 5px grid. The repeated focused test and actual executable
+also stop at y=149.5. The saved F9 screenshots show flat ground ahead of the
+player rather than a standing barrier at that boundary.
+
+![Native scenario and earned-campaign witness](route-0.3.2/05-forest-mask-378.jpg)
+
+![Exact component over original overhead art](route-0.3.2/06-mask-378-topdown.png)
+
+The witness seed (75,146) belongs to original tile index 25, tile ID 85, the
+`ts01` forest/grass atlas family, default `Hard.dat` mask 131. It is tile
+hardness, not a sprite or custom override at that seed. Its complete
+four-connected source tile-hard component has **4,557 pixels**, inclusive
+bounds **x=20–269, y=0–149**; all 4,557 are native-blocked. The adjoining complete
+native blocked component has 11,394 pixels, bounds x=20–325, y=0–151.
+[Exact inclusive row runs and owners](route-0.3.2/hardness-378.json) preserve
+both extents; the [compressed native grid](route-0.3.2/native-grid-378.json.gz)
+preserves the complete probe.
+
+| Tile index | Tile ID | Mask provenance | Pixels in source component |
+| --- | --- | --- | ---: |
+| 4 | 40 | custom 796 | 1,250 |
+| 16 | 40 | custom 796 | 1,250 |
+| 24 | 84 | default 33 | 200 |
+| 25 | 85 | default 131 | 182 |
+| 26 | 86 | default 19 | 200 |
+| 27 | 87 | default 32 | 200 |
+| 28 | 40 | custom 793 | 1,275 |
+
+Both causes are the existing forest mismatch documented in
+[DIRECTION.md](../DIRECTION.md#rc5-open-issue-natural-forms-disagree-with-source-hardness-2026-10-11):
+original 2D tile masks remain movement barriers while the outdoor renderer
+rebuilds forest separately and does not reconstruct this ground mask as a
+standing form (`fp_world.gd`, outdoor terrain branch). The development error
+was treating source hardness/art attribution as proof of agreement with the
+built form at player eye height. This is a fresh witness of that known class;
+no new forest mechanism or game fix is claimed here.
+
+![Actual executable: blocked and escaped F9 captures](route-0.3.2/08-export-378.jpg)
+
+The [export summary](route-0.3.2/export-378.json), full
+[blocked F9 record](route-0.3.2/export-378-0.json) and
+[escaped F9 record](route-0.3.2/export-378-1.json) include build/script hashes,
+input and state. Their saved images precede the path-bearing F9 notification.
+Published F9 JSON rewrites only the screenshot basename; the
+[record manifest](route-0.3.2/f9-records.json) binds original and published hashes.
+The first executable repro attempt selected Begin instead of Continue, landed
+on map 1 and failed its screen assertion: that was a harness failure, excluded
+from the witness. The corrected second attempt used the already-focused
+Continue option and passed both movement assertions.
+
 ## Harness fixes and verification
+
+Evidence-publication correction: machine-specific raw paths led us to omit a
+checkable full-input prefix and its original images. That was an oversight in
+the privacy/verifiability trade-off. Sanitized complete protocol records and
+committed capture originals now preserve both; the audit checks every command,
+response, terminal state and ledger hash, rather than only selected endpoints.
+The authored-door helper's old `_warp` name was inherited without checking its
+meaning against the no-injection promise; the explicit movement name and all
+call sites/tests are now consistent.
 
 Each corrected bug has both causes recorded above. Additional implementation
 details and class checks:
@@ -319,6 +359,14 @@ the changed/new Python tools, the launcher passed `bash -n`, and
 exported W/S/F9 and D/A/F9 witnesses are the runtime evidence. An early
 accidentally selected runtime-test invocation lacked the full launch wrapper and was stopped; its partial results
 are excluded. No production game diff is part of this unit.
+
+Review-correction checks: the 66 campaign tests pass after the helper rename.
+All 10,193 published trace records were compared with the retained originals;
+only 5,097 session-path values and 26 screenshot-response paths change. Every
+input command and the complete final checkpoint match. All 32 frame references
+and 26 trace screenshots resolve to committed original bytes with matching
+hashes. The compressed trace passes the size/privacy checks. No Godot run was
+performed for these documentation and naming corrections.
 
 ## Reproduction
 
