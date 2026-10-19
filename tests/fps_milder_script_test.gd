@@ -7,13 +7,13 @@ class ScriptGame extends GAME:
 	var arrival_checked := false
 	var arrival_visible := false
 	var arrived_at := Vector2.ZERO
-	func _dialogue(text: String, speaker: int, context: Dictionary) -> void:
+	func _dialogue(text: String, speaker: int, context: Dictionary, binding: String = "say_stop") -> int:
 		if str(context.get("script","")) == "s1-bul" and "lookie" in text:
 			arrival_checked=true
 			arrived_at=_position2(speaker)
 			var visual: Node3D=visuals.get(speaker)
 			arrival_visible=is_instance_valid(visual) and visual.get_node_or_null("Model") is Sprite3D and float(visual.get_meta("height",0))>1.0 and not visual.get_meta("seam_hidden",false)
-		await super._dialogue(text,speaker,context)
+		return await super._dialogue(text,speaker,context,binding)
 
 func _initialize() -> void:
 	_run.call_deferred()
