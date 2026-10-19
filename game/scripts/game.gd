@@ -54,6 +54,15 @@ var hardness_cache: Dictionary = {}
 # drawn walls (median 15 px) and 45-80 px out behind the houses, and was missing on the
 # inn's back (docs/DIRECTION.md, seventh pass).
 const FOOTPRINT_GROW := 4.0 # the player's radius in source pixels, as for every hardbox
+const PUSH_DELAY := 0.6 # FreeDink brain_keyboard.cpp:253 (seconds)
+const PUSH_BASE := 310 # FreeDink game_state.cpp:32
+const PUSH_TOLERANCE := 2.0 # original raw hardbox selection, not camera clearance
+var _push_direction := 0
+var _push_elapsed := 0.0
+var _push_animation := false
+var _collect_push_contact := false
+var _push_use_contact_direction := false
+var _push_block_probe := Vector2.INF
 var footprints: Dictionary = {} # screen -> record written by tools/collision_map.py
 var footprint_sprites: Dictionary = {} # editor index -> [PackedVector2Array]: this screen's buildings
 var screen_footprints: Array = [] # [PackedVector2Array]: kit buildings (tiles and many sprites)
@@ -167,6 +176,7 @@ func load_map(number: int, run_scripts: bool = true) -> void:
 	if not world.get("screens",{}).has(str(number)):
 		ui.notify("The path ends here.")
 		return
+	_reset_push()
 	# A preview's random choices belong to this visit. Reuse them only when the
 	# incoming story/editor state still matches the preview; later calls to random
 	# (after a blocking command) keep the live VM's normal behavior.
@@ -286,6 +296,10 @@ func editor_entity(number: int, source: Dictionary, deep: bool = true, vision_ov
 	var vision: int = int(vm.globals.get("vision",0)) if vision_override < 0 else vision_override
 	if int(e.get("vision",0)) != 0 and int(e.get("vision",0)) != vision: return {}
 	e["editor_num"] = idx
+	# Source editor_screen.cpp:54-87 allocates live editor sprites in this
+	# stable draw rank, not editor index order. Keep the arrival rank even if
+	# a script later moves the sprite or changes its drawing queue.
+	e["push_rank"] = int(e.get("que",0)) if int(e.get("que",0)) != 0 else int(e.get("y",0))
 	e["pseq"] = e.get("seq",0)
 	e["pframe"] = maxi(1,int(e.get("frame",1)))
 	e["seq"] = 0
@@ -426,24 +440,19 @@ func _update_visual(id: int) -> void:
 			sprite.position.y = 0.02
 
 func _physics_process(delta: float) -> void:
-	if not playing or changing: return
+	if not playing or changing:
+		_reset_push()
+		return
 	attack_cooldown = maxf(0,attack_cooldown-delta)
 	hurt_cooldown = maxf(0,hurt_cooldown-delta)
 	warp_cooldown = maxf(0,warp_cooldown-delta)
 	if not ui.modal and entities.has(1):
-		var player: Dictionary = entities[1]
-		if not player.get("frozen",false) and not int(player.get("disabled",0)) and not int(player.get("nocontrol",0)) and attack_cooldown < 0.2:
-			var input := Input.get_vector("left","right","up","down")
-			if input.length() > 0.15:
-				player["dir"] = _direction(input)
-				var speed := 105.0 * maxf(0.5,float(player.get("speed",3))/3.0)
-				_move_entity(1,input*speed*delta)
-				_set_animation(1,int(player.get("base_walk",70))+int(player.dir))
-			else:
-				if attack_cooldown <= 0:
-					_set_animation(1,int(player.get("base_idle",10))+_cardinal(int(player.dir)))
+		var input := Input.get_vector("left","right","up","down")
+		if _move_player_input(input if input.length() > 0.15 else Vector2.ZERO, delta):
 			_transitions()
 		_update_ai(delta)
+	else:
+		_reset_push()
 	for id in entities.keys():
 		if entities.has(id): _animate(id,delta)
 	hud_clock += delta
@@ -513,6 +522,151 @@ func _direction(v: Vector2) -> int:
 
 func _cardinal(dir: int) -> int:
 	return {1:2,3:2,7:8,9:8}.get(dir,dir)
+
+func _reset_push() -> void:
+	if _push_animation and entities.has(1):
+		var player: Dictionary = entities[1]
+		# Only release the animation control that PUSH itself acquired.
+		if int(player.get("seq",0)) == PUSH_BASE + _push_direction:
+			player["nocontrol"] = 0
+			player["seq"] = 0
+	_push_direction = 0
+	_push_elapsed = 0.0
+	_push_animation = false
+	_push_block_probe = Vector2.INF
+
+func _move_player_input(motion: Vector2, delta: float, speed_scale: float = 1.0, contact_direction: bool = false) -> bool:
+	# Both controllers feed source-world movement here. FPS strafing therefore
+	# pushes in the direction of travel, independently of the camera's gaze.
+	var player: Dictionary = entities[1]
+	var direction := _direction(motion.normalized()) if motion != Vector2.ZERO else 0
+	if contact_direction:
+		# Free camera headings have no source keyboard direction. Preserve a
+		# held face contact while the input still presses towards that face.
+		if motion == Vector2.ZERO or (_push_direction != 0 and motion.dot(_dir_vector(_push_direction)) <= 0.0): _reset_push()
+	elif direction != _push_direction:
+		_reset_push()
+	if player.get("frozen",false):
+		# Original thisTickCount keeps advancing during a script freeze. It
+		# suppresses dispatch, but does not restart an already expired timer.
+		if _push_direction != 0: _push_elapsed += delta
+		return false
+	if int(player.get("disabled",0)) or attack_cooldown >= 0.2:
+		_reset_push()
+		return false
+	if _push_animation:
+		if int(player.get("nocontrol",0)): return false
+		_push_animation = false # the normal animation cycle released control
+	if int(player.get("nocontrol",0)):
+		_reset_push()
+		return false
+	if motion == Vector2.ZERO:
+		_reset_push()
+		if attack_cooldown <= 0:
+			_set_animation(1,int(player.get("base_idle",10))+_cardinal(int(player.dir)))
+		return true
+	player["dir"] = direction
+	var speed := 105.0 * maxf(0.5,float(player.get("speed",3))/3.0) * speed_scale
+	_push_block_probe = Vector2.INF
+	_collect_push_contact = contact_direction or direction in [2,4,6,8]
+	_push_use_contact_direction = contact_direction
+	_move_entity(1,motion*speed*delta)
+	_collect_push_contact = false
+	_push_use_contact_direction = false
+	_set_animation(1,int(player.get("base_walk",70))+direction)
+	var push_direction := _push_contact_direction(_push_block_probe,direction) if contact_direction else direction
+	if _push_block_probe == Vector2.INF or push_direction not in [2,4,6,8]:
+		_reset_push()
+	elif _push_direction != push_direction:
+		_push_direction = push_direction
+		_push_elapsed = 0.0
+	else:
+		_push_elapsed += delta
+		# Do not turn exactly600ms into >600ms through accumulated float error.
+		if _push_elapsed > PUSH_DELAY and not is_equal_approx(_push_elapsed,PUSH_DELAY):
+			player["dir"] = push_direction
+			_set_animation(1,PUSH_BASE+push_direction)
+			player["nocontrol"] = 1
+			_push_animation = true
+			_dispatch_push(_push_block_probe)
+	return true
+
+func _record_push_block(probe: Vector2, axis: int) -> void:
+	if not _collect_push_contact: return
+	var direction := int(entities[1].get("dir",0))
+	if not _push_use_contact_direction and (axis == 0) != (direction in [4,6]): return
+	# Source hardness 2 (water) does not start the original push timer.
+	if _blocking_sprite(probe,1,_position2(1)) == 0 and _tile_hardness(probe) == 2: return
+	_push_block_probe = probe
+
+func _push_contact_direction(probe: Vector2, fallback: int) -> int:
+	if probe == Vector2.INF: return 0
+	var owner := _blocking_sprite(probe,1,_position2(1))
+	if owner == 0: return fallback # tile/footprint overlap retains the source-foot fallback
+	var raw := _hard_rect(entities[owner])
+	var contact := probe.clamp(raw.position,raw.end)
+	var west := contact.x == raw.position.x
+	var east := contact.x == raw.end.x
+	var north := contact.y == raw.position.y
+	var south := contact.y == raw.end.y
+	# A corner belongs to two faces: retain the original diagonal exclusion.
+	if (west or east) and (north or south): return 0
+	if west: return 6
+	if east: return 4
+	if north: return 2
+	if south: return 8
+	return fallback
+
+func _dispatch_push(probe: Vector2) -> void:
+	var foot := _position2(1)
+	var owner := _blocking_sprite(probe,1,foot)
+	var contact := Vector2.INF
+	if owner:
+		var raw := _hard_rect(entities[owner])
+		# Map the native finite foot's rejected centre onto the raw source
+		# hardbox. This removes exactly our collision clearance, in both axes.
+		contact = probe.clamp(raw.position,raw.end)
+	var expected := generation
+	# FreeDink brain_keyboard.cpp:59-83 visits ALL matches in live-slot order.
+	for id in _push_dispatch_ids():
+		if generation != expected: break
+		if id == 1 or not entities.has(id): continue
+		var e: Dictionary = entities[id]
+		if int(e.get("active",1)) == 0: continue
+		# Source background/editor-hidden sprites never retain a live slot.
+		if int(e.get("editor_num",0)) > 0 and int(e.get("type",1)) != 1: continue
+		var rect := _hard_rect(e).grow(PUSH_TOLERANCE)
+		# Preserve the original CURRENT-foot scan, even for non-hard scripted
+		# sprites beside tile collision. Only the actual blocker gains the
+		# finite-foot contact mapping. A sprite selected both ways runs once.
+		if _push_has_point(rect,foot) or (id == owner and _push_has_point(rect,contact)):
+			_run_event(id,"push")
+
+func _push_has_point(rect: Rect2, point: Vector2) -> bool:
+	# FreeDink rect.cpp:81-90 includes right/bottom, unlike Rect2.has_point.
+	return point.x >= rect.position.x and point.x <= rect.end.x and point.y >= rect.position.y and point.y <= rect.end.y
+
+func _push_dispatch_ids() -> Array:
+	var ids := entities.keys()
+	var first_editor := next_entity
+	var ranks := {}
+	# Legacy saves predate push_rank. Recover it from the source placement,
+	# rather than sorting on an already moved sprite's live y coordinate.
+	for source in world.screens[str(current_screen)].get("sprites",[]):
+		ranks[int(source.get("index",0))] = int(source.get("que",0)) if int(source.get("que",0)) != 0 else int(source.get("y",0))
+	for id in ids:
+		if int(entities[id].get("editor_num",0)) > 0: first_editor = mini(first_editor,id)
+	var order := {}
+	for id in ids:
+		var e: Dictionary = entities[id]
+		var editor := int(e.get("editor_num",0))
+		var stage := 1 if editor > 0 else (0 if id < first_editor else 2)
+		order[id] = [stage,int(e.get("push_rank",ranks.get(editor,0))) if editor > 0 else id,editor,id]
+	ids.sort_custom(func(a: int,b: int) -> bool:
+		for field in 4:
+			if order[a][field] != order[b][field]: return order[a][field] < order[b][field]
+		return false)
+	return ids
 
 func _dir_vector(dir: int) -> Vector2:
 	return {1:Vector2(-1,1),2:Vector2(0,1),3:Vector2(1,1),4:Vector2(-1,0),6:Vector2(1,0),7:Vector2(-1,-1),8:Vector2(0,-1),9:Vector2(1,-1)}.get(dir,Vector2.ZERO).normalized()
@@ -595,6 +749,9 @@ func _hard_rect(e: Dictionary) -> Rect2:
 # already inside a band is held out of the solid itself and may not step closer to it, but may
 # step away or slide along it.
 func _blocked(pos: Vector2, mover: int, from: Vector2 = Vector2.INF) -> bool:
+	return _blocking_sprite(pos,mover,from) != 0 or _structure_blocked(pos,from)
+
+func _blocking_sprite(pos: Vector2, mover: int, from: Vector2 = Vector2.INF) -> int:
 	for id in entities:
 		if id == mover or id == 1: continue
 		var e: Dictionary = entities[id]
@@ -604,8 +761,8 @@ func _blocked(pos: Vector2, mover: int, from: Vector2 = Vector2.INF) -> bool:
 		if not rect.grow(FOOTPRINT_GROW).has_point(pos): continue
 		if from != Vector2.INF and not rect.has_point(pos) and rect.grow(FOOTPRINT_GROW).has_point(from) and not rect.has_point(from) \
 				and _rect_distance(rect,pos) >= _rect_distance(rect,from) - 0.0001: continue
-		return true
-	return _structure_blocked(pos,from)
+		return id
+	return 0
 
 func _rect_distance(rect: Rect2, p: Vector2) -> float:
 	var d := Vector2(maxf(maxf(rect.position.x-p.x,0.0),p.x-rect.end.x),maxf(maxf(rect.position.y-p.y,0.0),p.y-rect.end.y))
@@ -672,25 +829,28 @@ func _edge_distance(pos: Vector2, poly: PackedVector2Array) -> float:
 	return best
 
 func _tile_blocked(pos: Vector2) -> bool:
-	if pos.x < 20 or pos.x >= 620 or pos.y < 0 or pos.y >= 400: return false
-	if _tile_pixel_replaced(pos): return false
+	return _tile_hardness(pos) != 0
+
+func _tile_hardness(pos: Vector2) -> int:
+	if pos.x < 20 or pos.x >= 620 or pos.y < 0 or pos.y >= 400: return 0
+	if _tile_pixel_replaced(pos): return 0
 	var tx := int((pos.x-20)/50)
 	var ty := int(pos.y/50)
 	var tile: Dictionary = world.screens[str(current_screen)].tiles[ty*12+tx]
 	# A building's own tiles, and the custom masks drawn round its picture, give way to its
 	# footprint (a reverted tile keeps its art's default mask: a river bank, a cliff edge).
 	var override := int(footprint_tiles.get(ty*12+tx,-1))
-	if override == 0: return false
+	if override == 0: return 0
 	var mask := int(tile.get("hard",0)) if override != 1 else 0
 	var hardness: Dictionary = world.get("hardness",{})
 	if mask == 0:
 		var defaults: Array = hardness.get("tile_defaults",[])
 		var tile_id := int(tile.get("tile",0))
 		if tile_id >= 0 and tile_id < defaults.size(): mask = int(defaults[tile_id])
-	if mask <= 0: return false
+	if mask <= 0: return 0
 	if not hardness_cache.has(mask):
 		var masks: Array = hardness.get("masks_rle",[])
-		if mask >= masks.size(): return false
+		if mask >= masks.size(): return 0
 		var decoded := PackedByteArray()
 		for run in masks[mask]:
 			for i in int(run[1]): decoded.append(int(run[0]))
@@ -699,7 +859,7 @@ func _tile_blocked(pos: Vector2) -> bool:
 	var x := int(pos.x-20)%50
 	var y := int(pos.y)%50
 	var pixels: PackedByteArray = hardness_cache[mask]
-	return x*51+y < pixels.size() and pixels[x*51+y] != 0
+	return int(pixels[x*51+y]) if x*51+y < pixels.size() else 0
 
 func _move_entity(id: int, displacement: Vector2, ignore_hardness: bool = false) -> void:
 	if not entities.has(id): return
@@ -707,7 +867,9 @@ func _move_entity(id: int, displacement: Vector2, ignore_hardness: bool = false)
 	var e: Dictionary = entities[id]
 	var noclip := ignore_hardness or int(e.get("noclip",0)) != 0
 	if noclip or not _blocked(pos+Vector2(displacement.x,0),id,pos): pos.x += displacement.x
+	elif id == 1 and displacement.x != 0: _record_push_block(pos+Vector2(displacement.x,0),0)
 	if noclip or not _blocked(pos+Vector2(0,displacement.y),id,pos): pos.y += displacement.y
+	elif id == 1 and displacement.y != 0: _record_push_block(pos+Vector2(0,displacement.y),1)
 	e["x"] = pos.x
 	e["y"] = pos.y
 

@@ -158,9 +158,11 @@ class PlaytestSession:
     def observe(self) -> dict[str, Any]:
         return self.request("observe")
 
-    def navigation_grid(self) -> dict[str, Any]:
+    def navigation_grid(self, step: int = 5) -> dict[str, Any]:
         """Read the current map's collision probes without advancing the game."""
-        return self.request("navigation_grid")
+        if isinstance(step, bool) or not isinstance(step, int) or step not in (1, 5):
+            raise ValueError("navigation step must be 1 or 5 pixels")
+        return self.request("navigation_grid", step=step)
 
     def hold(self, action: str, frames: int) -> dict[str, Any]:
         return self.request("hold", action=action, frames=frames)

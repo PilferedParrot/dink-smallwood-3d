@@ -1,0 +1,32 @@
+[
+  {
+    "published": "export-378-0.json",
+    "original_record_sha256": "f126fdfaae21b667db605d43b8c3c24a7080c3572030ee3e89de6eaa2a442acd",
+    "published_record_sha256": "f51ebd8e080aad977031ee10b4cb186eea0bc148b5df83d77699988e8b21e2db",
+    "only_change": "screenshot basename rewritten to the published image filename"
+  },
+  {
+    "published": "export-378-1.json",
+    "original_record_sha256": "575dc646e2996dd03e5ddc29be7e1bb9ee914a3998c590782eed47db74d1a347",
+    "published_record_sha256": "46ba6cceefb7df3087903324fabd54e0048c7d60896cd8a970d277ad78d35784",
+    "only_change": "screenshot basename rewritten to the published image filename"
+  },
+  {
+    "published": "export-rock-0.json",
+    "original_record_sha256": "2745129809c1d0bd8ac82700641aa26c45b5081d355069cda10e243d7e2bcc20",
+    "published_record_sha256": "0ddc23ed3d35a40304e7d8d2bf7fe0c1ab1a5d184d86f71cb72dcd6070c19cf4",
+    "only_change": "screenshot basename rewritten to the published image filename"
+  },
+  {
+    "published": "export-rock-1.json",
+    "original_record_sha256": "84efd08b266a07679872ee27cef9bd90c7acd2ca08e5eeb971925cf46ecc349b",
+    "published_record_sha256": "856b8b26cb06e8bb8c8fc48b92a22e6fd50bacdeec759753410c7ab6a95fd22f",
+    "only_change": "screenshot basename rewritten to the published image filename"
+  },
+  {
+    "published": "export-rock-2.json",
+    "original_record_sha256": "c12d69c79847b8ec6700b8ab2c9211569b823f09129d593494c17fe9a36b789e",
+    "published_record_sha256": "193e7137f754b6b664db918c9f3550acf84539c29c4a9962c139f047cd352156",
+    "only_change": "screenshot basename rewritten to the published image filename"
+  }
+]

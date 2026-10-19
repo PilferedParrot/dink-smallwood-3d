@@ -1,0 +1,3968 @@
+{
+  "title": "Existing indoor-grid adjacencies refused by FPS target-indoor guard",
+  "as_of": "2026-10-19",
+  "sources": {
+    "world": {
+      "path": "game/data/world.json",
+      "sha256": "3e643839d6c287f757d9a65ccd773f1d4313de645ab944c54700e1a88a011be1"
+    },
+    "fps_controller": {
+      "path": "game/scripts/fps_game.gd",
+      "sha256": "f22c9c6358d0f35ae5770b3cd627bf4309963c1535364f8d6a47245f097b8a79"
+    },
+    "campaign_route": {
+      "path": "tools/playtest_campaign.py",
+      "sha256": "92363859ef480e16c0bd7b873039efaf76bcc2bdf31a15bf3d36573434ebec91"
+    },
+    "cave_route": {
+      "path": "tools/playtest_cave_route.py",
+      "sha256": "b4cb27dc9faf20f0ffb53da002727e8c8000c713d9696317e6ea4923abca0b64"
+    },
+    "original_crossing": {
+      "path": "FreeDink source/freedink.cpp",
+      "sha256": "65d0749694d7c4c3e584dbaec35b424360bd95d66fe843d03ad3226cdea3fa52"
+    }
+  },
+  "rule": "game/scripts/fps_game.gd _blocked: after an out-of-screen player probe, target exists and world.screens[target].indoor == true makes the condition at line 344 true; target is refused irrespective of both screens being indoor. Earlier collision or lock conditions can also refuse movement.",
+  "enumeration": "Only existing indoor=true screens in world.json; horizontal delta \u00b11 within one 32-column row, vertical delta \u00b132. Adjacency is metadata, not evidence of physical seam traversability.",
+  "counts": {
+    "existing_screens": 644,
+    "indoor_screens": 74,
+    "undirected_indoor_pairs": 115,
+    "directed_metadata_refusals": 230,
+    "route_undirected_pairs": 2,
+    "route_directed_legs": 4,
+    "degree_sum": 230
+  },
+  "route_scope": "Current automated Bonca/Terris path in tools/playtest_campaign.py cave_from_rock and wizard_reward; finish_terris in tools/playtest_cave_route.py adds no indoor grid leg. Broader campaign applicability unknown.",
+  "observed_131_to_99": {
+    "evidence": "tmp/push-evidence/bonca3.json, cross-wizard-bonca-road-99",
+    "screen": 131,
+    "x": 289.375,
+    "y": 0.750836372375488,
+    "modal": false,
+    "dialogue": false,
+    "north_blocked": true,
+    "result": "no transition to 99; later modal dialogue is separate"
+  },
+  "verification": {
+    "independent_grid_traversal_equal": true,
+    "both_route_pairs_present": true,
+    "all_four_route_directions_present": true,
+    "sum_of_degrees_equals_directed_count": true
+  },
+  "edges": [
+    {
+      "id": "1-2",
+      "screens": [
+        1,
+        2
+      ],
+      "axis": "horizontal",
+      "scripts": [
+        "s1-h1-s",
+        "s1-h2-s"
+      ],
+      "on_current_automated_campaign_route": false,
+      "physical_seam_status": "not_censused"
+    },
+    {
+      "id": "1-33",
+      "screens": [
+        1,
+        33
+      ],
+      "axis": "vertical",
+      "scripts": [
+        "s1-h1-s",
+        null
+      ],
+      "on_current_automated_campaign_route": false,
+      "physical_seam_status": "not_censused"
+    },
+    {
+      "id": "2-3",
+      "screens": [
+        2,
+        3
+      ],
+      "axis": "horizontal",
+      "scripts": [
+        "s1-h2-s",
+        "s1-h3-s"
+      ],
+      "on_current_automated_campaign_route": false,
+      "physical_seam_status": "not_censused"
+    },
+    {
+      "id": "2-34",
+      "screens": [
+        2,
+        34
+      ],
+      "axis": "vertical",
+      "scripts": [
+        "s1-h2-s",
+        "s2-barp"
+      ],
+      "on_current_automated_campaign_route": false,
+      "physical_seam_status": "not_censused"
+    },
+    {
+      "id": "3-4",
+      "screens": [
+        3,
+        4
+      ],
+      "axis": "horizontal",
+      "scripts": [
+        "s1-h3-s",
+        null
+      ],
+      "on_current_automated_campaign_route": false,
+      "physical_seam_status": "not_censused"
+    },
+    {
+      "id": "3-35",
+      "screens": [
+        3,
+        35
+      ],
+      "axis": "vertical",
+      "scripts": [
+        "s1-h3-s",
+        null
+      ],
+      "on_current_automated_campaign_route": false,
+      "physical_seam_status": "not_censused"
+    },
+    {
+      "id": "4-5",
+      "screens": [
+        4,
+        5
+      ],
+      "axis": "horizontal",
+      "scripts": [
+        null,
+        "s2-h1-s"
+      ],
+      "on_current_automated_campaign_route": false,
+      "physical_seam_status": "not_censused"
+    },
+    {
+      "id": "4-36",
+      "screens": [
+        4,
+        36
+      ],
+      "axis": "vertical",
+      "scripts": [
+        null,
+        "s2-aunt"
+      ],
+      "on_current_automated_campaign_route": false,
+      "physical_seam_status": "not_censused"
+    },
+    {
+      "id": "5-6",
+      "screens": [
+        5,
+        6
+      ],
+      "axis": "horizontal",
+      "scripts": [
+        "s2-h1-s",
+        "s1-mh-s"
+      ],
+      "on_current_automated_campaign_route": false,
+      "physical_seam_status": "not_censused"
+    },
+    {
+      "id": "5-37",
+      "screens": [
+        5,
+        37
+      ],
+      "axis": "vertical",
+      "scripts": [
+        "s2-h1-s",
+        "s2-h2-s"
+      ],
+      "on_current_automated_campaign_route": false,
+      "physical_seam_status": "not_censused"
+    },
+    {
+      "id": "6-38",
+      "screens": [
+        6,
+        38
+      ],
+      "axis": "vertical",
+      "scripts": [
+        "s1-mh-s",
+        null
+      ],
+      "on_current_automated_campaign_route": false,
+      "physical_seam_status": "not_censused"
+    },
+    {
+      "id": "33-34",
+      "screens": [
+        33,
+        34
+      ],
+      "axis": "horizontal",
+      "scripts": [
+        null,
+        "s2-barp"
+      ],
+      "on_current_automated_campaign_route": false,
+      "physical_seam_status": "not_censused"
+    },
+    {
+      "id": "33-65",
+      "screens": [
+        33,
+        65
+      ],
+      "axis": "vertical",
+      "scripts": [
+        null,
+        null
+      ],
+      "on_current_automated_campaign_route": false,
+      "physical_seam_status": "not_censused"
+    },
+    {
+      "id": "34-35",
+      "screens": [
+        34,
+        35
+      ],
+      "axis": "horizontal",
+      "scripts": [
+        "s2-barp",
+        null
+      ],
+      "on_current_automated_campaign_route": false,
+      "physical_seam_status": "not_censused"
+    },
+    {
+      "id": "34-66",
+      "screens": [
+        34,
+        66
+      ],
+      "axis": "vertical",
+      "scripts": [
+        "s2-barp",
+        "s2-nad"
+      ],
+      "on_current_automated_campaign_route": false,
+      "physical_seam_status": "not_censused"
+    },
+    {
+      "id": "35-36",
+      "screens": [
+        35,
+        36
+      ],
+      "axis": "horizontal",
+      "scripts": [
+        null,
+        "s2-aunt"
+      ],
+      "on_current_automated_campaign_route": false,
+      "physical_seam_status": "not_censused"
+    },
+    {
+      "id": "35-67",
+      "screens": [
+        35,
+        67
+      ],
+      "axis": "vertical",
+      "scripts": [
+        null,
+        "s3-st1"
+      ],
+      "on_current_automated_campaign_route": false,
+      "physical_seam_status": "not_censused"
+    },
+    {
+      "id": "36-37",
+      "screens": [
+        36,
+        37
+      ],
+      "axis": "horizontal",
+      "scripts": [
+        "s2-aunt",
+        "s2-h2-s"
+      ],
+      "on_current_automated_campaign_route": false,
+      "physical_seam_status": "not_censused"
+    },
+    {
+      "id": "36-68",
+      "screens": [
+        36,
+        68
+      ],
+      "axis": "vertical",
+      "scripts": [
+        "s2-aunt",
+        "s2-crime"
+      ],
+      "on_current_automated_campaign_route": false,
+      "physical_seam_status": "not_censused"
+    },
+    {
+      "id": "37-38",
+      "screens": [
+        37,
+        38
+      ],
+      "axis": "horizontal",
+      "scripts": [
+        "s2-h2-s",
+        null
+      ],
+      "on_current_automated_campaign_route": false,
+      "physical_seam_status": "not_censused"
+    },
+    {
+      "id": "37-69",
+      "screens": [
+        37,
+        69
+      ],
+      "axis": "vertical",
+      "scripts": [
+        "s2-h2-s",
+        null
+      ],
+      "on_current_automated_campaign_route": false,
+      "physical_seam_status": "not_censused"
+    },
+    {
+      "id": "38-70",
+      "screens": [
+        38,
+        70
+      ],
+      "axis": "vertical",
+      "scripts": [
+        null,
+        null
+      ],
+      "on_current_automated_campaign_route": false,
+      "physical_seam_status": "not_censused"
+    },
+    {
+      "id": "65-66",
+      "screens": [
+        65,
+        66
+      ],
+      "axis": "horizontal",
+      "scripts": [
+        null,
+        "s2-nad"
+      ],
+      "on_current_automated_campaign_route": false,
+      "physical_seam_status": "not_censused"
+    },
+    {
+      "id": "65-97",
+      "screens": [
+        65,
+        97
+      ],
+      "axis": "vertical",
+      "scripts": [
+        null,
+        "s3-st2"
+      ],
+      "on_current_automated_campaign_route": false,
+      "physical_seam_status": "not_censused"
+    },
+    {
+      "id": "66-67",
+      "screens": [
+        66,
+        67
+      ],
+      "axis": "horizontal",
+      "scripts": [
+        "s2-nad",
+        "s3-st1"
+      ],
+      "on_current_automated_campaign_route": false,
+      "physical_seam_status": "not_censused"
+    },
+    {
+      "id": "66-98",
+      "screens": [
+        66,
+        98
+      ],
+      "axis": "vertical",
+      "scripts": [
+        "s2-nad",
+        "s1-cave"
+      ],
+      "on_current_automated_campaign_route": false,
+      "physical_seam_status": "not_censused"
+    },
+    {
+      "id": "67-68",
+      "screens": [
+        67,
+        68
+      ],
+      "axis": "horizontal",
+      "scripts": [
+        "s3-st1",
+        "s2-crime"
+      ],
+      "on_current_automated_campaign_route": false,
+      "physical_seam_status": "not_censused"
+    },
+    {
+      "id": "67-99",
+      "screens": [
+        67,
+        99
+      ],
+      "axis": "vertical",
+      "scripts": [
+        "s3-st1",
+        "s1-cave"
+      ],
+      "on_current_automated_campaign_route": false,
+      "physical_seam_status": "not_censused"
+    },
+    {
+      "id": "68-69",
+      "screens": [
+        68,
+        69
+      ],
+      "axis": "horizontal",
+      "scripts": [
+        "s2-crime",
+        null
+      ],
+      "on_current_automated_campaign_route": false,
+      "physical_seam_status": "not_censused"
+    },
+    {
+      "id": "68-100",
+      "screens": [
+        68,
+        100
+      ],
+      "axis": "vertical",
+      "scripts": [
+        "s2-crime",
+        null
+      ],
+      "on_current_automated_campaign_route": false,
+      "physical_seam_status": "not_censused"
+    },
+    {
+      "id": "69-70",
+      "screens": [
+        69,
+        70
+      ],
+      "axis": "horizontal",
+      "scripts": [
+        null,
+        null
+      ],
+      "on_current_automated_campaign_route": false,
+      "physical_seam_status": "not_censused"
+    },
+    {
+      "id": "69-101",
+      "screens": [
+        69,
+        101
+      ],
+      "axis": "vertical",
+      "scripts": [
+        null,
+        null
+      ],
+      "on_current_automated_campaign_route": false,
+      "physical_seam_status": "not_censused"
+    },
+    {
+      "id": "70-102",
+      "screens": [
+        70,
+        102
+      ],
+      "axis": "vertical",
+      "scripts": [
+        null,
+        null
+      ],
+      "on_current_automated_campaign_route": false,
+      "physical_seam_status": "not_censused"
+    },
+    {
+      "id": "73-74",
+      "screens": [
+        73,
+        74
+      ],
+      "axis": "horizontal",
+      "scripts": [
+        "sc-end",
+        null
+      ],
+      "on_current_automated_campaign_route": false,
+      "physical_seam_status": "not_censused"
+    },
+    {
+      "id": "73-105",
+      "screens": [
+        73,
+        105
+      ],
+      "axis": "vertical",
+      "scripts": [
+        "sc-end",
+        null
+      ],
+      "on_current_automated_campaign_route": false,
+      "physical_seam_status": "not_censused"
+    },
+    {
+      "id": "74-106",
+      "screens": [
+        74,
+        106
+      ],
+      "axis": "vertical",
+      "scripts": [
+        null,
+        null
+      ],
+      "on_current_automated_campaign_route": false,
+      "physical_seam_status": "not_censused"
+    },
+    {
+      "id": "85-86",
+      "screens": [
+        85,
+        86
+      ],
+      "axis": "horizontal",
+      "scripts": [
+        "s7-hell",
+        null
+      ],
+      "on_current_automated_campaign_route": false,
+      "physical_seam_status": "not_censused"
+    },
+    {
+      "id": "97-98",
+      "screens": [
+        97,
+        98
+      ],
+      "axis": "horizontal",
+      "scripts": [
+        "s3-st2",
+        "s1-cave"
+      ],
+      "on_current_automated_campaign_route": false,
+      "physical_seam_status": "not_censused"
+    },
+    {
+      "id": "97-129",
+      "screens": [
+        97,
+        129
+      ],
+      "axis": "vertical",
+      "scripts": [
+        "s3-st2",
+        "s3-bh"
+      ],
+      "on_current_automated_campaign_route": false,
+      "physical_seam_status": "not_censused"
+    },
+    {
+      "id": "98-99",
+      "screens": [
+        98,
+        99
+      ],
+      "axis": "horizontal",
+      "scripts": [
+        "s1-cave",
+        "s1-cave"
+      ],
+      "on_current_automated_campaign_route": false,
+      "physical_seam_status": "not_censused"
+    },
+    {
+      "id": "98-130",
+      "screens": [
+        98,
+        130
+      ],
+      "axis": "vertical",
+      "scripts": [
+        "s1-cave",
+        "s3-st3"
+      ],
+      "on_current_automated_campaign_route": false,
+      "physical_seam_status": "not_censused"
+    },
+    {
+      "id": "99-100",
+      "screens": [
+        99,
+        100
+      ],
+      "axis": "horizontal",
+      "scripts": [
+        "s1-cave",
+        null
+      ],
+      "on_current_automated_campaign_route": true,
+      "physical_seam_status": "not_censused"
+    },
+    {
+      "id": "99-131",
+      "screens": [
+        99,
+        131
+      ],
+      "axis": "vertical",
+      "scripts": [
+        "s1-cave",
+        "s1-caves"
+      ],
+      "on_current_automated_campaign_route": true,
+      "physical_seam_status": "131 north approach observed to y=0.750836 before modal; crossing failed; open destination landing not yet demonstrated"
+    },
+    {
+      "id": "100-101",
+      "screens": [
+        100,
+        101
+      ],
+      "axis": "horizontal",
+      "scripts": [
+        null,
+        null
+      ],
+      "on_current_automated_campaign_route": false,
+      "physical_seam_status": "not_censused"
+    },
+    {
+      "id": "100-132",
+      "screens": [
+        100,
+        132
+      ],
+      "axis": "vertical",
+      "scripts": [
+        null,
+        null
+      ],
+      "on_current_automated_campaign_route": false,
+      "physical_seam_status": "not_censused"
+    },
+    {
+      "id": "101-102",
+      "screens": [
+        101,
+        102
+      ],
+      "axis": "horizontal",
+      "scripts": [
+        null,
+        null
+      ],
+      "on_current_automated_campaign_route": false,
+      "physical_seam_status": "not_censused"
+    },
+    {
+      "id": "101-133",
+      "screens": [
+        101,
+        133
+      ],
+      "axis": "vertical",
+      "scripts": [
+        null,
+        null
+      ],
+      "on_current_automated_campaign_route": false,
+      "physical_seam_status": "not_censused"
+    },
+    {
+      "id": "102-134",
+      "screens": [
+        102,
+        134
+      ],
+      "axis": "vertical",
+      "scripts": [
+        null,
+        null
+      ],
+      "on_current_automated_campaign_route": false,
+      "physical_seam_status": "not_censused"
+    },
+    {
+      "id": "105-106",
+      "screens": [
+        105,
+        106
+      ],
+      "axis": "horizontal",
+      "scripts": [
+        null,
+        null
+      ],
+      "on_current_automated_campaign_route": false,
+      "physical_seam_status": "not_censused"
+    },
+    {
+      "id": "105-137",
+      "screens": [
+        105,
+        137
+      ],
+      "axis": "vertical",
+      "scripts": [
+        null,
+        null
+      ],
+      "on_current_automated_campaign_route": false,
+      "physical_seam_status": "not_censused"
+    },
+    {
+      "id": "106-138",
+      "screens": [
+        106,
+        138
+      ],
+      "axis": "vertical",
+      "scripts": [
+        null,
+        null
+      ],
+      "on_current_automated_campaign_route": false,
+      "physical_seam_status": "not_censused"
+    },
+    {
+      "id": "129-130",
+      "screens": [
+        129,
+        130
+      ],
+      "axis": "horizontal",
+      "scripts": [
+        "s3-bh",
+        "s3-st3"
+      ],
+      "on_current_automated_campaign_route": false,
+      "physical_seam_status": "not_censused"
+    },
+    {
+      "id": "129-161",
+      "screens": [
+        129,
+        161
+      ],
+      "axis": "vertical",
+      "scripts": [
+        "s3-bh",
+        "s3-h1"
+      ],
+      "on_current_automated_campaign_route": false,
+      "physical_seam_status": "not_censused"
+    },
+    {
+      "id": "130-131",
+      "screens": [
+        130,
+        131
+      ],
+      "axis": "horizontal",
+      "scripts": [
+        "s3-st3",
+        "s1-caves"
+      ],
+      "on_current_automated_campaign_route": false,
+      "physical_seam_status": "not_censused"
+    },
+    {
+      "id": "130-162",
+      "screens": [
+        130,
+        162
+      ],
+      "axis": "vertical",
+      "scripts": [
+        "s3-st3",
+        "s4-st1"
+      ],
+      "on_current_automated_campaign_route": false,
+      "physical_seam_status": "not_censused"
+    },
+    {
+      "id": "131-132",
+      "screens": [
+        131,
+        132
+      ],
+      "axis": "horizontal",
+      "scripts": [
+        "s1-caves",
+        null
+      ],
+      "on_current_automated_campaign_route": false,
+      "physical_seam_status": "not_censused"
+    },
+    {
+      "id": "131-163",
+      "screens": [
+        131,
+        163
+      ],
+      "axis": "vertical",
+      "scripts": [
+        "s1-caves",
+        "s4-h2"
+      ],
+      "on_current_automated_campaign_route": false,
+      "physical_seam_status": "not_censused"
+    },
+    {
+      "id": "132-133",
+      "screens": [
+        132,
+        133
+      ],
+      "axis": "horizontal",
+      "scripts": [
+        null,
+        null
+      ],
+      "on_current_automated_campaign_route": false,
+      "physical_seam_status": "not_censused"
+    },
+    {
+      "id": "132-164",
+      "screens": [
+        132,
+        164
+      ],
+      "axis": "vertical",
+      "scripts": [
+        null,
+        null
+      ],
+      "on_current_automated_campaign_route": false,
+      "physical_seam_status": "not_censused"
+    },
+    {
+      "id": "133-134",
+      "screens": [
+        133,
+        134
+      ],
+      "axis": "horizontal",
+      "scripts": [
+        null,
+        null
+      ],
+      "on_current_automated_campaign_route": false,
+      "physical_seam_status": "not_censused"
+    },
+    {
+      "id": "133-165",
+      "screens": [
+        133,
+        165
+      ],
+      "axis": "vertical",
+      "scripts": [
+        null,
+        null
+      ],
+      "on_current_automated_campaign_route": false,
+      "physical_seam_status": "not_censused"
+    },
+    {
+      "id": "134-166",
+      "screens": [
+        134,
+        166
+      ],
+      "axis": "vertical",
+      "scripts": [
+        null,
+        null
+      ],
+      "on_current_automated_campaign_route": false,
+      "physical_seam_status": "not_censused"
+    },
+    {
+      "id": "137-138",
+      "screens": [
+        137,
+        138
+      ],
+      "axis": "horizontal",
+      "scripts": [
+        null,
+        null
+      ],
+      "on_current_automated_campaign_route": false,
+      "physical_seam_status": "not_censused"
+    },
+    {
+      "id": "137-169",
+      "screens": [
+        137,
+        169
+      ],
+      "axis": "vertical",
+      "scripts": [
+        null,
+        null
+      ],
+      "on_current_automated_campaign_route": false,
+      "physical_seam_status": "not_censused"
+    },
+    {
+      "id": "138-170",
+      "screens": [
+        138,
+        170
+      ],
+      "axis": "vertical",
+      "scripts": [
+        null,
+        null
+      ],
+      "on_current_automated_campaign_route": false,
+      "physical_seam_status": "not_censused"
+    },
+    {
+      "id": "161-162",
+      "screens": [
+        161,
+        162
+      ],
+      "axis": "horizontal",
+      "scripts": [
+        "s3-h1",
+        "s4-st1"
+      ],
+      "on_current_automated_campaign_route": false,
+      "physical_seam_status": "not_censused"
+    },
+    {
+      "id": "161-193",
+      "screens": [
+        161,
+        193
+      ],
+      "axis": "vertical",
+      "scripts": [
+        "s3-h1",
+        "s4-h1"
+      ],
+      "on_current_automated_campaign_route": false,
+      "physical_seam_status": "not_censused"
+    },
+    {
+      "id": "162-163",
+      "screens": [
+        162,
+        163
+      ],
+      "axis": "horizontal",
+      "scripts": [
+        "s4-st1",
+        "s4-h2"
+      ],
+      "on_current_automated_campaign_route": false,
+      "physical_seam_status": "not_censused"
+    },
+    {
+      "id": "162-194",
+      "screens": [
+        162,
+        194
+      ],
+      "axis": "vertical",
+      "scripts": [
+        "s4-st1",
+        "s4-st2"
+      ],
+      "on_current_automated_campaign_route": false,
+      "physical_seam_status": "not_censused"
+    },
+    {
+      "id": "163-164",
+      "screens": [
+        163,
+        164
+      ],
+      "axis": "horizontal",
+      "scripts": [
+        "s4-h2",
+        null
+      ],
+      "on_current_automated_campaign_route": false,
+      "physical_seam_status": "not_censused"
+    },
+    {
+      "id": "163-195",
+      "screens": [
+        163,
+        195
+      ],
+      "axis": "vertical",
+      "scripts": [
+        "s4-h2",
+        null
+      ],
+      "on_current_automated_campaign_route": false,
+      "physical_seam_status": "not_censused"
+    },
+    {
+      "id": "164-165",
+      "screens": [
+        164,
+        165
+      ],
+      "axis": "horizontal",
+      "scripts": [
+        null,
+        null
+      ],
+      "on_current_automated_campaign_route": false,
+      "physical_seam_status": "not_censused"
+    },
+    {
+      "id": "164-196",
+      "screens": [
+        164,
+        196
+      ],
+      "axis": "vertical",
+      "scripts": [
+        null,
+        "s4-st3"
+      ],
+      "on_current_automated_campaign_route": false,
+      "physical_seam_status": "not_censused"
+    },
+    {
+      "id": "165-166",
+      "screens": [
+        165,
+        166
+      ],
+      "axis": "horizontal",
+      "scripts": [
+        null,
+        null
+      ],
+      "on_current_automated_campaign_route": false,
+      "physical_seam_status": "not_censused"
+    },
+    {
+      "id": "165-197",
+      "screens": [
+        165,
+        197
+      ],
+      "axis": "vertical",
+      "scripts": [
+        null,
+        null
+      ],
+      "on_current_automated_campaign_route": false,
+      "physical_seam_status": "not_censused"
+    },
+    {
+      "id": "166-198",
+      "screens": [
+        166,
+        198
+      ],
+      "axis": "vertical",
+      "scripts": [
+        null,
+        null
+      ],
+      "on_current_automated_campaign_route": false,
+      "physical_seam_status": "not_censused"
+    },
+    {
+      "id": "169-170",
+      "screens": [
+        169,
+        170
+      ],
+      "axis": "horizontal",
+      "scripts": [
+        null,
+        null
+      ],
+      "on_current_automated_campaign_route": false,
+      "physical_seam_status": "not_censused"
+    },
+    {
+      "id": "170-202",
+      "screens": [
+        170,
+        202
+      ],
+      "axis": "vertical",
+      "scripts": [
+        null,
+        null
+      ],
+      "on_current_automated_campaign_route": false,
+      "physical_seam_status": "not_censused"
+    },
+    {
+      "id": "193-194",
+      "screens": [
+        193,
+        194
+      ],
+      "axis": "horizontal",
+      "scripts": [
+        "s4-h1",
+        "s4-st2"
+      ],
+      "on_current_automated_campaign_route": false,
+      "physical_seam_status": "not_censused"
+    },
+    {
+      "id": "193-225",
+      "screens": [
+        193,
+        225
+      ],
+      "axis": "vertical",
+      "scripts": [
+        "s4-h1",
+        null
+      ],
+      "on_current_automated_campaign_route": false,
+      "physical_seam_status": "not_censused"
+    },
+    {
+      "id": "194-195",
+      "screens": [
+        194,
+        195
+      ],
+      "axis": "horizontal",
+      "scripts": [
+        "s4-st2",
+        null
+      ],
+      "on_current_automated_campaign_route": false,
+      "physical_seam_status": "not_censused"
+    },
+    {
+      "id": "194-226",
+      "screens": [
+        194,
+        226
+      ],
+      "axis": "vertical",
+      "scripts": [
+        "s4-st2",
+        "s5-heals"
+      ],
+      "on_current_automated_campaign_route": false,
+      "physical_seam_status": "not_censused"
+    },
+    {
+      "id": "195-196",
+      "screens": [
+        195,
+        196
+      ],
+      "axis": "horizontal",
+      "scripts": [
+        null,
+        "s4-st3"
+      ],
+      "on_current_automated_campaign_route": false,
+      "physical_seam_status": "not_censused"
+    },
+    {
+      "id": "195-227",
+      "screens": [
+        195,
+        227
+      ],
+      "axis": "vertical",
+      "scripts": [
+        null,
+        null
+      ],
+      "on_current_automated_campaign_route": false,
+      "physical_seam_status": "not_censused"
+    },
+    {
+      "id": "196-197",
+      "screens": [
+        196,
+        197
+      ],
+      "axis": "horizontal",
+      "scripts": [
+        "s4-st3",
+        null
+      ],
+      "on_current_automated_campaign_route": false,
+      "physical_seam_status": "not_censused"
+    },
+    {
+      "id": "196-228",
+      "screens": [
+        196,
+        228
+      ],
+      "axis": "vertical",
+      "scripts": [
+        "s4-st3",
+        "s5-st1"
+      ],
+      "on_current_automated_campaign_route": false,
+      "physical_seam_status": "not_censused"
+    },
+    {
+      "id": "197-198",
+      "screens": [
+        197,
+        198
+      ],
+      "axis": "horizontal",
+      "scripts": [
+        null,
+        null
+      ],
+      "on_current_automated_campaign_route": false,
+      "physical_seam_status": "not_censused"
+    },
+    {
+      "id": "197-229",
+      "screens": [
+        197,
+        229
+      ],
+      "axis": "vertical",
+      "scripts": [
+        null,
+        "s5-base"
+      ],
+      "on_current_automated_campaign_route": false,
+      "physical_seam_status": "not_censused"
+    },
+    {
+      "id": "225-226",
+      "screens": [
+        225,
+        226
+      ],
+      "axis": "horizontal",
+      "scripts": [
+        null,
+        "s5-heals"
+      ],
+      "on_current_automated_campaign_route": false,
+      "physical_seam_status": "not_censused"
+    },
+    {
+      "id": "225-257",
+      "screens": [
+        225,
+        257
+      ],
+      "axis": "vertical",
+      "scripts": [
+        null,
+        null
+      ],
+      "on_current_automated_campaign_route": false,
+      "physical_seam_status": "not_censused"
+    },
+    {
+      "id": "226-227",
+      "screens": [
+        226,
+        227
+      ],
+      "axis": "horizontal",
+      "scripts": [
+        "s5-heals",
+        null
+      ],
+      "on_current_automated_campaign_route": false,
+      "physical_seam_status": "not_censused"
+    },
+    {
+      "id": "226-258",
+      "screens": [
+        226,
+        258
+      ],
+      "axis": "vertical",
+      "scripts": [
+        "s5-heals",
+        null
+      ],
+      "on_current_automated_campaign_route": false,
+      "physical_seam_status": "not_censused"
+    },
+    {
+      "id": "227-228",
+      "screens": [
+        227,
+        228
+      ],
+      "axis": "horizontal",
+      "scripts": [
+        null,
+        "s5-st1"
+      ],
+      "on_current_automated_campaign_route": false,
+      "physical_seam_status": "not_censused"
+    },
+    {
+      "id": "227-259",
+      "screens": [
+        227,
+        259
+      ],
+      "axis": "vertical",
+      "scripts": [
+        null,
+        null
+      ],
+      "on_current_automated_campaign_route": false,
+      "physical_seam_status": "not_censused"
+    },
+    {
+      "id": "228-229",
+      "screens": [
+        228,
+        229
+      ],
+      "axis": "horizontal",
+      "scripts": [
+        "s5-st1",
+        "s5-base"
+      ],
+      "on_current_automated_campaign_route": false,
+      "physical_seam_status": "not_censused"
+    },
+    {
+      "id": "228-260",
+      "screens": [
+        228,
+        260
+      ],
+      "axis": "vertical",
+      "scripts": [
+        "s5-st1",
+        "s6-chur"
+      ],
+      "on_current_automated_campaign_route": false,
+      "physical_seam_status": "not_censused"
+    },
+    {
+      "id": "229-261",
+      "screens": [
+        229,
+        261
+      ],
+      "axis": "vertical",
+      "scripts": [
+        "s5-base",
+        "s6-st1"
+      ],
+      "on_current_automated_campaign_route": false,
+      "physical_seam_status": "not_censused"
+    },
+    {
+      "id": "257-258",
+      "screens": [
+        257,
+        258
+      ],
+      "axis": "horizontal",
+      "scripts": [
+        null,
+        null
+      ],
+      "on_current_automated_campaign_route": false,
+      "physical_seam_status": "not_censused"
+    },
+    {
+      "id": "257-289",
+      "screens": [
+        257,
+        289
+      ],
+      "axis": "vertical",
+      "scripts": [
+        null,
+        "s1-booth"
+      ],
+      "on_current_automated_campaign_route": false,
+      "physical_seam_status": "not_censused"
+    },
+    {
+      "id": "258-259",
+      "screens": [
+        258,
+        259
+      ],
+      "axis": "horizontal",
+      "scripts": [
+        null,
+        null
+      ],
+      "on_current_automated_campaign_route": false,
+      "physical_seam_status": "not_censused"
+    },
+    {
+      "id": "258-290",
+      "screens": [
+        258,
+        290
+      ],
+      "axis": "vertical",
+      "scripts": [
+        null,
+        null
+      ],
+      "on_current_automated_campaign_route": false,
+      "physical_seam_status": "not_censused"
+    },
+    {
+      "id": "259-260",
+      "screens": [
+        259,
+        260
+      ],
+      "axis": "horizontal",
+      "scripts": [
+        null,
+        "s6-chur"
+      ],
+      "on_current_automated_campaign_route": false,
+      "physical_seam_status": "not_censused"
+    },
+    {
+      "id": "260-261",
+      "screens": [
+        260,
+        261
+      ],
+      "axis": "horizontal",
+      "scripts": [
+        "s6-chur",
+        "s6-st1"
+      ],
+      "on_current_automated_campaign_route": false,
+      "physical_seam_status": "not_censused"
+    },
+    {
+      "id": "289-290",
+      "screens": [
+        289,
+        290
+      ],
+      "axis": "horizontal",
+      "scripts": [
+        "s1-booth",
+        null
+      ],
+      "on_current_automated_campaign_route": false,
+      "physical_seam_status": "not_censused"
+    },
+    {
+      "id": "514-515",
+      "screens": [
+        514,
+        515
+      ],
+      "axis": "horizontal",
+      "scripts": [
+        null,
+        null
+      ],
+      "on_current_automated_campaign_route": false,
+      "physical_seam_status": "not_censused"
+    },
+    {
+      "id": "514-546",
+      "screens": [
+        514,
+        546
+      ],
+      "axis": "vertical",
+      "scripts": [
+        null,
+        null
+      ],
+      "on_current_automated_campaign_route": false,
+      "physical_seam_status": "not_censused"
+    },
+    {
+      "id": "515-547",
+      "screens": [
+        515,
+        547
+      ],
+      "axis": "vertical",
+      "scripts": [
+        null,
+        null
+      ],
+      "on_current_automated_campaign_route": false,
+      "physical_seam_status": "not_censused"
+    },
+    {
+      "id": "546-547",
+      "screens": [
+        546,
+        547
+      ],
+      "axis": "horizontal",
+      "scripts": [
+        null,
+        null
+      ],
+      "on_current_automated_campaign_route": false,
+      "physical_seam_status": "not_censused"
+    },
+    {
+      "id": "546-578",
+      "screens": [
+        546,
+        578
+      ],
+      "axis": "vertical",
+      "scripts": [
+        null,
+        "s2-cave2"
+      ],
+      "on_current_automated_campaign_route": false,
+      "physical_seam_status": "not_censused"
+    },
+    {
+      "id": "547-579",
+      "screens": [
+        547,
+        579
+      ],
+      "axis": "vertical",
+      "scripts": [
+        null,
+        "s2-cave"
+      ],
+      "on_current_automated_campaign_route": false,
+      "physical_seam_status": "not_censused"
+    },
+    {
+      "id": "577-578",
+      "screens": [
+        577,
+        578
+      ],
+      "axis": "horizontal",
+      "scripts": [
+        null,
+        "s2-cave2"
+      ],
+      "on_current_automated_campaign_route": false,
+      "physical_seam_status": "not_censused"
+    },
+    {
+      "id": "577-609",
+      "screens": [
+        577,
+        609
+      ],
+      "axis": "vertical",
+      "scripts": [
+        null,
+        null
+      ],
+      "on_current_automated_campaign_route": false,
+      "physical_seam_status": "not_censused"
+    },
+    {
+      "id": "578-579",
+      "screens": [
+        578,
+        579
+      ],
+      "axis": "horizontal",
+      "scripts": [
+        "s2-cave2",
+        "s2-cave"
+      ],
+      "on_current_automated_campaign_route": false,
+      "physical_seam_status": "not_censused"
+    },
+    {
+      "id": "578-610",
+      "screens": [
+        578,
+        610
+      ],
+      "axis": "vertical",
+      "scripts": [
+        "s2-cave2",
+        null
+      ],
+      "on_current_automated_campaign_route": false,
+      "physical_seam_status": "not_censused"
+    },
+    {
+      "id": "609-610",
+      "screens": [
+        609,
+        610
+      ],
+      "axis": "horizontal",
+      "scripts": [
+        null,
+        null
+      ],
+      "on_current_automated_campaign_route": false,
+      "physical_seam_status": "not_censused"
+    }
+  ],
+  "directed_refusals": [
+    {
+      "edge_id": "1-2",
+      "source": 1,
+      "target": 2,
+      "direction": "east",
+      "source_script": "s1-h1-s",
+      "target_script": "s1-h2-s",
+      "metadata_refused_by_fps_indoor_target_check": true,
+      "current_automated_route_leg": null
+    },
+    {
+      "edge_id": "1-2",
+      "source": 2,
+      "target": 1,
+      "direction": "west",
+      "source_script": "s1-h2-s",
+      "target_script": "s1-h1-s",
+      "metadata_refused_by_fps_indoor_target_check": true,
+      "current_automated_route_leg": null
+    },
+    {
+      "edge_id": "1-33",
+      "source": 1,
+      "target": 33,
+      "direction": "south",
+      "source_script": "s1-h1-s",
+      "target_script": null,
+      "metadata_refused_by_fps_indoor_target_check": true,
+      "current_automated_route_leg": null
+    },
+    {
+      "edge_id": "1-33",
+      "source": 33,
+      "target": 1,
+      "direction": "north",
+      "source_script": null,
+      "target_script": "s1-h1-s",
+      "metadata_refused_by_fps_indoor_target_check": true,
+      "current_automated_route_leg": null
+    },
+    {
+      "edge_id": "2-3",
+      "source": 2,
+      "target": 3,
+      "direction": "east",
+      "source_script": "s1-h2-s",
+      "target_script": "s1-h3-s",
+      "metadata_refused_by_fps_indoor_target_check": true,
+      "current_automated_route_leg": null
+    },
+    {
+      "edge_id": "2-3",
+      "source": 3,
+      "target": 2,
+      "direction": "west",
+      "source_script": "s1-h3-s",
+      "target_script": "s1-h2-s",
+      "metadata_refused_by_fps_indoor_target_check": true,
+      "current_automated_route_leg": null
+    },
+    {
+      "edge_id": "2-34",
+      "source": 2,
+      "target": 34,
+      "direction": "south",
+      "source_script": "s1-h2-s",
+      "target_script": "s2-barp",
+      "metadata_refused_by_fps_indoor_target_check": true,
+      "current_automated_route_leg": null
+    },
+    {
+      "edge_id": "2-34",
+      "source": 34,
+      "target": 2,
+      "direction": "north",
+      "source_script": "s2-barp",
+      "target_script": "s1-h2-s",
+      "metadata_refused_by_fps_indoor_target_check": true,
+      "current_automated_route_leg": null
+    },
+    {
+      "edge_id": "3-4",
+      "source": 3,
+      "target": 4,
+      "direction": "east",
+      "source_script": "s1-h3-s",
+      "target_script": null,
+      "metadata_refused_by_fps_indoor_target_check": true,
+      "current_automated_route_leg": null
+    },
+    {
+      "edge_id": "3-4",
+      "source": 4,
+      "target": 3,
+      "direction": "west",
+      "source_script": null,
+      "target_script": "s1-h3-s",
+      "metadata_refused_by_fps_indoor_target_check": true,
+      "current_automated_route_leg": null
+    },
+    {
+      "edge_id": "3-35",
+      "source": 3,
+      "target": 35,
+      "direction": "south",
+      "source_script": "s1-h3-s",
+      "target_script": null,
+      "metadata_refused_by_fps_indoor_target_check": true,
+      "current_automated_route_leg": null
+    },
+    {
+      "edge_id": "3-35",
+      "source": 35,
+      "target": 3,
+      "direction": "north",
+      "source_script": null,
+      "target_script": "s1-h3-s",
+      "metadata_refused_by_fps_indoor_target_check": true,
+      "current_automated_route_leg": null
+    },
+    {
+      "edge_id": "4-5",
+      "source": 4,
+      "target": 5,
+      "direction": "east",
+      "source_script": null,
+      "target_script": "s2-h1-s",
+      "metadata_refused_by_fps_indoor_target_check": true,
+      "current_automated_route_leg": null
+    },
+    {
+      "edge_id": "4-5",
+      "source": 5,
+      "target": 4,
+      "direction": "west",
+      "source_script": "s2-h1-s",
+      "target_script": null,
+      "metadata_refused_by_fps_indoor_target_check": true,
+      "current_automated_route_leg": null
+    },
+    {
+      "edge_id": "4-36",
+      "source": 4,
+      "target": 36,
+      "direction": "south",
+      "source_script": null,
+      "target_script": "s2-aunt",
+      "metadata_refused_by_fps_indoor_target_check": true,
+      "current_automated_route_leg": null
+    },
+    {
+      "edge_id": "4-36",
+      "source": 36,
+      "target": 4,
+      "direction": "north",
+      "source_script": "s2-aunt",
+      "target_script": null,
+      "metadata_refused_by_fps_indoor_target_check": true,
+      "current_automated_route_leg": null
+    },
+    {
+      "edge_id": "5-6",
+      "source": 5,
+      "target": 6,
+      "direction": "east",
+      "source_script": "s2-h1-s",
+      "target_script": "s1-mh-s",
+      "metadata_refused_by_fps_indoor_target_check": true,
+      "current_automated_route_leg": null
+    },
+    {
+      "edge_id": "5-6",
+      "source": 6,
+      "target": 5,
+      "direction": "west",
+      "source_script": "s1-mh-s",
+      "target_script": "s2-h1-s",
+      "metadata_refused_by_fps_indoor_target_check": true,
+      "current_automated_route_leg": null
+    },
+    {
+      "edge_id": "5-37",
+      "source": 5,
+      "target": 37,
+      "direction": "south",
+      "source_script": "s2-h1-s",
+      "target_script": "s2-h2-s",
+      "metadata_refused_by_fps_indoor_target_check": true,
+      "current_automated_route_leg": null
+    },
+    {
+      "edge_id": "5-37",
+      "source": 37,
+      "target": 5,
+      "direction": "north",
+      "source_script": "s2-h2-s",
+      "target_script": "s2-h1-s",
+      "metadata_refused_by_fps_indoor_target_check": true,
+      "current_automated_route_leg": null
+    },
+    {
+      "edge_id": "6-38",
+      "source": 6,
+      "target": 38,
+      "direction": "south",
+      "source_script": "s1-mh-s",
+      "target_script": null,
+      "metadata_refused_by_fps_indoor_target_check": true,
+      "current_automated_route_leg": null
+    },
+    {
+      "edge_id": "6-38",
+      "source": 38,
+      "target": 6,
+      "direction": "north",
+      "source_script": null,
+      "target_script": "s1-mh-s",
+      "metadata_refused_by_fps_indoor_target_check": true,
+      "current_automated_route_leg": null
+    },
+    {
+      "edge_id": "33-34",
+      "source": 33,
+      "target": 34,
+      "direction": "east",
+      "source_script": null,
+      "target_script": "s2-barp",
+      "metadata_refused_by_fps_indoor_target_check": true,
+      "current_automated_route_leg": null
+    },
+    {
+      "edge_id": "33-34",
+      "source": 34,
+      "target": 33,
+      "direction": "west",
+      "source_script": "s2-barp",
+      "target_script": null,
+      "metadata_refused_by_fps_indoor_target_check": true,
+      "current_automated_route_leg": null
+    },
+    {
+      "edge_id": "33-65",
+      "source": 33,
+      "target": 65,
+      "direction": "south",
+      "source_script": null,
+      "target_script": null,
+      "metadata_refused_by_fps_indoor_target_check": true,
+      "current_automated_route_leg": null
+    },
+    {
+      "edge_id": "33-65",
+      "source": 65,
+      "target": 33,
+      "direction": "north",
+      "source_script": null,
+      "target_script": null,
+      "metadata_refused_by_fps_indoor_target_check": true,
+      "current_automated_route_leg": null
+    },
+    {
+      "edge_id": "34-35",
+      "source": 34,
+      "target": 35,
+      "direction": "east",
+      "source_script": "s2-barp",
+      "target_script": null,
+      "metadata_refused_by_fps_indoor_target_check": true,
+      "current_automated_route_leg": null
+    },
+    {
+      "edge_id": "34-35",
+      "source": 35,
+      "target": 34,
+      "direction": "west",
+      "source_script": null,
+      "target_script": "s2-barp",
+      "metadata_refused_by_fps_indoor_target_check": true,
+      "current_automated_route_leg": null
+    },
+    {
+      "edge_id": "34-66",
+      "source": 34,
+      "target": 66,
+      "direction": "south",
+      "source_script": "s2-barp",
+      "target_script": "s2-nad",
+      "metadata_refused_by_fps_indoor_target_check": true,
+      "current_automated_route_leg": null
+    },
+    {
+      "edge_id": "34-66",
+      "source": 66,
+      "target": 34,
+      "direction": "north",
+      "source_script": "s2-nad",
+      "target_script": "s2-barp",
+      "metadata_refused_by_fps_indoor_target_check": true,
+      "current_automated_route_leg": null
+    },
+    {
+      "edge_id": "35-36",
+      "source": 35,
+      "target": 36,
+      "direction": "east",
+      "source_script": null,
+      "target_script": "s2-aunt",
+      "metadata_refused_by_fps_indoor_target_check": true,
+      "current_automated_route_leg": null
+    },
+    {
+      "edge_id": "35-36",
+      "source": 36,
+      "target": 35,
+      "direction": "west",
+      "source_script": "s2-aunt",
+      "target_script": null,
+      "metadata_refused_by_fps_indoor_target_check": true,
+      "current_automated_route_leg": null
+    },
+    {
+      "edge_id": "35-67",
+      "source": 35,
+      "target": 67,
+      "direction": "south",
+      "source_script": null,
+      "target_script": "s3-st1",
+      "metadata_refused_by_fps_indoor_target_check": true,
+      "current_automated_route_leg": null
+    },
+    {
+      "edge_id": "35-67",
+      "source": 67,
+      "target": 35,
+      "direction": "north",
+      "source_script": "s3-st1",
+      "target_script": null,
+      "metadata_refused_by_fps_indoor_target_check": true,
+      "current_automated_route_leg": null
+    },
+    {
+      "edge_id": "36-37",
+      "source": 36,
+      "target": 37,
+      "direction": "east",
+      "source_script": "s2-aunt",
+      "target_script": "s2-h2-s",
+      "metadata_refused_by_fps_indoor_target_check": true,
+      "current_automated_route_leg": null
+    },
+    {
+      "edge_id": "36-37",
+      "source": 37,
+      "target": 36,
+      "direction": "west",
+      "source_script": "s2-h2-s",
+      "target_script": "s2-aunt",
+      "metadata_refused_by_fps_indoor_target_check": true,
+      "current_automated_route_leg": null
+    },
+    {
+      "edge_id": "36-68",
+      "source": 36,
+      "target": 68,
+      "direction": "south",
+      "source_script": "s2-aunt",
+      "target_script": "s2-crime",
+      "metadata_refused_by_fps_indoor_target_check": true,
+      "current_automated_route_leg": null
+    },
+    {
+      "edge_id": "36-68",
+      "source": 68,
+      "target": 36,
+      "direction": "north",
+      "source_script": "s2-crime",
+      "target_script": "s2-aunt",
+      "metadata_refused_by_fps_indoor_target_check": true,
+      "current_automated_route_leg": null
+    },
+    {
+      "edge_id": "37-38",
+      "source": 37,
+      "target": 38,
+      "direction": "east",
+      "source_script": "s2-h2-s",
+      "target_script": null,
+      "metadata_refused_by_fps_indoor_target_check": true,
+      "current_automated_route_leg": null
+    },
+    {
+      "edge_id": "37-38",
+      "source": 38,
+      "target": 37,
+      "direction": "west",
+      "source_script": null,
+      "target_script": "s2-h2-s",
+      "metadata_refused_by_fps_indoor_target_check": true,
+      "current_automated_route_leg": null
+    },
+    {
+      "edge_id": "37-69",
+      "source": 37,
+      "target": 69,
+      "direction": "south",
+      "source_script": "s2-h2-s",
+      "target_script": null,
+      "metadata_refused_by_fps_indoor_target_check": true,
+      "current_automated_route_leg": null
+    },
+    {
+      "edge_id": "37-69",
+      "source": 69,
+      "target": 37,
+      "direction": "north",
+      "source_script": null,
+      "target_script": "s2-h2-s",
+      "metadata_refused_by_fps_indoor_target_check": true,
+      "current_automated_route_leg": null
+    },
+    {
+      "edge_id": "38-70",
+      "source": 38,
+      "target": 70,
+      "direction": "south",
+      "source_script": null,
+      "target_script": null,
+      "metadata_refused_by_fps_indoor_target_check": true,
+      "current_automated_route_leg": null
+    },
+    {
+      "edge_id": "38-70",
+      "source": 70,
+      "target": 38,
+      "direction": "north",
+      "source_script": null,
+      "target_script": null,
+      "metadata_refused_by_fps_indoor_target_check": true,
+      "current_automated_route_leg": null
+    },
+    {
+      "edge_id": "65-66",
+      "source": 65,
+      "target": 66,
+      "direction": "east",
+      "source_script": null,
+      "target_script": "s2-nad",
+      "metadata_refused_by_fps_indoor_target_check": true,
+      "current_automated_route_leg": null
+    },
+    {
+      "edge_id": "65-66",
+      "source": 66,
+      "target": 65,
+      "direction": "west",
+      "source_script": "s2-nad",
+      "target_script": null,
+      "metadata_refused_by_fps_indoor_target_check": true,
+      "current_automated_route_leg": null
+    },
+    {
+      "edge_id": "65-97",
+      "source": 65,
+      "target": 97,
+      "direction": "south",
+      "source_script": null,
+      "target_script": "s3-st2",
+      "metadata_refused_by_fps_indoor_target_check": true,
+      "current_automated_route_leg": null
+    },
+    {
+      "edge_id": "65-97",
+      "source": 97,
+      "target": 65,
+      "direction": "north",
+      "source_script": "s3-st2",
+      "target_script": null,
+      "metadata_refused_by_fps_indoor_target_check": true,
+      "current_automated_route_leg": null
+    },
+    {
+      "edge_id": "66-67",
+      "source": 66,
+      "target": 67,
+      "direction": "east",
+      "source_script": "s2-nad",
+      "target_script": "s3-st1",
+      "metadata_refused_by_fps_indoor_target_check": true,
+      "current_automated_route_leg": null
+    },
+    {
+      "edge_id": "66-67",
+      "source": 67,
+      "target": 66,
+      "direction": "west",
+      "source_script": "s3-st1",
+      "target_script": "s2-nad",
+      "metadata_refused_by_fps_indoor_target_check": true,
+      "current_automated_route_leg": null
+    },
+    {
+      "edge_id": "66-98",
+      "source": 66,
+      "target": 98,
+      "direction": "south",
+      "source_script": "s2-nad",
+      "target_script": "s1-cave",
+      "metadata_refused_by_fps_indoor_target_check": true,
+      "current_automated_route_leg": null
+    },
+    {
+      "edge_id": "66-98",
+      "source": 98,
+      "target": 66,
+      "direction": "north",
+      "source_script": "s1-cave",
+      "target_script": "s2-nad",
+      "metadata_refused_by_fps_indoor_target_check": true,
+      "current_automated_route_leg": null
+    },
+    {
+      "edge_id": "67-68",
+      "source": 67,
+      "target": 68,
+      "direction": "east",
+      "source_script": "s3-st1",
+      "target_script": "s2-crime",
+      "metadata_refused_by_fps_indoor_target_check": true,
+      "current_automated_route_leg": null
+    },
+    {
+      "edge_id": "67-68",
+      "source": 68,
+      "target": 67,
+      "direction": "west",
+      "source_script": "s2-crime",
+      "target_script": "s3-st1",
+      "metadata_refused_by_fps_indoor_target_check": true,
+      "current_automated_route_leg": null
+    },
+    {
+      "edge_id": "67-99",
+      "source": 67,
+      "target": 99,
+      "direction": "south",
+      "source_script": "s3-st1",
+      "target_script": "s1-cave",
+      "metadata_refused_by_fps_indoor_target_check": true,
+      "current_automated_route_leg": null
+    },
+    {
+      "edge_id": "67-99",
+      "source": 99,
+      "target": 67,
+      "direction": "north",
+      "source_script": "s1-cave",
+      "target_script": "s3-st1",
+      "metadata_refused_by_fps_indoor_target_check": true,
+      "current_automated_route_leg": null
+    },
+    {
+      "edge_id": "68-69",
+      "source": 68,
+      "target": 69,
+      "direction": "east",
+      "source_script": "s2-crime",
+      "target_script": null,
+      "metadata_refused_by_fps_indoor_target_check": true,
+      "current_automated_route_leg": null
+    },
+    {
+      "edge_id": "68-69",
+      "source": 69,
+      "target": 68,
+      "direction": "west",
+      "source_script": null,
+      "target_script": "s2-crime",
+      "metadata_refused_by_fps_indoor_target_check": true,
+      "current_automated_route_leg": null
+    },
+    {
+      "edge_id": "68-100",
+      "source": 68,
+      "target": 100,
+      "direction": "south",
+      "source_script": "s2-crime",
+      "target_script": null,
+      "metadata_refused_by_fps_indoor_target_check": true,
+      "current_automated_route_leg": null
+    },
+    {
+      "edge_id": "68-100",
+      "source": 100,
+      "target": 68,
+      "direction": "north",
+      "source_script": null,
+      "target_script": "s2-crime",
+      "metadata_refused_by_fps_indoor_target_check": true,
+      "current_automated_route_leg": null
+    },
+    {
+      "edge_id": "69-70",
+      "source": 69,
+      "target": 70,
+      "direction": "east",
+      "source_script": null,
+      "target_script": null,
+      "metadata_refused_by_fps_indoor_target_check": true,
+      "current_automated_route_leg": null
+    },
+    {
+      "edge_id": "69-70",
+      "source": 70,
+      "target": 69,
+      "direction": "west",
+      "source_script": null,
+      "target_script": null,
+      "metadata_refused_by_fps_indoor_target_check": true,
+      "current_automated_route_leg": null
+    },
+    {
+      "edge_id": "69-101",
+      "source": 69,
+      "target": 101,
+      "direction": "south",
+      "source_script": null,
+      "target_script": null,
+      "metadata_refused_by_fps_indoor_target_check": true,
+      "current_automated_route_leg": null
+    },
+    {
+      "edge_id": "69-101",
+      "source": 101,
+      "target": 69,
+      "direction": "north",
+      "source_script": null,
+      "target_script": null,
+      "metadata_refused_by_fps_indoor_target_check": true,
+      "current_automated_route_leg": null
+    },
+    {
+      "edge_id": "70-102",
+      "source": 70,
+      "target": 102,
+      "direction": "south",
+      "source_script": null,
+      "target_script": null,
+      "metadata_refused_by_fps_indoor_target_check": true,
+      "current_automated_route_leg": null
+    },
+    {
+      "edge_id": "70-102",
+      "source": 102,
+      "target": 70,
+      "direction": "north",
+      "source_script": null,
+      "target_script": null,
+      "metadata_refused_by_fps_indoor_target_check": true,
+      "current_automated_route_leg": null
+    },
+    {
+      "edge_id": "73-74",
+      "source": 73,
+      "target": 74,
+      "direction": "east",
+      "source_script": "sc-end",
+      "target_script": null,
+      "metadata_refused_by_fps_indoor_target_check": true,
+      "current_automated_route_leg": null
+    },
+    {
+      "edge_id": "73-74",
+      "source": 74,
+      "target": 73,
+      "direction": "west",
+      "source_script": null,
+      "target_script": "sc-end",
+      "metadata_refused_by_fps_indoor_target_check": true,
+      "current_automated_route_leg": null
+    },
+    {
+      "edge_id": "73-105",
+      "source": 73,
+      "target": 105,
+      "direction": "south",
+      "source_script": "sc-end",
+      "target_script": null,
+      "metadata_refused_by_fps_indoor_target_check": true,
+      "current_automated_route_leg": null
+    },
+    {
+      "edge_id": "73-105",
+      "source": 105,
+      "target": 73,
+      "direction": "north",
+      "source_script": null,
+      "target_script": "sc-end",
+      "metadata_refused_by_fps_indoor_target_check": true,
+      "current_automated_route_leg": null
+    },
+    {
+      "edge_id": "74-106",
+      "source": 74,
+      "target": 106,
+      "direction": "south",
+      "source_script": null,
+      "target_script": null,
+      "metadata_refused_by_fps_indoor_target_check": true,
+      "current_automated_route_leg": null
+    },
+    {
+      "edge_id": "74-106",
+      "source": 106,
+      "target": 74,
+      "direction": "north",
+      "source_script": null,
+      "target_script": null,
+      "metadata_refused_by_fps_indoor_target_check": true,
+      "current_automated_route_leg": null
+    },
+    {
+      "edge_id": "85-86",
+      "source": 85,
+      "target": 86,
+      "direction": "east",
+      "source_script": "s7-hell",
+      "target_script": null,
+      "metadata_refused_by_fps_indoor_target_check": true,
+      "current_automated_route_leg": null
+    },
+    {
+      "edge_id": "85-86",
+      "source": 86,
+      "target": 85,
+      "direction": "west",
+      "source_script": null,
+      "target_script": "s7-hell",
+      "metadata_refused_by_fps_indoor_target_check": true,
+      "current_automated_route_leg": null
+    },
+    {
+      "edge_id": "97-98",
+      "source": 97,
+      "target": 98,
+      "direction": "east",
+      "source_script": "s3-st2",
+      "target_script": "s1-cave",
+      "metadata_refused_by_fps_indoor_target_check": true,
+      "current_automated_route_leg": null
+    },
+    {
+      "edge_id": "97-98",
+      "source": 98,
+      "target": 97,
+      "direction": "west",
+      "source_script": "s1-cave",
+      "target_script": "s3-st2",
+      "metadata_refused_by_fps_indoor_target_check": true,
+      "current_automated_route_leg": null
+    },
+    {
+      "edge_id": "97-129",
+      "source": 97,
+      "target": 129,
+      "direction": "south",
+      "source_script": "s3-st2",
+      "target_script": "s3-bh",
+      "metadata_refused_by_fps_indoor_target_check": true,
+      "current_automated_route_leg": null
+    },
+    {
+      "edge_id": "97-129",
+      "source": 129,
+      "target": 97,
+      "direction": "north",
+      "source_script": "s3-bh",
+      "target_script": "s3-st2",
+      "metadata_refused_by_fps_indoor_target_check": true,
+      "current_automated_route_leg": null
+    },
+    {
+      "edge_id": "98-99",
+      "source": 98,
+      "target": 99,
+      "direction": "east",
+      "source_script": "s1-cave",
+      "target_script": "s1-cave",
+      "metadata_refused_by_fps_indoor_target_check": true,
+      "current_automated_route_leg": null
+    },
+    {
+      "edge_id": "98-99",
+      "source": 99,
+      "target": 98,
+      "direction": "west",
+      "source_script": "s1-cave",
+      "target_script": "s1-cave",
+      "metadata_refused_by_fps_indoor_target_check": true,
+      "current_automated_route_leg": null
+    },
+    {
+      "edge_id": "98-130",
+      "source": 98,
+      "target": 130,
+      "direction": "south",
+      "source_script": "s1-cave",
+      "target_script": "s3-st3",
+      "metadata_refused_by_fps_indoor_target_check": true,
+      "current_automated_route_leg": null
+    },
+    {
+      "edge_id": "98-130",
+      "source": 130,
+      "target": 98,
+      "direction": "north",
+      "source_script": "s3-st3",
+      "target_script": "s1-cave",
+      "metadata_refused_by_fps_indoor_target_check": true,
+      "current_automated_route_leg": null
+    },
+    {
+      "edge_id": "99-100",
+      "source": 99,
+      "target": 100,
+      "direction": "east",
+      "source_script": "s1-cave",
+      "target_script": null,
+      "metadata_refused_by_fps_indoor_target_check": true,
+      "current_automated_route_leg": "wizard-bonca-road (cave_from_rock)"
+    },
+    {
+      "edge_id": "99-100",
+      "source": 100,
+      "target": 99,
+      "direction": "west",
+      "source_script": null,
+      "target_script": "s1-cave",
+      "metadata_refused_by_fps_indoor_target_check": true,
+      "current_automated_route_leg": "wizard-cave-return (wizard_reward)"
+    },
+    {
+      "edge_id": "99-131",
+      "source": 99,
+      "target": 131,
+      "direction": "south",
+      "source_script": "s1-cave",
+      "target_script": "s1-caves",
+      "metadata_refused_by_fps_indoor_target_check": true,
+      "current_automated_route_leg": "wizard-cave-return (wizard_reward)"
+    },
+    {
+      "edge_id": "99-131",
+      "source": 131,
+      "target": 99,
+      "direction": "north",
+      "source_script": "s1-caves",
+      "target_script": "s1-cave",
+      "metadata_refused_by_fps_indoor_target_check": true,
+      "current_automated_route_leg": "wizard-bonca-road (cave_from_rock)"
+    },
+    {
+      "edge_id": "100-101",
+      "source": 100,
+      "target": 101,
+      "direction": "east",
+      "source_script": null,
+      "target_script": null,
+      "metadata_refused_by_fps_indoor_target_check": true,
+      "current_automated_route_leg": null
+    },
+    {
+      "edge_id": "100-101",
+      "source": 101,
+      "target": 100,
+      "direction": "west",
+      "source_script": null,
+      "target_script": null,
+      "metadata_refused_by_fps_indoor_target_check": true,
+      "current_automated_route_leg": null
+    },
+    {
+      "edge_id": "100-132",
+      "source": 100,
+      "target": 132,
+      "direction": "south",
+      "source_script": null,
+      "target_script": null,
+      "metadata_refused_by_fps_indoor_target_check": true,
+      "current_automated_route_leg": null
+    },
+    {
+      "edge_id": "100-132",
+      "source": 132,
+      "target": 100,
+      "direction": "north",
+      "source_script": null,
+      "target_script": null,
+      "metadata_refused_by_fps_indoor_target_check": true,
+      "current_automated_route_leg": null
+    },
+    {
+      "edge_id": "101-102",
+      "source": 101,
+      "target": 102,
+      "direction": "east",
+      "source_script": null,
+      "target_script": null,
+      "metadata_refused_by_fps_indoor_target_check": true,
+      "current_automated_route_leg": null
+    },
+    {
+      "edge_id": "101-102",
+      "source": 102,
+      "target": 101,
+      "direction": "west",
+      "source_script": null,
+      "target_script": null,
+      "metadata_refused_by_fps_indoor_target_check": true,
+      "current_automated_route_leg": null
+    },
+    {
+      "edge_id": "101-133",
+      "source": 101,
+      "target": 133,
+      "direction": "south",
+      "source_script": null,
+      "target_script": null,
+      "metadata_refused_by_fps_indoor_target_check": true,
+      "current_automated_route_leg": null
+    },
+    {
+      "edge_id": "101-133",
+      "source": 133,
+      "target": 101,
+      "direction": "north",
+      "source_script": null,
+      "target_script": null,
+      "metadata_refused_by_fps_indoor_target_check": true,
+      "current_automated_route_leg": null
+    },
+    {
+      "edge_id": "102-134",
+      "source": 102,
+      "target": 134,
+      "direction": "south",
+      "source_script": null,
+      "target_script": null,
+      "metadata_refused_by_fps_indoor_target_check": true,
+      "current_automated_route_leg": null
+    },
+    {
+      "edge_id": "102-134",
+      "source": 134,
+      "target": 102,
+      "direction": "north",
+      "source_script": null,
+      "target_script": null,
+      "metadata_refused_by_fps_indoor_target_check": true,
+      "current_automated_route_leg": null
+    },
+    {
+      "edge_id": "105-106",
+      "source": 105,
+      "target": 106,
+      "direction": "east",
+      "source_script": null,
+      "target_script": null,
+      "metadata_refused_by_fps_indoor_target_check": true,
+      "current_automated_route_leg": null
+    },
+    {
+      "edge_id": "105-106",
+      "source": 106,
+      "target": 105,
+      "direction": "west",
+      "source_script": null,
+      "target_script": null,
+      "metadata_refused_by_fps_indoor_target_check": true,
+      "current_automated_route_leg": null
+    },
+    {
+      "edge_id": "105-137",
+      "source": 105,
+      "target": 137,
+      "direction": "south",
+      "source_script": null,
+      "target_script": null,
+      "metadata_refused_by_fps_indoor_target_check": true,
+      "current_automated_route_leg": null
+    },
+    {
+      "edge_id": "105-137",
+      "source": 137,
+      "target": 105,
+      "direction": "north",
+      "source_script": null,
+      "target_script": null,
+      "metadata_refused_by_fps_indoor_target_check": true,
+      "current_automated_route_leg": null
+    },
+    {
+      "edge_id": "106-138",
+      "source": 106,
+      "target": 138,
+      "direction": "south",
+      "source_script": null,
+      "target_script": null,
+      "metadata_refused_by_fps_indoor_target_check": true,
+      "current_automated_route_leg": null
+    },
+    {
+      "edge_id": "106-138",
+      "source": 138,
+      "target": 106,
+      "direction": "north",
+      "source_script": null,
+      "target_script": null,
+      "metadata_refused_by_fps_indoor_target_check": true,
+      "current_automated_route_leg": null
+    },
+    {
+      "edge_id": "129-130",
+      "source": 129,
+      "target": 130,
+      "direction": "east",
+      "source_script": "s3-bh",
+      "target_script": "s3-st3",
+      "metadata_refused_by_fps_indoor_target_check": true,
+      "current_automated_route_leg": null
+    },
+    {
+      "edge_id": "129-130",
+      "source": 130,
+      "target": 129,
+      "direction": "west",
+      "source_script": "s3-st3",
+      "target_script": "s3-bh",
+      "metadata_refused_by_fps_indoor_target_check": true,
+      "current_automated_route_leg": null
+    },
+    {
+      "edge_id": "129-161",
+      "source": 129,
+      "target": 161,
+      "direction": "south",
+      "source_script": "s3-bh",
+      "target_script": "s3-h1",
+      "metadata_refused_by_fps_indoor_target_check": true,
+      "current_automated_route_leg": null
+    },
+    {
+      "edge_id": "129-161",
+      "source": 161,
+      "target": 129,
+      "direction": "north",
+      "source_script": "s3-h1",
+      "target_script": "s3-bh",
+      "metadata_refused_by_fps_indoor_target_check": true,
+      "current_automated_route_leg": null
+    },
+    {
+      "edge_id": "130-131",
+      "source": 130,
+      "target": 131,
+      "direction": "east",
+      "source_script": "s3-st3",
+      "target_script": "s1-caves",
+      "metadata_refused_by_fps_indoor_target_check": true,
+      "current_automated_route_leg": null
+    },
+    {
+      "edge_id": "130-131",
+      "source": 131,
+      "target": 130,
+      "direction": "west",
+      "source_script": "s1-caves",
+      "target_script": "s3-st3",
+      "metadata_refused_by_fps_indoor_target_check": true,
+      "current_automated_route_leg": null
+    },
+    {
+      "edge_id": "130-162",
+      "source": 130,
+      "target": 162,
+      "direction": "south",
+      "source_script": "s3-st3",
+      "target_script": "s4-st1",
+      "metadata_refused_by_fps_indoor_target_check": true,
+      "current_automated_route_leg": null
+    },
+    {
+      "edge_id": "130-162",
+      "source": 162,
+      "target": 130,
+      "direction": "north",
+      "source_script": "s4-st1",
+      "target_script": "s3-st3",
+      "metadata_refused_by_fps_indoor_target_check": true,
+      "current_automated_route_leg": null
+    },
+    {
+      "edge_id": "131-132",
+      "source": 131,
+      "target": 132,
+      "direction": "east",
+      "source_script": "s1-caves",
+      "target_script": null,
+      "metadata_refused_by_fps_indoor_target_check": true,
+      "current_automated_route_leg": null
+    },
+    {
+      "edge_id": "131-132",
+      "source": 132,
+      "target": 131,
+      "direction": "west",
+      "source_script": null,
+      "target_script": "s1-caves",
+      "metadata_refused_by_fps_indoor_target_check": true,
+      "current_automated_route_leg": null
+    },
+    {
+      "edge_id": "131-163",
+      "source": 131,
+      "target": 163,
+      "direction": "south",
+      "source_script": "s1-caves",
+      "target_script": "s4-h2",
+      "metadata_refused_by_fps_indoor_target_check": true,
+      "current_automated_route_leg": null
+    },
+    {
+      "edge_id": "131-163",
+      "source": 163,
+      "target": 131,
+      "direction": "north",
+      "source_script": "s4-h2",
+      "target_script": "s1-caves",
+      "metadata_refused_by_fps_indoor_target_check": true,
+      "current_automated_route_leg": null
+    },
+    {
+      "edge_id": "132-133",
+      "source": 132,
+      "target": 133,
+      "direction": "east",
+      "source_script": null,
+      "target_script": null,
+      "metadata_refused_by_fps_indoor_target_check": true,
+      "current_automated_route_leg": null
+    },
+    {
+      "edge_id": "132-133",
+      "source": 133,
+      "target": 132,
+      "direction": "west",
+      "source_script": null,
+      "target_script": null,
+      "metadata_refused_by_fps_indoor_target_check": true,
+      "current_automated_route_leg": null
+    },
+    {
+      "edge_id": "132-164",
+      "source": 132,
+      "target": 164,
+      "direction": "south",
+      "source_script": null,
+      "target_script": null,
+      "metadata_refused_by_fps_indoor_target_check": true,
+      "current_automated_route_leg": null
+    },
+    {
+      "edge_id": "132-164",
+      "source": 164,
+      "target": 132,
+      "direction": "north",
+      "source_script": null,
+      "target_script": null,
+      "metadata_refused_by_fps_indoor_target_check": true,
+      "current_automated_route_leg": null
+    },
+    {
+      "edge_id": "133-134",
+      "source": 133,
+      "target": 134,
+      "direction": "east",
+      "source_script": null,
+      "target_script": null,
+      "metadata_refused_by_fps_indoor_target_check": true,
+      "current_automated_route_leg": null
+    },
+    {
+      "edge_id": "133-134",
+      "source": 134,
+      "target": 133,
+      "direction": "west",
+      "source_script": null,
+      "target_script": null,
+      "metadata_refused_by_fps_indoor_target_check": true,
+      "current_automated_route_leg": null
+    },
+    {
+      "edge_id": "133-165",
+      "source": 133,
+      "target": 165,
+      "direction": "south",
+      "source_script": null,
+      "target_script": null,
+      "metadata_refused_by_fps_indoor_target_check": true,
+      "current_automated_route_leg": null
+    },
+    {
+      "edge_id": "133-165",
+      "source": 165,
+      "target": 133,
+      "direction": "north",
+      "source_script": null,
+      "target_script": null,
+      "metadata_refused_by_fps_indoor_target_check": true,
+      "current_automated_route_leg": null
+    },
+    {
+      "edge_id": "134-166",
+      "source": 134,
+      "target": 166,
+      "direction": "south",
+      "source_script": null,
+      "target_script": null,
+      "metadata_refused_by_fps_indoor_target_check": true,
+      "current_automated_route_leg": null
+    },
+    {
+      "edge_id": "134-166",
+      "source": 166,
+      "target": 134,
+      "direction": "north",
+      "source_script": null,
+      "target_script": null,
+      "metadata_refused_by_fps_indoor_target_check": true,
+      "current_automated_route_leg": null
+    },
+    {
+      "edge_id": "137-138",
+      "source": 137,
+      "target": 138,
+      "direction": "east",
+      "source_script": null,
+      "target_script": null,
+      "metadata_refused_by_fps_indoor_target_check": true,
+      "current_automated_route_leg": null
+    },
+    {
+      "edge_id": "137-138",
+      "source": 138,
+      "target": 137,
+      "direction": "west",
+      "source_script": null,
+      "target_script": null,
+      "metadata_refused_by_fps_indoor_target_check": true,
+      "current_automated_route_leg": null
+    },
+    {
+      "edge_id": "137-169",
+      "source": 137,
+      "target": 169,
+      "direction": "south",
+      "source_script": null,
+      "target_script": null,
+      "metadata_refused_by_fps_indoor_target_check": true,
+      "current_automated_route_leg": null
+    },
+    {
+      "edge_id": "137-169",
+      "source": 169,
+      "target": 137,
+      "direction": "north",
+      "source_script": null,
+      "target_script": null,
+      "metadata_refused_by_fps_indoor_target_check": true,
+      "current_automated_route_leg": null
+    },
+    {
+      "edge_id": "138-170",
+      "source": 138,
+      "target": 170,
+      "direction": "south",
+      "source_script": null,
+      "target_script": null,
+      "metadata_refused_by_fps_indoor_target_check": true,
+      "current_automated_route_leg": null
+    },
+    {
+      "edge_id": "138-170",
+      "source": 170,
+      "target": 138,
+      "direction": "north",
+      "source_script": null,
+      "target_script": null,
+      "metadata_refused_by_fps_indoor_target_check": true,
+      "current_automated_route_leg": null
+    },
+    {
+      "edge_id": "161-162",
+      "source": 161,
+      "target": 162,
+      "direction": "east",
+      "source_script": "s3-h1",
+      "target_script": "s4-st1",
+      "metadata_refused_by_fps_indoor_target_check": true,
+      "current_automated_route_leg": null
+    },
+    {
+      "edge_id": "161-162",
+      "source": 162,
+      "target": 161,
+      "direction": "west",
+      "source_script": "s4-st1",
+      "target_script": "s3-h1",
+      "metadata_refused_by_fps_indoor_target_check": true,
+      "current_automated_route_leg": null
+    },
+    {
+      "edge_id": "161-193",
+      "source": 161,
+      "target": 193,
+      "direction": "south",
+      "source_script": "s3-h1",
+      "target_script": "s4-h1",
+      "metadata_refused_by_fps_indoor_target_check": true,
+      "current_automated_route_leg": null
+    },
+    {
+      "edge_id": "161-193",
+      "source": 193,
+      "target": 161,
+      "direction": "north",
+      "source_script": "s4-h1",
+      "target_script": "s3-h1",
+      "metadata_refused_by_fps_indoor_target_check": true,
+      "current_automated_route_leg": null
+    },
+    {
+      "edge_id": "162-163",
+      "source": 162,
+      "target": 163,
+      "direction": "east",
+      "source_script": "s4-st1",
+      "target_script": "s4-h2",
+      "metadata_refused_by_fps_indoor_target_check": true,
+      "current_automated_route_leg": null
+    },
+    {
+      "edge_id": "162-163",
+      "source": 163,
+      "target": 162,
+      "direction": "west",
+      "source_script": "s4-h2",
+      "target_script": "s4-st1",
+      "metadata_refused_by_fps_indoor_target_check": true,
+      "current_automated_route_leg": null
+    },
+    {
+      "edge_id": "162-194",
+      "source": 162,
+      "target": 194,
+      "direction": "south",
+      "source_script": "s4-st1",
+      "target_script": "s4-st2",
+      "metadata_refused_by_fps_indoor_target_check": true,
+      "current_automated_route_leg": null
+    },
+    {
+      "edge_id": "162-194",
+      "source": 194,
+      "target": 162,
+      "direction": "north",
+      "source_script": "s4-st2",
+      "target_script": "s4-st1",
+      "metadata_refused_by_fps_indoor_target_check": true,
+      "current_automated_route_leg": null
+    },
+    {
+      "edge_id": "163-164",
+      "source": 163,
+      "target": 164,
+      "direction": "east",
+      "source_script": "s4-h2",
+      "target_script": null,
+      "metadata_refused_by_fps_indoor_target_check": true,
+      "current_automated_route_leg": null
+    },
+    {
+      "edge_id": "163-164",
+      "source": 164,
+      "target": 163,
+      "direction": "west",
+      "source_script": null,
+      "target_script": "s4-h2",
+      "metadata_refused_by_fps_indoor_target_check": true,
+      "current_automated_route_leg": null
+    },
+    {
+      "edge_id": "163-195",
+      "source": 163,
+      "target": 195,
+      "direction": "south",
+      "source_script": "s4-h2",
+      "target_script": null,
+      "metadata_refused_by_fps_indoor_target_check": true,
+      "current_automated_route_leg": null
+    },
+    {
+      "edge_id": "163-195",
+      "source": 195,
+      "target": 163,
+      "direction": "north",
+      "source_script": null,
+      "target_script": "s4-h2",
+      "metadata_refused_by_fps_indoor_target_check": true,
+      "current_automated_route_leg": null
+    },
+    {
+      "edge_id": "164-165",
+      "source": 164,
+      "target": 165,
+      "direction": "east",
+      "source_script": null,
+      "target_script": null,
+      "metadata_refused_by_fps_indoor_target_check": true,
+      "current_automated_route_leg": null
+    },
+    {
+      "edge_id": "164-165",
+      "source": 165,
+      "target": 164,
+      "direction": "west",
+      "source_script": null,
+      "target_script": null,
+      "metadata_refused_by_fps_indoor_target_check": true,
+      "current_automated_route_leg": null
+    },
+    {
+      "edge_id": "164-196",
+      "source": 164,
+      "target": 196,
+      "direction": "south",
+      "source_script": null,
+      "target_script": "s4-st3",
+      "metadata_refused_by_fps_indoor_target_check": true,
+      "current_automated_route_leg": null
+    },
+    {
+      "edge_id": "164-196",
+      "source": 196,
+      "target": 164,
+      "direction": "north",
+      "source_script": "s4-st3",
+      "target_script": null,
+      "metadata_refused_by_fps_indoor_target_check": true,
+      "current_automated_route_leg": null
+    },
+    {
+      "edge_id": "165-166",
+      "source": 165,
+      "target": 166,
+      "direction": "east",
+      "source_script": null,
+      "target_script": null,
+      "metadata_refused_by_fps_indoor_target_check": true,
+      "current_automated_route_leg": null
+    },
+    {
+      "edge_id": "165-166",
+      "source": 166,
+      "target": 165,
+      "direction": "west",
+      "source_script": null,
+      "target_script": null,
+      "metadata_refused_by_fps_indoor_target_check": true,
+      "current_automated_route_leg": null
+    },
+    {
+      "edge_id": "165-197",
+      "source": 165,
+      "target": 197,
+      "direction": "south",
+      "source_script": null,
+      "target_script": null,
+      "metadata_refused_by_fps_indoor_target_check": true,
+      "current_automated_route_leg": null
+    },
+    {
+      "edge_id": "165-197",
+      "source": 197,
+      "target": 165,
+      "direction": "north",
+      "source_script": null,
+      "target_script": null,
+      "metadata_refused_by_fps_indoor_target_check": true,
+      "current_automated_route_leg": null
+    },
+    {
+      "edge_id": "166-198",
+      "source": 166,
+      "target": 198,
+      "direction": "south",
+      "source_script": null,
+      "target_script": null,
+      "metadata_refused_by_fps_indoor_target_check": true,
+      "current_automated_route_leg": null
+    },
+    {
+      "edge_id": "166-198",
+      "source": 198,
+      "target": 166,
+      "direction": "north",
+      "source_script": null,
+      "target_script": null,
+      "metadata_refused_by_fps_indoor_target_check": true,
+      "current_automated_route_leg": null
+    },
+    {
+      "edge_id": "169-170",
+      "source": 169,
+      "target": 170,
+      "direction": "east",
+      "source_script": null,
+      "target_script": null,
+      "metadata_refused_by_fps_indoor_target_check": true,
+      "current_automated_route_leg": null
+    },
+    {
+      "edge_id": "169-170",
+      "source": 170,
+      "target": 169,
+      "direction": "west",
+      "source_script": null,
+      "target_script": null,
+      "metadata_refused_by_fps_indoor_target_check": true,
+      "current_automated_route_leg": null
+    },
+    {
+      "edge_id": "170-202",
+      "source": 170,
+      "target": 202,
+      "direction": "south",
+      "source_script": null,
+      "target_script": null,
+      "metadata_refused_by_fps_indoor_target_check": true,
+      "current_automated_route_leg": null
+    },
+    {
+      "edge_id": "170-202",
+      "source": 202,
+      "target": 170,
+      "direction": "north",
+      "source_script": null,
+      "target_script": null,
+      "metadata_refused_by_fps_indoor_target_check": true,
+      "current_automated_route_leg": null
+    },
+    {
+      "edge_id": "193-194",
+      "source": 193,
+      "target": 194,
+      "direction": "east",
+      "source_script": "s4-h1",
+      "target_script": "s4-st2",
+      "metadata_refused_by_fps_indoor_target_check": true,
+      "current_automated_route_leg": null
+    },
+    {
+      "edge_id": "193-194",
+      "source": 194,
+      "target": 193,
+      "direction": "west",
+      "source_script": "s4-st2",
+      "target_script": "s4-h1",
+      "metadata_refused_by_fps_indoor_target_check": true,
+      "current_automated_route_leg": null
+    },
+    {
+      "edge_id": "193-225",
+      "source": 193,
+      "target": 225,
+      "direction": "south",
+      "source_script": "s4-h1",
+      "target_script": null,
+      "metadata_refused_by_fps_indoor_target_check": true,
+      "current_automated_route_leg": null
+    },
+    {
+      "edge_id": "193-225",
+      "source": 225,
+      "target": 193,
+      "direction": "north",
+      "source_script": null,
+      "target_script": "s4-h1",
+      "metadata_refused_by_fps_indoor_target_check": true,
+      "current_automated_route_leg": null
+    },
+    {
+      "edge_id": "194-195",
+      "source": 194,
+      "target": 195,
+      "direction": "east",
+      "source_script": "s4-st2",
+      "target_script": null,
+      "metadata_refused_by_fps_indoor_target_check": true,
+      "current_automated_route_leg": null
+    },
+    {
+      "edge_id": "194-195",
+      "source": 195,
+      "target": 194,
+      "direction": "west",
+      "source_script": null,
+      "target_script": "s4-st2",
+      "metadata_refused_by_fps_indoor_target_check": true,
+      "current_automated_route_leg": null
+    },
+    {
+      "edge_id": "194-226",
+      "source": 194,
+      "target": 226,
+      "direction": "south",
+      "source_script": "s4-st2",
+      "target_script": "s5-heals",
+      "metadata_refused_by_fps_indoor_target_check": true,
+      "current_automated_route_leg": null
+    },
+    {
+      "edge_id": "194-226",
+      "source": 226,
+      "target": 194,
+      "direction": "north",
+      "source_script": "s5-heals",
+      "target_script": "s4-st2",
+      "metadata_refused_by_fps_indoor_target_check": true,
+      "current_automated_route_leg": null
+    },
+    {
+      "edge_id": "195-196",
+      "source": 195,
+      "target": 196,
+      "direction": "east",
+      "source_script": null,
+      "target_script": "s4-st3",
+      "metadata_refused_by_fps_indoor_target_check": true,
+      "current_automated_route_leg": null
+    },
+    {
+      "edge_id": "195-196",
+      "source": 196,
+      "target": 195,
+      "direction": "west",
+      "source_script": "s4-st3",
+      "target_script": null,
+      "metadata_refused_by_fps_indoor_target_check": true,
+      "current_automated_route_leg": null
+    },
+    {
+      "edge_id": "195-227",
+      "source": 195,
+      "target": 227,
+      "direction": "south",
+      "source_script": null,
+      "target_script": null,
+      "metadata_refused_by_fps_indoor_target_check": true,
+      "current_automated_route_leg": null
+    },
+    {
+      "edge_id": "195-227",
+      "source": 227,
+      "target": 195,
+      "direction": "north",
+      "source_script": null,
+      "target_script": null,
+      "metadata_refused_by_fps_indoor_target_check": true,
+      "current_automated_route_leg": null
+    },
+    {
+      "edge_id": "196-197",
+      "source": 196,
+      "target": 197,
+      "direction": "east",
+      "source_script": "s4-st3",
+      "target_script": null,
+      "metadata_refused_by_fps_indoor_target_check": true,
+      "current_automated_route_leg": null
+    },
+    {
+      "edge_id": "196-197",
+      "source": 197,
+      "target": 196,
+      "direction": "west",
+      "source_script": null,
+      "target_script": "s4-st3",
+      "metadata_refused_by_fps_indoor_target_check": true,
+      "current_automated_route_leg": null
+    },
+    {
+      "edge_id": "196-228",
+      "source": 196,
+      "target": 228,
+      "direction": "south",
+      "source_script": "s4-st3",
+      "target_script": "s5-st1",
+      "metadata_refused_by_fps_indoor_target_check": true,
+      "current_automated_route_leg": null
+    },
+    {
+      "edge_id": "196-228",
+      "source": 228,
+      "target": 196,
+      "direction": "north",
+      "source_script": "s5-st1",
+      "target_script": "s4-st3",
+      "metadata_refused_by_fps_indoor_target_check": true,
+      "current_automated_route_leg": null
+    },
+    {
+      "edge_id": "197-198",
+      "source": 197,
+      "target": 198,
+      "direction": "east",
+      "source_script": null,
+      "target_script": null,
+      "metadata_refused_by_fps_indoor_target_check": true,
+      "current_automated_route_leg": null
+    },
+    {
+      "edge_id": "197-198",
+      "source": 198,
+      "target": 197,
+      "direction": "west",
+      "source_script": null,
+      "target_script": null,
+      "metadata_refused_by_fps_indoor_target_check": true,
+      "current_automated_route_leg": null
+    },
+    {
+      "edge_id": "197-229",
+      "source": 197,
+      "target": 229,
+      "direction": "south",
+      "source_script": null,
+      "target_script": "s5-base",
+      "metadata_refused_by_fps_indoor_target_check": true,
+      "current_automated_route_leg": null
+    },
+    {
+      "edge_id": "197-229",
+      "source": 229,
+      "target": 197,
+      "direction": "north",
+      "source_script": "s5-base",
+      "target_script": null,
+      "metadata_refused_by_fps_indoor_target_check": true,
+      "current_automated_route_leg": null
+    },
+    {
+      "edge_id": "225-226",
+      "source": 225,
+      "target": 226,
+      "direction": "east",
+      "source_script": null,
+      "target_script": "s5-heals",
+      "metadata_refused_by_fps_indoor_target_check": true,
+      "current_automated_route_leg": null
+    },
+    {
+      "edge_id": "225-226",
+      "source": 226,
+      "target": 225,
+      "direction": "west",
+      "source_script": "s5-heals",
+      "target_script": null,
+      "metadata_refused_by_fps_indoor_target_check": true,
+      "current_automated_route_leg": null
+    },
+    {
+      "edge_id": "225-257",
+      "source": 225,
+      "target": 257,
+      "direction": "south",
+      "source_script": null,
+      "target_script": null,
+      "metadata_refused_by_fps_indoor_target_check": true,
+      "current_automated_route_leg": null
+    },
+    {
+      "edge_id": "225-257",
+      "source": 257,
+      "target": 225,
+      "direction": "north",
+      "source_script": null,
+      "target_script": null,
+      "metadata_refused_by_fps_indoor_target_check": true,
+      "current_automated_route_leg": null
+    },
+    {
+      "edge_id": "226-227",
+      "source": 226,
+      "target": 227,
+      "direction": "east",
+      "source_script": "s5-heals",
+      "target_script": null,
+      "metadata_refused_by_fps_indoor_target_check": true,
+      "current_automated_route_leg": null
+    },
+    {
+      "edge_id": "226-227",
+      "source": 227,
+      "target": 226,
+      "direction": "west",
+      "source_script": null,
+      "target_script": "s5-heals",
+      "metadata_refused_by_fps_indoor_target_check": true,
+      "current_automated_route_leg": null
+    },
+    {
+      "edge_id": "226-258",
+      "source": 226,
+      "target": 258,
+      "direction": "south",
+      "source_script": "s5-heals",
+      "target_script": null,
+      "metadata_refused_by_fps_indoor_target_check": true,
+      "current_automated_route_leg": null
+    },
+    {
+      "edge_id": "226-258",
+      "source": 258,
+      "target": 226,
+      "direction": "north",
+      "source_script": null,
+      "target_script": "s5-heals",
+      "metadata_refused_by_fps_indoor_target_check": true,
+      "current_automated_route_leg": null
+    },
+    {
+      "edge_id": "227-228",
+      "source": 227,
+      "target": 228,
+      "direction": "east",
+      "source_script": null,
+      "target_script": "s5-st1",
+      "metadata_refused_by_fps_indoor_target_check": true,
+      "current_automated_route_leg": null
+    },
+    {
+      "edge_id": "227-228",
+      "source": 228,
+      "target": 227,
+      "direction": "west",
+      "source_script": "s5-st1",
+      "target_script": null,
+      "metadata_refused_by_fps_indoor_target_check": true,
+      "current_automated_route_leg": null
+    },
+    {
+      "edge_id": "227-259",
+      "source": 227,
+      "target": 259,
+      "direction": "south",
+      "source_script": null,
+      "target_script": null,
+      "metadata_refused_by_fps_indoor_target_check": true,
+      "current_automated_route_leg": null
+    },
+    {
+      "edge_id": "227-259",
+      "source": 259,
+      "target": 227,
+      "direction": "north",
+      "source_script": null,
+      "target_script": null,
+      "metadata_refused_by_fps_indoor_target_check": true,
+      "current_automated_route_leg": null
+    },
+    {
+      "edge_id": "228-229",
+      "source": 228,
+      "target": 229,
+      "direction": "east",
+      "source_script": "s5-st1",
+      "target_script": "s5-base",
+      "metadata_refused_by_fps_indoor_target_check": true,
+      "current_automated_route_leg": null
+    },
+    {
+      "edge_id": "228-229",
+      "source": 229,
+      "target": 228,
+      "direction": "west",
+      "source_script": "s5-base",
+      "target_script": "s5-st1",
+      "metadata_refused_by_fps_indoor_target_check": true,
+      "current_automated_route_leg": null
+    },
+    {
+      "edge_id": "228-260",
+      "source": 228,
+      "target": 260,
+      "direction": "south",
+      "source_script": "s5-st1",
+      "target_script": "s6-chur",
+      "metadata_refused_by_fps_indoor_target_check": true,
+      "current_automated_route_leg": null
+    },
+    {
+      "edge_id": "228-260",
+      "source": 260,
+      "target": 228,
+      "direction": "north",
+      "source_script": "s6-chur",
+      "target_script": "s5-st1",
+      "metadata_refused_by_fps_indoor_target_check": true,
+      "current_automated_route_leg": null
+    },
+    {
+      "edge_id": "229-261",
+      "source": 229,
+      "target": 261,
+      "direction": "south",
+      "source_script": "s5-base",
+      "target_script": "s6-st1",
+      "metadata_refused_by_fps_indoor_target_check": true,
+      "current_automated_route_leg": null
+    },
+    {
+      "edge_id": "229-261",
+      "source": 261,
+      "target": 229,
+      "direction": "north",
+      "source_script": "s6-st1",
+      "target_script": "s5-base",
+      "metadata_refused_by_fps_indoor_target_check": true,
+      "current_automated_route_leg": null
+    },
+    {
+      "edge_id": "257-258",
+      "source": 257,
+      "target": 258,
+      "direction": "east",
+      "source_script": null,
+      "target_script": null,
+      "metadata_refused_by_fps_indoor_target_check": true,
+      "current_automated_route_leg": null
+    },
+    {
+      "edge_id": "257-258",
+      "source": 258,
+      "target": 257,
+      "direction": "west",
+      "source_script": null,
+      "target_script": null,
+      "metadata_refused_by_fps_indoor_target_check": true,
+      "current_automated_route_leg": null
+    },
+    {
+      "edge_id": "257-289",
+      "source": 257,
+      "target": 289,
+      "direction": "south",
+      "source_script": null,
+      "target_script": "s1-booth",
+      "metadata_refused_by_fps_indoor_target_check": true,
+      "current_automated_route_leg": null
+    },
+    {
+      "edge_id": "257-289",
+      "source": 289,
+      "target": 257,
+      "direction": "north",
+      "source_script": "s1-booth",
+      "target_script": null,
+      "metadata_refused_by_fps_indoor_target_check": true,
+      "current_automated_route_leg": null
+    },
+    {
+      "edge_id": "258-259",
+      "source": 258,
+      "target": 259,
+      "direction": "east",
+      "source_script": null,
+      "target_script": null,
+      "metadata_refused_by_fps_indoor_target_check": true,
+      "current_automated_route_leg": null
+    },
+    {
+      "edge_id": "258-259",
+      "source": 259,
+      "target": 258,
+      "direction": "west",
+      "source_script": null,
+      "target_script": null,
+      "metadata_refused_by_fps_indoor_target_check": true,
+      "current_automated_route_leg": null
+    },
+    {
+      "edge_id": "258-290",
+      "source": 258,
+      "target": 290,
+      "direction": "south",
+      "source_script": null,
+      "target_script": null,
+      "metadata_refused_by_fps_indoor_target_check": true,
+      "current_automated_route_leg": null
+    },
+    {
+      "edge_id": "258-290",
+      "source": 290,
+      "target": 258,
+      "direction": "north",
+      "source_script": null,
+      "target_script": null,
+      "metadata_refused_by_fps_indoor_target_check": true,
+      "current_automated_route_leg": null
+    },
+    {
+      "edge_id": "259-260",
+      "source": 259,
+      "target": 260,
+      "direction": "east",
+      "source_script": null,
+      "target_script": "s6-chur",
+      "metadata_refused_by_fps_indoor_target_check": true,
+      "current_automated_route_leg": null
+    },
+    {
+      "edge_id": "259-260",
+      "source": 260,
+      "target": 259,
+      "direction": "west",
+      "source_script": "s6-chur",
+      "target_script": null,
+      "metadata_refused_by_fps_indoor_target_check": true,
+      "current_automated_route_leg": null
+    },
+    {
+      "edge_id": "260-261",
+      "source": 260,
+      "target": 261,
+      "direction": "east",
+      "source_script": "s6-chur",
+      "target_script": "s6-st1",
+      "metadata_refused_by_fps_indoor_target_check": true,
+      "current_automated_route_leg": null
+    },
+    {
+      "edge_id": "260-261",
+      "source": 261,
+      "target": 260,
+      "direction": "west",
+      "source_script": "s6-st1",
+      "target_script": "s6-chur",
+      "metadata_refused_by_fps_indoor_target_check": true,
+      "current_automated_route_leg": null
+    },
+    {
+      "edge_id": "289-290",
+      "source": 289,
+      "target": 290,
+      "direction": "east",
+      "source_script": "s1-booth",
+      "target_script": null,
+      "metadata_refused_by_fps_indoor_target_check": true,
+      "current_automated_route_leg": null
+    },
+    {
+      "edge_id": "289-290",
+      "source": 290,
+      "target": 289,
+      "direction": "west",
+      "source_script": null,
+      "target_script": "s1-booth",
+      "metadata_refused_by_fps_indoor_target_check": true,
+      "current_automated_route_leg": null
+    },
+    {
+      "edge_id": "514-515",
+      "source": 514,
+      "target": 515,
+      "direction": "east",
+      "source_script": null,
+      "target_script": null,
+      "metadata_refused_by_fps_indoor_target_check": true,
+      "current_automated_route_leg": null
+    },
+    {
+      "edge_id": "514-515",
+      "source": 515,
+      "target": 514,
+      "direction": "west",
+      "source_script": null,
+      "target_script": null,
+      "metadata_refused_by_fps_indoor_target_check": true,
+      "current_automated_route_leg": null
+    },
+    {
+      "edge_id": "514-546",
+      "source": 514,
+      "target": 546,
+      "direction": "south",
+      "source_script": null,
+      "target_script": null,
+      "metadata_refused_by_fps_indoor_target_check": true,
+      "current_automated_route_leg": null
+    },
+    {
+      "edge_id": "514-546",
+      "source": 546,
+      "target": 514,
+      "direction": "north",
+      "source_script": null,
+      "target_script": null,
+      "metadata_refused_by_fps_indoor_target_check": true,
+      "current_automated_route_leg": null
+    },
+    {
+      "edge_id": "515-547",
+      "source": 515,
+      "target": 547,
+      "direction": "south",
+      "source_script": null,
+      "target_script": null,
+      "metadata_refused_by_fps_indoor_target_check": true,
+      "current_automated_route_leg": null
+    },
+    {
+      "edge_id": "515-547",
+      "source": 547,
+      "target": 515,
+      "direction": "north",
+      "source_script": null,
+      "target_script": null,
+      "metadata_refused_by_fps_indoor_target_check": true,
+      "current_automated_route_leg": null
+    },
+    {
+      "edge_id": "546-547",
+      "source": 546,
+      "target": 547,
+      "direction": "east",
+      "source_script": null,
+      "target_script": null,
+      "metadata_refused_by_fps_indoor_target_check": true,
+      "current_automated_route_leg": null
+    },
+    {
+      "edge_id": "546-547",
+      "source": 547,
+      "target": 546,
+      "direction": "west",
+      "source_script": null,
+      "target_script": null,
+      "metadata_refused_by_fps_indoor_target_check": true,
+      "current_automated_route_leg": null
+    },
+    {
+      "edge_id": "546-578",
+      "source": 546,
+      "target": 578,
+      "direction": "south",
+      "source_script": null,
+      "target_script": "s2-cave2",
+      "metadata_refused_by_fps_indoor_target_check": true,
+      "current_automated_route_leg": null
+    },
+    {
+      "edge_id": "546-578",
+      "source": 578,
+      "target": 546,
+      "direction": "north",
+      "source_script": "s2-cave2",
+      "target_script": null,
+      "metadata_refused_by_fps_indoor_target_check": true,
+      "current_automated_route_leg": null
+    },
+    {
+      "edge_id": "547-579",
+      "source": 547,
+      "target": 579,
+      "direction": "south",
+      "source_script": null,
+      "target_script": "s2-cave",
+      "metadata_refused_by_fps_indoor_target_check": true,
+      "current_automated_route_leg": null
+    },
+    {
+      "edge_id": "547-579",
+      "source": 579,
+      "target": 547,
+      "direction": "north",
+      "source_script": "s2-cave",
+      "target_script": null,
+      "metadata_refused_by_fps_indoor_target_check": true,
+      "current_automated_route_leg": null
+    },
+    {
+      "edge_id": "577-578",
+      "source": 577,
+      "target": 578,
+      "direction": "east",
+      "source_script": null,
+      "target_script": "s2-cave2",
+      "metadata_refused_by_fps_indoor_target_check": true,
+      "current_automated_route_leg": null
+    },
+    {
+      "edge_id": "577-578",
+      "source": 578,
+      "target": 577,
+      "direction": "west",
+      "source_script": "s2-cave2",
+      "target_script": null,
+      "metadata_refused_by_fps_indoor_target_check": true,
+      "current_automated_route_leg": null
+    },
+    {
+      "edge_id": "577-609",
+      "source": 577,
+      "target": 609,
+      "direction": "south",
+      "source_script": null,
+      "target_script": null,
+      "metadata_refused_by_fps_indoor_target_check": true,
+      "current_automated_route_leg": null
+    },
+    {
+      "edge_id": "577-609",
+      "source": 609,
+      "target": 577,
+      "direction": "north",
+      "source_script": null,
+      "target_script": null,
+      "metadata_refused_by_fps_indoor_target_check": true,
+      "current_automated_route_leg": null
+    },
+    {
+      "edge_id": "578-579",
+      "source": 578,
+      "target": 579,
+      "direction": "east",
+      "source_script": "s2-cave2",
+      "target_script": "s2-cave",
+      "metadata_refused_by_fps_indoor_target_check": true,
+      "current_automated_route_leg": null
+    },
+    {
+      "edge_id": "578-579",
+      "source": 579,
+      "target": 578,
+      "direction": "west",
+      "source_script": "s2-cave",
+      "target_script": "s2-cave2",
+      "metadata_refused_by_fps_indoor_target_check": true,
+      "current_automated_route_leg": null
+    },
+    {
+      "edge_id": "578-610",
+      "source": 578,
+      "target": 610,
+      "direction": "south",
+      "source_script": "s2-cave2",
+      "target_script": null,
+      "metadata_refused_by_fps_indoor_target_check": true,
+      "current_automated_route_leg": null
+    },
+    {
+      "edge_id": "578-610",
+      "source": 610,
+      "target": 578,
+      "direction": "north",
+      "source_script": null,
+      "target_script": "s2-cave2",
+      "metadata_refused_by_fps_indoor_target_check": true,
+      "current_automated_route_leg": null
+    },
+    {
+      "edge_id": "609-610",
+      "source": 609,
+      "target": 610,
+      "direction": "east",
+      "source_script": null,
+      "target_script": null,
+      "metadata_refused_by_fps_indoor_target_check": true,
+      "current_automated_route_leg": null
+    },
+    {
+      "edge_id": "609-610",
+      "source": 610,
+      "target": 609,
+      "direction": "west",
+      "source_script": null,
+      "target_script": null,
+      "metadata_refused_by_fps_indoor_target_check": true,
+      "current_automated_route_leg": null
+    }
+  ]
+}

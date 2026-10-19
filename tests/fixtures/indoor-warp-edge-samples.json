@@ -1,0 +1,533 @@
+{
+  "setup": "End/middle/end samples of each of16 raw-hard warp edge directions other than34\u219266. Injected near-exit fixture, not earned progress. Derived from all1336 pinned points and original raw warp owners.",
+  "trials": [
+    {
+      "source": 1,
+      "adjacent": 33,
+      "direction": "south",
+      "source_point": [
+        312.0,
+        399.0
+      ],
+      "editor_index": 25,
+      "authored_destination": 439
+    },
+    {
+      "source": 1,
+      "adjacent": 33,
+      "direction": "south",
+      "source_point": [
+        323.0,
+        399.0
+      ],
+      "editor_index": 25,
+      "authored_destination": 439
+    },
+    {
+      "source": 1,
+      "adjacent": 33,
+      "direction": "south",
+      "source_point": [
+        334.0,
+        399.0
+      ],
+      "editor_index": 25,
+      "authored_destination": 439
+    },
+    {
+      "source": 3,
+      "adjacent": 2,
+      "direction": "west",
+      "source_point": [
+        20.0,
+        149.0
+      ],
+      "editor_index": 14,
+      "authored_destination": 440
+    },
+    {
+      "source": 3,
+      "adjacent": 2,
+      "direction": "west",
+      "source_point": [
+        20.0,
+        175.0
+      ],
+      "editor_index": 14,
+      "authored_destination": 440
+    },
+    {
+      "source": 3,
+      "adjacent": 2,
+      "direction": "west",
+      "source_point": [
+        20.0,
+        200.0
+      ],
+      "editor_index": 14,
+      "authored_destination": 440
+    },
+    {
+      "source": 38,
+      "adjacent": 70,
+      "direction": "south",
+      "source_point": [
+        248.0,
+        399.0
+      ],
+      "editor_index": 21,
+      "authored_destination": 530
+    },
+    {
+      "source": 38,
+      "adjacent": 70,
+      "direction": "south",
+      "source_point": [
+        260.0,
+        399.0
+      ],
+      "editor_index": 21,
+      "authored_destination": 530
+    },
+    {
+      "source": 38,
+      "adjacent": 70,
+      "direction": "south",
+      "source_point": [
+        272.0,
+        399.0
+      ],
+      "editor_index": 21,
+      "authored_destination": 530
+    },
+    {
+      "source": 65,
+      "adjacent": 97,
+      "direction": "south",
+      "source_point": [
+        304.0,
+        399.0
+      ],
+      "editor_index": 16,
+      "authored_destination": 532
+    },
+    {
+      "source": 65,
+      "adjacent": 97,
+      "direction": "south",
+      "source_point": [
+        318.0,
+        399.0
+      ],
+      "editor_index": 16,
+      "authored_destination": 532
+    },
+    {
+      "source": 65,
+      "adjacent": 97,
+      "direction": "south",
+      "source_point": [
+        331.0,
+        399.0
+      ],
+      "editor_index": 16,
+      "authored_destination": 532
+    },
+    {
+      "source": 66,
+      "adjacent": 98,
+      "direction": "south",
+      "source_point": [
+        304.0,
+        399.0
+      ],
+      "editor_index": 16,
+      "authored_destination": 497
+    },
+    {
+      "source": 66,
+      "adjacent": 98,
+      "direction": "south",
+      "source_point": [
+        318.0,
+        399.0
+      ],
+      "editor_index": 16,
+      "authored_destination": 497
+    },
+    {
+      "source": 66,
+      "adjacent": 98,
+      "direction": "south",
+      "source_point": [
+        331.0,
+        399.0
+      ],
+      "editor_index": 16,
+      "authored_destination": 497
+    },
+    {
+      "source": 68,
+      "adjacent": 100,
+      "direction": "south",
+      "source_point": [
+        304.0,
+        399.0
+      ],
+      "editor_index": 16,
+      "authored_destination": 497
+    },
+    {
+      "source": 68,
+      "adjacent": 100,
+      "direction": "south",
+      "source_point": [
+        318.0,
+        399.0
+      ],
+      "editor_index": 16,
+      "authored_destination": 497
+    },
+    {
+      "source": 68,
+      "adjacent": 100,
+      "direction": "south",
+      "source_point": [
+        331.0,
+        399.0
+      ],
+      "editor_index": 16,
+      "authored_destination": 497
+    },
+    {
+      "source": 69,
+      "adjacent": 101,
+      "direction": "south",
+      "source_point": [
+        454.0,
+        399.0
+      ],
+      "editor_index": 1,
+      "authored_destination": 659
+    },
+    {
+      "source": 69,
+      "adjacent": 101,
+      "direction": "south",
+      "source_point": [
+        514.0,
+        399.0
+      ],
+      "editor_index": 1,
+      "authored_destination": 659
+    },
+    {
+      "source": 69,
+      "adjacent": 101,
+      "direction": "south",
+      "source_point": [
+        574.0,
+        399.0
+      ],
+      "editor_index": 1,
+      "authored_destination": 659
+    },
+    {
+      "source": 101,
+      "adjacent": 133,
+      "direction": "south",
+      "source_point": [
+        457.0,
+        399.0
+      ],
+      "editor_index": 1,
+      "authored_destination": 307
+    },
+    {
+      "source": 101,
+      "adjacent": 133,
+      "direction": "south",
+      "source_point": [
+        517.0,
+        399.0
+      ],
+      "editor_index": 1,
+      "authored_destination": 307
+    },
+    {
+      "source": 101,
+      "adjacent": 133,
+      "direction": "south",
+      "source_point": [
+        577.0,
+        399.0
+      ],
+      "editor_index": 1,
+      "authored_destination": 307
+    },
+    {
+      "source": 102,
+      "adjacent": 134,
+      "direction": "south",
+      "source_point": [
+        220.0,
+        399.0
+      ],
+      "editor_index": 15,
+      "authored_destination": 402
+    },
+    {
+      "source": 102,
+      "adjacent": 134,
+      "direction": "south",
+      "source_point": [
+        320.0,
+        399.0
+      ],
+      "editor_index": 15,
+      "authored_destination": 402
+    },
+    {
+      "source": 102,
+      "adjacent": 134,
+      "direction": "south",
+      "source_point": [
+        470.0,
+        399.0
+      ],
+      "editor_index": 16,
+      "authored_destination": 402
+    },
+    {
+      "source": 131,
+      "adjacent": 163,
+      "direction": "south",
+      "source_point": [
+        200.0,
+        399.0
+      ],
+      "editor_index": 1,
+      "authored_destination": 277
+    },
+    {
+      "source": 131,
+      "adjacent": 163,
+      "direction": "south",
+      "source_point": [
+        288.0,
+        399.0
+      ],
+      "editor_index": 1,
+      "authored_destination": 277
+    },
+    {
+      "source": 131,
+      "adjacent": 163,
+      "direction": "south",
+      "source_point": [
+        375.0,
+        399.0
+      ],
+      "editor_index": 1,
+      "authored_destination": 277
+    },
+    {
+      "source": 132,
+      "adjacent": 164,
+      "direction": "south",
+      "source_point": [
+        256.0,
+        399.0
+      ],
+      "editor_index": 19,
+      "authored_destination": 534
+    },
+    {
+      "source": 132,
+      "adjacent": 164,
+      "direction": "south",
+      "source_point": [
+        316.0,
+        399.0
+      ],
+      "editor_index": 19,
+      "authored_destination": 534
+    },
+    {
+      "source": 132,
+      "adjacent": 164,
+      "direction": "south",
+      "source_point": [
+        376.0,
+        399.0
+      ],
+      "editor_index": 19,
+      "authored_destination": 534
+    },
+    {
+      "source": 164,
+      "adjacent": 196,
+      "direction": "south",
+      "source_point": [
+        256.0,
+        399.0
+      ],
+      "editor_index": 19,
+      "authored_destination": 248
+    },
+    {
+      "source": 164,
+      "adjacent": 196,
+      "direction": "south",
+      "source_point": [
+        316.0,
+        399.0
+      ],
+      "editor_index": 19,
+      "authored_destination": 248
+    },
+    {
+      "source": 164,
+      "adjacent": 196,
+      "direction": "south",
+      "source_point": [
+        376.0,
+        399.0
+      ],
+      "editor_index": 19,
+      "authored_destination": 248
+    },
+    {
+      "source": 165,
+      "adjacent": 197,
+      "direction": "south",
+      "source_point": [
+        256.0,
+        399.0
+      ],
+      "editor_index": 19,
+      "authored_destination": 209
+    },
+    {
+      "source": 165,
+      "adjacent": 197,
+      "direction": "south",
+      "source_point": [
+        316.0,
+        399.0
+      ],
+      "editor_index": 19,
+      "authored_destination": 209
+    },
+    {
+      "source": 165,
+      "adjacent": 197,
+      "direction": "south",
+      "source_point": [
+        376.0,
+        399.0
+      ],
+      "editor_index": 19,
+      "authored_destination": 209
+    },
+    {
+      "source": 166,
+      "adjacent": 198,
+      "direction": "south",
+      "source_point": [
+        256.0,
+        399.0
+      ],
+      "editor_index": 19,
+      "authored_destination": 180
+    },
+    {
+      "source": 166,
+      "adjacent": 198,
+      "direction": "south",
+      "source_point": [
+        316.0,
+        399.0
+      ],
+      "editor_index": 19,
+      "authored_destination": 180
+    },
+    {
+      "source": 166,
+      "adjacent": 198,
+      "direction": "south",
+      "source_point": [
+        376.0,
+        399.0
+      ],
+      "editor_index": 19,
+      "authored_destination": 180
+    },
+    {
+      "source": 227,
+      "adjacent": 259,
+      "direction": "south",
+      "source_point": [
+        457.0,
+        399.0
+      ],
+      "editor_index": 1,
+      "authored_destination": 710
+    },
+    {
+      "source": 227,
+      "adjacent": 259,
+      "direction": "south",
+      "source_point": [
+        517.0,
+        399.0
+      ],
+      "editor_index": 1,
+      "authored_destination": 710
+    },
+    {
+      "source": 227,
+      "adjacent": 259,
+      "direction": "south",
+      "source_point": [
+        577.0,
+        399.0
+      ],
+      "editor_index": 1,
+      "authored_destination": 710
+    },
+    {
+      "source": 289,
+      "adjacent": 290,
+      "direction": "east",
+      "source_point": [
+        619.0,
+        125.0
+      ],
+      "editor_index": 19,
+      "authored_destination": 350
+    },
+    {
+      "source": 289,
+      "adjacent": 290,
+      "direction": "east",
+      "source_point": [
+        619.0,
+        150.0
+      ],
+      "editor_index": 19,
+      "authored_destination": 350
+    },
+    {
+      "source": 289,
+      "adjacent": 290,
+      "direction": "east",
+      "source_point": [
+        619.0,
+        175.0
+      ],
+      "editor_index": 19,
+      "authored_destination": 350
+    }
+  ]
+}

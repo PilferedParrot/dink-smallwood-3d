@@ -1,0 +1,2533 @@
+{
+  "basis": "Source sequence/frame census of fp_world.gd:_model_key lands/Details frame>=7 branch, with earlier trees/shrubs/rocks branches checked. This is classification and authored placement data, not a live visibility/arrival census.",
+  "positive_control": [
+    89,
+    9
+  ],
+  "negative_control": [
+    89,
+    6
+  ],
+  "rows": [
+    {
+      "sequence": 89,
+      "frame": 7,
+      "path": "assets/graphics/lands/Details/crack-07.png",
+      "key": "grass",
+      "source_placements": []
+    },
+    {
+      "sequence": 89,
+      "frame": 8,
+      "path": "assets/graphics/lands/Details/crack-08.png",
+      "key": "grass",
+      "source_placements": []
+    },
+    {
+      "sequence": 89,
+      "frame": 9,
+      "path": "assets/graphics/lands/Details/crack-09.png",
+      "key": "grass",
+      "source_placements": [
+        {
+          "screen": 132,
+          "editor": 1,
+          "type": 0,
+          "script": "s1-hole",
+          "vision": 0
+        },
+        {
+          "screen": 180,
+          "editor": 1,
+          "type": 1,
+          "script": "s6-hole2",
+          "vision": 0
+        },
+        {
+          "screen": 209,
+          "editor": 4,
+          "type": 1,
+          "script": "s1-hole3",
+          "vision": 0
+        },
+        {
+          "screen": 243,
+          "editor": 13,
+          "type": 1,
+          "script": "s6-hole",
+          "vision": 1
+        },
+        {
+          "screen": 277,
+          "editor": 2,
+          "type": 1,
+          "script": "s1-hole",
+          "vision": 0
+        }
+      ]
+    },
+    {
+      "sequence": 89,
+      "frame": 10,
+      "path": "assets/graphics/lands/Details/crack-10.png",
+      "key": "grass",
+      "source_placements": [
+        {
+          "screen": 85,
+          "editor": 1,
+          "type": 1,
+          "script": "",
+          "vision": 0
+        },
+        {
+          "screen": 112,
+          "editor": 2,
+          "type": 0,
+          "script": "",
+          "vision": 0
+        },
+        {
+          "screen": 144,
+          "editor": 4,
+          "type": 0,
+          "script": "",
+          "vision": 0
+        },
+        {
+          "screen": 182,
+          "editor": 1,
+          "type": 0,
+          "script": "",
+          "vision": 0
+        },
+        {
+          "screen": 209,
+          "editor": 1,
+          "type": 0,
+          "script": "",
+          "vision": 0
+        },
+        {
+          "screen": 248,
+          "editor": 1,
+          "type": 0,
+          "script": "",
+          "vision": 0
+        },
+        {
+          "screen": 254,
+          "editor": 4,
+          "type": 1,
+          "script": "",
+          "vision": 0
+        },
+        {
+          "screen": 307,
+          "editor": 17,
+          "type": 1,
+          "script": "",
+          "vision": 1
+        },
+        {
+          "screen": 483,
+          "editor": 11,
+          "type": 0,
+          "script": "",
+          "vision": 0
+        },
+        {
+          "screen": 625,
+          "editor": 5,
+          "type": 1,
+          "script": "",
+          "vision": 0
+        },
+        {
+          "screen": 671,
+          "editor": 1,
+          "type": 0,
+          "script": "",
+          "vision": 0
+        }
+      ]
+    },
+    {
+      "sequence": 90,
+      "frame": 7,
+      "path": "assets/graphics/lands/Details/grave-07.png",
+      "key": "grass",
+      "source_placements": [
+        {
+          "screen": 26,
+          "editor": 1,
+          "type": 1,
+          "script": "thorn",
+          "vision": 0
+        },
+        {
+          "screen": 26,
+          "editor": 2,
+          "type": 1,
+          "script": "thorn",
+          "vision": 0
+        },
+        {
+          "screen": 31,
+          "editor": 2,
+          "type": 1,
+          "script": "thorn",
+          "vision": 0
+        },
+        {
+          "screen": 59,
+          "editor": 2,
+          "type": 1,
+          "script": "thorn",
+          "vision": 0
+        },
+        {
+          "screen": 59,
+          "editor": 4,
+          "type": 1,
+          "script": "thorn",
+          "vision": 0
+        },
+        {
+          "screen": 60,
+          "editor": 4,
+          "type": 1,
+          "script": "thorn",
+          "vision": 0
+        },
+        {
+          "screen": 61,
+          "editor": 4,
+          "type": 1,
+          "script": "thorn",
+          "vision": 0
+        },
+        {
+          "screen": 62,
+          "editor": 4,
+          "type": 1,
+          "script": "thorn",
+          "vision": 0
+        },
+        {
+          "screen": 63,
+          "editor": 4,
+          "type": 1,
+          "script": "thorn",
+          "vision": 0
+        },
+        {
+          "screen": 64,
+          "editor": 4,
+          "type": 1,
+          "script": "",
+          "vision": 0
+        },
+        {
+          "screen": 95,
+          "editor": 4,
+          "type": 1,
+          "script": "thorn",
+          "vision": 0
+        },
+        {
+          "screen": 96,
+          "editor": 4,
+          "type": 1,
+          "script": "",
+          "vision": 0
+        },
+        {
+          "screen": 123,
+          "editor": 5,
+          "type": 1,
+          "script": "thorn",
+          "vision": 0
+        },
+        {
+          "screen": 124,
+          "editor": 1,
+          "type": 1,
+          "script": "thorn",
+          "vision": 0
+        },
+        {
+          "screen": 126,
+          "editor": 1,
+          "type": 1,
+          "script": "thorn",
+          "vision": 0
+        },
+        {
+          "screen": 127,
+          "editor": 4,
+          "type": 1,
+          "script": "thorn",
+          "vision": 0
+        },
+        {
+          "screen": 128,
+          "editor": 4,
+          "type": 1,
+          "script": "thorn",
+          "vision": 0
+        },
+        {
+          "screen": 157,
+          "editor": 1,
+          "type": 1,
+          "script": "thorn",
+          "vision": 0
+        },
+        {
+          "screen": 158,
+          "editor": 4,
+          "type": 1,
+          "script": "thorn",
+          "vision": 0
+        },
+        {
+          "screen": 159,
+          "editor": 4,
+          "type": 1,
+          "script": "thorn",
+          "vision": 0
+        },
+        {
+          "screen": 189,
+          "editor": 4,
+          "type": 1,
+          "script": "thorn",
+          "vision": 0
+        },
+        {
+          "screen": 190,
+          "editor": 4,
+          "type": 1,
+          "script": "thorn",
+          "vision": 0
+        },
+        {
+          "screen": 191,
+          "editor": 4,
+          "type": 1,
+          "script": "thorn",
+          "vision": 0
+        },
+        {
+          "screen": 192,
+          "editor": 4,
+          "type": 1,
+          "script": "thorn",
+          "vision": 0
+        },
+        {
+          "screen": 223,
+          "editor": 4,
+          "type": 1,
+          "script": "thorn",
+          "vision": 0
+        },
+        {
+          "screen": 224,
+          "editor": 4,
+          "type": 1,
+          "script": "thorn",
+          "vision": 0
+        },
+        {
+          "screen": 254,
+          "editor": 3,
+          "type": 1,
+          "script": "thorn",
+          "vision": 0
+        }
+      ]
+    },
+    {
+      "sequence": 90,
+      "frame": 8,
+      "path": "assets/graphics/lands/Details/grave-08.png",
+      "key": "grass",
+      "source_placements": [
+        {
+          "screen": 26,
+          "editor": 4,
+          "type": 1,
+          "script": "thorn",
+          "vision": 0
+        },
+        {
+          "screen": 26,
+          "editor": 5,
+          "type": 1,
+          "script": "thorn",
+          "vision": 0
+        },
+        {
+          "screen": 27,
+          "editor": 2,
+          "type": 1,
+          "script": "thorn",
+          "vision": 0
+        },
+        {
+          "screen": 27,
+          "editor": 3,
+          "type": 1,
+          "script": "thorn",
+          "vision": 0
+        },
+        {
+          "screen": 27,
+          "editor": 4,
+          "type": 1,
+          "script": "thorn",
+          "vision": 0
+        },
+        {
+          "screen": 27,
+          "editor": 5,
+          "type": 1,
+          "script": "thorn",
+          "vision": 0
+        },
+        {
+          "screen": 28,
+          "editor": 2,
+          "type": 1,
+          "script": "thorn",
+          "vision": 0
+        },
+        {
+          "screen": 29,
+          "editor": 2,
+          "type": 1,
+          "script": "thorn",
+          "vision": 0
+        },
+        {
+          "screen": 30,
+          "editor": 2,
+          "type": 1,
+          "script": "thorn",
+          "vision": 0
+        },
+        {
+          "screen": 58,
+          "editor": 2,
+          "type": 1,
+          "script": "thorn",
+          "vision": 0
+        },
+        {
+          "screen": 58,
+          "editor": 3,
+          "type": 1,
+          "script": "thorn",
+          "vision": 0
+        },
+        {
+          "screen": 58,
+          "editor": 4,
+          "type": 1,
+          "script": "thorn",
+          "vision": 0
+        },
+        {
+          "screen": 58,
+          "editor": 5,
+          "type": 1,
+          "script": "thorn",
+          "vision": 0
+        },
+        {
+          "screen": 59,
+          "editor": 1,
+          "type": 1,
+          "script": "thorn",
+          "vision": 0
+        },
+        {
+          "screen": 60,
+          "editor": 2,
+          "type": 1,
+          "script": "thorn",
+          "vision": 0
+        },
+        {
+          "screen": 60,
+          "editor": 3,
+          "type": 1,
+          "script": "thorn",
+          "vision": 0
+        },
+        {
+          "screen": 60,
+          "editor": 5,
+          "type": 1,
+          "script": "thorn",
+          "vision": 0
+        },
+        {
+          "screen": 61,
+          "editor": 2,
+          "type": 1,
+          "script": "thorn",
+          "vision": 0
+        },
+        {
+          "screen": 61,
+          "editor": 3,
+          "type": 1,
+          "script": "thorn",
+          "vision": 0
+        },
+        {
+          "screen": 61,
+          "editor": 5,
+          "type": 1,
+          "script": "thorn",
+          "vision": 0
+        },
+        {
+          "screen": 61,
+          "editor": 6,
+          "type": 1,
+          "script": "thorn",
+          "vision": 0
+        },
+        {
+          "screen": 62,
+          "editor": 2,
+          "type": 1,
+          "script": "thorn",
+          "vision": 0
+        },
+        {
+          "screen": 62,
+          "editor": 3,
+          "type": 1,
+          "script": "thorn",
+          "vision": 0
+        },
+        {
+          "screen": 62,
+          "editor": 5,
+          "type": 1,
+          "script": "thorn",
+          "vision": 0
+        },
+        {
+          "screen": 62,
+          "editor": 6,
+          "type": 1,
+          "script": "thorn",
+          "vision": 0
+        },
+        {
+          "screen": 62,
+          "editor": 7,
+          "type": 1,
+          "script": "thorn",
+          "vision": 0
+        },
+        {
+          "screen": 62,
+          "editor": 8,
+          "type": 1,
+          "script": "thorn",
+          "vision": 0
+        },
+        {
+          "screen": 63,
+          "editor": 2,
+          "type": 1,
+          "script": "thorn",
+          "vision": 0
+        },
+        {
+          "screen": 63,
+          "editor": 3,
+          "type": 1,
+          "script": "thorn",
+          "vision": 0
+        },
+        {
+          "screen": 63,
+          "editor": 5,
+          "type": 1,
+          "script": "thorn",
+          "vision": 0
+        },
+        {
+          "screen": 64,
+          "editor": 2,
+          "type": 1,
+          "script": "thorn",
+          "vision": 0
+        },
+        {
+          "screen": 64,
+          "editor": 3,
+          "type": 1,
+          "script": "thorn",
+          "vision": 0
+        },
+        {
+          "screen": 64,
+          "editor": 5,
+          "type": 1,
+          "script": "thorn",
+          "vision": 0
+        },
+        {
+          "screen": 90,
+          "editor": 2,
+          "type": 1,
+          "script": "thorn",
+          "vision": 0
+        },
+        {
+          "screen": 90,
+          "editor": 3,
+          "type": 1,
+          "script": "thorn",
+          "vision": 0
+        },
+        {
+          "screen": 90,
+          "editor": 4,
+          "type": 1,
+          "script": "thorn",
+          "vision": 0
+        },
+        {
+          "screen": 90,
+          "editor": 5,
+          "type": 1,
+          "script": "thorn",
+          "vision": 0
+        },
+        {
+          "screen": 91,
+          "editor": 2,
+          "type": 1,
+          "script": "thorn",
+          "vision": 0
+        },
+        {
+          "screen": 91,
+          "editor": 3,
+          "type": 1,
+          "script": "thorn",
+          "vision": 0
+        },
+        {
+          "screen": 91,
+          "editor": 4,
+          "type": 1,
+          "script": "thorn",
+          "vision": 0
+        },
+        {
+          "screen": 91,
+          "editor": 5,
+          "type": 1,
+          "script": "thorn",
+          "vision": 0
+        },
+        {
+          "screen": 95,
+          "editor": 2,
+          "type": 1,
+          "script": "thorn",
+          "vision": 0
+        },
+        {
+          "screen": 95,
+          "editor": 3,
+          "type": 1,
+          "script": "thorn",
+          "vision": 0
+        },
+        {
+          "screen": 95,
+          "editor": 5,
+          "type": 1,
+          "script": "thorn",
+          "vision": 0
+        },
+        {
+          "screen": 96,
+          "editor": 2,
+          "type": 1,
+          "script": "thorn",
+          "vision": 0
+        },
+        {
+          "screen": 96,
+          "editor": 3,
+          "type": 1,
+          "script": "thorn",
+          "vision": 0
+        },
+        {
+          "screen": 96,
+          "editor": 5,
+          "type": 1,
+          "script": "thorn",
+          "vision": 0
+        },
+        {
+          "screen": 122,
+          "editor": 1,
+          "type": 1,
+          "script": "thorn",
+          "vision": 0
+        },
+        {
+          "screen": 122,
+          "editor": 2,
+          "type": 1,
+          "script": "thorn",
+          "vision": 0
+        },
+        {
+          "screen": 122,
+          "editor": 3,
+          "type": 1,
+          "script": "thorn",
+          "vision": 0
+        },
+        {
+          "screen": 122,
+          "editor": 4,
+          "type": 1,
+          "script": "thorn",
+          "vision": 0
+        },
+        {
+          "screen": 122,
+          "editor": 5,
+          "type": 1,
+          "script": "thorn",
+          "vision": 0
+        },
+        {
+          "screen": 124,
+          "editor": 2,
+          "type": 1,
+          "script": "thorn",
+          "vision": 0
+        },
+        {
+          "screen": 125,
+          "editor": 1,
+          "type": 1,
+          "script": "thorn",
+          "vision": 0
+        },
+        {
+          "screen": 127,
+          "editor": 2,
+          "type": 1,
+          "script": "thorn",
+          "vision": 0
+        },
+        {
+          "screen": 127,
+          "editor": 3,
+          "type": 1,
+          "script": "thorn",
+          "vision": 0
+        },
+        {
+          "screen": 127,
+          "editor": 5,
+          "type": 1,
+          "script": "thorn",
+          "vision": 0
+        },
+        {
+          "screen": 128,
+          "editor": 2,
+          "type": 1,
+          "script": "thorn",
+          "vision": 0
+        },
+        {
+          "screen": 128,
+          "editor": 3,
+          "type": 1,
+          "script": "thorn",
+          "vision": 0
+        },
+        {
+          "screen": 155,
+          "editor": 2,
+          "type": 1,
+          "script": "thorn",
+          "vision": 0
+        },
+        {
+          "screen": 155,
+          "editor": 3,
+          "type": 1,
+          "script": "thorn",
+          "vision": 0
+        },
+        {
+          "screen": 155,
+          "editor": 4,
+          "type": 1,
+          "script": "thorn",
+          "vision": 0
+        },
+        {
+          "screen": 155,
+          "editor": 5,
+          "type": 1,
+          "script": "thorn",
+          "vision": 0
+        },
+        {
+          "screen": 156,
+          "editor": 2,
+          "type": 1,
+          "script": "thorn",
+          "vision": 0
+        },
+        {
+          "screen": 156,
+          "editor": 3,
+          "type": 1,
+          "script": "thorn",
+          "vision": 0
+        },
+        {
+          "screen": 156,
+          "editor": 4,
+          "type": 1,
+          "script": "thorn",
+          "vision": 0
+        },
+        {
+          "screen": 157,
+          "editor": 2,
+          "type": 1,
+          "script": "thorn",
+          "vision": 0
+        },
+        {
+          "screen": 157,
+          "editor": 3,
+          "type": 1,
+          "script": "thorn",
+          "vision": 0
+        },
+        {
+          "screen": 158,
+          "editor": 2,
+          "type": 1,
+          "script": "thorn",
+          "vision": 0
+        },
+        {
+          "screen": 158,
+          "editor": 3,
+          "type": 1,
+          "script": "thorn",
+          "vision": 0
+        },
+        {
+          "screen": 158,
+          "editor": 5,
+          "type": 1,
+          "script": "thorn",
+          "vision": 0
+        },
+        {
+          "screen": 159,
+          "editor": 2,
+          "type": 1,
+          "script": "thorn",
+          "vision": 0
+        },
+        {
+          "screen": 159,
+          "editor": 3,
+          "type": 1,
+          "script": "thorn",
+          "vision": 0
+        },
+        {
+          "screen": 159,
+          "editor": 5,
+          "type": 1,
+          "script": "thorn",
+          "vision": 0
+        },
+        {
+          "screen": 160,
+          "editor": 2,
+          "type": 1,
+          "script": "thorn",
+          "vision": 0
+        },
+        {
+          "screen": 160,
+          "editor": 3,
+          "type": 1,
+          "script": "thorn",
+          "vision": 0
+        },
+        {
+          "screen": 160,
+          "editor": 5,
+          "type": 1,
+          "script": "thorn",
+          "vision": 0
+        },
+        {
+          "screen": 189,
+          "editor": 2,
+          "type": 1,
+          "script": "thorn",
+          "vision": 0
+        },
+        {
+          "screen": 189,
+          "editor": 3,
+          "type": 1,
+          "script": "thorn",
+          "vision": 0
+        },
+        {
+          "screen": 189,
+          "editor": 5,
+          "type": 1,
+          "script": "thorn",
+          "vision": 0
+        },
+        {
+          "screen": 190,
+          "editor": 2,
+          "type": 1,
+          "script": "thorn",
+          "vision": 0
+        },
+        {
+          "screen": 190,
+          "editor": 3,
+          "type": 1,
+          "script": "thorn",
+          "vision": 0
+        },
+        {
+          "screen": 190,
+          "editor": 5,
+          "type": 1,
+          "script": "thorn",
+          "vision": 0
+        },
+        {
+          "screen": 191,
+          "editor": 2,
+          "type": 1,
+          "script": "thorn",
+          "vision": 0
+        },
+        {
+          "screen": 191,
+          "editor": 3,
+          "type": 1,
+          "script": "thorn",
+          "vision": 0
+        },
+        {
+          "screen": 191,
+          "editor": 5,
+          "type": 1,
+          "script": "thorn",
+          "vision": 0
+        },
+        {
+          "screen": 192,
+          "editor": 2,
+          "type": 1,
+          "script": "thorn",
+          "vision": 0
+        },
+        {
+          "screen": 192,
+          "editor": 3,
+          "type": 1,
+          "script": "thorn",
+          "vision": 0
+        },
+        {
+          "screen": 222,
+          "editor": 2,
+          "type": 1,
+          "script": "thorn",
+          "vision": 0
+        },
+        {
+          "screen": 222,
+          "editor": 3,
+          "type": 1,
+          "script": "thorn",
+          "vision": 0
+        },
+        {
+          "screen": 223,
+          "editor": 2,
+          "type": 1,
+          "script": "thorn",
+          "vision": 0
+        },
+        {
+          "screen": 223,
+          "editor": 3,
+          "type": 1,
+          "script": "thorn",
+          "vision": 0
+        },
+        {
+          "screen": 223,
+          "editor": 5,
+          "type": 1,
+          "script": "thorn",
+          "vision": 0
+        },
+        {
+          "screen": 223,
+          "editor": 6,
+          "type": 1,
+          "script": "thorn",
+          "vision": 0
+        },
+        {
+          "screen": 224,
+          "editor": 2,
+          "type": 1,
+          "script": "thorn",
+          "vision": 0
+        },
+        {
+          "screen": 224,
+          "editor": 3,
+          "type": 1,
+          "script": "thorn",
+          "vision": 0
+        },
+        {
+          "screen": 224,
+          "editor": 5,
+          "type": 1,
+          "script": "thorn",
+          "vision": 0
+        },
+        {
+          "screen": 254,
+          "editor": 2,
+          "type": 1,
+          "script": "thorn",
+          "vision": 0
+        },
+        {
+          "screen": 255,
+          "editor": 1,
+          "type": 1,
+          "script": "thorn",
+          "vision": 0
+        }
+      ]
+    },
+    {
+      "sequence": 90,
+      "frame": 9,
+      "path": "assets/graphics/lands/Details/grave-09.png",
+      "key": "grass",
+      "source_placements": [
+        {
+          "screen": 154,
+          "editor": 5,
+          "type": 1,
+          "script": "",
+          "vision": 0
+        },
+        {
+          "screen": 154,
+          "editor": 13,
+          "type": 1,
+          "script": "thorn",
+          "vision": 0
+        },
+        {
+          "screen": 154,
+          "editor": 20,
+          "type": 1,
+          "script": "thorn",
+          "vision": 0
+        },
+        {
+          "screen": 154,
+          "editor": 21,
+          "type": 1,
+          "script": "thorn",
+          "vision": 0
+        }
+      ]
+    },
+    {
+      "sequence": 90,
+      "frame": 10,
+      "path": "assets/graphics/lands/Details/grave-10.png",
+      "key": "grass",
+      "source_placements": [
+        {
+          "screen": 59,
+          "editor": 5,
+          "type": 1,
+          "script": "thorn",
+          "vision": 0
+        },
+        {
+          "screen": 122,
+          "editor": 6,
+          "type": 1,
+          "script": "thorn",
+          "vision": 0
+        },
+        {
+          "screen": 122,
+          "editor": 7,
+          "type": 1,
+          "script": "thorn",
+          "vision": 0
+        },
+        {
+          "screen": 122,
+          "editor": 8,
+          "type": 1,
+          "script": "thorn",
+          "vision": 0
+        },
+        {
+          "screen": 153,
+          "editor": 1,
+          "type": 1,
+          "script": "thorn",
+          "vision": 0
+        },
+        {
+          "screen": 154,
+          "editor": 12,
+          "type": 1,
+          "script": "thorn",
+          "vision": 0
+        },
+        {
+          "screen": 154,
+          "editor": 14,
+          "type": 1,
+          "script": "thorn",
+          "vision": 0
+        },
+        {
+          "screen": 154,
+          "editor": 15,
+          "type": 1,
+          "script": "thorn",
+          "vision": 0
+        },
+        {
+          "screen": 154,
+          "editor": 16,
+          "type": 1,
+          "script": "thorn",
+          "vision": 0
+        },
+        {
+          "screen": 154,
+          "editor": 17,
+          "type": 1,
+          "script": "",
+          "vision": 0
+        },
+        {
+          "screen": 154,
+          "editor": 18,
+          "type": 1,
+          "script": "thorn",
+          "vision": 0
+        },
+        {
+          "screen": 154,
+          "editor": 19,
+          "type": 1,
+          "script": "thorn",
+          "vision": 0
+        }
+      ]
+    },
+    {
+      "sequence": 90,
+      "frame": 11,
+      "path": "assets/graphics/lands/Details/grave-11.png",
+      "key": "grass",
+      "source_placements": [
+        {
+          "screen": 99,
+          "editor": 5,
+          "type": 0,
+          "script": "",
+          "vision": 0
+        }
+      ]
+    },
+    {
+      "sequence": 90,
+      "frame": 12,
+      "path": "assets/graphics/lands/Details/grave-12.png",
+      "key": "grass",
+      "source_placements": [
+        {
+          "screen": 123,
+          "editor": 1,
+          "type": 0,
+          "script": "",
+          "vision": 0
+        },
+        {
+          "screen": 123,
+          "editor": 2,
+          "type": 0,
+          "script": "",
+          "vision": 0
+        },
+        {
+          "screen": 192,
+          "editor": 5,
+          "type": 1,
+          "script": "thorn",
+          "vision": 0
+        }
+      ]
+    },
+    {
+      "sequence": 90,
+      "frame": 13,
+      "path": "assets/graphics/lands/Details/grave-13.png",
+      "key": "grass",
+      "source_placements": [
+        {
+          "screen": 192,
+          "editor": 6,
+          "type": 0,
+          "script": "",
+          "vision": 0
+        }
+      ]
+    },
+    {
+      "sequence": 90,
+      "frame": 14,
+      "path": "assets/graphics/lands/Details/grave-14.png",
+      "key": "grass",
+      "source_placements": []
+    },
+    {
+      "sequence": 90,
+      "frame": 15,
+      "path": "assets/graphics/lands/Details/grave-15.png",
+      "key": "grass",
+      "source_placements": []
+    },
+    {
+      "sequence": 92,
+      "frame": 7,
+      "path": "assets/graphics/lands/Details/beach-07.png",
+      "key": "grass",
+      "source_placements": [
+        {
+          "screen": 351,
+          "editor": 8,
+          "type": 0,
+          "script": "",
+          "vision": 0
+        },
+        {
+          "screen": 420,
+          "editor": 4,
+          "type": 0,
+          "script": "",
+          "vision": 0
+        },
+        {
+          "screen": 452,
+          "editor": 5,
+          "type": 0,
+          "script": "",
+          "vision": 0
+        },
+        {
+          "screen": 481,
+          "editor": 4,
+          "type": 0,
+          "script": "",
+          "vision": 0
+        },
+        {
+          "screen": 481,
+          "editor": 8,
+          "type": 0,
+          "script": "",
+          "vision": 0
+        },
+        {
+          "screen": 482,
+          "editor": 4,
+          "type": 0,
+          "script": "",
+          "vision": 0
+        },
+        {
+          "screen": 483,
+          "editor": 6,
+          "type": 0,
+          "script": "",
+          "vision": 0
+        },
+        {
+          "screen": 484,
+          "editor": 6,
+          "type": 0,
+          "script": "",
+          "vision": 0
+        },
+        {
+          "screen": 488,
+          "editor": 8,
+          "type": 0,
+          "script": "",
+          "vision": 0
+        },
+        {
+          "screen": 583,
+          "editor": 2,
+          "type": 0,
+          "script": "",
+          "vision": 0
+        },
+        {
+          "screen": 615,
+          "editor": 1,
+          "type": 0,
+          "script": "",
+          "vision": 0
+        },
+        {
+          "screen": 646,
+          "editor": 7,
+          "type": 0,
+          "script": "",
+          "vision": 0
+        },
+        {
+          "screen": 701,
+          "editor": 6,
+          "type": 0,
+          "script": "",
+          "vision": 0
+        },
+        {
+          "screen": 701,
+          "editor": 7,
+          "type": 0,
+          "script": "",
+          "vision": 0
+        },
+        {
+          "screen": 711,
+          "editor": 4,
+          "type": 0,
+          "script": "",
+          "vision": 0
+        },
+        {
+          "screen": 727,
+          "editor": 7,
+          "type": 0,
+          "script": "",
+          "vision": 0
+        },
+        {
+          "screen": 727,
+          "editor": 10,
+          "type": 0,
+          "script": "",
+          "vision": 0
+        },
+        {
+          "screen": 727,
+          "editor": 12,
+          "type": 0,
+          "script": "",
+          "vision": 0
+        },
+        {
+          "screen": 729,
+          "editor": 8,
+          "type": 0,
+          "script": "",
+          "vision": 0
+        },
+        {
+          "screen": 731,
+          "editor": 7,
+          "type": 0,
+          "script": "",
+          "vision": 0
+        },
+        {
+          "screen": 732,
+          "editor": 11,
+          "type": 0,
+          "script": "",
+          "vision": 0
+        },
+        {
+          "screen": 732,
+          "editor": 17,
+          "type": 0,
+          "script": "",
+          "vision": 0
+        },
+        {
+          "screen": 733,
+          "editor": 9,
+          "type": 0,
+          "script": "",
+          "vision": 0
+        },
+        {
+          "screen": 733,
+          "editor": 10,
+          "type": 0,
+          "script": "",
+          "vision": 0
+        },
+        {
+          "screen": 734,
+          "editor": 22,
+          "type": 0,
+          "script": "",
+          "vision": 0
+        },
+        {
+          "screen": 734,
+          "editor": 23,
+          "type": 0,
+          "script": "",
+          "vision": 0
+        },
+        {
+          "screen": 759,
+          "editor": 4,
+          "type": 0,
+          "script": "",
+          "vision": 0
+        },
+        {
+          "screen": 761,
+          "editor": 10,
+          "type": 0,
+          "script": "",
+          "vision": 0
+        },
+        {
+          "screen": 761,
+          "editor": 15,
+          "type": 0,
+          "script": "",
+          "vision": 0
+        },
+        {
+          "screen": 762,
+          "editor": 21,
+          "type": 0,
+          "script": "",
+          "vision": 0
+        },
+        {
+          "screen": 762,
+          "editor": 28,
+          "type": 0,
+          "script": "",
+          "vision": 0
+        },
+        {
+          "screen": 763,
+          "editor": 16,
+          "type": 0,
+          "script": "",
+          "vision": 0
+        },
+        {
+          "screen": 764,
+          "editor": 23,
+          "type": 0,
+          "script": "",
+          "vision": 0
+        },
+        {
+          "screen": 764,
+          "editor": 37,
+          "type": 0,
+          "script": "",
+          "vision": 0
+        },
+        {
+          "screen": 765,
+          "editor": 10,
+          "type": 0,
+          "script": "",
+          "vision": 0
+        },
+        {
+          "screen": 765,
+          "editor": 29,
+          "type": 0,
+          "script": "",
+          "vision": 0
+        }
+      ]
+    },
+    {
+      "sequence": 92,
+      "frame": 8,
+      "path": "assets/graphics/lands/Details/beach-08.png",
+      "key": "grass",
+      "source_placements": [
+        {
+          "screen": 320,
+          "editor": 5,
+          "type": 1,
+          "script": "",
+          "vision": 0
+        },
+        {
+          "screen": 351,
+          "editor": 7,
+          "type": 0,
+          "script": "",
+          "vision": 0
+        },
+        {
+          "screen": 352,
+          "editor": 3,
+          "type": 0,
+          "script": "",
+          "vision": 0
+        },
+        {
+          "screen": 487,
+          "editor": 1,
+          "type": 0,
+          "script": "",
+          "vision": 0
+        },
+        {
+          "screen": 488,
+          "editor": 9,
+          "type": 0,
+          "script": "",
+          "vision": 0
+        },
+        {
+          "screen": 519,
+          "editor": 4,
+          "type": 0,
+          "script": "",
+          "vision": 0
+        },
+        {
+          "screen": 701,
+          "editor": 8,
+          "type": 0,
+          "script": "",
+          "vision": 0
+        },
+        {
+          "screen": 701,
+          "editor": 9,
+          "type": 0,
+          "script": "",
+          "vision": 0
+        },
+        {
+          "screen": 711,
+          "editor": 5,
+          "type": 0,
+          "script": "",
+          "vision": 0
+        },
+        {
+          "screen": 727,
+          "editor": 8,
+          "type": 0,
+          "script": "",
+          "vision": 0
+        },
+        {
+          "screen": 727,
+          "editor": 9,
+          "type": 0,
+          "script": "",
+          "vision": 0
+        },
+        {
+          "screen": 731,
+          "editor": 8,
+          "type": 0,
+          "script": "",
+          "vision": 0
+        },
+        {
+          "screen": 732,
+          "editor": 12,
+          "type": 0,
+          "script": "",
+          "vision": 0
+        },
+        {
+          "screen": 734,
+          "editor": 29,
+          "type": 0,
+          "script": "",
+          "vision": 0
+        },
+        {
+          "screen": 742,
+          "editor": 3,
+          "type": 0,
+          "script": "",
+          "vision": 0
+        },
+        {
+          "screen": 760,
+          "editor": 15,
+          "type": 0,
+          "script": "",
+          "vision": 0
+        },
+        {
+          "screen": 761,
+          "editor": 14,
+          "type": 0,
+          "script": "",
+          "vision": 0
+        },
+        {
+          "screen": 762,
+          "editor": 22,
+          "type": 0,
+          "script": "",
+          "vision": 0
+        },
+        {
+          "screen": 763,
+          "editor": 11,
+          "type": 0,
+          "script": "",
+          "vision": 0
+        },
+        {
+          "screen": 763,
+          "editor": 12,
+          "type": 0,
+          "script": "",
+          "vision": 0
+        },
+        {
+          "screen": 763,
+          "editor": 17,
+          "type": 0,
+          "script": "",
+          "vision": 0
+        },
+        {
+          "screen": 764,
+          "editor": 35,
+          "type": 0,
+          "script": "",
+          "vision": 0
+        }
+      ]
+    },
+    {
+      "sequence": 92,
+      "frame": 9,
+      "path": "assets/graphics/lands/Details/beach-09.png",
+      "key": "grass",
+      "source_placements": [
+        {
+          "screen": 257,
+          "editor": 12,
+          "type": 0,
+          "script": "",
+          "vision": 0
+        },
+        {
+          "screen": 257,
+          "editor": 13,
+          "type": 0,
+          "script": "",
+          "vision": 0
+        },
+        {
+          "screen": 351,
+          "editor": 4,
+          "type": 0,
+          "script": "",
+          "vision": 0
+        },
+        {
+          "screen": 352,
+          "editor": 2,
+          "type": 0,
+          "script": "",
+          "vision": 0
+        },
+        {
+          "screen": 487,
+          "editor": 3,
+          "type": 0,
+          "script": "",
+          "vision": 0
+        },
+        {
+          "screen": 550,
+          "editor": 5,
+          "type": 0,
+          "script": "",
+          "vision": 0
+        },
+        {
+          "screen": 582,
+          "editor": 5,
+          "type": 0,
+          "script": "",
+          "vision": 0
+        },
+        {
+          "screen": 615,
+          "editor": 7,
+          "type": 0,
+          "script": "",
+          "vision": 0
+        },
+        {
+          "screen": 699,
+          "editor": 4,
+          "type": 0,
+          "script": "",
+          "vision": 0
+        },
+        {
+          "screen": 699,
+          "editor": 5,
+          "type": 0,
+          "script": "",
+          "vision": 0
+        },
+        {
+          "screen": 699,
+          "editor": 6,
+          "type": 0,
+          "script": "",
+          "vision": 0
+        },
+        {
+          "screen": 699,
+          "editor": 7,
+          "type": 0,
+          "script": "",
+          "vision": 0
+        },
+        {
+          "screen": 699,
+          "editor": 8,
+          "type": 0,
+          "script": "",
+          "vision": 0
+        },
+        {
+          "screen": 727,
+          "editor": 14,
+          "type": 0,
+          "script": "",
+          "vision": 0
+        },
+        {
+          "screen": 728,
+          "editor": 15,
+          "type": 0,
+          "script": "",
+          "vision": 0
+        },
+        {
+          "screen": 728,
+          "editor": 16,
+          "type": 0,
+          "script": "",
+          "vision": 0
+        },
+        {
+          "screen": 728,
+          "editor": 17,
+          "type": 0,
+          "script": "",
+          "vision": 0
+        },
+        {
+          "screen": 729,
+          "editor": 2,
+          "type": 0,
+          "script": "",
+          "vision": 0
+        },
+        {
+          "screen": 733,
+          "editor": 6,
+          "type": 0,
+          "script": "",
+          "vision": 0
+        },
+        {
+          "screen": 733,
+          "editor": 7,
+          "type": 0,
+          "script": "",
+          "vision": 0
+        },
+        {
+          "screen": 733,
+          "editor": 8,
+          "type": 0,
+          "script": "",
+          "vision": 0
+        },
+        {
+          "screen": 733,
+          "editor": 16,
+          "type": 0,
+          "script": "",
+          "vision": 0
+        },
+        {
+          "screen": 762,
+          "editor": 14,
+          "type": 0,
+          "script": "",
+          "vision": 0
+        },
+        {
+          "screen": 764,
+          "editor": 34,
+          "type": 0,
+          "script": "",
+          "vision": 0
+        },
+        {
+          "screen": 765,
+          "editor": 11,
+          "type": 0,
+          "script": "",
+          "vision": 0
+        },
+        {
+          "screen": 765,
+          "editor": 20,
+          "type": 0,
+          "script": "",
+          "vision": 0
+        }
+      ]
+    },
+    {
+      "sequence": 92,
+      "frame": 10,
+      "path": "assets/graphics/lands/Details/beach-10.png",
+      "key": "grass",
+      "source_placements": [
+        {
+          "screen": 257,
+          "editor": 11,
+          "type": 0,
+          "script": "",
+          "vision": 0
+        },
+        {
+          "screen": 351,
+          "editor": 5,
+          "type": 0,
+          "script": "",
+          "vision": 0
+        },
+        {
+          "screen": 352,
+          "editor": 5,
+          "type": 0,
+          "script": "",
+          "vision": 0
+        },
+        {
+          "screen": 420,
+          "editor": 3,
+          "type": 0,
+          "script": "",
+          "vision": 0
+        },
+        {
+          "screen": 449,
+          "editor": 10,
+          "type": 0,
+          "script": "",
+          "vision": 0
+        },
+        {
+          "screen": 452,
+          "editor": 4,
+          "type": 0,
+          "script": "",
+          "vision": 0
+        },
+        {
+          "screen": 481,
+          "editor": 3,
+          "type": 0,
+          "script": "",
+          "vision": 0
+        },
+        {
+          "screen": 482,
+          "editor": 3,
+          "type": 0,
+          "script": "",
+          "vision": 0
+        },
+        {
+          "screen": 483,
+          "editor": 7,
+          "type": 0,
+          "script": "",
+          "vision": 0
+        },
+        {
+          "screen": 483,
+          "editor": 8,
+          "type": 0,
+          "script": "",
+          "vision": 0
+        },
+        {
+          "screen": 484,
+          "editor": 5,
+          "type": 0,
+          "script": "",
+          "vision": 0
+        },
+        {
+          "screen": 550,
+          "editor": 3,
+          "type": 0,
+          "script": "",
+          "vision": 0
+        },
+        {
+          "screen": 551,
+          "editor": 5,
+          "type": 0,
+          "script": "",
+          "vision": 0
+        },
+        {
+          "screen": 583,
+          "editor": 7,
+          "type": 0,
+          "script": "",
+          "vision": 0
+        },
+        {
+          "screen": 614,
+          "editor": 4,
+          "type": 0,
+          "script": "",
+          "vision": 0
+        },
+        {
+          "screen": 614,
+          "editor": 5,
+          "type": 1,
+          "script": "",
+          "vision": 0
+        },
+        {
+          "screen": 614,
+          "editor": 6,
+          "type": 0,
+          "script": "",
+          "vision": 0
+        },
+        {
+          "screen": 615,
+          "editor": 5,
+          "type": 0,
+          "script": "",
+          "vision": 0
+        },
+        {
+          "screen": 646,
+          "editor": 5,
+          "type": 0,
+          "script": "",
+          "vision": 0
+        },
+        {
+          "screen": 647,
+          "editor": 7,
+          "type": 0,
+          "script": "",
+          "vision": 0
+        },
+        {
+          "screen": 678,
+          "editor": 4,
+          "type": 0,
+          "script": "",
+          "vision": 0
+        },
+        {
+          "screen": 678,
+          "editor": 5,
+          "type": 0,
+          "script": "",
+          "vision": 0
+        },
+        {
+          "screen": 678,
+          "editor": 6,
+          "type": 0,
+          "script": "",
+          "vision": 0
+        },
+        {
+          "screen": 679,
+          "editor": 2,
+          "type": 0,
+          "script": "",
+          "vision": 0
+        },
+        {
+          "screen": 688,
+          "editor": 4,
+          "type": 1,
+          "script": "",
+          "vision": 0
+        },
+        {
+          "screen": 710,
+          "editor": 7,
+          "type": 1,
+          "script": "",
+          "vision": 0
+        },
+        {
+          "screen": 711,
+          "editor": 6,
+          "type": 0,
+          "script": "",
+          "vision": 0
+        },
+        {
+          "screen": 725,
+          "editor": 6,
+          "type": 0,
+          "script": "",
+          "vision": 0
+        },
+        {
+          "screen": 727,
+          "editor": 3,
+          "type": 0,
+          "script": "",
+          "vision": 0
+        },
+        {
+          "screen": 727,
+          "editor": 11,
+          "type": 0,
+          "script": "",
+          "vision": 0
+        },
+        {
+          "screen": 728,
+          "editor": 7,
+          "type": 0,
+          "script": "",
+          "vision": 0
+        },
+        {
+          "screen": 729,
+          "editor": 3,
+          "type": 0,
+          "script": "",
+          "vision": 0
+        },
+        {
+          "screen": 731,
+          "editor": 9,
+          "type": 0,
+          "script": "",
+          "vision": 0
+        },
+        {
+          "screen": 733,
+          "editor": 5,
+          "type": 0,
+          "script": "",
+          "vision": 0
+        },
+        {
+          "screen": 734,
+          "editor": 20,
+          "type": 1,
+          "script": "",
+          "vision": 0
+        },
+        {
+          "screen": 734,
+          "editor": 21,
+          "type": 0,
+          "script": "",
+          "vision": 0
+        },
+        {
+          "screen": 743,
+          "editor": 5,
+          "type": 0,
+          "script": "",
+          "vision": 0
+        },
+        {
+          "screen": 761,
+          "editor": 2,
+          "type": 0,
+          "script": "",
+          "vision": 0
+        },
+        {
+          "screen": 761,
+          "editor": 16,
+          "type": 0,
+          "script": "",
+          "vision": 0
+        },
+        {
+          "screen": 762,
+          "editor": 15,
+          "type": 0,
+          "script": "",
+          "vision": 0
+        },
+        {
+          "screen": 762,
+          "editor": 16,
+          "type": 0,
+          "script": "",
+          "vision": 0
+        },
+        {
+          "screen": 763,
+          "editor": 13,
+          "type": 0,
+          "script": "",
+          "vision": 0
+        },
+        {
+          "screen": 763,
+          "editor": 14,
+          "type": 0,
+          "script": "",
+          "vision": 0
+        },
+        {
+          "screen": 765,
+          "editor": 18,
+          "type": 0,
+          "script": "",
+          "vision": 0
+        }
+      ]
+    },
+    {
+      "sequence": 92,
+      "frame": 11,
+      "path": "assets/graphics/lands/Details/beach-11.png",
+      "key": "grass",
+      "source_placements": [
+        {
+          "screen": 257,
+          "editor": 10,
+          "type": 0,
+          "script": "",
+          "vision": 0
+        },
+        {
+          "screen": 351,
+          "editor": 2,
+          "type": 0,
+          "script": "",
+          "vision": 0
+        },
+        {
+          "screen": 352,
+          "editor": 1,
+          "type": 0,
+          "script": "",
+          "vision": 0
+        },
+        {
+          "screen": 352,
+          "editor": 4,
+          "type": 0,
+          "script": "",
+          "vision": 0
+        },
+        {
+          "screen": 385,
+          "editor": 5,
+          "type": 0,
+          "script": "",
+          "vision": 0
+        },
+        {
+          "screen": 388,
+          "editor": 2,
+          "type": 0,
+          "script": "",
+          "vision": 0
+        },
+        {
+          "screen": 417,
+          "editor": 9,
+          "type": 0,
+          "script": "",
+          "vision": 0
+        },
+        {
+          "screen": 420,
+          "editor": 2,
+          "type": 0,
+          "script": "",
+          "vision": 0
+        },
+        {
+          "screen": 449,
+          "editor": 9,
+          "type": 0,
+          "script": "",
+          "vision": 0
+        },
+        {
+          "screen": 452,
+          "editor": 7,
+          "type": 0,
+          "script": "",
+          "vision": 0
+        },
+        {
+          "screen": 483,
+          "editor": 9,
+          "type": 0,
+          "script": "",
+          "vision": 0
+        },
+        {
+          "screen": 483,
+          "editor": 10,
+          "type": 0,
+          "script": "",
+          "vision": 0
+        },
+        {
+          "screen": 484,
+          "editor": 3,
+          "type": 0,
+          "script": "",
+          "vision": 0
+        },
+        {
+          "screen": 484,
+          "editor": 7,
+          "type": 0,
+          "script": "",
+          "vision": 0
+        },
+        {
+          "screen": 487,
+          "editor": 2,
+          "type": 0,
+          "script": "",
+          "vision": 0
+        },
+        {
+          "screen": 518,
+          "editor": 8,
+          "type": 0,
+          "script": "",
+          "vision": 0
+        },
+        {
+          "screen": 519,
+          "editor": 5,
+          "type": 0,
+          "script": "",
+          "vision": 0
+        },
+        {
+          "screen": 520,
+          "editor": 5,
+          "type": 0,
+          "script": "",
+          "vision": 0
+        },
+        {
+          "screen": 550,
+          "editor": 4,
+          "type": 0,
+          "script": "",
+          "vision": 0
+        },
+        {
+          "screen": 551,
+          "editor": 9,
+          "type": 0,
+          "script": "",
+          "vision": 0
+        },
+        {
+          "screen": 582,
+          "editor": 4,
+          "type": 0,
+          "script": "",
+          "vision": 0
+        },
+        {
+          "screen": 583,
+          "editor": 4,
+          "type": 0,
+          "script": "",
+          "vision": 0
+        },
+        {
+          "screen": 583,
+          "editor": 5,
+          "type": 0,
+          "script": "",
+          "vision": 0
+        },
+        {
+          "screen": 583,
+          "editor": 6,
+          "type": 0,
+          "script": "",
+          "vision": 0
+        },
+        {
+          "screen": 614,
+          "editor": 2,
+          "type": 1,
+          "script": "",
+          "vision": 0
+        },
+        {
+          "screen": 614,
+          "editor": 3,
+          "type": 0,
+          "script": "",
+          "vision": 0
+        },
+        {
+          "screen": 615,
+          "editor": 6,
+          "type": 0,
+          "script": "",
+          "vision": 0
+        },
+        {
+          "screen": 646,
+          "editor": 4,
+          "type": 0,
+          "script": "",
+          "vision": 0
+        },
+        {
+          "screen": 647,
+          "editor": 6,
+          "type": 0,
+          "script": "",
+          "vision": 0
+        },
+        {
+          "screen": 678,
+          "editor": 2,
+          "type": 0,
+          "script": "",
+          "vision": 0
+        },
+        {
+          "screen": 678,
+          "editor": 3,
+          "type": 0,
+          "script": "",
+          "vision": 0
+        },
+        {
+          "screen": 701,
+          "editor": 12,
+          "type": 0,
+          "script": "",
+          "vision": 0
+        },
+        {
+          "screen": 710,
+          "editor": 8,
+          "type": 1,
+          "script": "",
+          "vision": 0
+        },
+        {
+          "screen": 710,
+          "editor": 9,
+          "type": 0,
+          "script": "",
+          "vision": 0
+        },
+        {
+          "screen": 711,
+          "editor": 1,
+          "type": 0,
+          "script": "",
+          "vision": 0
+        },
+        {
+          "screen": 720,
+          "editor": 2,
+          "type": 0,
+          "script": "",
+          "vision": 0
+        },
+        {
+          "screen": 727,
+          "editor": 13,
+          "type": 0,
+          "script": "",
+          "vision": 0
+        },
+        {
+          "screen": 727,
+          "editor": 16,
+          "type": 0,
+          "script": "",
+          "vision": 0
+        },
+        {
+          "screen": 729,
+          "editor": 4,
+          "type": 0,
+          "script": "",
+          "vision": 0
+        },
+        {
+          "screen": 732,
+          "editor": 13,
+          "type": 0,
+          "script": "",
+          "vision": 0
+        },
+        {
+          "screen": 733,
+          "editor": 4,
+          "type": 0,
+          "script": "",
+          "vision": 0
+        },
+        {
+          "screen": 734,
+          "editor": 25,
+          "type": 0,
+          "script": "",
+          "vision": 0
+        },
+        {
+          "screen": 742,
+          "editor": 4,
+          "type": 1,
+          "script": "",
+          "vision": 0
+        },
+        {
+          "screen": 743,
+          "editor": 4,
+          "type": 0,
+          "script": "",
+          "vision": 0
+        },
+        {
+          "screen": 759,
+          "editor": 5,
+          "type": 0,
+          "script": "",
+          "vision": 0
+        },
+        {
+          "screen": 761,
+          "editor": 1,
+          "type": 0,
+          "script": "",
+          "vision": 0
+        },
+        {
+          "screen": 763,
+          "editor": 15,
+          "type": 0,
+          "script": "",
+          "vision": 0
+        },
+        {
+          "screen": 764,
+          "editor": 6,
+          "type": 0,
+          "script": "",
+          "vision": 0
+        },
+        {
+          "screen": 765,
+          "editor": 6,
+          "type": 0,
+          "script": "",
+          "vision": 0
+        }
+      ]
+    }
+  ]
+}

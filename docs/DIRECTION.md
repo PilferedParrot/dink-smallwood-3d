@@ -2522,3 +2522,376 @@ Natural expiry now takes the greater budget; explicit script TTL still wins.
 The second cause was treating P2's reading rule as overflow-only during the
 source-lifetime rewrite. The complete literal census and both deadline modes
 check the class.
+
+## Campaign PUSH dispatch (2026-10-19)
+
+Walking into a pushable source object now runs its DinkC `push` procedure after
+600 ms of blocked cardinal movement. Both the original overhead controller
+(`game.gd`) and the shipped first-person controller (`fps_game.gd`) use the same
+input/timer/dispatch path. The shipped `main.tscn` selects FPS; the overhead
+path is exercised by a direct regression host, not a player-selectable view.
+The overhead path retains the source keyboard's cardinal gate; native
+diagonal directions1/3/7/9 do not start pushing. FPS derives a sprite-owned
+push direction from the raw face at the mapped contact: west→6, east→4,
+north→2, south→8. A true corner belongs to two faces and retains the diagonal
+exclusion. Thus a free camera's off-axis heading can press into the same face
+without requiring world-axis alignment. North-facing D strafe and east-facing
+W forward both press the west face and yield east6. This face policy adapts
+the original keyboard rule to a camera heading the original never had; it is
+not claimed as an original analog-input algorithm.
+
+**Both roots.** The technical failure was an absent engine-to-script event:
+`story.json` retained all four PUSH procedures, but neither movement controller
+started the timer or dispatched them. The four-pixel camera-foot clearance also
+made a literal port of the original selection miss the rock. The development
+failure was an integration oversight: retaining and interpreting a source
+procedure was treated as sufficient without verifying the real movement-to-event
+path. This diagnosis is based on the missing call sites and movement-test gap,
+not a claim about a past author's intentions. Replacing the point mover with a
+finite foot required re-deriving the contact used by the interaction too.
+
+**Source derivation.** GNU FreeDink's `brain.cpp:592–650` constructs one-pixel
+movement probes; `live_screen.cpp:148–162` writes the raw hardbox into the mask,
+without player-radius growth. `update_frame.cpp:288–290,317–341` initializes
+the probes, runs the player brain and then performs collision checking.
+`freedink.cpp:100–129` stops on the previous probe,
+starts the timer only on blocked cardinal movement and non-water hardness,
+and clears it after free movement or a direction change. `brain_keyboard.cpp:
+190–214` clears PUSH/control on release of the initiating direction; `253–261`
+selects base310+dir, frame1, nocontrol, and dispatches after strictly more than
+600 ms. `live_sprite.cpp:146–186` releases nocontrol at animation completion;
+the timer is retained, permitting repetition while input remains held.
+`brain_keyboard.cpp:172–250` returns on control/freeze before dispatch but
+does not clear the timer; `freedink.cpp:128` clears it on legal movement.
+The port therefore advances an existing timer across a script freeze and can
+repeat immediately once control returns, while release or movement away still
+ends contact.
+
+The original dispatch (`brain_keyboard.cpp:54–85`) tests Dink's current foot
+point against every active scripted live sprite's raw hardbox grown by2. It
+has no forward target offset and no hard predicate on candidates. `rect.cpp:
+81–90` includes right/bottom edges. It visits every matching live sprite in
+ascending slot order, without an early return. Our movement's rectangles keep
+their existing Godot membership; PUSH uses the original inclusive membership.
+
+The rock's raw bounds on277 are [235,171,337,195]. The original east approach
+stops at x234, inside the grow2 selection beginning at233. Our unchanged
+collision adds radius4 and stops at x230.25, outside that selection. The fix
+retains the current-foot scan and additionally maps the actual blocked sprite's
+rejected probe to the nearest point of its raw rectangle:
+`contact = clamp(probe, raw.position, raw.end)`. At the west rock face this is
+(235,181). Only that actual blocker gains the finite-foot contact selection;
+a candidate chosen by both tests runs once. No clearance or reach was fitted
+to the cave. Querying navigation, NPC movement and scripted motion does not
+collect player push contacts. Anonymous tile blocking still selects a soft
+scripted sprite containing the actual foot, as the original permits; a mask
+without a matching sprite runs no PUSH procedure. Source water hardness2 does
+not start a timer.
+
+This contact mapping requires `_blocking_sprite` to identify the sprite that
+owns the rejected probe. If tile hardness stops movement before a sprite owns
+that probe, or a sprite's hardbox has been replaced by a built footprint,
+`_blocking_sprite` can return0. Dispatch then has only the current-foot scan
+against each candidate's raw hardbox grown by2. At the port's four-pixel
+clearance, that foot can remain outside raw+2, so a nearby scripted sprite may
+receive no PUSH. Built footprints and this ownership gap have no direct
+FreeDink analogue. None of the seven screens hosting the four shipped PUSH
+procedures has authored footprint data, and their verified approaches use
+sprite-owned blocks. Tile-overlap approaches outside those tests remain
+unverified; the contact mapping is established for sprite-owned blocks, not
+arbitrary tile/footprint overlaps.
+
+**Follow-up causes and controls.** The first FPS implementation reused the
+existing movement-direction quantizer (`abs(axis)>=0.3`) as its cardinal PUSH
+gate. That made west-face contact at20/30/40 degrees off-axis fail even when
+contact persisted;10 degrees passed. The technical cause was a keyboard
+direction gate applied to a continuous camera heading. The development error
+was reasoning that stopped at perfectly aligned forward/strafe tests and
+misapplied the source's keyboard-only constraint. The face mapping above
+removes that quantizer from sprite-owned FPS PUSH. Tests retain the actual
+rock geometry at10/20/30/40 degrees and a true corner, with a lower scripted
+walking speed so sliding remains on the24px face for the delay. The setup is
+a labelled input scenario, not earned progression.
+
+The first freeze branch also cleared `_push_elapsed`, adding a new600ms
+wait after a freeze-using script returned. The technical cause was that reset;
+the development cause was an oversight: the source's early freeze return was
+not compared with the lifetime of its wall-clock timer. A composed DinkC PUSH
+fixture freezes, waits800ms and unfreezes without moving its blocker; physical
+held input must repeat within two ticks of release. This detects the cadence
+error independently of the cave rock, whose move removes contact. Both this
+case and off-axis contact were red on the reviewed implementation before the
+fix. The overhead touch/transition control gate remains the same as434db5a.
+
+**Order and limits.** Original live slots are not native entity ids. Screen
+main runs before editors (`game_engine.cpp:710–726`); editors are created in
+ascending queue-or-y rank with editor-index ties (`editor_screen.cpp:54–87`),
+and background/hidden editor sprites do not retain live slots
+(`game_engine.cpp:483–508`). PUSH retains that arrival rank, including a fallback
+to original placement data for older saves; it places screen-main-created
+sprites before editors and later runtime sprites in creation order. The source
+allocator reuses inactive slots (`live_sprites_manager.cpp:65–95`); this port
+retains monotonic ids and does not reconstruct arbitrary historic slot reuse.
+All real multiple-selection pairs among the four procedures are the seven
+rock pairs on590, whose relative order is fully determined by editor draw rank.
+None of the four PUSH procedures calls `create_sprite`; source text effects do
+not reorder surviving editor candidates. The real editor4/11 overlap
+has source order11 then4, opposite native id order; the input test checks it.
+No global allocator change is needed for this class.
+
+FreeDink also exposes two script switches outside this campaign's dispatch
+path: `push_active` can disable the blocked-movement timer
+(`dinkc_bindings.cpp:1187–1190`, `freedink.cpp:106–123`), and
+`set_dink_base_push` changes the push animation base
+(`dinkc_bindings.cpp:1970–1973`, `brain_keyboard.cpp:253–259`). Their defaults
+are1 and310 (`game_state.cpp:31–32`). The port has neither DinkC handler and
+uses a fixed `PUSH_BASE=310` in `game.gd`. A case-insensitive scan of all381
+files in the shipped `/usr/share/games/dink/dink/Story` found no call to either
+switch. The verified match here is the shipped campaign's four PUSH procedures;
+scripts in other D-Mods that use these switches can behave differently.
+
+| Procedure | Original placement(s) | Result/gate |
+| --- | --- | --- |
+| `s1-h1-4` | 1, 414, 446 | Furniture refusal text; no quest flag or passage opens. Two type0 placements on446 are source background rather than live PUSH targets. |
+| `s1-roc` | 277, 601 | Strength4 plus east6 moves the rock toward350 and sets `rock_placement=1`; west4 returns it toward285 and clears the flag. The277 placement covers the Bonca cave opening. |
+| `s2-idol` | 579 | Refuses pushing. Its main removes it only after `caveguy>4`; pushing itself does not remove it. |
+| `s3-rock` | 590, vision1 | Refuses pushing. Screen main selects this barrier while `story<8`; pushing does not bypass story progression. |
+
+Tests deliberately place Dink adjacent to unchanged source objects and skip
+startup/progression for those labelled scenarios. They exercise physical-key
+input, all four source procedures and their actual dialogue/quest effects;
+forward, strafe and overhead movement; repeated animation/release; overlapping
+candidates and source ordering; inclusive-edge selection; and negative controls
+for short contact, no PUSH procedure, a bare mask and diagonal movement.
+The earned-save export and continuation are separate campaign evidence.
+
+The scripted mover already completes at a gap below1px, so the moved rock can
+finish at349.17 rather than exactly350. Tests check script completion, its
+flag and that existing tolerance. Original integer-endpoint fidelity for other
+scripts comparing `sp_x` is outside this dispatch change.
+
+The first earned packed continuation pushed the rock and completed the normal
+`S1-HOLE` transition to131 before the push controller returned. Its next
+hardcoded277 navigation was therefore a harness failure. The technical cause
+was assuming the action's starting screen remained current after a held input
+and an asynchronous cutscene; the development error was checking quest success
+without accepting the accompanying normal transition. The controller now
+accepts either277 or the authored destination131, then continues the cave route;
+a regression covers both outcomes and rejects unexpected screens. The initial
+failed trace is retained in the private evidence ledger.
+
+The next cave stop exposed a pre-existing **game dialogue fidelity defect**.
+`S1-CAVES.noise` waits4 seconds and can call `say_stop` (line42: “This cave
+sucks, let's leave...”) without `freeze`. FreeDink's `dc_say_stop`
+(`dinkc_bindings.cpp:766–788`) yields the calling script until its text sprite
+expires, without changing player freeze/nocontrol. `dc_say` at748–764 does not
+yield; `say_stop_npc` at790–807 also yields without freezing. `text.cpp:45–65`
+creates a non-hard text sprite with a lifetime; `brain_text.cpp:26–29` follows
+its moving owner, and `update_frame.cpp:295–300` resumes the suspended script
+on expiry. Human movement is gated by nocontrol, choice or explicit freeze
+(`brain_keyboard.cpp:216–241`); explicit freeze is a separate binding
+(`dinkc_bindings.cpp:552–559`). Speech alone does not stop original movement.
+
+Our `_dialogue` makes every `say_stop` a blocking card (`fps_game.gd:687–740`,
+`game_ui.gd:580–600`); the global modal gate then skips movement. On131 at
+(289,354.25), all four collision probes were free, frozen=false and nocontrol=0,
+while the cave-noise card owned the stop. The technical cause is treating script
+suspension as player-input blocking. The development error was conflating those
+two engine semantics and omitting non-frozen speech/movement coverage. The
+existing `speech_semantics_test.gd:50` explicitly expects `ui.modal` for
+`say_stop`, while its Python test calls this original blocking semantics;
+it checks script waiting and card ownership without attempting player
+movement. That test encodes the same assumption, so a green suite cannot
+certify this fidelity claim. This unit retains the production UI behavior. The continuation presses ordinary
+Enter when initial or mid-walk text appears, an explicit workaround for the
+game defect; its tests cover both timings. The first stalled trace remains
+recorded with its original classification and the source-based reassessment.
+
+### Next earned stop: indoor cave edge (2026-10-19)
+
+On the reviewed PUSH build, normal input pushes the rock, enters 131 through
+`S1-HOLE`, and walks to 131's north edge. The intended next screen is 99, then 100
+for Bonca. The crossing stops at y 0.7508. The technical owner is the unconditional
+`target.indoor` rejection in `fps_game.gd:344`, introduced in `f98c39d` with the
+continuous-neighbor collision work. All 131/99/100 carry the original indoor bit,
+read directly from Dink.dat (`tools/import_assets.py:21–27,89–98`). FreeDink's
+`did_player_cross_screen` (`freedink.cpp:132–242`) allows a linked, unlocked
+neighbor and uses indoor only to decide whether to update `last_map`.
+
+The development cause is a misapplied boundary heuristic: an indoor target was
+classified as an invalid continuous-world neighbor. The accompanying coverage
+was explicitly 570 **outdoor** screens; it excluded the indoor class where the
+cave route crosses adjacent screens. This diagnosis follows the condition and
+the recorded scope of `f98c39d`, rather than attributing a private intention to
+its author. An indoor bit alone is not evidence of an impassable seam.
+
+The compact earned [stop record](playtest/route-0.3.2/push-campaign-stop.json)
+separates 18 nonmodal crossing attempts: 8 with controls released, 10 with ordinary
+PUSH-animation nocontrol after the source delay. Frozen remains false; those
+animation samples are not a script freeze. A later ambient card is a separate
+modal-speech defect. North is blocked while east/south/west are free: this is
+an authored campaign edge-crossing failure, not a zero-motion trap.
+
+A labelled [ownership intervention](playtest/route-0.3.2/push-indoor-owner.json)
+starts a scenario at the measured stop, with map startup skipped. Original `W` held for 12 physics ticks
+stays on 131; changing only 99's indoor flag in memory frees the same north probe
+and the same input reaches 99. No source/save is changed, and this intervention is never
+counted as earned progression. Production seam behavior is unchanged in PUSH.
+
+The [complete metadata census](playtest/route-0.3.2/push-indoor-edges.json)
+lists 115 adjacent indoor pairs and both directed refusals (230), with scripts
+and source hashes. It tags the current planned route 131→99→100 and reverse
+100→99→131. The other pairs are outside this automated route's scope, not
+certified irrelevant to the wider campaign. Adjacency is not proof of a
+physically open seam: source hardness, walls, locks and arrival state still
+need their own checks. Only 131→99 has the live ownership intervention here.
+
+## Indoor and mixed screen-edge links — 2026-10-19
+
+The cave's earned 131→99 crossing was stopped by the target's indoor bit in
+FPS `_blocked`, before any incoming collision test. `git blame` assigns that
+clause to f98c39d, “Preserve continuous FPS crossings and check incoming
+collision.” Its stated protection was to prevent discontinuous landings inside
+a target solid; its survey certified 570 outdoor screens. The second cause was
+a misapplied indoor-is-separate-world heuristic, reinforced by a renderer that
+composes outdoor neighbors but renders indoor rooms separately. The implementation
+and its verification stopped short of checking linked indoor maps. The commit
+states no independent reason for making the indoor bit solid.
+
+GNU FreeDink 109.6 `freedink.cpp:132–242` tests an active keyboard-brain player's
+crossing at x<20,x>619,y<0,y>399, unless walk_off_screen is set. It follows logical
+screen−1,+1,−32,+32 when the candidate is in 1..768, `map.loc[candidate]>0`, and the
+source is unlocked. `EditorMap.cpp:43–63` reads these loc/music/indoor arrays from
+Dink.dat. There is no `adjacentloc` symbol in this version; the inline loc checks
+implement that rule. Indoor affects only the last outdoor map remembered for the
+map view: `freedink.cpp:148,172,196,223,830`, `dinkc_bindings.cpp:670`, map use at
+`freedink.cpp:853`. It is not a collision flag.
+
+Movement hardness is evaluated before crossing (`freedink.cpp:80–129`).
+`live_screen.cpp:216–239` clamps out-of-range queries when screenlocked, otherwise
+returns zero beyond the current screen. Raw source tile masks and unscaled frame
+hardboxes are filled at `live_screen.cpp:132–169`, `game_engine.cpp:477–503,570–577`.
+FreeDink does not test target hardness first. On success it updates departure
+time, loads the target, resets movement/freeze/lock and music (`game_engine.cpp:
+325–373`), updates last_map only outdoors, resets vision/scripts, runs screen
+main, places sprites, then runs their mains (`game_engine.cpp:700–734`). It lands
+at 20/619/0/399 on the crossed axis. FPS retains its intentional continuous 600×400
+arrival, incoming-solid veto, one-pixel movement subdivision and no-row-wrap
+protection. This unit removes only the indoor eligibility clause; source and
+target startup, scripts, music and lock behavior still use the existing loader.
+
+The native class checker distinguishes link eligibility, source boundary hardness
+and FPS incoming collision. Empty-target fixtures isolate the metadata rule for
+all 230 directed indoor links and 16 mixed links. A separately implemented Python
+raw-mask census validates every original boundary count. Raw vision0 unlocked
+source data has 229 raw-open indoor edges;34→66 south is entirely raw-hard,
+including its exit warp. All 16 mixed edges are raw-open. “Open” means at least one free source boundary point; it does not
+certify reachability from a spawn or arbitrary script/persistence states. FPS's
+fitted-source collision and incoming-solid veto are intentional physical
+differences, reported individually rather than called original equivalence.
+
+FreeDink's inline ±1 arithmetic would also accept 22 mixed directed row-wrap links
+between a row's last column and the next row's first. They are listed separately
+outside the 115 geometric indoor pairs, as retained FPS no-row-wrap differences;
+16 mixed geometric links therefore means 38 mixed inline loc links. The retained
+row guard has its own negative control.
+
+The first green census passed all 246 metadata cases but rejected a flawed
+negative control: 34→66 south is entirely hard in the original raster because
+bar exit sprite 16 is a hard warp to 498. `update_frame.cpp:347–353` calls
+`special_block` for that movement result before the edge crossing. The static
+FPS collision host skips warp hardness and does not execute transitions, so its
+25 free south points cannot certify the final exit choice. The control had
+conflated an event-triggering hard warp with an ordinary solid, stopping the
+derivation at the raster. The corrected census checks an ordinary wall point
+(screen 34, x=50, y=399), and a separate real-input fixture tests the wall stop and the
+authored 34→498 redirect, never 66. These fixtures skip campaign startup and are
+labelled as such; earned cave progression remains a separate test.
+
+The first full input fixture did observe 34→498, never 66, but its reverse check
+failed because the injected x=50,y=347 pose was inside left wall sprites 11 and
+23. The selected south wall alone did not establish a valid approach. This was
+another fixture oversight: collision ownership was checked for one wall rather
+than every intersecting owner. The corrected fixture uses x=100 and requires
+native free approach/retreat probes and a blocked forward probe before input,
+recording the sprite owners and tile hardness. The game needs no change for it.
+
+### Independent review corrections
+
+The first class checker compared eligibility with a literal `true` and inferred
+original links from imported screen keys. Its second cause was an oversight:
+reasoning stopped after identifying the indoor bit and did not independently
+verify the import equivalence. The revised checker reads the unmodified raw
+`Dink.dat` loc array from a licensed, hashed fixture, verifies all 768 logical
+slots against imported keys, and checks all 2,960 directed geometric grid
+neighbors. Contradictory fixtures detect both loc-zero/runtime-present and
+loc-positive/runtime-absent cases. A deliberately wrong expectation fails the
+independent comparison. Source data and licensing are pinned in
+`tests/fixtures/indoor-map-provenance.json`.
+
+Previously the physical counts were reported without an enforced bound. The
+second cause was applying the intentional incoming/source-collision exception
+as a general exemption from regression checks. The revised fixture pins the
+exact five completely closed directions, every affected direction's source and
+incoming veto counts, and every one of the 1,336 original-raw-hard/FPS-free
+source points across 17 directions. All1,336 points are owned by original
+hard warp sprites, with no ordinary wall or tile owners. Starting with an empty point exception list
+failed exactly that assertion. The 34→66 south exception is exactly x=311..335
+at y=399; the input fixture covers all 25 columns with straight, both diagonal,
+and sprint variants (150 approaches), requiring the authored 498 redirect and
+never 66. The earlier single x=320 approach reduced this class to one instance;
+that narrow test was the process cause of the review gap. Three straight normal-speed
+samples (first/middle/last point) on each of the other16 warp-edge directions
+extend the authored-destination/never-adjacent control to48 more cases.
+
+The five retained static physical closures are 2→34 south, 34→33 west,
+34→35 east, 34→2 north and 35→34 west. An original raw free-space component
+comparison, with authored vision-0 hard-warp contacts, found zero lost screens
+or regions from original home (1,334,161), P1's outdoor home (439,323,390), or
+any of 82 confirmed authored warp-destination regions. All five have alternate
+screen paths. The outer-shell component of 34 loses exits in this model, but
+is not reached from any of those seeds. Scripts, other vision states and
+hard arrivals are not certified. The lead decided to retain these recorded
+physical differences on that evidence.
+
+Review also found a latent destination-door query inconsistency. The incoming
+path called the base collision predicate, bypassing the FPS inactive-door leaf.
+Its second cause was treating the base predicate as the complete destination
+contract, overlooking source-renderer state and unrendered arrival entities.
+The source66 query (320,-45) from (320,-44) maps to target34 (320,355) from
+(320,356): the inactive door16 plane at y=352 must reject distance3 from the
+previous distance4 boundary. Native red admitted all six inactive cases, while
+active and retreat controls held. This is injected overshoot, not an earned
+campaign failure; loading at355 maps the actual player to348. Ordinary first
+seam steps remain at least47px from all seven fitted door planes. One-pixel
+substeps do not bound cumulative displacement before the transition: an
+injected58px movement can pass the whole plane.
+
+Incoming collision now also checks the target inactive-door predicate during
+the existing save/restore. Interior classification uses the queried screen,
+and active fitted exits recognize a valid live warp without requiring the
+`fps_portal` flag added only by rendering. Cached arrival data is not mutated.
+Tests distinguish inactive, active-unrendered, disabled and invalid warps,
+source/target interior mismatch, retreat, cumulative movement and exact source
+and cache restoration. These are labelled query fixtures, not campaign progress.
+
+The focused review checks are green on the revised game:2,960 link cases,
+230 indoor plus16 mixed physical cases with exact exception pins,150 bar
+approaches, and48 samples across the other16 hard-warp edge directions.
+Every warp sample reached its authored destination instead of the geometric
+neighbor. Native target-door query controls pass, including active unrendered
+portals, inactive leaves, source/cache restoration and cumulative displacement.
+These focused fixtures do not certify the earned route, rendering or full suite;
+those retain their separate evidence gates.
+
+The earned Bonca victory also exposed a controller assumption: normal LRAISE
+waits one second, so its attribute choice can replace Pause while the save
+controller navigates. The game crossing and victory succeeded; the save attempt
+was a harness failure. The process cause was assuming the menu stayed stable
+across input ticks after combat. Saving now recognizes only the exact three
+level-up choices, selects Increase Attack through normal keyboard input, then
+retries the normal save with a bound. Mock red/green checks cover choices before
+Pause, after Pause and during menu navigation; an unknown replacement still
+fails without selection. The observed replacement of an already open Pause
+menu is a separate UX finding, not changed by this unit. Route screenshots now
+use actual checkpoint names rather than the similarly named input trace labels.

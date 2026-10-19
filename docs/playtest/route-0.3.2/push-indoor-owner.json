@@ -1,0 +1,35 @@
+{
+  "after_intervention_input": {
+    "frozen": false,
+    "modal": false,
+    "nocontrol": 0,
+    "screen": 99,
+    "x": 290.013671875,
+    "y": 379.750823974609
+  },
+  "after_original_input": {
+    "frozen": false,
+    "modal": false,
+    "nocontrol": 0,
+    "screen": 131,
+    "x": 290.013671875,
+    "y": 0.750836372375488
+  },
+  "before": {
+    "frozen": false,
+    "modal": false,
+    "nocontrol": 0,
+    "screen": 131,
+    "x": 290.013671875,
+    "y": 0.750836372375488
+  },
+  "initial_target_indoor": true,
+  "probe": {
+    "blocked_after_flag": false,
+    "blocked_before": true,
+    "x": 290.013671875,
+    "y": -0.124163627624512
+  },
+  "setup": "Labelled source-engine scenario at the measured earned stop; map startup skipped, initial coordinates and quest context injected. This is ownership evidence only, not earned progression. The only intervention between identical W12 physical input is target99 indoor flag true\u2192false in memory; no source file/save modified.",
+  "verified_indoor_gate_owner": true
+}

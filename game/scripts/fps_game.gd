@@ -180,6 +180,7 @@ func load_map(number: int, run_scripts: bool = true) -> void:
 
 func _physics_process(delta: float) -> void:
 	if not playing or changing:
+		_reset_push()
 		_fps_restore_dialogue_camera()
 		_fps_update_mouse_mode()
 		return
@@ -192,6 +193,8 @@ func _physics_process(delta: float) -> void:
 	if not ui.modal and entities.has(1):
 		_fps_move_player(delta)
 		_update_ai(delta)
+	else:
+		_reset_push()
 	for id in entities.keys():
 		if entities.has(id): _animate(id, delta)
 	_fps_update_jump(delta)
@@ -224,25 +227,14 @@ func _physics_process(delta: float) -> void:
 		ui.show_hud(stats)
 
 func _fps_move_player(delta: float) -> void:
-	var player: Dictionary = entities[1]
-	if player.get("frozen", false) or int(player.get("disabled", 0)) != 0 or int(player.get("nocontrol", 0)) != 0 or attack_cooldown >= 0.2:
-		return
 	var deadzone := _fps_controller_deadzone()
 	var input := Input.get_vector("left", "right", "up", "down", deadzone)
-	if input == Vector2.ZERO:
-		if attack_cooldown <= 0.0: _set_animation(1, int(player.get("base_idle", 10)) + _cardinal(int(player.get("dir", 2))))
-		_transitions()
-		return
 	var forward3 := Vector3(-camera.global_transform.basis.z.x, 0.0, -camera.global_transform.basis.z.z).normalized()
 	var right3 := Vector3(camera.global_transform.basis.x.x, 0.0, camera.global_transform.basis.x.z).normalized()
 	var source_direction := Vector2(forward3.x * -input.y + right3.x * input.x, forward3.z * -input.y + right3.z * input.x).normalized()
-	player["dir"] = _direction(source_direction)
-	var speed := 105.0 * maxf(0.5, float(player.get("speed", 3)) / 3.0)
-	if Input.is_action_pressed("sprint"): speed *= 1.55
 	var from := _position2(1)
-	_move_entity(1, source_direction * speed * input.length() * delta)
-	_set_animation(1, int(player.get("base_walk", 70)) + int(player.dir))
-	_transitions(false,from)
+	if _move_player_input(source_direction * input.length(), delta, 1.55 if Input.is_action_pressed("sprint") else 1.0, true):
+		_transitions(false,from)
 
 func _edge_destination(pos: Vector2) -> Dictionary:
 	var target := current_screen
@@ -259,7 +251,9 @@ func _portal_can_warp(editor_num: int) -> bool:
 	for id in entities:
 		if id == 1: continue
 		var e: Dictionary = entities[id]
-		if int(e.get("editor_num", 0)) == editor_num and bool(e.get("fps_portal", false)) and e.get("warp") != null \
+		# The caller enumerates fitted exits. Arrival sprites have not yet had
+		# rendering add fps_portal; a matching live warp will be adapted on load.
+		if int(e.get("editor_num", 0)) == editor_num and e.get("warp") != null \
 				and int(e.get("active", 1)) != 0 and world.screens.has(str(int(e.warp.get("map", 0)))):
 			return true
 	return false
@@ -286,7 +280,7 @@ func _closed_door_blocks(ex: Dictionary, pos: Vector2, from: Vector2, clearance:
 	return true
 
 func _inactive_door_blocks(pos: Vector2, from: Vector2) -> bool:
-	if fp_world == null or not fp_world.interior or not fp_world.solids.walls_fitted(current_screen): return false
+	if fp_world == null or not fp_world.is_inside(current_screen) or not fp_world.solids.walls_fitted(current_screen): return false
 	for ex in fp_world.solids.exits(current_screen):
 		if _portal_can_warp(int(ex.editor_num)): continue
 		if _closed_door_blocks(ex, pos, from, float(FOOTPRINT_GROW)): return true
@@ -300,7 +294,9 @@ func _blocked(pos: Vector2, mover: int, from: Vector2 = Vector2.INF) -> bool:
 	var target: int = destination.screen
 	# There is no horizontal seam between the last and first columns of a row.
 	var column := (current_screen-1)%32
-	if locked or not world.screens.has(str(target)) or bool(world.screens[str(target)].get("indoor",false)) \
+	# FreeDink 109.6 freedink.cpp:132-242 uses indoor only for last_map.
+	# Linked rooms use the same incoming collision check as outdoor neighbors.
+	if locked or not world.screens.has(str(target)) \
 			or (pos.x < 20.0 and column == 0) or (pos.x >= 620.0 and column == 31): return true
 	var arrival := neighbour_arrival_state(target)
 	var saved_screen := current_screen
@@ -318,7 +314,8 @@ func _blocked(pos: Vector2, mover: int, from: Vector2 = Vector2.INF) -> bool:
 	footprint_sprites = {}; screen_footprints = []; footprint_tiles = {}
 	_load_footprints(target)
 	var translated_from: Vector2 = from+(destination.position-pos) if from != Vector2.INF else Vector2.INF
-	var blocked := super._blocked(destination.position,mover,translated_from)
+	# Include the target's fitted door before restoring the source state.
+	var blocked := _inactive_door_blocks(destination.position,translated_from) or super._blocked(destination.position,mover,translated_from)
 	current_screen = saved_screen
 	entities = saved_entities
 	footprint_sprites = saved_sprites

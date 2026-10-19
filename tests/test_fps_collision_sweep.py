@@ -44,4 +44,25 @@ def test_outdoor_landings_and_walkable_grid_never_trap(tmp_path):
     assert data["edge_samples"] == sum(side["walkable"] for side in coverage.values()), data
     assert data["edge_samples"] > 1000000, data
     assert data["crossings"] + data["rejected"] == data["edge_samples"], data
+    assert 0 <= data["indoor_landings"] <= data["crossings"], data
+    assert data["indoor_landing_traps"] == 0, data
     assert run.returncode == 0 and not data["failures"] and "SCRIPT ERROR" not in run.stderr, run.stdout + run.stderr + str(data["failures"][:20])
+
+
+def test_survey_rejects_an_injected_indoor_landing_trap(tmp_path):
+    """A bounded negative fixture, not a second whole-world walker run."""
+    report = tmp_path / "indoor-trap.json"
+    env = dict(os.environ, XDG_DATA_HOME=str(tmp_path / "data"),
+               XDG_CONFIG_HOME=str(tmp_path / "config"), XDG_CACHE_HOME=str(tmp_path / "cache"))
+    run = subprocess.run([GODOT, "--headless", "--audio-driver", "Dummy", "--path", "game",
+                          "--script", str(ROOT / "tests/fps_collision_sweep.gd"), "--",
+                          "--sources=117", "--host=res://../tests/indoor_landing_trap_host.gd",
+                          "--report=" + str(report)], cwd=ROOT, env=env, text=True,
+                         capture_output=True, timeout=180)
+    assert report.is_file() and "SCRIPT ERROR" not in run.stderr, run.stdout + run.stderr
+    data = json.loads(report.read_text())
+    assert data["host"].endswith("indoor_landing_trap_host.gd")
+    assert data["screens"] == 1 and data["indoor_landings"] > 0, data
+    assert data["indoor_landing_traps"] == data["indoor_landings"], data
+    assert run.returncode == 1 and any(f["kind"] == "landing_trap" and f["target"] == 85
+                                     and f["indoor"] for f in data["failures"]), data

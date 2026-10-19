@@ -1,0 +1,64 @@
+{
+  "label": "Scenario fixture: skips campaign progression and map startup scripts; ordinary forward/back input and native collision. Compared coarse samples with earned source-5 state.",
+  "setup": {
+    "death_fixture": false,
+    "load_map_scripts": false,
+    "mode": "scenario",
+    "screen": 378,
+    "test_mode": false,
+    "x": 75.0,
+    "y": 160.0,
+    "yaw": 0.0
+  },
+  "grid_seconds": 9.902385049994336,
+  "native_x75_y145_150": [
+    {
+      "x": 75,
+      "y": 145,
+      "blocked": false
+    },
+    {
+      "x": 75,
+      "y": 146,
+      "blocked": true
+    },
+    {
+      "x": 75,
+      "y": 147,
+      "blocked": true
+    },
+    {
+      "x": 75,
+      "y": 148,
+      "blocked": true
+    },
+    {
+      "x": 75,
+      "y": 149,
+      "blocked": false
+    },
+    {
+      "x": 75,
+      "y": 150,
+      "blocked": false
+    }
+  ],
+  "coarse_sample_mismatches_against_source5": 0,
+  "positions": {
+    "before": [
+      378,
+      75.0,
+      160.0
+    ],
+    "after_forward12": [
+      378,
+      75.0,
+      149.5
+    ],
+    "after_back12": [
+      378,
+      75.0,
+      170.5
+    ]
+  }
+}

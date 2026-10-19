@@ -1,0 +1,137 @@
+{
+  "setup": "Normal Continue of an unmodified earned map277 pre-push save; no scenario/progression injection. OS D1.2s pushes east, release allows original script completion, D0.1s passes the old collision boundary; F9 records actual executable state.",
+  "visual": {
+    "setup": "Normal Continue of unchanged earned save, packed resources; ordinary mouse look turns east, held W45 starts push, release and wait allow the original script to finish. No scenario or state injection.",
+    "kind": "Editor engine with exported embedded resources and external real-input bridge; normal Continue of same earned save;12 normal ticks settle the150ms HUD refresh before camera/frames.",
+    "frames": [
+      {
+        "image": "push-east-before.png",
+        "sha256": "4cf8dbaa23f55681bb13cbc78cef325d669f61999521b9072a53bb78a1e152dd"
+      },
+      {
+        "image": "push-east-after.png",
+        "sha256": "9af8d1e971ccf7178e3154cc38d362aa49cc1919ac9c131349933f299028df5b"
+      }
+    ],
+    "before": {
+      "screen": 277,
+      "x": 225.000366210938,
+      "y": 180.999481201172,
+      "yaw": -7.83732506149798
+    },
+    "after": {
+      "screen": 277,
+      "x": 230.249633789062,
+      "y": 179.804565429688,
+      "yaw": -7.83732506149798
+    }
+  },
+  "implementation_sha": "eb9b27ca4c07b9eb5de9d7e7016a5d691e17e520",
+  "export_sha256": "b4b8c783521e8e29e2cc2798cac0eb2077144084cdd1a71e2c51561495d0f3c1",
+  "earned_save_sha256": "5d275b27c644cac8ed569e04533fbcfdc82bcee6a66a7ea381e27a8d5a57f7c3",
+  "states": [
+    {
+      "player": {
+        "dir": 8,
+        "x": 225.000366210938,
+        "y": 180.999481201172
+      },
+      "camera": {
+        "pitch": -0.08,
+        "yaw": -6.28151762741595
+      },
+      "rock": {
+        "x": 285.0,
+        "y": 180.0,
+        "active": 1.0,
+        "script": "s1-roc"
+      },
+      "globals": {
+        "strength": 4.0,
+        "wizard_see": 2.0,
+        "rock_placement": 0.0
+      }
+    },
+    {
+      "player": {
+        "dir": 6,
+        "x": 230.250366210938,
+        "y": 180.879364013672
+      },
+      "camera": {
+        "pitch": -0.08,
+        "yaw": -6.28151762741595
+      },
+      "rock": {
+        "x": 349.16666666667,
+        "y": 180.0,
+        "active": 1.0,
+        "script": "s1-roc"
+      },
+      "globals": {
+        "strength": 4.0,
+        "wizard_see": 2.0,
+        "rock_placement": 1.0
+      }
+    },
+    {
+      "player": {
+        "dir": 6,
+        "x": 251.250366210938,
+        "y": 180.844207763672
+      },
+      "camera": {
+        "pitch": -0.08,
+        "yaw": -6.28151762741595
+      },
+      "rock": {
+        "x": 349.16666666667,
+        "y": 180.0,
+        "active": 1.0,
+        "script": "s1-roc"
+      },
+      "globals": {
+        "strength": 4.0,
+        "wizard_see": 2.0,
+        "rock_placement": 1.0
+      }
+    }
+  ],
+  "f9_records": [
+    {
+      "state": "before",
+      "record": "push-export-before.json",
+      "image": "push-export-before.png",
+      "original_record_sha256": "8cc64a96cb66c761fa368fb17354b4633cc2af0378b7afb53e7474042b97571a",
+      "published_record_sha256": "29cd4bfcef222110ed930cfa2f5b9d9950cbd824d6541e8135003a1206c1176c",
+      "image_sha256": "32992e2cbf521c4fbf5f858844892e278c22006f5cae26339d164e6b71ca07c1",
+      "change": "Only screenshot basename rewritten; game state retained."
+    },
+    {
+      "state": "pushed",
+      "record": "push-export-pushed.json",
+      "image": "push-export-pushed.png",
+      "original_record_sha256": "a3d7e89dabf6dedd0a946e5379e1561857fb5e6664beafd731c9d553c94bd7d7",
+      "published_record_sha256": "7bbcd16bf7d557c7a6a2e62b9d32acfb820cf30c6349a642383d790d832b9159",
+      "image_sha256": "6b90c3b5b40258f5d07b992776c7cb912f90acd87c030ff685fe01dd490d8e92",
+      "change": "Only screenshot basename rewritten; game state retained."
+    },
+    {
+      "state": "passage",
+      "record": "push-export-passage.json",
+      "image": "push-export-passage.png",
+      "original_record_sha256": "3a8e3b5255a7a8d860ded55ac554714f9dfcee9ad8f15d23525fe622af80cd95",
+      "published_record_sha256": "9d6010eaf6590b0573216af011a1d9a506fb3e5b8edc6c743e1c92c19f5d3871",
+      "image_sha256": "c0d043b4c22d7902aaa72878d97577e8c5ff9037e5c0ea903b5699ea9d501ca9",
+      "change": "Only screenshot basename rewritten; game state retained."
+    }
+  ],
+  "review_cases": {
+    "red": "push-review-red.json",
+    "green": "push-review-green.json",
+    "baseline_commit": "b6f60ca",
+    "red_failures": 4,
+    "green_failures": 0,
+    "note": "Exact seven-case reviewed-baseline test retained privately; final suite adds an explicit real-swing check and the separate2D diagonal control. F3 was withdrawn after direct baseline indentation inspection; production transitions unchanged."
+  }
+}
