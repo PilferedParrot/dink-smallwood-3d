@@ -33,6 +33,8 @@ func _run() -> void:
 		game._create_visual(id)
 	game.next_entity=int(state.get("next_entity",2));game.locked=bool(state.get("locked",false))
 	for key in state.get("settings",{}): game.settings[key]=state.settings[key]
+	game.bindings.load_overrides(game.settings.get(game.bindings.SETTINGS_KEY,{}))
+	game.bindings.install()
 	game._apply_settings()
 	game.fps_yaw=float(state.camera.yaw);game.fps_pitch=float(state.camera.pitch)
 	game.playing=true;game.changing=false;game.ui.close_menu();game._sync_fps_camera()

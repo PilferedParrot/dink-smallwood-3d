@@ -29,26 +29,8 @@ func key(code: int, pressed: bool) -> InputEventKey:
 	return event
 
 func _run() -> void:
-	var action := "left"
-	if not InputMap.has_action(action): InputMap.add_action(action)
-	var binding := key(KEY_A, false)
-	InputMap.action_add_event(action, binding)
-	for pair in [["attack", MOUSE_BUTTON_LEFT], ["magic", MOUSE_BUTTON_RIGHT]]:
-		var mouse_binding := InputEventMouseButton.new()
-		mouse_binding.button_index = pair[1]
-		if not InputMap.has_action(pair[0]): InputMap.add_action(pair[0])
-		InputMap.action_add_event(pair[0], mouse_binding)
-	var joy_binding := InputEventJoypadMotion.new()
-	joy_binding.device = -1
-	joy_binding.axis = JOY_AXIS_LEFT_X
-	joy_binding.axis_value = 1.0
-	if not InputMap.has_action("right"): InputMap.add_action("right")
-	InputMap.action_add_event("right", joy_binding)
-	var button_binding := InputEventJoypadButton.new()
-	button_binding.device = -1
-	button_binding.button_index = JOY_BUTTON_A
-	if not InputMap.has_action("talk"): InputMap.add_action("talk")
-	InputMap.action_add_event("talk", button_binding)
+	var bindings = preload("res://scripts/input_bindings.gd").new()
+	bindings.install()
 
 	var time := {"usec":20_000_000}
 	var recorder = RECORDER.new()
@@ -126,6 +108,16 @@ func _run() -> void:
 	capped.clock_usec = func() -> int: return time.usec
 	for i in range(RECORDER.MAX_EVENTS + 8): capped.record_input(motion)
 	check(capped._report_events(time.usec).size() == RECORDER.MAX_EVENTS and capped._dropped_for_cap == 8, "High-rate input remains memory bounded")
+	# Recording follows the same registry after remapping, including quick slots.
+	check(bindings.set_bindings("attack",[bindings.key(KEY_K)]).ok,"Recorder attack remap setup")
+	check(bindings.set_bindings("weapon_2",[bindings.key(KEY_J)]).ok,"Recorder slot remap setup")
+	var remapped = RECORDER.new()
+	remapped.record_input(key(KEY_K,true))
+	remapped.record_input(key(KEY_J,true))
+	remapped.record_input(key(KEY_2,true))
+	remapped.record_input(mouse)
+	var remapped_events: Array = remapped._report_events(remapped._now_usec())
+	check(remapped_events.size() == 2 and remapped_events[0].physical == KEY_K and remapped_events[1].physical == KEY_J,"Recorder follows attack/slot overrides and omits former defaults")
 	game.queue_free()
 	await process_frame
 	if failures.is_empty(): print("BUG REPORT RECORDER PASS")

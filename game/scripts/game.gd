@@ -1,6 +1,8 @@
 # Copyright 2026 PilferedParrot contributors. SPDX-License-Identifier: Apache-2.0
 extends Node3D
 const VM = preload("res://scripts/dink_vm.gd")
+const INPUT_BINDINGS = preload("res://scripts/input_bindings.gd")
+var bindings
 const UI = preload("res://scripts/game_ui.gd")
 const NEIGHBOUR_SANDBOX = preload("res://scripts/neighbour_script_sandbox.gd")
 const STARTUP_CUT_COMMANDS := ["wait", "say_stop", "say_stop_npc", "say_stop_xy", "move_stop", "freeze", "freeeze", "choice", "fade_down", "fade_up", "load_screen", "force_vision", "show_bmp", "activate_bow", "stop_entire_game", "restart_game", "kill_game", "load_game"]
@@ -76,6 +78,7 @@ func _ready() -> void:
 	vm = VM.new(self)
 	vm.load_story()
 	ui = UI.new()
+	ui.bindings = bindings
 	add_child(ui)
 	ui.action_requested.connect(_ui_action)
 	music = AudioStreamPlayer.new()
@@ -100,8 +103,6 @@ func _ready() -> void:
 	light.rotation_degrees = Vector3(-60,-20,0)
 	light.light_energy = 0.6
 	add_child(light)
-	var saved_settings := _read_json("user://settings.json")
-	settings.merge(saved_settings, true)
 	_apply_settings()
 	_load_sound_slots()
 	_make_player()
@@ -124,26 +125,13 @@ func _read_json(path: String) -> Dictionary:
 	var parsed: Variant = JSON.parse_string(FileAccess.get_file_as_string(path))
 	return parsed if parsed is Dictionary else {}
 
+func _input_context() -> String:
+	return "2d"
+
 func _input_map() -> void:
-	var keys := {"left":[KEY_A,KEY_LEFT],"right":[KEY_D,KEY_RIGHT],"up":[KEY_W,KEY_UP],"down":[KEY_S,KEY_DOWN],"talk":[KEY_E,KEY_ENTER],"attack":[KEY_SPACE],"magic":[KEY_Q],"pause":[KEY_ESCAPE],"inventory":[KEY_I],"camera":[KEY_R],"map":[KEY_M]}
-	var buttons := {"talk":JOY_BUTTON_A,"attack":JOY_BUTTON_X,"magic":JOY_BUTTON_Y,"pause":JOY_BUTTON_START,"inventory":JOY_BUTTON_BACK,"camera":JOY_BUTTON_RIGHT_STICK}
-	for action in keys:
-		if not InputMap.has_action(action): InputMap.add_action(action, 0.2)
-		for key in keys[action]:
-			var event := InputEventKey.new()
-			event.physical_keycode = key
-			InputMap.action_add_event(action,event)
-		if buttons.has(action):
-			var event := InputEventJoypadButton.new()
-			event.device = -1
-			event.button_index = buttons[action]
-			InputMap.action_add_event(action,event)
-	for pair in [["left",JOY_AXIS_LEFT_X,-1.0],["right",JOY_AXIS_LEFT_X,1.0],["up",JOY_AXIS_LEFT_Y,-1.0],["down",JOY_AXIS_LEFT_Y,1.0]]:
-		var event := InputEventJoypadMotion.new()
-		event.device = -1
-		event.axis = pair[1]
-		event.axis_value = pair[2]
-		InputMap.action_add_event(pair[0],event)
+	bindings = INPUT_BINDINGS.new(_input_context())
+	settings = bindings.load_settings(settings)
+	bindings.install()
 
 func _make_player() -> void:
 	entities[1] = {"x":334.0,"y":161.0,"pseq":14,"pframe":1,"seq":0,"frame":1,"brain":1,"dir":4,"base_walk":70,"base_idle":10,"base_attack":100,"speed":3,"size":100,"active":1,"hard":1,"frozen":false,"anim_time":0.0,"script":"","editor_num":0}
@@ -472,6 +460,10 @@ func _add_equipment_stats(stats: Dictionary) -> void:
 	stats["spell_item"] = magic_items[spell_index] if spell_index >= 0 and spell_index < magic_items.size() else {}
 
 func _input(event: InputEvent) -> void:
+	if event.is_action_pressed("fullscreen") and not event.is_echo():
+		DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_WINDOWED if DisplayServer.window_get_mode() == DisplayServer.WINDOW_MODE_FULLSCREEN else DisplayServer.WINDOW_MODE_FULLSCREEN)
+		get_viewport().set_input_as_handled()
+		return
 	if not is_instance_valid(ui) or not event.is_action_pressed("map") or event.is_echo(): return
 	if not playing: return
 	if ui.page == "map":
@@ -492,7 +484,7 @@ func _open_world_map() -> void:
 	vm.run("button6", "main", 1)
 
 func _unhandled_input(event: InputEvent) -> void:
-	if event.is_action_pressed("pause") or event.is_action_pressed("ui_cancel"):
+	if event.is_action_pressed("pause") or event.is_action_pressed("escape") or (ui.modal and event.is_action_pressed("ui_cancel")):
 		if ui.dialogue_mode: return
 		if playing:
 			if ui.modal: ui.request_back()

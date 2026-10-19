@@ -1,5 +1,9 @@
 # Copyright 2026 PilferedParrot contributors. SPDX-License-Identifier: Apache-2.0
 extends CanvasLayer
+const INPUT_BINDINGS = preload("res://scripts/input_bindings.gd")
+var bindings
+var control_primer_label: Label
+var controls_label: Label
 signal action_requested(action: String, payload: Variant)
 signal dialogue_finished(choice: int)
 var modal := true
@@ -74,7 +78,10 @@ const LOGO = preload("res://assets/graphics/Startme/options/dinkl-01.png")
 func _ready() -> void:
 	layer = 10
 	process_mode = Node.PROCESS_MODE_ALWAYS
-	_ensure_controller_navigation()
+	if bindings == null:
+		bindings = INPUT_BINDINGS.new()
+		bindings.install()
+	bindings.changed.connect(_bindings_changed)
 	# A plugged-in pad does not mean it is the device the player is using.
 	# Switch cues when actual keyboard/pointer/controller input arrives.
 	controller_active = false
@@ -315,6 +322,7 @@ func _process(_delta: float) -> void:
 	if page == "dialogue": _fit_dialogue_panel()
 	if page == "dialogue" and not dialogue_mode: _advance_timed_speech(_delta)
 	if page == "dialogue" and choice_prompt_scroll.visible:
+		choice_prompt_axis = Input.get_action_strength("ui_page_down") - Input.get_action_strength("ui_page_up")
 		if not is_zero_approx(choice_prompt_axis):
 			choice_prompt_scroll.scroll_vertical += roundi(choice_prompt_axis * choice_prompt_scroll.size.y * _delta)
 		_update_hint()
@@ -427,35 +435,68 @@ func _keep_choice_visible(answer: Control, serial: int) -> void:
 	if serial == page_serial and is_instance_valid(answer) and answer.is_inside_tree():
 		menu_scroll.ensure_control_visible(answer)
 
-func _ensure_controller_navigation() -> void:
-	var buttons := {"ui_accept": JOY_BUTTON_A, "ui_cancel": JOY_BUTTON_B, "ui_up": JOY_BUTTON_DPAD_UP, "ui_down": JOY_BUTTON_DPAD_DOWN, "ui_left": JOY_BUTTON_DPAD_LEFT, "ui_right": JOY_BUTTON_DPAD_RIGHT}
-	for action in buttons:
-		if not InputMap.has_action(action): InputMap.add_action(action)
-		var event := InputEventJoypadButton.new()
-		event.device = -1
-		event.button_index = buttons[action]
-		if not InputMap.action_has_event(action, event): InputMap.action_add_event(action, event)
-	var axes := {"ui_up": [JOY_AXIS_LEFT_Y, -1.0], "ui_down": [JOY_AXIS_LEFT_Y, 1.0], "ui_left": [JOY_AXIS_LEFT_X, -1.0], "ui_right": [JOY_AXIS_LEFT_X, 1.0]}
-	for action in axes:
-		if not InputMap.has_action(action): InputMap.add_action(action)
-		var event := InputEventJoypadMotion.new()
-		event.device = -1
-		event.axis = axes[action][0]
-		event.axis_value = axes[action][1]
-		if not InputMap.action_has_event(action, event): InputMap.action_add_event(action, event)
+func _bindings_changed() -> void:
+	_update_hint()
+	# These are the only persistent labels whose text is built on page entry.
+	if page == "title": show_title(FileAccess.file_exists("user://adventure.json"))
+	elif page == "settings": show_settings(bindings.settings)
+
+func _key(action: String) -> String:
+	return bindings.short_label(action,controller_active)
+
+func _navigation_hint() -> String:
+	return "%s / %s  Choose     %s or click  Confirm" % [_key("ui_up"),_key("ui_down"),_key("ui_accept")]
+
+func _gameplay_hint() -> String:
+	var text := "%s  Move" % bindings.movement_label(controller_active)
+	if bindings.context == "fps": text += "   %s  Look" % ("Mouse" if not controller_active else bindings.look_label())
+	text += "   %s  Attack   %s  Talk   %s  Equipment   %s  Pause" % [_key("attack"),_key("talk"),_key("inventory"),_key("pause")]
+	if not equipment_stats.get("spell_item",{}).is_empty(): text += "   %s  Magic" % _key("magic")
+	return text
+
+func _control_primer() -> String:
+	var look := " · Mouse look" if bindings.context == "fps" else ""
+	return "%s move%s\n%s talk · %s attack\n%s gear · %s pause · %s help" % [bindings.movement_label(),look,bindings.short_label("talk"),bindings.short_label("attack"),bindings.short_label("inventory"),bindings.short_label("pause"),bindings.short_label("help")]
+
+func _controls_group(ids: Array) -> String:
+	var parts: Array[String] = []
+	for action in ids:
+		if bindings.actions[action].contexts.has(bindings.context) or bindings.actions[action].contexts.has("global"):
+			parts.append("%s: %s" % [bindings.actions[action].name,bindings.label(action,false,"",true)])
+	return "    ".join(parts)
+
+func _controls_text() -> String:
+	var lines: Array[String] = ["Move: " + bindings.movement_label() + " / " + bindings.movement_label(true)]
+	if bindings.context == "fps": lines[0] += "    Aim: mouse / " + bindings.look_label(true,true)
+	lines.append(_controls_group(["attack","magic"]))
+	lines.append(_controls_group(["talk","jump","sprint"]))
+	var equipment := _controls_group(["inventory"])
+	if bindings.context == "fps":
+		var slots: Array[String] = []
+		var consecutive := true
+		for slot in range(1,10):
+			var label: String = bindings.label("weapon_%d" % slot,false,"",true)
+			slots.append(label)
+			consecutive = consecutive and label == str(slot)
+		equipment += "    Weapon slots: " + ("1–9" if consecutive else ", ".join(slots))
+		equipment += " / " + bindings.label("weapon_previous",false,"",true) + " / " + bindings.label("weapon_next",false,"",true)
+	lines.append(equipment)
+	lines.append(_controls_group(["pause","map","help"]))
+	lines.append(_controls_group(["camera","fullscreen","bug_report"]))
+	lines.append("Guaranteed back / pause: " + bindings.label("escape"))
+	lines.append("Controller labels use Xbox button positions.")
+	return "\n".join(lines)
 
 func _input(event: InputEvent) -> void:
-	if event is InputEventJoypadMotion and event.axis == JOY_AXIS_RIGHT_Y:
-		choice_prompt_axis = event.axis_value if absf(event.axis_value) > 0.25 else 0.0
 	if page == "dialogue" and choice_prompt_scroll.visible:
 		var direction := int(event.is_action_pressed("ui_page_down")) - int(event.is_action_pressed("ui_page_up"))
-		if direction != 0:
-			controller_active = false
+		if direction != 0 and not event is InputEventJoypadMotion:
+			controller_active = event is InputEventJoypadButton
 			choice_prompt_scroll.scroll_vertical += roundi(direction * choice_prompt_scroll.size.y)
 			get_viewport().set_input_as_handled()
 			_update_hint()
 			return
-	if not modal and event is InputEventKey and event.pressed and not event.echo and event.physical_keycode == KEY_F1:
+	if not modal and event.is_action_pressed("help") and not event.is_echo():
 		gameplay_hint_used = true
 		gameplay_hint_deadline_msec = Time.get_ticks_msec() + roundi(GAMEPLAY_HINT_SECONDS * 1000)
 		get_viewport().set_input_as_handled()
@@ -471,17 +512,14 @@ func _input(event: InputEvent) -> void:
 	_update_hint()
 
 func _uses_gameplay_control(event: InputEvent) -> bool:
-	if event is InputEventKey:
-		return event.pressed and event.physical_keycode in [KEY_W, KEY_A, KEY_S, KEY_D, KEY_E, KEY_I, KEY_SPACE]
-	if event is InputEventMouseButton:
-		return event.pressed and event.button_index in [MOUSE_BUTTON_LEFT, MOUSE_BUTTON_RIGHT]
-	if event is InputEventMouseMotion:
-		return event.relative.length() > 2.0
-	if event is InputEventJoypadMotion:
-		return absf(event.axis_value) > 0.25
-	return event is InputEventJoypadButton and event.pressed
+	if event is InputEventMouseMotion: return event.relative.length() > 2.0
+	for action in bindings.gameplay_actions():
+		if event.is_action_pressed(action): return true
+	return false
 
 func _update_hint() -> void:
+	if is_instance_valid(control_primer_label): control_primer_label.text = _control_primer()
+	if is_instance_valid(controls_label): controls_label.text = _controls_text()
 	if not is_instance_valid(hint): return
 	if page == "dialogue" and not dialogue_mode:
 		# Timed speech shares the card; gameplay help must not cover its name.
@@ -495,26 +533,23 @@ func _update_hint() -> void:
 			if dialogue_continue.visible:
 				# The focused action already gives its keyboard/controller cue.
 				hint.text = ""
-				dialogue_continue.text = "Continue   ·   A" if controller_active else "Continue   ·   Enter"
+				dialogue_continue.text = "Continue   ·   " + _key("ui_accept")
 			else:
-				hint.text = "D-pad / LS  Choose     A  Confirm" if controller_active else "Arrows  Choose     Enter or click  Confirm"
+				hint.text = _navigation_hint()
 				if choice_prompt_scroll.visible and choice_prompt_scroll.get_v_scroll_bar().max_value > choice_prompt_scroll.size.y:
-					hint.text += "     RS  Read prompt" if controller_active else "     PgUp / PgDn  Read prompt"
+					hint.text += "     %s / %s  Read prompt" % [_key("ui_page_up"),_key("ui_page_down")]
 		else:
 			var back := "Resume" if return_page == "game" else "Back"
-			hint.text = "D-pad / LS  Choose     A  Confirm" if controller_active else "Arrows  Choose     Enter or click  Confirm"
+			hint.text = _navigation_hint()
 			if page == "settings":
-				hint.text += "     Left / right  Adjust" if not controller_active else "     Left / right  Adjust"
-			if page != "title": hint.text += "     B  " + back if controller_active else "     Esc  " + back
+				hint.text += "     %s / %s  Adjust" % [_key("ui_left"),_key("ui_right")]
+			if page != "title": hint.text += "     " + _key("ui_cancel") + "  " + back
 		return
-	if controller_active:
-		hint.text = "LS  Move   RS  Look   RT / X  Attack   A  Talk   Back  Equipment   Start  Pause"
-	else:
-		hint.text = "WASD  Move     Mouse  Look     Left click  Attack     E  Talk     I  Equipment     Esc  Pause"
-	if not equipment_stats.get("spell_item", {}).is_empty():
-		hint.text += "     LT / Y  Magic" if controller_active else "     Right click  Magic"
+	hint.text = _gameplay_hint()
 
 func _clear(title: String, next_page: String) -> void:
+	control_primer_label = null
+	controls_label = null
 	_clear_toast()
 	if next_page == "pause": return_page = "game"
 	elif next_page == "title": return_page = "title"
@@ -629,7 +664,7 @@ func show_title(has_save: bool) -> void:
 	_button("Settings & controls", "settings")
 	_button("Credits & support", "credits")
 	_button("Quit", "quit")
-	_label("WASD move · Mouse look\nE talk · Left click attack\nI gear · Esc pause · F1 help", 18)
+	control_primer_label = _label(_control_primer(), 18)
 	_focus()
 
 func show_pause() -> void:
@@ -913,7 +948,7 @@ func show_journal(text: String) -> void:
 
 func show_settings(settings: Dictionary) -> void:
 	_clear("Settings & controls", "settings")
-	_label("Move: WASD / left stick    Aim: mouse / right stick\nAttack: left click / RT / X    Magic: right click / LT / Y\nTalk: E / A    Jump: Space / right stick click    Sprint: Shift / left stick click\nEquipment: I / Back (Select)    Quick weapons: 1–9 / LB and RB    Pause: Esc / Start\nWorld map: M or Pause → World map (once received)\nControls help: F1 (shows for 8 seconds)\nLocal bug report: F9 (screenshot, state and recent input)\nController labels use the Xbox layout; other mapped gamepads use the same button positions.", 18)
+	controls_label = _label(_controls_text(), 18)
 	for setting in [["master", "Master volume", 0.0, 1.0, 0.1, 0.8], ["music", "Music volume", 0.0, 1.0, 0.05, 0.55], ["sfx", "Sound effects", 0.0, 1.0, 0.1, 0.8], ["text_scale", "Text size", 0.85, 1.3, 0.05, 1.0], ["mouse_sensitivity", "Mouse sensitivity", 0.0005, 0.006, 0.0005, 0.002], ["fov", "Field of view", 60.0, 105.0, 1.0, 80.0], ["controller_sensitivity", "Controller look sensitivity", 0.5, 4.0, 0.1, 2.0], ["controller_deadzone", "Controller stick dead zone", 0.05, 0.4, 0.05, 0.2]]:
 		var key: String = setting[0]
 		var value_label := _label(setting[1], 18)

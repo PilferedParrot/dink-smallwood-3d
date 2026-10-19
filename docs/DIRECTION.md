@@ -2227,3 +2227,55 @@ normalization; dispatch-consistent matching and source controls correct that
 instrument error. Fixtures skip campaign progression. The unrelated title parser
 residue is recorded separately and remains unfixed. Raw packed frames, negative
 controls and native logs stay locally in `tmp/p2-evidence/`.
+
+## Input bindings and persistence — October 19, P3a
+
+Prior art checked before implementation: Godot's [InputMap](https://docs.godotengine.org/en/stable/classes/class_inputmap.html)
+and [InputEventKey](https://docs.godotengine.org/en/stable/classes/class_inputeventkey.html), the official
+[gui/input_mapping demo](https://github.com/godotengine/godot-demo-projects/tree/master/gui/input_mapping),
+[Maaack's remapping addon](https://github.com/Maaack/Godot-Input-Remapping) and
+[Nathan Hoad's Input Helper](https://github.com/nathanhoad/godot_input_helper) (upstream sources read2026-10-19).
+The demo uses a dictionary keyed by action, replaces InputMap events, and restores known actions individually.
+Both addons resolve physical keys through DisplayServer for labels. Reuse those engine patterns; keep physical
+keyboard positions and typed, JSON-safe event records, rather than resource deserialization or labels as identity.
+InputMap does not persist runtime edits. The existing settings owner therefore stores the versioned records.
+No addon UI dependency is needed for this data-only unit. OpenAlex's public search for game input remapping
+accessibility returned general accessibility work rather than a more relevant engine implementation; the engine
+and maintained source examples are the primary implementation references. Local source receipts stay in tmp/.
+
+Input/hint inventory (base95ec8d6):
+
+- game.gd input setup: movement, talk, attack, magic, pause, inventory, camera and map → registry actions.
+- fps_game.gd setup: mode-specific attack/jump/camera defaults, sprint, look axes, weapon cycling and triggers
+  → same registry, with separate2D/first-person defaults. Numeric1–9 equip → nine named weapon actions.
+- fps_game.gd F9 report and F11 fullscreen → named actions; F9 remains reserved for local evidence.
+- game_ui.gd controller menu setup → registry-owned ui_accept/cancel/directions. Engine keyboard defaults,
+  focus traversal and paging are also explicitly registered so a remap cannot leave a hidden native alias.
+- game_ui.gd raw right-stick prompt scrolling → named prompt actions. Mouse motion remains continuous
+  pointer/look input, not a button binding. Native Control pointer clicks, text editing and scroll-wheel
+  handling remain engine interactions, not gameplay actions. Their literal pointer description stays fixed.
+- game_ui.gd F1 help → named help action; the first-use hint detector follows gameplay actions.
+- bug_report_recorder.gd numeric/F9 special handling → named registry actions. Raw key fields in its
+  encoding/decoding are local replay data, not a second binding table; Unicode is never recorded.
+- Hint surfaces: gameplay strip and F1 strip, title primer, settings controls text, dialogue Continue,
+  choice/menu footer, settings adjustment/back cues and overflow-prompt reading cues → binding labels.
+- Escape remains a guaranteed exit; it is declared reserved. F9 is reserved for local bug capture.
+  Other shortcuts, including F1/F11, can be remapped. Menu navigation has its own context; shared menu/
+  gameplay defaults are intentional because their handlers are mutually exclusive.
+- Original DinkC key text is preserved: ESCAPE's Keyboard commands choice names Ctrl/Space/Shift/Enter
+  and arrows; S1-LTR names M/button6 for the map. Those are original story words, not generated UI guidance.
+  The story inventory is recorded locally and the source data is not rewritten.
+
+The original failure was dispersed binding ownership: first-person setup changed the base map after setup,
+UI setup added its own events, hints duplicated defaults, and quick weapons bypassed actions. Why made:
+an incremental implementation oversight treated each new input surface independently and did not test a
+persisted non-default binding across all consumers. The class gate covers the registry and every input owner.
+
+The shipped registry uses a versioned dictionary of typed event lists in the
+existing settings file; 2D and first-person overrides stay independent. Native
+menu events, focus traversal and prompt paging have explicit defaults; ui_select
+aliases the current confirm list. Escape remains an independent fallback, and
+F9 cannot be assigned away. Refuse and one-action swaps are transactional with
+atomic writes; resets use the same conflict rules. Hints query the current
+binding and keyboard layout, including title/settings text on keyboard input.
+See `docs/INPUT_BINDINGS.md` for the data/API contract.

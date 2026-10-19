@@ -136,7 +136,7 @@ func _init() -> void:
 	check(received == "equip" and payload == 1, "Controller equips the selected inventory item")
 	check(ui.hint.text.contains("D-pad") and ui.hint.text.contains("A"), "Controller input shows contextual menu hints")
 	ui.close_menu()
-	check(ui.hint.text.contains("RT / X"), "Closing a menu restores controller gameplay hints")
+	check(ui.hint.text.contains(ui.bindings.short_label("attack",true)), "Closing a menu restores controller gameplay hints")
 	var key := InputEventKey.new()
 	key.physical_keycode = KEY_W
 	key.pressed = true

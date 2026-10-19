@@ -73,59 +73,8 @@ func _ready() -> void:
 		fps_pitch = -0.03
 	_sync_fps_camera()
 
-func _input_map() -> void:
-	super._input_map()
-	# Base binds Space to a melee action.  In first person Space is exclusively
-	# jump; weapons are on the mouse/right trigger.
-	for existing in InputMap.action_get_events("attack"):
-		if existing is InputEventKey and existing.physical_keycode == KEY_SPACE:
-			InputMap.action_erase_event("attack", existing)
-	_fps_bind_key("sprint", KEY_SHIFT)
-	_fps_bind_key("jump", KEY_SPACE)
-	for pair in [["jump",JOY_BUTTON_RIGHT_STICK],["sprint",JOY_BUTTON_LEFT_STICK]]:
-		var button := InputEventJoypadButton.new()
-		button.device = -1
-		button.button_index = pair[1]
-		InputMap.action_add_event(pair[0],button)
-	# The right stick is reserved for camera look in first person.  Remove the
-	# base game's camera toggle binding so a stick click cannot change the view.
-	for existing in InputMap.action_get_events("camera"):
-		if existing is InputEventJoypadButton and existing.button_index == JOY_BUTTON_RIGHT_STICK:
-			InputMap.action_erase_event("camera", existing)
-	for pair in [["look_left",JOY_AXIS_RIGHT_X,-1.0],["look_right",JOY_AXIS_RIGHT_X,1.0],["look_up",JOY_AXIS_RIGHT_Y,-1.0],["look_down",JOY_AXIS_RIGHT_Y,1.0]]:
-		_fps_bind_joy(pair[0], pair[1], pair[2])
-	_fps_bind_joy_button("weapon_previous", JOY_BUTTON_LEFT_SHOULDER)
-	_fps_bind_joy_button("weapon_next", JOY_BUTTON_RIGHT_SHOULDER)
-	_fps_bind_mouse("attack", MOUSE_BUTTON_LEFT)
-	_fps_bind_mouse("magic", MOUSE_BUTTON_RIGHT)
-	_fps_bind_joy("attack", JOY_AXIS_TRIGGER_RIGHT, 1.0)
-	_fps_bind_joy("magic", JOY_AXIS_TRIGGER_LEFT, 1.0)
-
-func _fps_bind_key(action: String, key: Key) -> void:
-	if not InputMap.has_action(action): InputMap.add_action(action, 0.2)
-	var event := InputEventKey.new()
-	event.physical_keycode = key
-	InputMap.action_add_event(action, event)
-
-func _fps_bind_mouse(action: String, button: int) -> void:
-	var event := InputEventMouseButton.new()
-	event.button_index = button
-	InputMap.action_add_event(action, event)
-
-func _fps_bind_joy(action: String, axis: int, value: float) -> void:
-	if not InputMap.has_action(action): InputMap.add_action(action, 0.2)
-	var event := InputEventJoypadMotion.new()
-	event.device = -1
-	event.axis = axis
-	event.axis_value = value
-	InputMap.action_add_event(action, event)
-
-func _fps_bind_joy_button(action: String, button_index: int) -> void:
-	if not InputMap.has_action(action): InputMap.add_action(action, 0.2)
-	var event := InputEventJoypadButton.new()
-	event.device = -1
-	event.button_index = button_index
-	InputMap.action_add_event(action, event)
+func _input_context() -> String:
+	return "fps"
 
 func _new_game() -> void:
 	_fps_restore_dialogue_camera()
@@ -408,7 +357,7 @@ func _unhandled_input(event: InputEvent) -> void:
 		_sync_fps_camera()
 		get_viewport().set_input_as_handled()
 		return
-	if event.is_action_pressed("pause") or (event.is_action_pressed("ui_cancel") and ui.modal):
+	if event.is_action_pressed("pause") or event.is_action_pressed("escape") or (event.is_action_pressed("ui_cancel") and ui.modal):
 		if ui.dialogue_mode: return
 		if playing:
 			if ui.modal: ui.request_back()
@@ -429,8 +378,8 @@ func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("talk"): _talk()
 	if event.is_action_pressed("inventory"): ui.show_inventory(items, magic_items)
 	if event.is_action_pressed("jump"): _fps_update_jump(0.0)
-	if event is InputEventKey and event.pressed and event.physical_keycode >= KEY_1 and event.physical_keycode <= KEY_9:
-		_equip(int(event.physical_keycode - KEY_1), false)
+	for slot in range(1,10):
+		if _fps_is_initial_action_press(event, "weapon_%d" % slot): _equip(slot-1, false)
 
 func _fps_update_mouse_mode() -> void:
 	var wanted := Input.MOUSE_MODE_CAPTURED if playing and not ui.modal else Input.MOUSE_MODE_VISIBLE
@@ -1254,7 +1203,7 @@ func _smoke_test() -> void:
 	get_tree().quit(0 if failures.is_empty() else 1)
 
 func _input(event: InputEvent) -> void:
-	if event is InputEventKey and event.pressed and not event.echo and (event.physical_keycode == KEY_F9 or event.keycode == KEY_F9):
+	if event.is_action_pressed("bug_report") and not event.is_echo():
 		if not bug_report_pending and entities.has(1) and vm != null:
 			bug_report_pending = true
 			_save_bug_report.call_deferred()
@@ -1268,8 +1217,6 @@ func _input(event: InputEvent) -> void:
 	if ui.modal or not playing:
 		if event.is_action_pressed("attack"): fps_fire_held = true
 		if event.is_action_pressed("magic"): fps_magic_held = true
-	if event is InputEventKey and event.pressed and event.physical_keycode == KEY_F11:
-		DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_WINDOWED if DisplayServer.window_get_mode() == DisplayServer.WINDOW_MODE_FULLSCREEN else DisplayServer.WINDOW_MODE_FULLSCREEN)
 
 func _save_bug_report() -> void:
 	# Capture the completed frame before adding the success toast to it.

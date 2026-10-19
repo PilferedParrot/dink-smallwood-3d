@@ -5,12 +5,8 @@ extends RefCounted
 
 const WINDOW_USEC := 10_000_000
 const MAX_EVENTS := 8192
-const GAMEPLAY_ACTIONS := [
-	"left", "right", "up", "down", "talk", "attack", "magic",
-	"pause", "inventory", "camera", "map", "sprint", "jump",
-	"weapon_previous", "weapon_next", "look_left", "look_right",
-	"look_up", "look_down",
-]
+const BINDINGS = preload("res://scripts/input_bindings.gd")
+var bindings = BINDINGS.new()
 
 # A test can supply a monotonic clock without waiting ten real seconds.
 var clock_usec: Callable
@@ -23,20 +19,17 @@ func _now_usec() -> int:
 	return int(clock_usec.call()) if clock_usec.is_valid() else Time.get_ticks_usec()
 
 func _is_gameplay_binding(event: InputEvent) -> bool:
-	for action in GAMEPLAY_ACTIONS:
+	for action in bindings.gameplay_actions():
 		if InputMap.has_action(action) and event.is_action(action):
 			return true
 	return false
 
 func _encode(event: InputEvent) -> Dictionary:
 	if event is InputEventKey:
-		# Numeric weapon shortcuts are handled directly by fps_game.gd. Never
-		# serialize unicode, typed text, or unrelated keys (including F9).
+		# Record only named gameplay actions; never Unicode or unrelated text.
+		if event.is_action("bug_report") or not _is_gameplay_binding(event): return {}
 		var physical := int(event.physical_keycode)
 		var logical := int(event.keycode)
-		if physical == KEY_F9 or logical == KEY_F9: return {}
-		var number_key := (physical >= KEY_1 and physical <= KEY_9) or (logical >= KEY_1 and logical <= KEY_9)
-		if not number_key and not _is_gameplay_binding(event): return {}
 		return {"type":"key", "physical":physical, "logical":logical,
 			"pressed":event.pressed, "echo":event.echo,
 			"shift":event.shift_pressed, "ctrl":event.ctrl_pressed,
