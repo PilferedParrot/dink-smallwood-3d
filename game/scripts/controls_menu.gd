@@ -36,6 +36,13 @@ func _ready() -> void:
 	for area in GROUPS:
 		var tab := _button(GROUPS[area], "group_"+area, tabs)
 		tab.toggle_mode = true
+		# Selection stays visible without relying on the gold text colour.
+		var selected: StyleBoxFlat = ui.menu_theme.get_stylebox("focus","Button").duplicate()
+		selected.set_border_width_all(0)
+		selected.border_width_bottom = ui.menu_theme.get_stylebox("focus","Button").border_width_bottom
+		for side in [SIDE_LEFT,SIDE_TOP,SIDE_RIGHT,SIDE_BOTTOM]:
+			selected.set_content_margin(side,ui.menu_theme.get_stylebox("normal","Button").get_content_margin(side))
+		tab.add_theme_stylebox_override("pressed",selected)
 		tab.pressed.connect(_select_group.bind(area))
 	scroll = ScrollContainer.new()
 	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
