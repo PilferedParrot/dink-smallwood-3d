@@ -1,0 +1,48 @@
+{
+  "failures": [
+    "A true raw-box corner retains the original diagonal exclusion"
+  ],
+  "records": [
+    {
+      "dialogue": [
+        "It's .. it's moving..."
+      ],
+      "label": "fps-true-corner",
+      "player": {
+        "active": 1,
+        "anim_time": 0.05,
+        "attack_hit_sound": 0.0,
+        "base_attack": 100,
+        "base_idle": 10,
+        "base_walk": 70,
+        "brain": 1,
+        "dir": 6,
+        "editor_num": 0,
+        "frame": 5,
+        "frame_delay": 0.0,
+        "frozen": true,
+        "hard": 1,
+        "nocontrol": 0,
+        "pframe": 1,
+        "pseq": 14,
+        "script": "",
+        "seq": 0,
+        "size": 100,
+        "speed": 3,
+        "x": 232.25,
+        "y": 168.25
+      },
+      "pushes": [
+        {
+          "dir": 6,
+          "editor": 3,
+          "id": 32,
+          "script": "s1-roc"
+        }
+      ],
+      "rock_placement": 0,
+      "screen": 277
+    }
+  ],
+  "setup": "Labelled scenarios: source maps, startup skipped; no earned progression claimed"
+}

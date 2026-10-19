@@ -1,0 +1,32 @@
+{
+  "source_project": "Dink P3a",
+  "original_record_sha256": "3bdd1359a6c11ee035d4a1396149d0ec3650941b73ef4d2bd0c70c118d13cde2",
+  "records": [
+    {
+      "label": "candidate",
+      "sha": "7ad226e61839716866f4692326dea476b9a31a30",
+      "elapsed_seconds": 294.9808745459886,
+      "exit": 0,
+      "pass": true,
+      "native_script_sha256": "a506be042cfcb9cd694721928dd060793fae5751e33f7ef2597830e9099708d9",
+      "native_timeout_seconds": 600,
+      "lock_wait_excluded": true,
+      "log_sha256": "e02d35978b8e20b2091e3b29d2666778c482a24b013dabf73556e881f0c1561e"
+    },
+    {
+      "label": "baseline",
+      "sha": "95ec8d6",
+      "elapsed_seconds": 372.44836742497864,
+      "exit": 0,
+      "pass": true,
+      "native_script_sha256": "a506be042cfcb9cd694721928dd060793fae5751e33f7ef2597830e9099708d9",
+      "native_timeout_seconds": 600,
+      "lock_wait_excluded": true,
+      "log_sha256": "7e1a18d7be3268f139ad23627529e7dea46281f6d94ab14654d31b2ac8f0b47e"
+    }
+  ],
+  "current_script_sha256": "a506be042cfcb9cd694721928dd060793fae5751e33f7ef2597830e9099708d9",
+  "current_renderer_sha256": "51d30660c5187a6d9222c0eb834d4dd40c86b520cb287fd1fd45fce64436204f",
+  "baseline_renderer_byte_identical_to_current": true,
+  "interpretation": "Original180s wrapper deadline predatesPUSH and is below alreadymeasured successful baseline372.448s. Standalone600s checks are distinct from unchanged pytestwrapper."
+}

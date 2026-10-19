@@ -2434,3 +2434,38 @@ walker passed with zero traps and must not be repeated merely to finish the
 remaining suite. Original and current opening-walk controls both exceeded
 40 seconds; this does not isolate a PUSH regression or establish an underlying
 performance cause. No timeout is counted as a green game result.
+
+
+### PUSH verification closed (2026-10-19 20:46 UTC)
+
+The earlier corner-control limitation is closed by test-only commit
+`ba164631aabdf076b4c0173cd54e67ec85c20060`. From northwest of the raw box, heading -3PI/4 holds southeast
+pressure; both coordinates must stay blocked for 60 real-input ticks. The fixed
+game passes. A private copy removing only the two-face return0 fails exactly
+“A true raw-box corner retains the original diagonal exclusion.” The full
+23-case pytest test passes; the same updated cave case remains red on 434db5a.
+Technical root of the weak control was the wrong yaw quadrant. Development
+root was assuming contact from placement without measuring sustained pressure
+or mutation sensitivity. No production game code changes in this closure.
+
+A second harness cause accompanied the earlier orphan: `nice -n10` is a
+relative increment. Outerpytest 10 plus innerlauncher10 produced actual nice 19,
+confirmed in the retained process snapshot. The technical error was compounding
+priority at several layers; the development error was checking flags rather
+than inherited effective scheduling state. The launcher now preserves a
+parent 10 or lowers parent 0 to10, never requesting a priority increase.
+Pytest itself stays0 because some existing tests already add nice 10. Two
+parent 0/10 fixtures verify effective10, PID identity and no surviving child
+after a caller deadline. The unchanged 23-case native control passes95s under
+load, and original/current opening walks pass20.389/20.446s.
+
+The final 264-node result is262 passes, one optional-data skip and the known
+pre-existing180s renderer deadline; no assertion failures or unrun nodes.
+The identical renderer body passes644 screens in189.093s with
+600s allowed. Prior base95ec8d6 already took372.448s and its renderer hash
+matches; inheriting that gate without checking existing timing records was
+an oversight in our verification planning. The shared-launcher unit owns the
+common deadline fix; this PUSH branch deliberately leaves its wrapper alone.
+The lead accepts G3 with that explicit exception. Raw failed and partial runs
+remain retained, separate from the later passing controls. See
+`docs/playtest/route-0.3.2/push-suite-final.json` and`push-corner-proof.json`.

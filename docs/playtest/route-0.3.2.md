@@ -550,3 +550,40 @@ one-branch mutation, remains private and unverified: all three follow-up
 launches timed out before producing reports. The tracked test was restored
 to the version bound by the existing 23-case evidence. Those earlier passing
 results remain valid observations, with this explicit coverage limitation.
+
+
+### Final PUSH verification (2026-10-19 20:46 UTC)
+
+The [complete 264-node inventory](route-0.3.2/push-suite-final.json) supersedes
+the earlier partial result: **262 passed, one optional local-evidence skip,
+one known pre-existing180-second deadline, and zero unrun**. There are no
+game assertion failures. All ten other original timeout failures passed on
+retry with their original deadlines. The lead accepts G3 with the recorded
+pre-existing deadline exception; `tests/test_fps_world.py` remains unchanged.
+
+The identical opening walk passes on 434db5a in20.389s and on
+the fixed game in20.446s, within the registered
+30.583s candidate bound. The unchanged world-test body separately
+passes all 644 screens in189.093s with 600s allowed.
+[Existing baseline controls](route-0.3.2/push-world-deadline.json) already measured
+372.448s on 95ec8d6 and294.981s on P3a's candidate; the fixture and renderer
+match by hash. These standalone results do not rewrite the failed180s wrapper.
+The 570-screen walker remains the earlier zero-trap pass and was not repeated.
+
+The [strengthened 23-case input test](route-0.3.2/push-input-strengthened.json)
+passes through its real pytest entry point after test-only commit `ba164631aabdf076b4c0173cd54e67ec85c20060`.
+The [corner proof](route-0.3.2/push-corner-proof.json) closes the earlier weak
+negative: SE input holds both coordinates blocked for 60 ticks, and removing
+only the two-face rejection causes exactly the predicted no-PUSH assertion
+to fail. The same updated test still gives the three expected cave failures
+on 434db5a. All game files remain byte-identical to eb9b27c; the earned-save
+export/F9 proof and its single current binary remain valid.
+
+Private launcher defects were corrected and tested: nested timeout ownership
+left an orphan, while relative nice 10 applied twice produced actual nice 19.
+The direct-exec launcher now keeps the engine PID and applies only the positive
+delta to target nice 10; pytest runs at0 so tests that add their own nice 10
+retain10. Parent0/10 lifecycle fixtures both pass, and a live engine was
+verified at10. Pure fixtures run without the game lock behind an exit97
+unexpected-native guard; every real Godot launch remains serialized. Total
+active verification is1016.645s within the2100s cap; lock waits are excluded.

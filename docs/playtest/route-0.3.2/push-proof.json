@@ -133,5 +133,11 @@
     "red_failures": 4,
     "green_failures": 0,
     "note": "Exact seven-case reviewed-baseline test retained privately; final suite adds an explicit real-swing check and the separate2D diagonal control. F3 was withdrawn after direct baseline indentation inspection; production transitions unchanged."
+  },
+  "strengthened_corner": {
+    "artifact": "push-corner-proof.json",
+    "test_only_commit": "ba164631aabdf076b4c0173cd54e67ec85c20060",
+    "green": true,
+    "one_branch_mutation_red": true
   }
 }

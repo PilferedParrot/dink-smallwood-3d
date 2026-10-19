@@ -1,0 +1,1441 @@
+{
+  "date_utc": "2026-10-19 20:46 UTC",
+  "frozen_full_suite_commit": "7b00ebb48a7ff8ad2226e1cabd2f24e0198af64b",
+  "invocation_head": "ceafe42079506465d2514c75b52d2abb60a27b6b (docs only after freeze)",
+  "implementation_commit": "eb9b27ca4c07b9eb5de9d7e7016a5d691e17e520",
+  "final_test_only_commit": "ba164631aabdf076b4c0173cd54e67ec85c20060",
+  "raw_counts": {
+    "passed": 262,
+    "skipped": 1,
+    "failed": 1
+  },
+  "classified_counts": {
+    "passed": 262,
+    "optional_skip": 1,
+    "game_assertion_failures": 0,
+    "preexisting_deadline": 1,
+    "unrun": 0
+  },
+  "g3": "Accepted by lead with known pre-existing deadline exception; original pytest wrapper remains180s. Standalone body is separate evidence, not a rewritten pytest result.",
+  "outcomes": [
+    {
+      "nodeid": "tests/test_adventure.py::test_opening_adventure_and_all_imported_screens",
+      "outcome": "passed",
+      "seconds": 7.91
+    },
+    {
+      "nodeid": "tests/test_adventure.py::test_combat_brains_and_callbacks",
+      "outcome": "passed",
+      "seconds": 0.434
+    },
+    {
+      "nodeid": "tests/test_alktree_aftermath.py::test_original_frozen_evacuation_and_neighbor_aftermath",
+      "outcome": "passed",
+      "seconds": 13.028
+    },
+    {
+      "nodeid": "tests/test_assets.py::test_map_screen_reads_96_tiles_before_sprite_table",
+      "outcome": "passed",
+      "seconds": 0.002
+    },
+    {
+      "nodeid": "tests/test_assets.py::test_map_screen_reads_script_after_the_complete_sprite_table",
+      "outcome": "passed",
+      "seconds": 0.002
+    },
+    {
+      "nodeid": "tests/test_assets.py::test_map_screen_treats_leading_nul_as_an_empty_script",
+      "outcome": "passed",
+      "seconds": 0.002
+    },
+    {
+      "nodeid": "tests/test_assets.py::test_map_sprite_alt_rectangle_is_clip_rect_not_physical_hardbox",
+      "outcome": "passed",
+      "seconds": 0.001
+    },
+    {
+      "nodeid": "tests/test_assets.py::test_installed_freedink_screen_one_mother_layout",
+      "outcome": "passed",
+      "seconds": 0.039
+    },
+    {
+      "nodeid": "tests/test_assets.py::test_installed_freedink_opening_screen_scripts",
+      "outcome": "passed",
+      "seconds": 0.757
+    },
+    {
+      "nodeid": "tests/test_assets.py::test_hard_dat_preserves_all_800_tile_masks",
+      "outcome": "passed",
+      "seconds": 0.182
+    },
+    {
+      "nodeid": "tests/test_assets.py::test_dink_dat_has_769_records",
+      "outcome": "passed",
+      "seconds": 0.001
+    },
+    {
+      "nodeid": "tests/test_assets.py::test_sequences_match_freedink_metadata_aliases_and_repeat_sentinels",
+      "outcome": "passed",
+      "seconds": 0.407
+    },
+    {
+      "nodeid": "tests/test_assets.py::test_home_exit_warp_uses_the_original_sequence_frame",
+      "outcome": "passed",
+      "seconds": 0.725
+    },
+    {
+      "nodeid": "tests/test_assets.py::test_sound_manifest_records_midi_inputs_and_bundled_replacement_sources",
+      "outcome": "passed",
+      "seconds": 0.005
+    },
+    {
+      "nodeid": "tests/test_audio_cues.py::test_every_audio_cue_resolves_or_is_a_listed_freedink_gap",
+      "outcome": "passed",
+      "seconds": 19.089
+    },
+    {
+      "nodeid": "tests/test_audio_provenance.py::test_every_shipped_sound_is_the_listed_freedink_file",
+      "outcome": "passed",
+      "seconds": 0.207
+    },
+    {
+      "nodeid": "tests/test_audio_provenance.py::test_table_covers_music_and_effects_exactly_once",
+      "outcome": "passed",
+      "seconds": 0.001
+    },
+    {
+      "nodeid": "tests/test_audio_provenance.py::test_verifier_rejects_an_unlisted_or_altered_sound",
+      "outcome": "passed",
+      "seconds": 0.081
+    },
+    {
+      "nodeid": "tests/test_audio_provenance.py::test_empty_music_render_is_rejected",
+      "outcome": "passed",
+      "seconds": 0.0
+    },
+    {
+      "nodeid": "tests/test_audio_provenance.py::test_running_status_after_a_meta_event_is_written_out",
+      "outcome": "passed",
+      "seconds": 0.0
+    },
+    {
+      "nodeid": "tests/test_audio_provenance.py::test_explicit_status_is_lossless_on_every_freedink_midi",
+      "outcome": "passed",
+      "seconds": 0.072
+    },
+    {
+      "nodeid": "tests/test_audio_provenance.py::test_gap_fill_rules_reject_what_they_must",
+      "outcome": "passed",
+      "seconds": 0.003
+    },
+    {
+      "nodeid": "tests/test_audio_provenance.py::test_synthesized_fills_rebuild_byte_for_byte",
+      "outcome": "passed",
+      "seconds": 0.407
+    },
+    {
+      "nodeid": "tests/test_bug_report_recorder.py::test_bug_report_recorder_saves_local_evidence_and_bounded_input",
+      "outcome": "passed",
+      "seconds": 0.318
+    },
+    {
+      "nodeid": "tests/test_effect_alpha_visibility.py::test_effect_alpha_visibility_and_source_floor_art",
+      "outcome": "passed",
+      "seconds": 4.429
+    },
+    {
+      "nodeid": "tests/test_ethel_dialogue.py::test_both_ethel_agreements_release_player_and_npc",
+      "outcome": "passed",
+      "seconds": 4.255
+    },
+    {
+      "nodeid": "tests/test_fitted_surface_order.py::test_fitted_surfaces_keep_their_order_and_source_panel_copies_make_one_solid",
+      "outcome": "passed",
+      "seconds": 2.256
+    },
+    {
+      "nodeid": "tests/test_fps.py::test_first_person_campaign_integration",
+      "outcome": "passed",
+      "seconds": 8.081
+    },
+    {
+      "nodeid": "tests/test_fps.py::test_first_person_controller_regressions",
+      "outcome": "passed",
+      "seconds": 4.247
+    },
+    {
+      "nodeid": "tests/test_fps_bake.py::test_baked_houses_equal_their_composition",
+      "outcome": "passed",
+      "seconds": 16.569
+    },
+    {
+      "nodeid": "tests/test_fps_bridge_rails.py::test_an_east_west_decks_foot_line_is_its_planks_top_edge_and_no_railing_pixel_is_under_it[brdge-06.png]",
+      "outcome": "passed",
+      "seconds": 0.01
+    },
+    {
+      "nodeid": "tests/test_fps_bridge_rails.py::test_an_east_west_decks_foot_line_is_its_planks_top_edge_and_no_railing_pixel_is_under_it[brdge-08.png]",
+      "outcome": "passed",
+      "seconds": 0.005
+    },
+    {
+      "nodeid": "tests/test_fps_bridge_rails.py::test_an_east_west_decks_foot_line_is_its_planks_top_edge_and_no_railing_pixel_is_under_it[brdge-10.png]",
+      "outcome": "passed",
+      "seconds": 0.003
+    },
+    {
+      "nodeid": "tests/test_fps_bridge_rails.py::test_the_north_south_profiles_follow_the_original_plank_rows_and_clear_upper_posts",
+      "outcome": "passed",
+      "seconds": 0.022
+    },
+    {
+      "nodeid": "tests/test_fps_bridge_rails.py::test_a_near_railings_posts_stand_on_its_line_and_everything_in_its_card_is_above_it[brdge-07.png]",
+      "outcome": "passed",
+      "seconds": 0.003
+    },
+    {
+      "nodeid": "tests/test_fps_bridge_rails.py::test_a_near_railings_posts_stand_on_its_line_and_everything_in_its_card_is_above_it[brdge-09.png]",
+      "outcome": "passed",
+      "seconds": 0.003
+    },
+    {
+      "nodeid": "tests/test_fps_bridge_rails.py::test_a_near_railings_posts_stand_on_its_line_and_everything_in_its_card_is_above_it[brdge-11.png]",
+      "outcome": "passed",
+      "seconds": 0.002
+    },
+    {
+      "nodeid": "tests/test_fps_bridge_rails.py::test_the_committed_split_is_what_the_tool_makes_from_the_art",
+      "outcome": "passed",
+      "seconds": 0.634
+    },
+    {
+      "nodeid": "tests/test_fps_bridge_rails.py::test_north_south_modular_ropes_join_and_terminate_on_supports",
+      "outcome": "passed",
+      "seconds": 16.442
+    },
+    {
+      "nodeid": "tests/test_fps_bridge_rails.py::test_north_south_side_materials_use_only_opaque_rope_pixels_and_shared_depth_phase",
+      "outcome": "passed",
+      "seconds": 0.139
+    },
+    {
+      "nodeid": "tests/test_fps_bridge_rails.py::test_every_bridge_sprite_of_the_map_is_built_with_its_railing_and_its_ray_body",
+      "outcome": "passed",
+      "seconds": 0.324
+    },
+    {
+      "nodeid": "tests/test_fps_bridge_rails.py::test_standing_rails_leave_the_ground_and_central_north_south_plank_seams_are_preserved",
+      "outcome": "passed",
+      "seconds": 11.778
+    },
+    {
+      "nodeid": "tests/test_fps_bridge_rails.py::test_a_downward_ray_onto_a_deck_hits_the_deck_and_one_beside_it_does_not",
+      "outcome": "passed",
+      "seconds": 23.774
+    },
+    {
+      "nodeid": "tests/test_fps_bridge_rails.py::test_a_railing_seen_from_its_own_axis_is_not_a_sliver",
+      "outcome": "passed",
+      "seconds": 0.002
+    },
+    {
+      "nodeid": "tests/test_fps_bridges.py::test_every_bridge_deck_of_the_map_is_painted_into_the_ground_and_every_railing_is_a_fixed_card",
+      "outcome": "passed",
+      "seconds": 8.22
+    },
+    {
+      "nodeid": "tests/test_fps_bridges.py::test_the_deck_of_448s_bridge_is_continuous_down_the_middle_of_the_picture",
+      "outcome": "passed",
+      "seconds": 14.807
+    },
+    {
+      "nodeid": "tests/test_fps_bug_report.py::test_f9_saves_rendered_local_report_and_actual_input",
+      "outcome": "passed",
+      "seconds": 24.783
+    },
+    {
+      "nodeid": "tests/test_fps_cards.py::test_every_card_of_the_map_is_a_billboard_unless_its_art_is_a_structure",
+      "outcome": "passed",
+      "seconds": 56.309
+    },
+    {
+      "nodeid": "tests/test_fps_cards.py::test_loaded_scenes_agree_and_every_billboard_has_a_twin_on_the_sun",
+      "outcome": "passed",
+      "seconds": 11.881
+    },
+    {
+      "nodeid": "tests/test_fps_cards.py::test_a_tree_stands_whole_from_every_side_and_still_casts_a_shadow",
+      "outcome": "passed",
+      "seconds": 13.97
+    },
+    {
+      "nodeid": "tests/test_fps_castle.py::test_every_fitted_castle_frame_is_a_3d_piece_and_nothing_else_is",
+      "outcome": "passed",
+      "seconds": 20.355
+    },
+    {
+      "nodeid": "tests/test_fps_castle.py::test_each_fitted_piece_reproduces_its_sprite_through_the_original_camera_and_a_wall_is_deep",
+      "outcome": "passed",
+      "seconds": 41.726
+    },
+    {
+      "nodeid": "tests/test_fps_collision_input.py::test_seam_solids_and_open_grass_through_keyboard",
+      "outcome": "passed",
+      "seconds": 5.526
+    },
+    {
+      "nodeid": "tests/test_fps_collision_input.py::test_diagonal_neighbor_solidity_and_continuous_coordinates",
+      "outcome": "passed",
+      "seconds": 0.856
+    },
+    {
+      "nodeid": "tests/test_fps_collision_sweep.py::test_outdoor_landings_and_walkable_grid_never_trap",
+      "outcome": "passed",
+      "seconds": 421.093
+    },
+    {
+      "nodeid": "tests/test_fps_dialogue_framing.py::test_dialogue_camera_fits_rendered_actor_and_grief_room",
+      "outcome": "passed",
+      "seconds": 4.792
+    },
+    {
+      "nodeid": "tests/test_fps_doors.py::test_castle_doors_share_wall_plane_and_drawbridge_is_down",
+      "outcome": "passed",
+      "seconds": 23.12
+    },
+    {
+      "nodeid": "tests/test_fps_entity_hit_targets.py::test_collision_shapes_supply_hit_targets",
+      "outcome": "passed",
+      "seconds": 0.317
+    },
+    {
+      "nodeid": "tests/test_fps_entity_hit_targets.py::test_real_fps_south_talk_occlusion_melee_and_barrel_persistence",
+      "outcome": "passed",
+      "seconds": 5.187
+    },
+    {
+      "nodeid": "tests/test_fps_entity_hit_targets.py::test_native_worldwide_ray_census_has_no_new_loss",
+      "outcome": "skipped",
+      "seconds": 0.001
+    },
+    {
+      "nodeid": "tests/test_fps_facing.py::test_actors_turn_with_the_camera_and_a_speaker_faces_you",
+      "outcome": "passed",
+      "seconds": 5.398
+    },
+    {
+      "nodeid": "tests/test_fps_fence_ray.py::test_fitted_fences_pass_open_bay_rays_and_stop_part_rays",
+      "outcome": "passed",
+      "seconds": 4.273
+    },
+    {
+      "nodeid": "tests/test_fps_fences.py::test_every_fence_art_of_the_map_has_a_reading_and_the_reading_is_the_modules",
+      "outcome": "passed",
+      "seconds": 0.001
+    },
+    {
+      "nodeid": "tests/test_fps_fences.py::test_every_posts_foot_is_where_its_pixels_end_and_its_width_is_drawn[assets/graphics/lands/Fence/fence-01.png]",
+      "outcome": "passed",
+      "seconds": 0.002
+    },
+    {
+      "nodeid": "tests/test_fps_fences.py::test_every_posts_foot_is_where_its_pixels_end_and_its_width_is_drawn[assets/graphics/lands/Fence/fence-02.png]",
+      "outcome": "passed",
+      "seconds": 0.001
+    },
+    {
+      "nodeid": "tests/test_fps_fences.py::test_every_posts_foot_is_where_its_pixels_end_and_its_width_is_drawn[assets/graphics/lands/Fence/fence-03.png]",
+      "outcome": "passed",
+      "seconds": 0.001
+    },
+    {
+      "nodeid": "tests/test_fps_fences.py::test_every_posts_foot_is_where_its_pixels_end_and_its_width_is_drawn[assets/graphics/lands/Fence/fence-04.png]",
+      "outcome": "passed",
+      "seconds": 0.001
+    },
+    {
+      "nodeid": "tests/test_fps_fences.py::test_every_posts_foot_is_where_its_pixels_end_and_its_width_is_drawn[assets/graphics/lands/Fence/fence-05.png]",
+      "outcome": "passed",
+      "seconds": 0.001
+    },
+    {
+      "nodeid": "tests/test_fps_fences.py::test_every_posts_foot_is_where_its_pixels_end_and_its_width_is_drawn[assets/graphics/lands/Fence/fence-06.png]",
+      "outcome": "passed",
+      "seconds": 0.001
+    },
+    {
+      "nodeid": "tests/test_fps_fences.py::test_every_posts_foot_is_where_its_pixels_end_and_its_width_is_drawn[assets/graphics/struct/Island/isle-07.png]",
+      "outcome": "passed",
+      "seconds": 0.002
+    },
+    {
+      "nodeid": "tests/test_fps_fences.py::test_every_posts_foot_is_where_its_pixels_end_and_its_width_is_drawn[assets/graphics/struct/Island/isle-08.png]",
+      "outcome": "passed",
+      "seconds": 0.001
+    },
+    {
+      "nodeid": "tests/test_fps_fences.py::test_the_committed_reading_is_what_the_tool_makes_from_the_art",
+      "outcome": "passed",
+      "seconds": 10.45
+    },
+    {
+      "nodeid": "tests/test_fps_fences.py::test_the_maps_chains_stand_on_the_rows_the_reading_takes_for_depth",
+      "outcome": "passed",
+      "seconds": 0.987
+    },
+    {
+      "nodeid": "tests/test_fps_fences.py::test_every_fence_entity_stands_solid_with_a_fitted_ray_body_and_no_card",
+      "outcome": "passed",
+      "seconds": 12.603
+    },
+    {
+      "nodeid": "tests/test_fps_fences.py::test_a_post_the_map_shares_is_one_post_and_every_post_is_the_modules_size",
+      "outcome": "passed",
+      "seconds": 0.005
+    },
+    {
+      "nodeid": "tests/test_fps_fences.py::test_the_rails_meet_posts_and_a_chain_is_one_line",
+      "outcome": "passed",
+      "seconds": 0.027
+    },
+    {
+      "nodeid": "tests/test_fps_fences.py::test_a_fence_seen_from_its_own_axis_is_not_a_sliver",
+      "outcome": "passed",
+      "seconds": 14.288
+    },
+    {
+      "nodeid": "tests/test_fps_fir_collision.py::test_compiled_fit_rebuilds_from_native_baseline",
+      "outcome": "passed",
+      "seconds": 2.425
+    },
+    {
+      "nodeid": "tests/test_fps_fir_collision.py::test_screen_index_includes_corners_without_row_wrap",
+      "outcome": "passed",
+      "seconds": 0.093
+    },
+    {
+      "nodeid": "tests/test_fps_fir_collision.py::test_native_inventory_uses_source_collision_baseline",
+      "outcome": "passed",
+      "seconds": 0.004
+    },
+    {
+      "nodeid": "tests/test_fps_fir_collision.py::test_runtime_rectangles_and_escape_band",
+      "outcome": "passed",
+      "seconds": 0.209
+    },
+    {
+      "nodeid": "tests/test_fps_fire_world.py::test_fire_and_ruin_fixture_headless",
+      "outcome": "passed",
+      "seconds": 4.427
+    },
+    {
+      "nodeid": "tests/test_fps_fire_world.py::test_fire_and_ruin_fixture_rendered",
+      "outcome": "passed",
+      "seconds": 11.402
+    },
+    {
+      "nodeid": "tests/test_fps_foyer.py::test_foyer_door_and_keyboard_warp_match_source",
+      "outcome": "passed",
+      "seconds": 5.2
+    },
+    {
+      "nodeid": "tests/test_fps_foyer_mapping.py::test_live_foyer_mapping_and_inactive_leaf",
+      "outcome": "passed",
+      "seconds": 15.56
+    },
+    {
+      "nodeid": "tests/test_fps_gate.py::test_hard_one_fence_gate_is_walkable_but_hard_zero_fence_stays_solid",
+      "outcome": "passed",
+      "seconds": 9.358
+    },
+    {
+      "nodeid": "tests/test_fps_grief_presentation.py::test_story_three_grief_camera_and_aftermath_labels",
+      "outcome": "passed",
+      "seconds": 11.221
+    },
+    {
+      "nodeid": "tests/test_fps_huts.py::test_every_hut_is_a_3d_piece_and_the_rest_of_the_island_is_not",
+      "outcome": "passed",
+      "seconds": 38.569
+    },
+    {
+      "nodeid": "tests/test_fps_huts.py::test_each_hut_reproduces_its_sprite_through_the_original_camera_and_stands_seen_from_the_east",
+      "outcome": "passed",
+      "seconds": 73.058
+    },
+    {
+      "nodeid": "tests/test_fps_interior.py::test_fits_read_each_shape_from_its_own_pixels",
+      "outcome": "passed",
+      "seconds": 2.053
+    },
+    {
+      "nodeid": "tests/test_fps_interior.py::test_dinks_house_stands_solid_with_no_sky_and_a_door",
+      "outcome": "passed",
+      "seconds": 9.065
+    },
+    {
+      "nodeid": "tests/test_fps_landing.py::test_clearance_band_landing_does_not_trap_player",
+      "outcome": "passed",
+      "seconds": 9.004
+    },
+    {
+      "nodeid": "tests/test_fps_landmarks.py::test_both_landmarks_are_on_the_screen",
+      "outcome": "passed",
+      "seconds": 9.26
+    },
+    {
+      "nodeid": "tests/test_fps_landmarks.py::test_a_landmark_is_a_solid_not_a_card[save-ring]",
+      "outcome": "passed",
+      "seconds": 0.002
+    },
+    {
+      "nodeid": "tests/test_fps_landmarks.py::test_the_save_machine_is_not_the_same_from_two_sides_and_keeps_its_script",
+      "outcome": "passed",
+      "seconds": 0.001
+    },
+    {
+      "nodeid": "tests/test_fps_landmarks.py::test_the_well_has_a_body_the_rays_hit",
+      "outcome": "passed",
+      "seconds": 0.0
+    },
+    {
+      "nodeid": "tests/test_fps_landmarks.py::test_the_well_keeps_its_sprite_until_its_base_reads",
+      "outcome": "passed",
+      "seconds": 0.0
+    },
+    {
+      "nodeid": "tests/test_fps_landmarks.py::test_the_wells_roof_is_a_gable_not_a_flat_slab",
+      "outcome": "passed",
+      "seconds": 0.0
+    },
+    {
+      "nodeid": "tests/test_fps_landmarks.py::test_the_wells_pitch_is_the_thatched_cottages",
+      "outcome": "passed",
+      "seconds": 0.011
+    },
+    {
+      "nodeid": "tests/test_fps_map.py::test_original_map_ownership_and_keyboard_menu_inputs",
+      "outcome": "passed",
+      "seconds": 7.835
+    },
+    {
+      "nodeid": "tests/test_fps_melee_reach.py::test_fist_uses_original_target_hardbox_reach_and_barrel_script",
+      "outcome": "passed",
+      "seconds": 8.256
+    },
+    {
+      "nodeid": "tests/test_fps_milder_script.py::test_actual_pig_feed_script_keeps_offscreen_spawned_milder_visible",
+      "outcome": "passed",
+      "seconds": 12.549
+    },
+    {
+      "nodeid": "tests/test_fps_mother_visibility.py::test_story_two_mother_dialogue_uses_and_restores_clear_camera",
+      "outcome": "passed",
+      "seconds": 11.1
+    },
+    {
+      "nodeid": "tests/test_fps_mounted_posters.py::test_source_poster_rectangles_share_one_fitted_wall_front",
+      "outcome": "passed",
+      "seconds": 0.311
+    },
+    {
+      "nodeid": "tests/test_fps_mounted_posters.py::test_native_mounted_poster_class",
+      "outcome": "passed",
+      "seconds": 14.948
+    },
+    {
+      "nodeid": "tests/test_fps_neighbor_crossing.py::test_duck_preview_survives_real_w_key_boundary_crossing",
+      "outcome": "passed",
+      "seconds": 11.52
+    },
+    {
+      "nodeid": "tests/test_fps_neighbor_startup.py::test_neighbour_startup_real_loads_disagree_with_editor_only_control",
+      "outcome": "passed",
+      "seconds": 43.423
+    },
+    {
+      "nodeid": "tests/test_fps_neighbor_startup_survey.py::test_all_outdoor_neighbor_startup_fixtures",
+      "outcome": "passed",
+      "seconds": 42.691
+    },
+    {
+      "nodeid": "tests/test_fps_neighbours.py::test_the_neighbours_draw_the_actors_the_map_places_on_them",
+      "outcome": "passed",
+      "seconds": 14.798
+    },
+    {
+      "nodeid": "tests/test_fps_neighbours.py::test_a_neighbour_pig_shows_the_frame_drawn_for_its_facing_as_the_camera_sees_it[--face-FACE-cameras0]",
+      "outcome": "passed",
+      "seconds": 14.142
+    },
+    {
+      "nodeid": "tests/test_fps_neighbours.py::test_a_neighbour_pig_shows_the_frame_drawn_for_its_facing_as_the_camera_sees_it[--live-LIVE-cameras1]",
+      "outcome": "passed",
+      "seconds": 13.692
+    },
+    {
+      "nodeid": "tests/test_fps_neighbours.py::test_the_neighbour_pigs_are_in_the_picture_and_the_instrument_is_still",
+      "outcome": "passed",
+      "seconds": 87.395
+    },
+    {
+      "nodeid": "tests/test_fps_opening_polish.py::test_opening_polish_fixture_headless",
+      "outcome": "passed",
+      "seconds": 23.419
+    },
+    {
+      "nodeid": "tests/test_fps_opening_polish.py::test_opening_polish_rendered_fixture",
+      "outcome": "passed",
+      "seconds": 40.531
+    },
+    {
+      "nodeid": "tests/test_fps_player_shadow.py::test_player_shadow_tracks_source_frame_sun_position_and_size",
+      "outcome": "passed",
+      "seconds": 12.918
+    },
+    {
+      "nodeid": "tests/test_fps_props.py::test_every_fitted_prop_is_a_solid",
+      "outcome": "passed",
+      "seconds": 30.747
+    },
+    {
+      "nodeid": "tests/test_fps_props.py::test_the_pig_feed_sack_and_the_pie_are_solids_as_deep_as_they_are_wide",
+      "outcome": "passed",
+      "seconds": 0.002
+    },
+    {
+      "nodeid": "tests/test_fps_props.py::test_a_barrel_stands_round",
+      "outcome": "passed",
+      "seconds": 0.001
+    },
+    {
+      "nodeid": "tests/test_fps_props.py::test_the_camera_never_stands_inside_a_solid_prop",
+      "outcome": "passed",
+      "seconds": 0.0
+    },
+    {
+      "nodeid": "tests/test_fps_props.py::test_a_prop_follows_the_frame_its_sequence_shows",
+      "outcome": "passed",
+      "seconds": 0.0
+    },
+    {
+      "nodeid": "tests/test_fps_props.py::test_props_the_player_walks_through_are_no_deeper_than_their_footprint",
+      "outcome": "passed",
+      "seconds": 0.0
+    },
+    {
+      "nodeid": "tests/test_fps_reload.py::test_structural_fps_visuals_survive_repeated_save_load",
+      "outcome": "passed",
+      "seconds": 13.242
+    },
+    {
+      "nodeid": "tests/test_fps_seams.py::test_every_billboard_part_is_built_as_the_independent_reading_says",
+      "outcome": "passed",
+      "seconds": 24.177
+    },
+    {
+      "nodeid": "tests/test_fps_seams.py::test_trees_stand_on_the_ground_once[376]",
+      "outcome": "passed",
+      "seconds": 13.337
+    },
+    {
+      "nodeid": "tests/test_fps_seams.py::test_trees_stand_on_the_ground_once[251]",
+      "outcome": "passed",
+      "seconds": 17.545
+    },
+    {
+      "nodeid": "tests/test_fps_seams.py::test_trees_stand_on_the_ground_once[319]",
+      "outcome": "passed",
+      "seconds": 18.867
+    },
+    {
+      "nodeid": "tests/test_fps_seams.py::test_trees_stand_on_the_ground_once[451]",
+      "outcome": "passed",
+      "seconds": 16.231
+    },
+    {
+      "nodeid": "tests/test_fps_seams.py::test_trees_stand_on_the_ground_once[768]",
+      "outcome": "passed",
+      "seconds": 8.959
+    },
+    {
+      "nodeid": "tests/test_fps_sideflip.py::test_the_flip_is_spread_over_the_band_and_the_old_code_pops[260-284-True]",
+      "outcome": "passed",
+      "seconds": 178.883
+    },
+    {
+      "nodeid": "tests/test_fps_sideflip.py::test_the_flip_is_spread_over_the_band_and_the_old_code_pops[0-21-True]",
+      "outcome": "passed",
+      "seconds": 163.108
+    },
+    {
+      "nodeid": "tests/test_fps_sideflip.py::test_cameras_beyond_the_band_get_the_old_picture_and_the_controls_go_red",
+      "outcome": "passed",
+      "seconds": 241.228
+    },
+    {
+      "nodeid": "tests/test_fps_source_interaction_body.py::test_source_interaction_body_native",
+      "outcome": "passed",
+      "seconds": 2.557
+    },
+    {
+      "nodeid": "tests/test_fps_sprite_walls.py::test_art_ownership_height_geometry_and_tile_subtraction",
+      "outcome": "passed",
+      "seconds": 1.87
+    },
+    {
+      "nodeid": "tests/test_fps_sprite_walls.py::test_native_wall_runtime",
+      "outcome": "passed",
+      "seconds": 107.715
+    },
+    {
+      "nodeid": "tests/test_fps_stuck.py::test_pig_farm_transition_walkable_from_source_collision",
+      "outcome": "passed",
+      "seconds": 16.607
+    },
+    {
+      "nodeid": "tests/test_fps_trees.py::test_the_games_flags_equal_an_independent_reading_of_the_map",
+      "outcome": "passed",
+      "seconds": 119.869
+    },
+    {
+      "nodeid": "tests/test_fps_trees.py::test_the_draw_order_holds_in_rendered_scenes_and_the_controls_go_red",
+      "outcome": "passed",
+      "seconds": 137.936
+    },
+    {
+      "nodeid": "tests/test_fps_whole_fir.py::test_fit_matches_original_pixels",
+      "outcome": "passed",
+      "seconds": 1.739
+    },
+    {
+      "nodeid": "tests/test_fps_whole_fir.py::test_live_host_replaces_partial_art_in_439_and_768_views",
+      "outcome": "passed",
+      "seconds": 29.784
+    },
+    {
+      "nodeid": "tests/test_game_ui.py::test_game_ui_parses_with_supported_godot",
+      "outcome": "passed",
+      "seconds": 1.86
+    },
+    {
+      "nodeid": "tests/test_game_ui.py::test_controller_can_navigate_and_activate_menu",
+      "outcome": "passed",
+      "seconds": 7.899
+    },
+    {
+      "nodeid": "tests/test_game_ui.py::test_modal_ui_consumes_pointer_events_and_has_focusable_controls",
+      "outcome": "passed",
+      "seconds": 0.002
+    },
+    {
+      "nodeid": "tests/test_game_ui.py::test_controller_callbacks_bind_each_choice_and_setting_key",
+      "outcome": "passed",
+      "seconds": 0.007
+    },
+    {
+      "nodeid": "tests/test_game_ui.py::test_public_support_link_remains_in_credits",
+      "outcome": "passed",
+      "seconds": 0.033
+    },
+    {
+      "nodeid": "tests/test_native_profile.py::test_default_native_subprocess_profile_is_disposable",
+      "outcome": "passed",
+      "seconds": 1.525
+    },
+    {
+      "nodeid": "tests/test_native_requirements.py::test_ci_rejects_a_missing_godot_before_any_test_can_skip",
+      "outcome": "passed",
+      "seconds": 3.34
+    },
+    {
+      "nodeid": "tests/test_native_requirements.py::test_ci_rejects_missing_xvfb_before_any_test_can_skip",
+      "outcome": "passed",
+      "seconds": 2.597
+    },
+    {
+      "nodeid": "tests/test_fps_walk.py::test_opening_route_with_three_dimensional_collision",
+      "outcome": "passed",
+      "seconds": 18.622
+    },
+    {
+      "nodeid": "tests/test_fps_wall.py::test_player_stops_at_drawn_walls_and_doors_open",
+      "outcome": "passed",
+      "seconds": 29.261
+    },
+    {
+      "nodeid": "tests/test_fps_whole_fir.py::test_all_source_parts_build_complete_geometry",
+      "outcome": "passed",
+      "seconds": 37.94
+    },
+    {
+      "nodeid": "tests/test_fps_world.py::test_first_person_renderer_traverses_all_imported_screens",
+      "outcome": "failed",
+      "seconds": 180.329,
+      "classification": "Known pre-existing180s harness deadline; no game assertion failure; unchanged body passes644 screens in189.092834s under600s."
+    },
+    {
+      "nodeid": "tests/test_nut_pickup.py::test_original_runtime_nut_touch_trigger",
+      "outcome": "passed",
+      "seconds": 8.092
+    },
+    {
+      "nodeid": "tests/test_playtest.py::test_playtest_ticks_pause_and_headless_screenshot_rejection",
+      "outcome": "passed",
+      "seconds": 10.055
+    },
+    {
+      "nodeid": "tests/test_playtest.py::test_playtest_rejects_unbounded_or_non_integral_actions",
+      "outcome": "passed",
+      "seconds": 8.387
+    },
+    {
+      "nodeid": "tests/test_playtest.py::test_navigation_grid_is_read_only_and_keeps_solid_pigpen",
+      "outcome": "passed",
+      "seconds": 11.629
+    },
+    {
+      "nodeid": "tests/test_playtest.py::test_headless_mouse_look_is_reported_as_unsupported",
+      "outcome": "passed",
+      "seconds": 8.566
+    },
+    {
+      "nodeid": "tests/test_playtest.py::test_invalid_startup_fails_and_retains_log",
+      "outcome": "passed",
+      "seconds": 7.587
+    },
+    {
+      "nodeid": "tests/test_playtest.py::test_campaign_boots_real_title_and_starts_with_menu_input",
+      "outcome": "passed",
+      "seconds": 8.059
+    },
+    {
+      "nodeid": "tests/test_playtest.py::test_title_quit_requires_explicit_expected_exit",
+      "outcome": "passed",
+      "seconds": 7.32
+    },
+    {
+      "nodeid": "tests/test_playtest.py::test_campaign_opening_dialogue_and_ui_save_reload",
+      "outcome": "passed",
+      "seconds": 13.746
+    },
+    {
+      "nodeid": "tests/test_playtest_campaign.py::test_feed_waypoint_tolerance_fits_the_actual_item_pig_acceptance_box",
+      "outcome": "passed",
+      "seconds": 0.001
+    },
+    {
+      "nodeid": "tests/test_playtest_campaign.py::test_native_grid_step_api_rejects_non_integral_or_unbounded_sampling",
+      "outcome": "passed",
+      "seconds": 0.003
+    },
+    {
+      "nodeid": "tests/test_playtest_campaign.py::test_native_pixel_barrier_and_waypoint_tolerance_both_constrain_the_plan",
+      "outcome": "passed",
+      "seconds": 0.004
+    },
+    {
+      "nodeid": "tests/test_playtest_campaign.py::test_disconnected_edge_candidate_is_rejected_before_expensive_search",
+      "outcome": "passed",
+      "seconds": 0.003
+    },
+    {
+      "nodeid": "tests/test_playtest_campaign.py::test_aim_faces_target_before_walking_despite_viewport_scaling[0.0-0.5]",
+      "outcome": "passed",
+      "seconds": 0.003
+    },
+    {
+      "nodeid": "tests/test_playtest_campaign.py::test_aim_faces_target_before_walking_despite_viewport_scaling[0.0-1.0]",
+      "outcome": "passed",
+      "seconds": 0.002
+    },
+    {
+      "nodeid": "tests/test_playtest_campaign.py::test_aim_faces_target_before_walking_despite_viewport_scaling[0.0-1.4814814814814814]",
+      "outcome": "passed",
+      "seconds": 0.002
+    },
+    {
+      "nodeid": "tests/test_playtest_campaign.py::test_aim_faces_target_before_walking_despite_viewport_scaling[0.0-3.0]",
+      "outcome": "passed",
+      "seconds": 0.003
+    },
+    {
+      "nodeid": "tests/test_playtest_campaign.py::test_aim_faces_target_before_walking_despite_viewport_scaling[3.1315926535897933-0.5]",
+      "outcome": "passed",
+      "seconds": 0.003
+    },
+    {
+      "nodeid": "tests/test_playtest_campaign.py::test_aim_faces_target_before_walking_despite_viewport_scaling[3.1315926535897933-1.0]",
+      "outcome": "passed",
+      "seconds": 0.002
+    },
+    {
+      "nodeid": "tests/test_playtest_campaign.py::test_aim_faces_target_before_walking_despite_viewport_scaling[3.1315926535897933-1.4814814814814814]",
+      "outcome": "passed",
+      "seconds": 0.006
+    },
+    {
+      "nodeid": "tests/test_playtest_campaign.py::test_aim_faces_target_before_walking_despite_viewport_scaling[3.1315926535897933-3.0]",
+      "outcome": "passed",
+      "seconds": 0.002
+    },
+    {
+      "nodeid": "tests/test_playtest_campaign.py::test_aim_faces_target_before_walking_despite_viewport_scaling[-3.1315926535897933-0.5]",
+      "outcome": "passed",
+      "seconds": 0.003
+    },
+    {
+      "nodeid": "tests/test_playtest_campaign.py::test_aim_faces_target_before_walking_despite_viewport_scaling[-3.1315926535897933-1.0]",
+      "outcome": "passed",
+      "seconds": 0.003
+    },
+    {
+      "nodeid": "tests/test_playtest_campaign.py::test_aim_faces_target_before_walking_despite_viewport_scaling[-3.1315926535897933-1.4814814814814814]",
+      "outcome": "passed",
+      "seconds": 0.001
+    },
+    {
+      "nodeid": "tests/test_playtest_campaign.py::test_aim_faces_target_before_walking_despite_viewport_scaling[-3.1315926535897933-3.0]",
+      "outcome": "passed",
+      "seconds": 0.002
+    },
+    {
+      "nodeid": "tests/test_playtest_campaign.py::test_aim_faces_target_before_walking_despite_viewport_scaling[14.066370614359172-0.5]",
+      "outcome": "passed",
+      "seconds": 0.002
+    },
+    {
+      "nodeid": "tests/test_playtest_campaign.py::test_aim_faces_target_before_walking_despite_viewport_scaling[14.066370614359172-1.0]",
+      "outcome": "passed",
+      "seconds": 0.003
+    },
+    {
+      "nodeid": "tests/test_playtest_campaign.py::test_aim_faces_target_before_walking_despite_viewport_scaling[14.066370614359172-1.4814814814814814]",
+      "outcome": "passed",
+      "seconds": 0.002
+    },
+    {
+      "nodeid": "tests/test_playtest_campaign.py::test_aim_faces_target_before_walking_despite_viewport_scaling[14.066370614359172-3.0]",
+      "outcome": "passed",
+      "seconds": 0.002
+    },
+    {
+      "nodeid": "tests/test_playtest_campaign.py::test_door_approach_stops_on_an_unexpected_map",
+      "outcome": "passed",
+      "seconds": 0.002
+    },
+    {
+      "nodeid": "tests/test_playtest_campaign.py::test_aim_allows_one_capture_tick_and_rejects_unresponsive_input[True]",
+      "outcome": "passed",
+      "seconds": 0.002
+    },
+    {
+      "nodeid": "tests/test_playtest_campaign.py::test_aim_allows_one_capture_tick_and_rejects_unresponsive_input[False]",
+      "outcome": "passed",
+      "seconds": 0.003
+    },
+    {
+      "nodeid": "tests/test_playtest_campaign.py::test_nut_collected_during_fall_does_not_require_a_settled_sprite[True]",
+      "outcome": "passed",
+      "seconds": 0.005
+    },
+    {
+      "nodeid": "tests/test_playtest_campaign.py::test_nut_collected_during_fall_does_not_require_a_settled_sprite[False]",
+      "outcome": "passed",
+      "seconds": 0.002
+    },
+    {
+      "nodeid": "tests/test_playtest_campaign.py::test_cutscene_acceptance_waits_past_early_quest_flag_and_control_gap",
+      "outcome": "passed",
+      "seconds": 0.002
+    },
+    {
+      "nodeid": "tests/test_playtest_campaign.py::test_cutscene_acceptance_rejects_quest_flag_without_conversation",
+      "outcome": "passed",
+      "seconds": 0.002
+    },
+    {
+      "nodeid": "tests/test_playtest_campaign.py::test_cutscene_acceptance_tracks_lines_across_the_five_line_telemetry_window",
+      "outcome": "passed",
+      "seconds": 0.002
+    },
+    {
+      "nodeid": "tests/test_playtest_campaign.py::test_alktree_route_rejects_early_flags_without_earned_ethel_dialogue",
+      "outcome": "passed",
+      "seconds": 0.002
+    },
+    {
+      "nodeid": "tests/test_playtest_campaign.py::test_alktree_route_requires_observed_request_line_even_with_flags",
+      "outcome": "passed",
+      "seconds": 0.002
+    },
+    {
+      "nodeid": "tests/test_playtest_campaign.py::test_alktree_aftermath_rejects_story_five_without_exterior_fire_lines",
+      "outcome": "passed",
+      "seconds": 0.001
+    },
+    {
+      "nodeid": "tests/test_playtest_campaign.py::test_alktree_aftermath_rejects_story_five_without_neighbour_dialogue",
+      "outcome": "passed",
+      "seconds": 0.003
+    },
+    {
+      "nodeid": "tests/test_playtest_campaign.py::test_letter_route_rejects_story_five_flag_without_guard_lines",
+      "outcome": "passed",
+      "seconds": 0.002
+    },
+    {
+      "nodeid": "tests/test_playtest_campaign.py::test_letter_completion_requires_released_controls_and_finished_vm_tasks",
+      "outcome": "passed",
+      "seconds": 0.002
+    },
+    {
+      "nodeid": "tests/test_playtest_campaign.py::test_letter_post_fade_task_is_not_assumed_finished_by_released_controls",
+      "outcome": "passed",
+      "seconds": 0.002
+    },
+    {
+      "nodeid": "tests/test_playtest_campaign.py::test_chest_selection_uses_live_description_case_and_real_enter[]",
+      "outcome": "passed",
+      "seconds": 0.002
+    },
+    {
+      "nodeid": "tests/test_playtest_campaign.py::test_chest_selection_uses_live_description_case_and_real_enter[Selected: ]",
+      "outcome": "passed",
+      "seconds": 0.002
+    },
+    {
+      "nodeid": "tests/test_playtest_campaign.py::test_chest_rejects_stale_description_when_back_has_focus[]",
+      "outcome": "passed",
+      "seconds": 0.003
+    },
+    {
+      "nodeid": "tests/test_playtest_campaign.py::test_chest_rejects_stale_description_when_back_has_focus[Selected: ]",
+      "outcome": "passed",
+      "seconds": 0.003
+    },
+    {
+      "nodeid": "tests/test_playtest_campaign.py::test_grid_planner_takes_open_corridor_around_solid_wall",
+      "outcome": "passed",
+      "seconds": 0.002
+    },
+    {
+      "nodeid": "tests/test_playtest_campaign.py::test_grid_planner_does_not_treat_disconnected_direction_as_game_failure",
+      "outcome": "passed",
+      "seconds": 0.002
+    },
+    {
+      "nodeid": "tests/test_playtest_campaign.py::test_rounded_blocked_start_keeps_nearby_open_sample_as_a_real_waypoint",
+      "outcome": "passed",
+      "seconds": 0.008
+    },
+    {
+      "nodeid": "tests/test_playtest_campaign.py::test_start_projection_stays_local_and_does_not_rewrite_a_blocked_goal",
+      "outcome": "passed",
+      "seconds": 0.004
+    },
+    {
+      "nodeid": "tests/test_playtest_campaign.py::test_partial_terris_report_can_resume_only_its_exact_earned_letter_save[320-320.000001]",
+      "outcome": "passed",
+      "seconds": 0.004
+    },
+    {
+      "nodeid": "tests/test_playtest_campaign.py::test_partial_terris_report_can_resume_only_its_exact_earned_letter_save[362.416656494141-362.416666666667]",
+      "outcome": "passed",
+      "seconds": 0.004
+    },
+    {
+      "nodeid": "tests/test_playtest_campaign.py::test_terris_arrival_rejects_flags_without_its_actual_conversation",
+      "outcome": "passed",
+      "seconds": 0.003
+    },
+    {
+      "nodeid": "tests/test_playtest_campaign.py::test_terris_arrival_waits_for_control_and_task_completion",
+      "outcome": "passed",
+      "seconds": 0.004
+    },
+    {
+      "nodeid": "tests/test_playtest_campaign.py::test_terris_arrival_requires_source_bridge_story_progression",
+      "outcome": "passed",
+      "seconds": 0.002
+    },
+    {
+      "nodeid": "tests/test_playtest_campaign.py::test_terris_route_rejects_unearned_letter",
+      "outcome": "passed",
+      "seconds": 0.002
+    },
+    {
+      "nodeid": "tests/test_playtest_campaign.py::test_letter_continuation_rejects_scenario_setup_and_unrelated_save",
+      "outcome": "passed",
+      "seconds": 0.002
+    },
+    {
+      "nodeid": "tests/test_playtest_campaign.py::test_grid_planner_cannot_use_transition_space_to_bypass_a_wall",
+      "outcome": "passed",
+      "seconds": 0.004
+    },
+    {
+      "nodeid": "tests/test_playtest_campaign.py::test_planning_excludes_the_exact_continuous_crossing_boundary[east]",
+      "outcome": "passed",
+      "seconds": 0.052
+    },
+    {
+      "nodeid": "tests/test_playtest_campaign.py::test_planning_excludes_the_exact_continuous_crossing_boundary[south]",
+      "outcome": "passed",
+      "seconds": 0.024
+    },
+    {
+      "nodeid": "tests/test_playtest_campaign.py::test_grid_planner_prefers_clearance_over_hugging_a_sampled_boundary",
+      "outcome": "passed",
+      "seconds": 0.003
+    },
+    {
+      "nodeid": "tests/test_playtest_campaign.py::test_planned_navigation_rejects_unexpected_door_transition",
+      "outcome": "passed",
+      "seconds": 0.003
+    },
+    {
+      "nodeid": "tests/test_playtest_campaign.py::test_save_acceptance_detects_lost_magic_and_changed_combat_stats[fireball]",
+      "outcome": "passed",
+      "seconds": 0.003
+    },
+    {
+      "nodeid": "tests/test_playtest_campaign.py::test_save_acceptance_detects_lost_magic_and_changed_combat_stats[life]",
+      "outcome": "passed",
+      "seconds": 0.002
+    },
+    {
+      "nodeid": "tests/test_playtest_campaign.py::test_save_acceptance_detects_lost_magic_and_changed_combat_stats[magic]",
+      "outcome": "passed",
+      "seconds": 0.002
+    },
+    {
+      "nodeid": "tests/test_playtest_campaign.py::test_save_acceptance_detects_lost_magic_and_changed_combat_stats[defense]",
+      "outcome": "passed",
+      "seconds": 0.001
+    },
+    {
+      "nodeid": "tests/test_playtest_campaign.py::test_save_acceptance_detects_lost_magic_and_changed_combat_stats[exp]",
+      "outcome": "passed",
+      "seconds": 0.004
+    },
+    {
+      "nodeid": "tests/test_playtest_campaign.py::test_save_acceptance_detects_lost_magic_and_changed_combat_stats[level]",
+      "outcome": "passed",
+      "seconds": 0.002
+    },
+    {
+      "nodeid": "tests/test_playtest_campaign.py::test_map_wide_corridor_is_split_to_fit_normal_walking_budget",
+      "outcome": "passed",
+      "seconds": 0.003
+    },
+    {
+      "nodeid": "tests/test_playtest_campaign.py::test_continuation_rejects_changed_save_when_report_records_its_hash",
+      "outcome": "passed",
+      "seconds": 0.006
+    },
+    {
+      "nodeid": "tests/test_playtest_campaign.py::test_landing_probe_requires_all_directions_blocked_and_released_controls[False-False]",
+      "outcome": "passed",
+      "seconds": 0.008
+    },
+    {
+      "nodeid": "tests/test_playtest_campaign.py::test_landing_probe_requires_all_directions_blocked_and_released_controls[True-False]",
+      "outcome": "passed",
+      "seconds": 0.002
+    },
+    {
+      "nodeid": "tests/test_playtest_campaign.py::test_landing_probe_requires_all_directions_blocked_and_released_controls[False-True]",
+      "outcome": "passed",
+      "seconds": 0.003
+    },
+    {
+      "nodeid": "tests/test_playtest_campaign.py::test_cave_route_accepts_entrance_reached_during_held_push[277]",
+      "outcome": "passed",
+      "seconds": 0.002
+    },
+    {
+      "nodeid": "tests/test_playtest_campaign.py::test_cave_route_accepts_entrance_reached_during_held_push[131]",
+      "outcome": "passed",
+      "seconds": 0.001
+    },
+    {
+      "nodeid": "tests/test_playtest_campaign.py::test_cave_route_rejects_unexpected_transition_during_push",
+      "outcome": "passed",
+      "seconds": 0.008
+    },
+    {
+      "nodeid": "tests/test_playtest_campaign.py::test_walk_uses_normal_enter_workaround_for_nonfrozen_modal_text[False]",
+      "outcome": "passed",
+      "seconds": 0.004
+    },
+    {
+      "nodeid": "tests/test_playtest_campaign.py::test_walk_uses_normal_enter_workaround_for_nonfrozen_modal_text[True]",
+      "outcome": "passed",
+      "seconds": 0.002
+    },
+    {
+      "nodeid": "tests/test_playtest_push_route.py::test_continuation_requires_the_actual_earned_leg[bonca-277-2-0-wizard-rock-before-push-earned-save]",
+      "outcome": "passed",
+      "seconds": 0.004
+    },
+    {
+      "nodeid": "tests/test_playtest_push_route.py::test_continuation_requires_the_actual_earned_leg[reward-100-3-1-bonca-complete-earned-save]",
+      "outcome": "passed",
+      "seconds": 0.004
+    },
+    {
+      "nodeid": "tests/test_playtest_push_route.py::test_continuation_requires_the_actual_earned_leg[terris-6-4-1-wizard-reward-earned-save]",
+      "outcome": "passed",
+      "seconds": 0.011
+    },
+    {
+      "nodeid": "tests/test_playtest_push_route.py::test_terris_leg_requires_the_earned_spell",
+      "outcome": "passed",
+      "seconds": 0.005
+    },
+    {
+      "nodeid": "tests/test_playtest_qwen.py::test_invalid_action_is_inconclusive_and_retains_usage",
+      "outcome": "passed",
+      "seconds": 0.005
+    },
+    {
+      "nodeid": "tests/test_playtest_qwen.py::test_truncated_and_extra_fields_are_inconclusive",
+      "outcome": "passed",
+      "seconds": 0.003
+    },
+    {
+      "nodeid": "tests/test_playtest_qwen.py::test_runner_history_and_pause_protect_false_positive",
+      "outcome": "passed",
+      "seconds": 0.002
+    },
+    {
+      "nodeid": "tests/test_playtest_qwen.py::test_modal_movement_is_never_a_pass",
+      "outcome": "passed",
+      "seconds": 0.003
+    },
+    {
+      "nodeid": "tests/test_playtest_qwen.py::test_command_failure_budget_and_bridge_exception_are_reported",
+      "outcome": "passed",
+      "seconds": 0.004
+    },
+    {
+      "nodeid": "tests/test_playtest_restart.py::test_cold_continue_uses_earned_isolated_save",
+      "outcome": "passed",
+      "seconds": 25.628
+    },
+    {
+      "nodeid": "tests/test_playtest_restart.py::test_bounded_death_and_restart_uses_actual_menu_input",
+      "outcome": "passed",
+      "seconds": 17.601
+    },
+    {
+      "nodeid": "tests/test_playtest_restart.py::test_letter_cold_continue_expected_globals_include_map_unlock",
+      "outcome": "passed",
+      "seconds": 0.002
+    },
+    {
+      "nodeid": "tests/test_push_input.py::test_push_scripts_through_movement_input",
+      "outcome": "passed",
+      "seconds": 70.868
+    },
+    {
+      "nodeid": "tests/test_rc5_census.py::test_component_runs_preserve_all_pixels_including_diagonal_and_singletons",
+      "outcome": "passed",
+      "seconds": 0.018
+    },
+    {
+      "nodeid": "tests/test_rc5_census.py::test_hidden_crop_contributes_no_projected_pixel",
+      "outcome": "passed",
+      "seconds": 0.016
+    },
+    {
+      "nodeid": "tests/test_rc5_census.py::test_known_base_cases_and_every_pixel_has_a_partition",
+      "outcome": "passed",
+      "seconds": 3.432
+    },
+    {
+      "nodeid": "tests/test_rc5_census.py::test_current_structure_masks_match_real_fps_queries",
+      "outcome": "passed",
+      "seconds": 5.314
+    },
+    {
+      "nodeid": "tests/test_rc5_residue.py::test_membership_codes_preserve_high_bits_and_exact_union",
+      "outcome": "passed",
+      "seconds": 0.005
+    },
+    {
+      "nodeid": "tests/test_rc5_residue.py::test_perimeter_cross_tab_is_location_union_and_keeps_membership_bits",
+      "outcome": "passed",
+      "seconds": 0.001
+    },
+    {
+      "nodeid": "tests/test_rc5_residue.py::test_gzip_json_round_trip_is_deterministic",
+      "outcome": "passed",
+      "seconds": 0.002
+    },
+    {
+      "nodeid": "tests/test_screen_startup.py::test_original_duck_search_runs_before_sprite_vision_filter",
+      "outcome": "passed",
+      "seconds": 5.012
+    },
+    {
+      "nodeid": "tests/test_speaker_occlusion_contract.py::test_speaker_floor_and_top_remain_above_actual_dialogue_card",
+      "outcome": "passed",
+      "seconds": 5.966
+    },
+    {
+      "nodeid": "tests/test_speech_semantics.py::test_shared_speech_card_preserves_original_blocking_semantics",
+      "outcome": "passed",
+      "seconds": 5.869
+    },
+    {
+      "nodeid": "tests/test_static_death_art.py::test_prone_editor_art_has_one_original_ground_owner",
+      "outcome": "passed",
+      "seconds": 4.019
+    },
+    {
+      "nodeid": "tests/test_story.py::test_nested_control_flow_and_expression_ast",
+      "outcome": "passed",
+      "seconds": 0.002
+    },
+    {
+      "nodeid": "tests/test_story.py::test_labels_calls_and_overrides",
+      "outcome": "passed",
+      "seconds": 0.002
+    },
+    {
+      "nodeid": "tests/test_story.py::test_unsupported_syntax_is_reported_and_retained",
+      "outcome": "passed",
+      "seconds": 0.002
+    },
+    {
+      "nodeid": "tests/test_story.py::test_s1_h2_o_eof_brace_repair_keeps_unfreeze_in_talk",
+      "outcome": "passed",
+      "seconds": 0.002
+    },
+    {
+      "nodeid": "tests/test_story.py::test_eof_brace_repair_is_scoped_to_s1_h2_o",
+      "outcome": "passed",
+      "seconds": 0.002
+    },
+    {
+      "nodeid": "tests/test_story.py::test_choice_positions_and_script_scoped_overrides",
+      "outcome": "passed",
+      "seconds": 0.001
+    },
+    {
+      "nodeid": "tests/test_story.py::test_installed_campaign_compiles_without_unsupported_code",
+      "outcome": "passed",
+      "seconds": 0.347
+    },
+    {
+      "nodeid": "tests/test_story.py::test_dink_vm_regressions",
+      "outcome": "passed",
+      "seconds": 0.363
+    },
+    {
+      "nodeid": "tests/test_ui_feedback_ownership.py::test_equipment_feedback_has_one_owner_and_inventory_tracks_live_equipment",
+      "outcome": "passed",
+      "seconds": 0.662
+    }
+  ],
+  "walker": {
+    "screens": 570,
+    "traps": 0,
+    "seconds": 421.093,
+    "repeated": false
+  },
+  "launcher_control": {
+    "setup": "Unchanged previously-passing23-case test through corrected direct-exec launcher; isolated profile, shared lock, Dummy audio; no corner correction applied.",
+    "seconds": 94.872,
+    "exit_code": 0,
+    "timed_out": false,
+    "pass": true,
+    "scenarios": 23,
+    "source_sha256": {
+      "tests/push_input_test.gd": "4e872b54792ef32b0a3594afc187efc147418f926883563b9221850d7948d6d0",
+      "game/scripts/game.gd": "e5e5c1ed9790741f1ec5ae73788c3c10bf536aa4e41217402575056ca7bc5ae0",
+      "game/scripts/fps_game.gd": "f22c9c6358d0f35ae5770b3cd627bf4309963c1535364f8d6a47245f097b8a79"
+    },
+    "launcher_sha256": "d267075faefbb65ab14b228223251235aa8f53f929a30dceedccc560b8ae85cb"
+  },
+  "paired_opening_walk": {
+    "baseline": {
+      "date_utc": "2026-10-19T19:50:53.182797+00:00",
+      "label": "baseline",
+      "limit": 900.0,
+      "seconds": 20.388826,
+      "exit_code": 0,
+      "timed_out": false,
+      "full_comparison_limit": 900,
+      "budget_clipped": false,
+      "pass": true,
+      "source_sha256": {
+        "tests/push_input_test.gd": "4e872b54792ef32b0a3594afc187efc147418f926883563b9221850d7948d6d0",
+        "game/scripts/game.gd": "e5e5c1ed9790741f1ec5ae73788c3c10bf536aa4e41217402575056ca7bc5ae0",
+        "game/scripts/fps_game.gd": "f22c9c6358d0f35ae5770b3cd627bf4309963c1535364f8d6a47245f097b8a79"
+      },
+      "launcher_sha256": "d267075faefbb65ab14b228223251235aa8f53f929a30dceedccc560b8ae85cb",
+      "script": "tests/fps_walk_test.gd",
+      "setup": "Unmodified original script; original434 controllers first up to900s, current candidate limited to1.5x measured successful baseline. Isolated profile; actual keys, Dummy audio, direct exec launcher, no scenario bridge."
+    },
+    "candidate": {
+      "date_utc": "2026-10-19T19:52:35.689247+00:00",
+      "label": "candidate",
+      "limit": 30.583239,
+      "seconds": 20.446345,
+      "exit_code": 0,
+      "timed_out": false,
+      "full_comparison_limit": 30.583239000000003,
+      "budget_clipped": false,
+      "pass": true,
+      "source_sha256": {
+        "tests/push_input_test.gd": "4e872b54792ef32b0a3594afc187efc147418f926883563b9221850d7948d6d0",
+        "game/scripts/game.gd": "e5e5c1ed9790741f1ec5ae73788c3c10bf536aa4e41217402575056ca7bc5ae0",
+        "game/scripts/fps_game.gd": "f22c9c6358d0f35ae5770b3cd627bf4309963c1535364f8d6a47245f097b8a79"
+      },
+      "launcher_sha256": "d267075faefbb65ab14b228223251235aa8f53f929a30dceedccc560b8ae85cb",
+      "script": "tests/fps_walk_test.gd",
+      "setup": "Unmodified original script; original434 controllers first up to900s, current candidate limited to1.5x measured successful baseline. Isolated profile; actual keys, Dummy audio, direct exec launcher, no scenario bridge."
+    }
+  },
+  "world_standalone": {
+    "date_utc": "2026-10-19T20:38:34.864359+00:00",
+    "setup": "Unmodifiedfps_world_test.gd body, optional600s standalone after117-node prioritytail. Originaltests/test_fps_world.py180s remainsunchanged and its timeout is retained. Actualworldscenes; testmode/startupcancelled peroriginaltest, notearnedcampaign.",
+    "seconds": 189.092834,
+    "limit": 600,
+    "exit_code": 0,
+    "screens": 644,
+    "pass": true,
+    "source_sha256": {
+      "tests/push_input_test.gd": "4e872b54792ef32b0a3594afc187efc147418f926883563b9221850d7948d6d0",
+      "game/scripts/game.gd": "e5e5c1ed9790741f1ec5ae73788c3c10bf536aa4e41217402575056ca7bc5ae0",
+      "game/scripts/fps_game.gd": "f22c9c6358d0f35ae5770b3cd627bf4309963c1535364f8d6a47245f097b8a79"
+    },
+    "world_script_sha256": "a506be042cfcb9cd694721928dd060793fae5751e33f7ef2597830e9099708d9",
+    "renderer_sha256": "51d30660c5187a6d9222c0eb834d4dd40c86b520cb287fd1fd45fce64436204f",
+    "launcher_sha256": "d267075faefbb65ab14b228223251235aa8f53f929a30dceedccc560b8ae85cb"
+  },
+  "world_deadline_prior_evidence": "push-world-deadline.json",
+  "stronger_corner": "push-corner-proof.json",
+  "final_input_scenarios": 23,
+  "final_input_failures": [],
+  "active_verification_seconds": 1016.645005,
+  "active_cap_seconds": 2100,
+  "full_suite_source_sha256": {
+    "tests/push_input_test.gd": "4e872b54792ef32b0a3594afc187efc147418f926883563b9221850d7948d6d0",
+    "game/scripts/game.gd": "e5e5c1ed9790741f1ec5ae73788c3c10bf536aa4e41217402575056ca7bc5ae0",
+    "game/scripts/fps_game.gd": "f22c9c6358d0f35ae5770b3cd627bf4309963c1535364f8d6a47245f097b8a79"
+  },
+  "final_test_sha256": "02d34c21dd2140e65c7bc8bf55136c646766f6b7ce1654dab8619b8c4141fd11",
+  "evidence_sha256": {
+    "pytest-part1.xml": "c11850b94ec723c12257fb0161eb1a7ef4970090319cae68275b9a68273ad98b",
+    "pytest-part2.xml": "ce0b7550d0b5de2d2501a0b6318d28694206284c8025e02688509f2623c521d6",
+    "suite-consolidated.json": "f89160757333f4b57b4f0fbb2a5f6464ba743e866fed982084934b34871423c9",
+    "retry-per-node/progress.json": "c6220979d830eb8da370e5e48802870348f65e8a6c13ee2a3fe1945d36775a7f",
+    "launcher-orphan-evidence.json": "dcae598e6c83cdead2f55e5fb53b573d33689beaef57211376d6e20306149818",
+    "launcher-priority-fixture-result.json": "2af9df5b2c945f6d6f6854a1939f267d4459bbece11550a5a3808476bd4db570",
+    "world-standalone-result.json": "bb7479bd3ebe6e8528b77645670784a622f6180a37459c29e3b95cc1571ab212"
+  }
+}

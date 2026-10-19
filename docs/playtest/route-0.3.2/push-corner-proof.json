@@ -1,0 +1,53 @@
+{
+  "setup": "Labelled map277 scenario at NW raw corner232.25,168.25; real W60 towardSE yaw-3PI/4; assert both coordinates remain blocked and no PUSH. No earned-save claim.",
+  "implementation_commit": "eb9b27ca4c07b9eb5de9d7e7016a5d691e17e520",
+  "test_only_commit": "ba164631aabdf076b4c0173cd54e67ec85c20060",
+  "test_sha256": "02d34c21dd2140e65c7bc8bf55136c646766f6b7ce1654dab8619b8c4141fd11",
+  "one_mutation": "Remove only two-face corner return0; leave production files untouched.",
+  "results": {
+    "green": {
+      "label": "green",
+      "exit_code": 0,
+      "seconds": 5.291,
+      "pass": true,
+      "failures": [],
+      "records": 1,
+      "test_sha256": "02d34c21dd2140e65c7bc8bf55136c646766f6b7ce1654dab8619b8c4141fd11",
+      "game_controller_sha256": "e5e5c1ed9790741f1ec5ae73788c3c10bf536aa4e41217402575056ca7bc5ae0",
+      "fps_controller_sha256": "f22c9c6358d0f35ae5770b3cd627bf4309963c1535364f8d6a47245f097b8a79"
+    },
+    "mutant": {
+      "label": "mutant",
+      "exit_code": 1,
+      "seconds": 5.197,
+      "pass": true,
+      "failures": [
+        "A true raw-box corner retains the original diagonal exclusion"
+      ],
+      "records": 1,
+      "test_sha256": "02d34c21dd2140e65c7bc8bf55136c646766f6b7ce1654dab8619b8c4141fd11",
+      "game_controller_sha256": "16796d15f8c3770c73448bd7a6ebad2bcc6e3985ad75194beda2bd426d023e3a",
+      "fps_controller_sha256": "f22c9c6358d0f35ae5770b3cd627bf4309963c1535364f8d6a47245f097b8a79"
+    },
+    "original-red": {
+      "label": "original-red",
+      "exit_code": 1,
+      "seconds": 9.329,
+      "pass": true,
+      "failures": [
+        "fps-strafe-east: exactly one real PUSH procedure",
+        "fps-strafe-east: script sets rock_placement1",
+        "fps-strafe-east: script finishes within existing mover tolerance of350"
+      ],
+      "records": 1,
+      "test_sha256": "02d34c21dd2140e65c7bc8bf55136c646766f6b7ce1654dab8619b8c4141fd11",
+      "game_controller_sha256": "5d1eeb7ff9673a6eb2476833f89ac8e380d7744be4516bec81f1c5af2854931e",
+      "fps_controller_sha256": "049c943a839dc7d3797b2d0b9798028d819967cd2ac5a0115a58ddabe014077a"
+    }
+  },
+  "full_input_scenarios": 23,
+  "full_input_failures": [],
+  "full_pytest_xml_sha256": "9df03a61ca73cfb75c63650c30c4a92f3ad2aabea38706002d567ef608cd3917",
+  "technical_root": "Prior NW placement used NE yaw and brushed away; a no-PUSH result did not exercise sustained corner pressure.",
+  "development_root": "Direction was assumed without asserting blocked coordinates or mutation sensitivity."
+}
