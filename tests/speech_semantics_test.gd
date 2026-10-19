@@ -13,6 +13,12 @@ const ROWS := [
 var game
 var failures: Array[String] = []
 var stopped := {}
+var movement_lane := Vector2.INF
+const CONTROL_ROWS := [
+	["freeze", false, true, "dinkc_bindings.cpp:552-559; brain_keyboard.cpp:222-240"],
+	["unfreeze", false, false, "dinkc_bindings.cpp:542-550"],
+	["choice", true, true, "game_choice.cpp:38-54,166-177; brain_keyboard.cpp:219-220"],
+]
 func _initialize() -> void: _run.call_deferred()
 func check(ok: bool, message: String) -> void:
 	if not ok: failures.append(message); push_error(message)
@@ -21,11 +27,52 @@ func settle() -> void:
 	for _i in 8: await process_frame
 func program(name: String, code: Array) -> void:
 	game.vm.story.scripts[name] = {"procedures":{"main":{"code":code}}}
+func physical_key(pressed: bool) -> void:
+	var event := InputEventKey.new()
+	event.keycode = KEY_D; event.physical_keycode = KEY_D; event.pressed = pressed
+	Input.parse_input_event(event); Input.flush_buffered_events()
+	await process_frame
+func measure_walk() -> float:
+	game.entities[1].x = movement_lane.x; game.entities[1].y = movement_lane.y
+	game.fps_yaw = 0; game._sync_fps_camera()
+	var before: Vector2 = game._position2(1)
+	game.set_physics_process(true)
+	await physical_key(true)
+	for _i in 12: await physics_frame
+	await process_frame
+	await physical_key(false)
+	game.set_physics_process(false)
+	return before.distance_to(game._position2(1))
+func control_row(row: Array) -> void:
+	game.ui.cancel_speech(); game.vm.cancel_all(); await settle()
+	game.entities[1].frozen = row[0] == "unfreeze"
+	game.entities[1].nocontrol = 0; game.entities[1].disabled = 0
+	game.attack_cooldown = 0
+	var args: Array = [literal(1)]
+	if row[0] == "choice": args = [literal("A modal source choice"),literal([{"text":"First","value":1},{"text":"Second","value":2}])]
+	program("speech_control", [{"op":"call","name":row[0],"args":args},{"op":"set","target":"&speech_marker","expr":literal(1)}])
+	game.vm.globals.speech_marker = 0
+	game.vm.run("speech_control","main",1)
+	await settle()
+	check((int(game.vm.globals.speech_marker) == 0) == row[1], "%s caller wait=%s (%s)" % [row[0],row[1],row[3]])
+	var moved := await measure_walk()
+	check((moved < 0.01) == row[2], "%s player blocked=%s via real physics (pixels=%s; %s)" % [row[0],row[2],moved,row[3]])
+	if row[0] == "choice":
+		for pressed in [true,false]:
+			var event := InputEventKey.new()
+			event.keycode = KEY_ENTER; event.physical_keycode = KEY_ENTER; event.pressed = pressed
+			Input.parse_input_event(event); Input.flush_buffered_events()
+			await process_frame
+		await settle()
+		check(int(game.vm.globals.speech_marker) == 1, "Choice input resumes its caller")
+	print("SPEECH ROW ",JSON.stringify({"binding":row[0],"wait":row[1],"blocked":row[2],"pixels":moved,"lifetime":"not text","citation":row[3]}))
 func run_row(row: Array) -> void:
 	game.ui.cancel_speech()
 	game.vm.cancel_all()
 	await settle()
 	game.entities[1].frozen = false
+	game.entities[1].nocontrol = 0; game.entities[1].disabled = 0
+	game.attack_cooldown = 0
 	var text := "`2Text contains colour and UTF8: é."
 	var cmd: String = row[0]
 	var expected_wait: bool = row[1]
@@ -39,7 +86,10 @@ func run_row(row: Array) -> void:
 		game.ui._process(0)
 		await process_frame
 	check((int(game.vm.globals.speech_marker) == 0) == expected_wait, "%s caller wait=%s (%s)" % [cmd,expected_wait,row[3]])
-	check(game.ui.modal == row[2] and not game.entities[1].frozen, "%s never freezes player (%s; brain_keyboard.cpp:216-241)" % [cmd,row[3]])
+	var expected_blocked: bool = row[2]
+	if "--flip-movement-row" in OS.get_cmdline_user_args() and cmd == "say": expected_blocked = not expected_blocked
+	var moved := await measure_walk()
+	check((moved < 0.01) == expected_blocked, "%s player blocked=%s via real physics (pixels=%s; %s)" % [cmd,expected_blocked,moved,row[3]])
 	check(game.ui.speech_lines.size() == 1, cmd + " creates exactly one independent text sprite")
 	var id: int = int(game.ui.speech_lines.keys().back())
 	var ttl := maxi(2700, text.to_utf8_buffer().size() * 77)
@@ -54,7 +104,7 @@ func run_row(row: Array) -> void:
 	await settle()
 	check(not game.ui.is_speech_active(id), cmd + " text expires at source TTL")
 	check(int(game.vm.globals.speech_marker) == 1, cmd + " caller completes after its own expiry")
-	print("SPEECH ROW ", JSON.stringify({"binding":cmd,"wait":expected_wait,"blocked":row[2],"ttl":ttl,"citation":row[3]}))
+	print("SPEECH ROW ", JSON.stringify({"binding":cmd,"wait":expected_wait,"blocked":expected_blocked,"pixels":moved,"ttl":ttl,"citation":row[3]}))
 func stop_line(binding: String, text: String, owner: int, name: String) -> void:
 	await game.dink_call(binding, [text, owner, 40], {})
 	stopped[name] = true
@@ -64,8 +114,19 @@ func _run() -> void:
 	await process_frame
 	game.set_physics_process(false); game.vm.cancel_all()
 	game.load_map(439, false); game.ui.close_menu(); game.ui.set_process(false)
-	game.test_mode = false
+	game.test_mode = false; game.playing = true; game.changing = false
+	for y in range(100,300,20):
+		for x in range(100,500,20):
+			var clear := true
+			for dx in range(0,50,2):
+				if game._blocked(Vector2(x+dx,y),1): clear = false
+			if clear: movement_lane = Vector2(x,y); break
+		if movement_lane != Vector2.INF: break
+	check(movement_lane != Vector2.INF,"Real-physics table has a source-collision-clear lane")
 	for row in ROWS: await run_row(row)
+	for row in CONTROL_ROWS: await control_row(row)
+	game.entities[1].frozen = false
+	game.ui.cancel_speech(); game.vm.cancel_all(); await settle()
 	check(game.ui.source_speech_msec("x") == 2700, "Source minimum is 2700ms")
 	check(game.ui.source_speech_msec("é".repeat(40)) == 80 * 77, "strlen measures bytes, not codepoints")
 	game.vm.globals.gold = 123456789

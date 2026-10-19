@@ -2470,12 +2470,13 @@ text handles and caller waiters; ambient speech allows movement and look. Only
 an explicitly frozen player receives speaker camera framing. Choices remain
 modal. See [Speech and reading pace](SPEECH.md) for the complete source table.
 
-Normal TTL is `max(2700, expanded UTF8 bytes × 77)` milliseconds
+Source TTL is `max(2700, expanded UTF8 bytes × 77)` milliseconds
 (`text.cpp:40–65`), including colour codes. A monotonic creation deadline avoids
 Godot's slow-frame delta clamp stretching short text (`game_engine.cpp:188–207`).
-P2's overflow reading scroll remains a deliberate presentation extension. The
-optional Settings toggle **Speech waits for me**, default Off, keeps text and
-its caller waiting until a bound Talk input dismisses it. Its plain hint follows
+Natural expiry keeps P2's reading floor and overflow scroll as deliberate
+presentation extensions. The optional Settings toggle **Speech waits for me**,
+default Off, keeps waiting-script text and its caller waiting until a bound Talk
+input dismisses it. Ambient `say`/`say_xy` retain natural expiry. Its plain hint follows
 the current binding and input device. Script-controlled zero/positive TTL and
 removal retain their text-handle ownership.
 
@@ -2494,3 +2495,30 @@ fixtures exercise real keys in both presentations, normal map131 noise in a
 labelled scenario, all five speech bindings, independent callers, remapped Talk,
 process restart, stalled frames and menu reading-time preservation. The earned
 campaign route remains a separate integration check.
+
+The blind review caught two remaining modal-era assumptions. The reading option
+had been applied to ambient `say`/`say_xy`, creating a dismissal backlog and
+capturing Talk. It now applies only to lines with waiting scripts; a queued
+ambient burst retains natural expiry. The save gate still treated `dialogue_busy`
+as blocked control. FreeDink109.6 `dinkc_bindings.cpp:1316–1319` delegates saving
+without that gate, and `savegame.cpp:348–490` saves neither script continuations
+nor transient control locks. Speech, choices and freeze no longer refuse saving;
+reload clears `frozen`/`nocontrol`. The source save machine's two real-input
+choice groups are included in the class check (`SAVEBOT.c:18–48`). The second
+cause in both cases was stopping the representation audit at movement rather
+than tracing all consumers of the old modal state.
+
+The speech table now walks every binding through the actual physics loop and
+includes freeze/unfreeze/choice rows; a separately flipped movement expectation
+must fail. The cave scenario likewise holds W through engine physics callbacks
+and measures only ticks where the same source noise card is visible. Its
+scenario/earned distinction remains explicit.
+
+The full-suite reading census also caught a P2 regression: natural speech had
+kept the scroll extension but lost the reading floor for text that fits on one
+card. The source `S1-H2-2.talk:8` line about the old lady's liquor is a natural
+`say`, with no explicit kill: source TTL3157ms versus reading budget3530ms.
+Natural expiry now takes the greater budget; explicit script TTL still wins.
+The second cause was treating P2's reading rule as overflow-only during the
+source-lifetime rewrite. The complete literal census and both deadline modes
+check the class.

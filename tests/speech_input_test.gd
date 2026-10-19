@@ -21,7 +21,9 @@ func line() -> void:
 func walk() -> float:
 	var before: Vector2 = game._position2(1)
 	await key(KEY_D, true)
-	for _i in 10: game._physics_process(1.0 / 60)
+	for _i in 10:
+		await physics_frame
+		await process_frame
 	await key(KEY_D, false)
 	return before.distance_to(game._position2(1))
 func clear_line() -> void:
@@ -32,7 +34,6 @@ func fixture(fps: bool) -> void:
 	game.test_mode = true
 	root.add_child(game)
 	await process_frame
-	game.set_physics_process(false)
 	game.vm.cancel_all()
 	game.load_map(439, false)
 	game.ui.close_menu()
@@ -51,6 +52,7 @@ func fixture(fps: bool) -> void:
 	game.entities[1].frozen = false; game.entities[1].nocontrol = 0
 	if fps: game.fps_yaw = 0; game._sync_fps_camera()
 	game.test_mode = false
+	check(game.is_physics_processing(), "Gameplay physics callback is enabled")
 	completed = 0
 	line()
 	for _i in 6: await process_frame
@@ -62,12 +64,16 @@ func fixture(fps: bool) -> void:
 	await game.dink_call("freeze", [1], {})
 	line()
 	for _i in 6: await process_frame
-	check(await walk() < 0.01, "Explicit freeze control blocks movement during speech")
+	var frozen_distance := await walk()
+	check(frozen_distance < 0.01, "Explicit freeze control blocks movement during speech")
 	await clear_line()
 	await game.dink_call("unfreeze", [1], {})
 	game.ui.show_choices("A genuine modal choice", ["Stay", "Go"])
 	for _i in 4: await process_frame
-	check(game.ui.modal and await walk() < 0.01, "Choice control still blocks movement")
+	var choice_modal: bool = game.ui.modal
+	var choice_distance := await walk()
+	check(choice_modal and choice_distance < 0.01, "Choice control still blocks movement")
+	print("G1 ", JSON.stringify({"mode":"FPS" if fps else "2D","free_px":distance,"freeze_px":frozen_distance,"choice_px":choice_distance,"choice_modal":choice_modal,"physics":game.is_physics_processing()}))
 	game.ui._choose_dialogue(1)
 	game.vm.cancel_all(); game.queue_free()
 	await process_frame

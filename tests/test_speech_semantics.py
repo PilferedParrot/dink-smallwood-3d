@@ -13,3 +13,11 @@ def test_speech_contract_table_can_reject_a_wrong_row(tmp_path):
     assert "SCRIPT ERROR" not in result.stdout + result.stderr
     errors = json.loads(next(line.removeprefix("SPEECH FAILURES ") for line in result.stdout.splitlines() if line.startswith("SPEECH FAILURES ")))
     assert len(errors) == 1 and errors[0].startswith("say caller wait=true"), errors
+
+
+def test_speech_contract_table_can_reject_a_wrong_movement_row(tmp_path):
+    result = run_speech(tmp_path, "speech_semantics_test.gd", "--flip-movement-row")
+    assert result.returncode == 1 and "say player blocked=true" in result.stdout + result.stderr
+    assert "SCRIPT ERROR" not in result.stdout + result.stderr
+    errors = json.loads(next(line.removeprefix("SPEECH FAILURES ") for line in result.stdout.splitlines() if line.startswith("SPEECH FAILURES ")))
+    assert len(errors) == 1 and errors[0].startswith("say player blocked=true"), errors

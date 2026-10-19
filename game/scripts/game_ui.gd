@@ -37,7 +37,7 @@ var speech_pause_offset_msec := 0
 var speech_waits_for_me := false:
 	set(value):
 		speech_waits_for_me = value
-		for line in speech_lines.values(): line.waits = value
+		for line in speech_lines.values(): line.waits = value and bool(line.get("script_waits", false))
 		if is_instance_valid(root): _update_hint()
 var timed_reading_done := false
 var speech_dismiss_hint: Label
@@ -780,13 +780,20 @@ static func source_speech_msec(expanded_text: String) -> int:
 	# FreeDink109.6 text.cpp:40-65, strlen AFTER substitution, BEFORE colour removal.
 	return maxi(2700, expanded_text.to_utf8_buffer().size() * 77)
 
-func show_speech(text: String, speaker: String = "Dink", owner: int = 0, ttl_msec: int = -1) -> int:
+static func speech_reading_seconds(text: String) -> float:
+	var words := text.replace("\n", " ").replace("\t", " ").replace("\r", " ").split(" ", false).size()
+	return maxf(float(words) / SPEECH_WORDS_PER_SECOND, float(text.length()) / SPEECH_CHARACTERS_PER_SECOND)
+
+func show_speech(text: String, speaker: String = "Dink", owner: int = 0, ttl_msec: int = -1, script_waits: bool = false) -> int:
 	if owner == 0: cancel_owner_speech(0)
 	speech_request += 1
 	var id := speech_request
 	var ttl := source_speech_msec(text) if ttl_msec < 0 else ttl_msec
+	# Preserve P2's reading floor for ALL natural speech, including short,
+	# word-dense lines that fit without scrolling. Script deadlines override it.
+	ttl = maxi(ttl, ceili(speech_reading_seconds(text) * 1000))
 	var now := _speech_now_msec()
-	speech_lines[id] = {"id":id,"text":text,"speaker":speaker,"owner":owner,"born":now,"expires":now+ttl,"deadline":-1,"remaining":float(ttl)/1000.0,"waits":speech_waits_for_me}
+	speech_lines[id] = {"id":id,"text":text,"speaker":speaker,"owner":owner,"born":now,"expires":now+ttl,"deadline":-1,"remaining":float(ttl)/1000.0,"script_waits":script_waits,"waits":speech_waits_for_me and script_waits}
 	if modal:
 		pending_speech = speech_lines[id]
 	else:
@@ -831,8 +838,7 @@ func _advance_timed_speech(delta: float) -> void:
 	if key != timed_layout_key:
 		# Reflow starts reading again at the top; a resize never skips text.
 		timed_layout_key = key
-		var words := timed_text.replace("\n", " ").replace("\t", " ").replace("\r", " ").split(" ", false).size()
-		var reading := maxf(float(words) / SPEECH_WORDS_PER_SECOND, float(timed_text.length()) / SPEECH_CHARACTERS_PER_SECOND)
+		var reading := speech_reading_seconds(timed_text)
 		var visible_fraction := minf(1, menu_scroll.size.y / maxf(1, key.x))
 		timed_hold = reading * visible_fraction if extent > 0 else reading
 		timed_last_hold = reading * visible_fraction

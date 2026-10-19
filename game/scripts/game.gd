@@ -1013,7 +1013,7 @@ func _start_speech(text: String, speaker: int, context: Dictionary, binding: Str
 	var line := _interpolate(text, context)
 	var speaker_name := _speech_name(speaker, context)
 	_record_dialogue(line, speaker_name)
-	var id: int = ui.show_speech(line, speaker_name, owner, UI.source_speech_msec(expanded))
+	var id: int = ui.show_speech(line, speaker_name, owner, UI.source_speech_msec(expanded), binding.begins_with("say_stop"))
 	if binding.begins_with("say_stop"):
 		speech_waiters[id] = true
 		dialogue_busy = true
@@ -1463,7 +1463,9 @@ func _write_json(path: String, data: Dictionary) -> bool:
 	return DirAccess.rename_absolute(path+".tmp",path) == OK
 
 func _save_game(path: String = "user://adventure.json") -> bool:
-	if not playing or dialogue_busy or entities[1].get("frozen",false): return false
+	# FreeDink109.6 dinkc_bindings.cpp:1316-1319 delegates unconditionally;
+	# savegame.cpp:348-490 checks file opening, not speech/freeze/choices.
+	if not playing or not entities.has(1): return false
 	return _write_json(path,{"version":1,"vm":vm.snapshot_state(),"screen":current_screen,"entities":entities,"editor_state":editor_state,"items":items,"magic_items":magic_items,"visited":visited,"dialogue_log":dialogue_log,"journal_log":journal_log,"next_entity":next_entity,"locked":locked})
 
 func _load_game(path: String = "user://adventure.json") -> bool:
@@ -1487,6 +1489,10 @@ func _load_game(path: String = "user://adventure.json") -> bool:
 	for key in data.entities:
 		entities[int(key)] = data.entities[key]
 		entities[int(key)].erase("moving")
+		# Source saves no script continuations or transient control locks
+		# (FreeDink109.6 savegame.cpp:370-490). Never reload an orphan freeze.
+		entities[int(key)]["frozen"] = false
+		entities[int(key)]["nocontrol"] = 0
 		_create_visual(int(key))
 	next_entity = int(data.get("next_entity",next_entity))
 	locked = bool(data.get("locked",false))
