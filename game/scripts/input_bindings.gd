@@ -5,12 +5,14 @@ signal changed
 const SETTINGS_KEY := "bindings_v1"
 const VERSION := 1
 const SCOPES := ["2d", "fps", "menu", "global"]
+const ESSENTIAL_MENU := ["ui_up","ui_down","ui_left","ui_right","ui_accept","ui_cancel"]
 var context := "fps"
 var settings_path := "user://settings.json"
 var settings: Dictionary = {}
 var overrides: Dictionary = {}
 var actions: Dictionary = {}
 var warnings: Array[String] = []
+var backup_required := false
 
 func _init(mode: String = "fps", path: String = "user://settings.json") -> void:
 	assert(mode in ["2d", "fps"])
@@ -170,6 +172,13 @@ func _reserved(action: String, record: Dictionary) -> bool:
 static func _same(a: Dictionary, b: Dictionary) -> bool:
 	return normalize(a) == normalize(b)
 
+static func _overlap(action: String, a: Dictionary, other: String, b: Dictionary) -> bool:
+	if a.type == "key" and b.type == "key" and a.physical == b.physical:
+		# Native focus traversal matches Tab modifiers exactly.
+		if action in ["ui_focus_next","ui_focus_prev"] and other in ["ui_focus_next","ui_focus_prev"]: return _same(a,b)
+		return true
+	return _same(a,b)
+
 func conflicts(action: String, records: Array, scope: String = "", proposed: Variant = null) -> Array[String]:
 	var area := scope_for(action,scope)
 	if proposed == null: proposed = overrides
@@ -187,21 +196,34 @@ func conflicts(action: String, records: Array, scope: String = "", proposed: Var
 				if not actions[other].contexts.has(other_area): continue
 				for binding in proposed.get(other_area,{}).get(other,defaults(other,other_area)):
 					if record.type == "key" and int(record.physical) == KEY_ESCAPE and action in ["pause","ui_cancel"] and other in ["pause","ui_cancel"]: continue
-					var overlap := _same(record,binding)
-					if record.type == "key" and binding.type == "key" and record.physical == binding.physical:
-						# Native focus traversal matches Tab modifiers exactly.
-						overlap = overlap or not (action in ["ui_focus_next","ui_focus_prev"] and other in ["ui_focus_next","ui_focus_prev"])
-					if overlap and not result.has(other): result.append(other)
+					if _overlap(action,record,other,binding) and not result.has(other): result.append(other)
 	return result
+
+func _menu_device_error(proposed: Dictionary) -> Dictionary:
+	for action in ESSENTIAL_MENU:
+		var keyboard := false
+		var controller := false
+		for record in proposed.get("menu",{}).get(action,defaults(action,"menu")):
+			keyboard = keyboard or record.type == "key"
+			controller = controller or record.type in ["pad","axis"]
+		if not keyboard or not controller:
+			return {"ok":false,"error":"menu_device_required","action":action,"device":"keyboard" if not keyboard else "pad"}
+	return {}
 
 func load_settings(base: Dictionary = {}) -> Dictionary:
 	settings = base.duplicate(true)
 	warnings.clear()
+	backup_required = false
 	if FileAccess.file_exists(settings_path):
 		var parser := JSON.new()
 		if parser.parse(FileAccess.get_file_as_string(settings_path)) == OK and parser.data is Dictionary:
 			settings.merge(parser.data,true)
-		else: _warn("Corrupt settings file; using defaults (file left intact).")
+			var envelope: Variant = settings.get(SETTINGS_KEY,{})
+			if settings.has(SETTINGS_KEY) and (not envelope is Dictionary or not _integer(envelope.get("version"),VERSION,VERSION) or not envelope.get("contexts") is Dictionary):
+				backup_required = true
+		else:
+			backup_required = true
+			_warn("Corrupt settings file; using defaults (file left intact).")
 	if settings.has(SETTINGS_KEY) and settings[SETTINGS_KEY] is Dictionary and settings[SETTINGS_KEY].is_empty():
 		overrides.clear()
 		_warn("Malformed bindings envelope; using defaults.")
@@ -232,16 +254,65 @@ func load_overrides(data: Variant) -> void:
 			if reserved:
 				_warn("Reserved binding: %s/%s; using defaults." % [area,action])
 			else: overrides[area][action] = cleaned
-	# Reject collisions deterministically; keep all unrelated valid overrides.
-	for area in SCOPES:
-		while true:
+	# Repair each essential action independently before considering collisions.
+	for action in ESSENTIAL_MENU:
+		if not overrides.get("menu",{}).has(action): continue
+		var single := {"menu":{action:overrides.menu[action]}}
+		var guard := _menu_device_error(single)
+		if not guard.is_empty():
+			_warn("Menu device missing: %s/%s; using defaults." % [action,guard.device])
+			overrides.menu.erase(action)
+	# Compare overrides in registry order, independent of JSON insertion order.
+	# An explicit empty mask prevents defaults from rejecting a legitimate swap
+	# before the other override has been considered.
+	var mask := {}
+	for action in actions:
+		for area in actions[action].contexts:
+			if not mask.has(area): mask[area] = {}
+			mask[area][action] = []
+	var accepted := {}
+	var later_collisions: Array = []
+	for action in actions:
+		for area in actions[action].contexts:
+			if not overrides.get(area,{}).has(action): continue
+			var records: Array = overrides[area][action]
+			if not conflicts(action,records,area,mask).is_empty():
+				_warn("Conflicting later binding: %s/%s; using defaults." % [area,action])
+				later_collisions.append([area,action])
+				continue
+			if not accepted.has(area): accepted[area] = {}
+			accepted[area][action] = records
+			mask[area][action] = records
+	# A later action's fallback must not reintroduce the winning key. Retain
+	# every unrelated default slot; the essential menu device minimum wins if
+	# no safe fallback can preserve it.
+	for pair in later_collisions:
+		var area: String = pair[0]
+		var action: String = pair[1]
+		var fallback: Array = []
+		for record in defaults(action,area):
+			if conflicts(action,[record],area,mask).is_empty(): fallback.append(record)
+		if fallback == defaults(action,area): continue
+		var proposal := accepted.duplicate(true)
+		if not proposal.has(area): proposal[area] = {}
+		proposal[area][action] = fallback
+		if not _menu_device_error(proposal).is_empty(): continue
+		accepted = proposal
+		_warn("Removed colliding fallback slots: %s/%s." % [area,action])
+	overrides = accepted
+	# A dropped override restores a default. Reject any override that would
+	# collide with that fallback, repeating until the final installed map is safe.
+	for _pass in range(actions.size()+1):
+		var any_rejected := false
+		for area in SCOPES:
 			var rejected: Array = []
 			for action in overrides.get(area,{}):
 				if not conflicts(action,overrides[area][action],area).is_empty(): rejected.append(action)
-			if rejected.is_empty(): break
 			for action in rejected:
-				_warn("Conflicting binding: %s/%s; using defaults." % [area,action])
+				_warn("Binding conflicts with restored default: %s/%s; using defaults." % [area,action])
 				overrides[area].erase(action)
+				any_rejected = true
+		if not any_rejected: break
 
 func install() -> void:
 	for action in actions:
@@ -254,9 +325,16 @@ func install() -> void:
 	InputMap.action_erase_events("ui_select")
 	for record in events("ui_accept","menu"): InputMap.action_add_event("ui_select",to_event(record))
 
-func _commit(next: Dictionary) -> Dictionary:
-	var data := settings.duplicate(true)
-	data[SETTINGS_KEY] = {"version":VERSION,"contexts":next}
+func _write_settings(data: Dictionary) -> Dictionary:
+	if backup_required and FileAccess.file_exists(settings_path):
+		var backup := settings_path+".bak"
+		var suffix := 1
+		while FileAccess.file_exists(backup) or DirAccess.dir_exists_absolute(backup):
+			backup = settings_path+".bak.%d" % suffix
+			suffix += 1
+		if DirAccess.copy_absolute(settings_path,backup) != OK or FileAccess.get_sha256(settings_path) != FileAccess.get_sha256(backup):
+			return {"ok":false,"error":"write_failed","reason":"backup_failed"}
+		backup_required = false
 	var file := FileAccess.open(settings_path+".tmp",FileAccess.WRITE)
 	if file == null: return {"ok":false,"error":"write_failed"}
 	file.store_string(JSON.stringify(data))
@@ -267,6 +345,16 @@ func _commit(next: Dictionary) -> Dictionary:
 		DirAccess.remove_absolute(settings_path+".tmp")
 		return {"ok":false,"error":"write_failed"}
 	if DirAccess.rename_absolute(settings_path+".tmp",settings_path) != OK: return {"ok":false,"error":"write_failed"}
+	return {"ok":true}
+
+func save_settings() -> Dictionary:
+	return _write_settings(settings)
+
+func _commit(next: Dictionary) -> Dictionary:
+	var data := settings.duplicate(true)
+	data[SETTINGS_KEY] = {"version":VERSION,"contexts":next}
+	var saved := _write_settings(data)
+	if not saved.ok: return saved
 	overrides = next
 	settings[SETTINGS_KEY] = data[SETTINGS_KEY]
 	install()
@@ -295,7 +383,58 @@ func set_bindings(action: String, records: Array, policy := "refuse", scope: Str
 	for id in next[area]:
 		var remaining := conflicts(id,next[area][id],area,next)
 		if not remaining.is_empty(): return {"ok":false,"error":"conflict","conflicts":remaining}
+	var guard := _menu_device_error(next)
+	if not guard.is_empty(): return guard
 	return _commit(next)
+
+func add_binding(action: String, record: Dictionary, policy := "refuse", scope: String = "") -> Dictionary:
+	if policy not in ["refuse","swap"]: return {"ok":false,"error":"malformed_events"}
+	var records := events(action,scope)
+	records.append(record)
+	# Adding has no old slot to exchange. A collision is always a refusal.
+	return set_bindings(action,records,"refuse",scope)
+
+func replace_binding(action: String, index: int, record: Dictionary, policy := "refuse", scope: String = "") -> Dictionary:
+	var area := scope_for(action,scope)
+	if not actions.has(action) or not actions[action].contexts.has(area): return {"ok":false,"error":"unknown_action"}
+	if actions[action].reserved: return {"ok":false,"error":"reserved"}
+	var records := events(action,area)
+	if index < 0 or index >= records.size(): return {"ok":false,"error":"invalid_index"}
+	var value := normalize(record)
+	if value.is_empty() or policy not in ["refuse","swap"]: return {"ok":false,"error":"malformed_events"}
+	if _reserved(action,value): return {"ok":false,"error":"reserved"}
+	var old: Dictionary = records[index]
+	records[index] = value
+	var collision := conflicts(action,[value],area)
+	if policy == "refuse" or collision.is_empty(): return set_bindings(action,records,"refuse",area)
+	if collision.size() != 1 or actions[collision[0]].reserved or not actions[collision[0]].contexts.has(area):
+		return {"ok":false,"error":"conflict","conflicts":collision}
+	var other: String = collision[0]
+	var other_records := events(other,area)
+	var indices: Array[int] = []
+	for slot in range(other_records.size()):
+		if _overlap(action,value,other,other_records[slot]): indices.append(slot)
+	if indices.size() != 1: return {"ok":false,"error":"conflict","conflicts":collision}
+	if _reserved(other,old): return {"ok":false,"error":"reserved"}
+	other_records[indices[0]] = old
+	var next := overrides.duplicate(true)
+	if not next.has(area): next[area] = {}
+	next[area][action] = records
+	next[area][other] = other_records
+	for id in next[area]:
+		var remaining := conflicts(id,next[area][id],area,next)
+		if not remaining.is_empty(): return {"ok":false,"error":"conflict","conflicts":remaining}
+	var guard := _menu_device_error(next)
+	if not guard.is_empty(): return guard
+	return _commit(next)
+
+func remove_binding(action: String, index: int, scope: String = "") -> Dictionary:
+	if not actions.has(action) or not actions[action].contexts.has(scope_for(action,scope)): return {"ok":false,"error":"unknown_action"}
+	if actions[action].reserved: return {"ok":false,"error":"reserved"}
+	var records := events(action,scope)
+	if index < 0 or index >= records.size(): return {"ok":false,"error":"invalid_index"}
+	records.remove_at(index)
+	return set_bindings(action,records,"refuse",scope)
 
 func reset_action(action: String, policy := "refuse", scope: String = "") -> Dictionary:
 	if not actions.has(action): return {"ok":false,"error":"unknown_action"}

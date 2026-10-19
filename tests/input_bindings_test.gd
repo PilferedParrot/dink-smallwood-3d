@@ -54,7 +54,9 @@ func table() -> void:
 			b.load_settings({"music":0.33,"sentinel":"keep me"})
 			if phase == "write":
 				check(b.reset_action(action,"refuse",scope).ok,"Reset default bindings "+scope+"/"+action)
-				check(b.set_bindings(action,[registry_script.key(KEY_F13)],"refuse",scope).ok,"Persist "+scope+"/"+action)
+				var replacement := [registry_script.key(KEY_F13)]
+				if scope == "menu" and action in b.ESSENTIAL_MENU: replacement.append(registry_script.pad(JOY_BUTTON_PADDLE1))
+				check(b.set_bindings(action,replacement,"refuse",scope).ok,"Persist "+scope+"/"+action)
 			else:
 				b.install()
 				watching = action
@@ -113,7 +115,7 @@ func robustness() -> void:
 	var restarted = registry_script.new("fps",b.settings_path)
 	restarted.load_settings()
 	check(restarted.events("talk") == [registry_script.key(KEY_K)] and restarted.events("attack") == b.defaults("talk"),"Swapped bindings survive restart")
-	check(b.set_bindings("ui_accept",[registry_script.key(KEY_K)]).ok,"Disjoint menu/gameplay contexts can share")
+	check(b.set_bindings("ui_accept",[registry_script.key(KEY_K),registry_script.pad(JOY_BUTTON_PADDLE1)]).ok,"Disjoint menu/gameplay contexts can share with both essential devices")
 	check(not b.set_bindings("fullscreen",[registry_script.key(KEY_K)]).ok,"Global binding overlaps menus and gameplay")
 	for keycode in [KEY_ESCAPE,KEY_F9]:
 		check(not b.set_bindings("magic",[registry_script.key(keycode)]).ok,"Reserved key cannot be taken")

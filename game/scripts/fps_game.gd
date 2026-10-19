@@ -88,7 +88,7 @@ func _new_game() -> void:
 	if not items.any(func(item: Dictionary): return str(item.get("script", "")).to_lower() == "item-b1"):
 		items.append({"script":"item-b1", "name":"Bow", "seq":0, "frame":1})
 		vm.globals["cur_weapon"] = items.size()
-		ui.notify("A travel bow is ready. Left click or RT to fire.")
+		ui.notify("A travel bow is ready. %s to fire." % bindings.label("attack", false, "", true))
 	_fps_face_mother()
 
 func _fps_face_mother() -> void:

@@ -1417,7 +1417,8 @@ func _ui_action(action: String, payload: Variant) -> void:
 		"setting":
 			settings[payload.key] = payload.value
 			_apply_settings()
-			_write_json("user://settings.json",settings)
+			var saved: Dictionary = bindings.save_settings()
+			if not saved.ok: push_warning("Settings were not saved: %s" % str(saved))
 		"title":
 			vm.cancel_all()
 			playing = false

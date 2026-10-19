@@ -2308,3 +2308,54 @@ the assumption in this run: an oversight reused the fixed deadline without
 measuring the644-screen workload first; the original budget's calibration has
 not been established. Its limit is intentionally unchanged in this input unit;
 the timeout and the successful native controls are recorded separately.
+
+### P3a review corrections — October 19
+
+Menu recovery must work for the device the player has. What broke: essential
+menu bindings could be emptied or reduced to the other device family and saved.
+Why made: reasoning stopped at Escape plus pointer recovery, overlooking both
+keyboard confirmation/navigation and a pad-only player's lack of Escape. The
+six directional/confirm/back actions now retain a keyboard key and a pad
+button or axis through whole-list and slot edits, swaps, resets and load-time
+repair. Native recovery fixtures use only one device family, with neither mouse
+nor Escape; their Reset button is explicitly a harness surface, not a P3a UI.
+
+What broke in the hints inventory: the opening bow toast still named physical
+default controls. Why made: an oversight placed that prose outside the binding
+labels, while a stale-whole-string test could only catch examples already known.
+The toast now queries Attack labels and a lexical class gate scans script string
+literals, with invented-input positives and the inventory's visual E badge as
+an inert negative control. Original DinkC words remain outside generated hints.
+The lexical gate is deliberately conservative; it is not a proof about all
+possible semantic phrasings or rendered layout.
+
+What broke in editing: whole-action replacement discarded other device slots.
+Why made: a documented but incomplete API design treated whole-list replacement
+as the only editing operation. Add/replace/remove now operate on explicit slots,
+with a one-slot exchange for an unambiguous swap. The existing whole-list API
+remains explicit. Every refusal leaves disk and live bindings unchanged,
+including when the other action in a swap would lose its final device slot.
+
+What broke in recovery: colliding valid overrides were all discarded, and a
+later save could overwrite unreadable or future-version settings without a copy.
+Why made: the deterministic-rejection heuristic was misapplied as reject-all;
+backup preservation and the separate volume-save path were overlooked. Load now
+considers collisions in registry order, preserves the first safe override and
+unrelated slots, and protects essential-menu defaults. Unreadable or unsupported
+settings are copied and hash-checked before replacement, using numbered suffixes
+when a backup already exists. Both binding and ordinary settings writes use
+that same atomic writer. Godot's documented
+[DirAccess.copy_absolute](https://docs.godotengine.org/en/stable/classes/class_diraccess.html#class-diraccess-method-copy-absolute)
+provides the file copy; no saved resources or objects are deserialized.
+
+The earlier attack gate established 2D dispatch and persistence; the broader FPS
+fixture reached the polled endpoint with a counter. That trade-off did not prove
+the actual projectile and held-fire behavior. The additional FPS fixture uses
+unmodified attack handling: persisted physical input launches a real bow arrow,
+starts recoil/cooldown, does not auto-repeat while held, clears on release and
+fires again on a fresh press. It also runs the opening bow toast; subsequent
+combat isolation deliberately skips further campaign progression.
+An initial combined fixture inherited a delayed opening freeze after one
+unfreeze; assuming that state would remain clear was a harness oversight.
+Opening/toast and outdoor combat now use separate instances with explicit
+combat preconditions, rather than changing production attack behavior.

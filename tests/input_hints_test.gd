@@ -1,4 +1,5 @@
-# Packed-render fixture: skips campaign progression for repeatable UI coverage.
+# Packed-render fixture: skips progression for repeatable UI coverage, then
+# starts a new game through title input and stops story tasks at the bow toast.
 # Navigation/confirmation/help/recovery use the real physical input pipeline.
 extends SceneTree
 const GAME = preload("res://scripts/fps_game.gd")
@@ -78,7 +79,11 @@ func _run() -> void:
 	var code := KEY_F13
 	for action in game.bindings.actions:
 		if game.bindings.actions[action].contexts == ["menu"]:
-			check(game.bindings.set_bindings(action,[game.bindings.key(code)]).ok,"Menu remap "+action)
+			var replacement := [game.bindings.key(code)]
+			if action in game.bindings.ESSENTIAL_MENU:
+				for record in game.bindings.defaults(action):
+					if record.type in ["pad","axis"]: replacement.append(record)
+			check(game.bindings.set_bindings(action,replacement).ok,"Menu remap "+action)
 			code += 1
 	await key(KEY_ESCAPE)
 	check(game.ui.page == "pause","Guaranteed Escape opens pause with every menu action remapped")
@@ -115,6 +120,18 @@ func _run() -> void:
 	check(game.bindings.events("ui_accept") == game.bindings.defaults("ui_accept"),"Reset restores menu controls")
 	await key(KEY_ESCAPE)
 	check(game.ui.page == "pause","Escape still works after reset")
+	check(game.bindings.set_bindings("attack",[game.bindings.key(KEY_K)]).ok,"Restore remapped Attack for opening toast")
+	check(game.bindings.set_bindings("talk",[game.bindings.key(KEY_J)]).ok,"Restore remapped Talk for opening toast")
+	game.playing = false
+	game.ui.show_title(false)
+	for _i in 4: await process_frame
+	await key(KEY_ENTER)
+	for _i in 180:
+		if game.ui.toast.text.begins_with("A travel bow is ready."): break
+		await process_frame
+	check(game.ui.toast.text == "A travel bow is ready. K to fire.","Actual title input reaches binding-derived opening toast")
+	game.vm.cancel_all()
+	await frame("bow-ready")
 	game.vm.cancel_all()
 	game.queue_free()
 	await process_frame
