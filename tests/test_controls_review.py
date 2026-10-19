@@ -6,7 +6,7 @@ import pytest
 from test_controls_page import GODOT, LOCK, ROOT
 
 
-@pytest.mark.parametrize('mode,large', [('pad',False),('keyboard',False),('layout',False),('layout',True),('dialogs',False)])
+@pytest.mark.parametrize('mode,large', [('pad',False),('keyboard',False),('axis_cancel',False),('layout',False),('layout',True),('dialogs',False)])
 def test_controls_review_regressions(tmp_path, mode, large):
     env = dict(os.environ, XDG_DATA_HOME=str(tmp_path/'data'),
                XDG_CONFIG_HOME=str(tmp_path/'config'), XDG_CACHE_HOME=str(tmp_path/'cache'))

@@ -292,6 +292,9 @@ func _input(event: InputEvent) -> void:
 			get_viewport().set_input_as_handled()
 		return
 	if event is InputEventMouseMotion: return
+	if not axis_token.is_empty() and blocked_axes.has(axis_token):
+		get_viewport().set_input_as_handled()
+		return
 	if event is InputEventJoypadButton or event is InputEventJoypadMotion:
 		if event.is_action_pressed("ui_cancel"):
 			if cancel_pressed_msec < 0:
@@ -312,7 +315,6 @@ func _input(event: InputEvent) -> void:
 			if Rect2(Vector2.ZERO,button.size).has_point(local.position): return
 	get_viewport().set_input_as_handled()
 	if event.is_echo(): return
-	if not axis_token.is_empty() and blocked_axes.has(axis_token): return
 	var captured: Dictionary = bindings.from_event(event)
 	if captured.is_empty(): return
 	if bindings.is_modifier(captured):

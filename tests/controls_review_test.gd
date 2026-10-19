@@ -18,6 +18,9 @@ func key(code: int) -> void:
 func pad_event(code: int, pressed: bool) -> void:
 	var e := InputEventJoypadButton.new(); e.device=3; e.button_index=code; e.pressed=pressed
 	Input.parse_input_event(e); await settle(2)
+func axis(value: float) -> void:
+	var e := InputEventJoypadMotion.new(); e.device=3; e.axis=JOY_AXIS_TRIGGER_LEFT; e.axis_value=value
+	Input.parse_input_event(e); await settle()
 func pad(code: int) -> void:
 	await pad_event(code,true); await pad_event(code,false); await settle()
 func nodes(parent: Node) -> Array[Node]:
@@ -67,6 +70,18 @@ func run() -> void:
 			check(ui.controls_menu.state=="list","F1 keyboard-only Escape cancels capture")
 			await key(KEY_ENTER); await key(KEY_ENTER)
 			check(ui.controls_menu.state=="proposal" and ui.controls_menu.record=={"type":"key","physical":KEY_ENTER},"F2 Enter is honestly a candidate during listening")
+	elif mode=="axis_cancel":
+		# Explicit registry fixture: remap menu-cancel while its future axis is held.
+		# Capture entry, neutral and the subsequent hold still use physical events.
+		await axis(0.9)
+		var changed: Dictionary=ui.bindings.replace_binding("ui_cancel",1,{"type":"axis","axis":JOY_AXIS_TRIGGER_LEFT,"direction":1},"refuse","menu")
+		check(changed.get("ok",false),"Axis-cancel fixture is valid")
+		await key(KEY_ENTER); await axis(1.0)
+		await create_timer(1.1).timeout
+		check(ui.controls_menu.state=="capture","Already-held cancel axis does not cancel or propose")
+		await axis(0.0); await axis(0.9); await create_timer(1.1).timeout; await settle()
+		check(ui.controls_menu.state=="list","Fresh remapped cancel-axis hold cancels directly")
+		await axis(0.0)
 	elif mode=="layout":
 		var viewport: Rect2=ui.controls_menu.scroll.get_global_rect()
 		var count := 0
