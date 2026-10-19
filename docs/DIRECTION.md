@@ -2393,3 +2393,33 @@ Escape cancellation and a visible 15-second timeout. A clash names
 the other action before offering Swap/Cancel; P3a still validates the entire
 transaction. Reset asks before changing one action or all actions. Unusual
 keys get readable names or a numeric key code. Changes save immediately.
+
+Capture first reviews the proposed change in plain words, including the old
+binding it replaces and, for a swap, where that old binding will go. Every pad
+button remains capturable: B proposes B, then the ordinary menu-back input can
+cancel its review. Removal is available in review as well as through the
+pointer's listening footer. Keyboard and pad users can therefore navigate to
+Remove without sacrificing an input to an undocumented capture shortcut. The
+selected context has an underline as well as gold text; focus keeps its frame.
+
+An early rendered Reset button collapsed horizontally and wrapped into a tall
+column. Why made: an oversight assumed an autowrapped native button retained
+its natural text minimum alongside an expanding label. Button width now derives
+from the theme font and style margins; height reuses the existing footer minimum.
+The layout gate checks every context at both player sizes and both text scales.
+
+The listening footer originally polled the global pointer position while
+handling a click. Why made: a state-polling heuristic was used where the event's
+own coordinates were authoritative. Injected events exposed it because the
+headless global pointer stayed at zero while native GUI clicks worked. An
+ordinary hardware mouse failure was not established; polling can also race
+queued hardware events. Hit testing now uses the engine's
+[make_input_local](https://docs.godotengine.org/en/stable/classes/class_canvasitem.html#class-canvasitem-method-make-input-local).
+Cancel and Remove are tested with event coordinates at both sizes and scales.
+
+Engine key identifiers and compressed stick signs also needed presentation
+work: treating debug names as player copy was an incomplete labeling heuristic.
+Application/media keys now have readable names or a numeric key code; stick
+labels retain their horizontal/vertical direction. A census covers defaults,
+unusual keys and actual slot text in every context. Even reserved-key prose
+queries the registry, preserving one source of binding names.

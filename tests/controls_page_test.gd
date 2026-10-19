@@ -156,6 +156,20 @@ func run() -> void:
 		await finish()
 		return
 	await frame("controls")
+	if phase == "frames":
+		await activate("attack_0")
+		await frame("capture")
+		await key(KEY_K)
+		await activate("bind")
+		check(game.bindings.events("attack").has({"type":"key","physical":KEY_K}),"Packed UI saves the captured Attack key")
+		await activate("attack_0")
+		await key(KEY_Q)
+		check(button("swap") != null,"Packed UI shows the real clash")
+		await frame("clash")
+		await activate("cancel")
+		await gameplay_frame()
+		await finish()
+		return
 	if phase == "navigation":
 		await navigation()
 		await finish()
@@ -225,18 +239,20 @@ func run() -> void:
 	check(game.bindings.events("attack").has(expected_record()),"Final binding persisted after reset-all workflow")
 	await frame("persisted")
 	if capture_frames:
-		# Presentation fixture: skip story progression and startup scripts.
-		game.playing = true
-		game.vm.cancel_all()
-		game.ui.close_menu()
-		game.load_map(439,false)
-		game.entities[1].frozen = false
-		game.fps_yaw = 0.55
-		game._sync_fps_camera()
-		await key(KEY_F1)
-		check(game.ui.hint.text.contains(game.bindings.short_label("attack")+"  Attack"),"Rendered gameplay hint follows remapped input")
-		await frame("gameplay-hint")
+		await gameplay_frame()
 	await finish()
+func gameplay_frame() -> void:
+	# Presentation fixture: skip story progression and startup scripts.
+	game.playing = true
+	game.vm.cancel_all()
+	game.ui.close_menu()
+	game.load_map(439,false)
+	game.entities[1].frozen = false
+	game.fps_yaw = 0.55
+	game._sync_fps_camera()
+	await key(KEY_F1)
+	check(game.ui.hint.text.contains(game.bindings.short_label("attack")+"  Attack"),"Rendered gameplay hint follows remapped input")
+	await frame("gameplay-hint")
 func navigation() -> void:
 	# Independent of the pending mutation API; this is not the complete G1 gate.
 	await activate("attack_0")
