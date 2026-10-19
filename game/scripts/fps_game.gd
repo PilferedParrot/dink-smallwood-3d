@@ -232,6 +232,7 @@ func load_map(number: int, run_scripts: bool = true) -> void:
 
 func _physics_process(delta: float) -> void:
 	if not playing or changing:
+		_reset_push()
 		_fps_restore_dialogue_camera()
 		_fps_update_mouse_mode()
 		return
@@ -241,6 +242,8 @@ func _physics_process(delta: float) -> void:
 	if not ui.modal and entities.has(1):
 		_fps_move_player(delta)
 		_update_ai(delta)
+	else:
+		_reset_push()
 	for id in entities.keys():
 		if entities.has(id): _animate(id, delta)
 	_fps_update_jump(delta)
@@ -273,25 +276,14 @@ func _physics_process(delta: float) -> void:
 		ui.show_hud(stats)
 
 func _fps_move_player(delta: float) -> void:
-	var player: Dictionary = entities[1]
-	if player.get("frozen", false) or int(player.get("disabled", 0)) != 0 or int(player.get("nocontrol", 0)) != 0 or attack_cooldown >= 0.2:
-		return
 	var deadzone := _fps_controller_deadzone()
 	var input := Input.get_vector("left", "right", "up", "down", deadzone)
-	if input == Vector2.ZERO:
-		if attack_cooldown <= 0.0: _set_animation(1, int(player.get("base_idle", 10)) + _cardinal(int(player.get("dir", 2))))
-		_transitions()
-		return
 	var forward3 := Vector3(-camera.global_transform.basis.z.x, 0.0, -camera.global_transform.basis.z.z).normalized()
 	var right3 := Vector3(camera.global_transform.basis.x.x, 0.0, camera.global_transform.basis.x.z).normalized()
 	var source_direction := Vector2(forward3.x * -input.y + right3.x * input.x, forward3.z * -input.y + right3.z * input.x).normalized()
-	player["dir"] = _direction(source_direction)
-	var speed := 105.0 * maxf(0.5, float(player.get("speed", 3)) / 3.0)
-	if Input.is_action_pressed("sprint"): speed *= 1.55
 	var from := _position2(1)
-	_move_entity(1, source_direction * speed * input.length() * delta)
-	_set_animation(1, int(player.get("base_walk", 70)) + int(player.dir))
-	_transitions(false,from)
+	if _move_player_input(source_direction * input.length(), delta, 1.55 if Input.is_action_pressed("sprint") else 1.0):
+		_transitions(false,from)
 
 func _edge_destination(pos: Vector2) -> Dictionary:
 	var target := current_screen

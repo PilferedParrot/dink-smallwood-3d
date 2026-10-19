@@ -939,6 +939,10 @@ class Campaign:
     def wizard_cave(self) -> dict[str, Any]:
         self._warp(6, 251, (467.0, 387.0), "wizard-leave-cabin")
         self.travel_route([283, 315, 314, 346, 378, 377, 376, 375, 374, 373, 372, 340, 341, 309, 277], "wizard-cave-road")
+        return self.cave_from_rock()
+
+    def cave_from_rock(self) -> dict[str, Any]:
+        """Continue from an earned map277 checkpoint with the same real inputs."""
         self.push_cave_rock()
         self.navigate(277, (275.0, 162.0), "wizard-cave-hole", transition=131)
         # S1-HOLE moves/animates Dink and loads 131. The runner only waits.

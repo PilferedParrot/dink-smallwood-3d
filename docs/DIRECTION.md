@@ -2175,3 +2175,92 @@ Native tests isolate profiles, use Dummy audio and default to bounded software
 rendering. CI requires Godot and xvfb; the allocator regression checks both
 stability and the authored pixel winner. Thread pinning did not fix the bug.
 See `docs/rc5/render-determinism.md` for evidence, verification, costs and limits.
+## Campaign PUSH dispatch (2026-10-19)
+
+Walking into a pushable source object now runs its DinkC `push` procedure after
+600 ms of blocked cardinal movement. Both the original overhead controller
+(`game.gd`) and the shipped first-person controller (`fps_game.gd`) use the same
+input/timer/dispatch path. The shipped `main.tscn` selects FPS; the overhead
+path is exercised by a direct regression host, not a player-selectable view.
+FPS facing follows movement in source coordinates:
+north-facing D strafe and east-facing W forward both yield native east6.
+Native diagonal directions1/3/7/9 do not start pushing.
+
+**Both roots.** The technical failure was an absent engine-to-script event:
+`story.json` retained all four PUSH procedures, but neither movement controller
+started the timer or dispatched them. The four-pixel camera-foot clearance also
+made a literal port of the original selection miss the rock. The development
+failure was an integration oversight: retaining and interpreting a source
+procedure was treated as sufficient without verifying the real movement-to-event
+path. This diagnosis is based on the missing call sites and movement-test gap,
+not a claim about a past author's intentions. Replacing the point mover with a
+finite foot required re-deriving the contact used by the interaction too.
+
+**Source derivation.** GNU FreeDink's `brain.cpp:592–650` constructs one-pixel
+movement probes; `live_screen.cpp:148–162` writes the raw hardbox into the mask,
+without player-radius growth. `update_frame.cpp:288–290,317–341` initializes
+the probes, runs the player brain and then performs collision checking.
+`freedink.cpp:100–129` stops on the previous probe,
+starts the timer only on blocked cardinal movement and non-water hardness,
+and clears it after free movement or a direction change. `brain_keyboard.cpp:
+190–214` clears PUSH/control on release of the initiating direction; `253–261`
+selects base310+dir, frame1, nocontrol, and dispatches after strictly more than
+600 ms. `live_sprite.cpp:146–186` releases nocontrol at animation completion;
+the timer is retained, permitting repetition while input remains held.
+
+The original dispatch (`brain_keyboard.cpp:54–85`) tests Dink's current foot
+point against every active scripted live sprite's raw hardbox grown by2. It
+has no forward target offset and no hard predicate on candidates. `rect.cpp:
+81–90` includes right/bottom edges. It visits every matching live sprite in
+ascending slot order, without an early return. Our movement's rectangles keep
+their existing Godot membership; PUSH uses the original inclusive membership.
+
+The rock's raw bounds on277 are [235,171,337,195]. The original east approach
+stops at x234, inside the grow2 selection beginning at233. Our unchanged
+collision adds radius4 and stops at x230.25, outside that selection. The fix
+retains the current-foot scan and additionally maps the actual blocked sprite's
+rejected probe to the nearest point of its raw rectangle:
+`contact = clamp(probe, raw.position, raw.end)`. At the west rock face this is
+(235,181). Only that actual blocker gains the finite-foot contact selection;
+a candidate chosen by both tests runs once. No clearance or reach was fitted
+to the cave. Querying navigation, NPC movement and scripted motion does not
+collect player push contacts. Anonymous tile blocking still selects a soft
+scripted sprite containing the actual foot, as the original permits; a mask
+without a matching sprite runs no PUSH procedure. Source water hardness2 does
+not start a timer.
+
+**Order and limits.** Original live slots are not native entity ids. Screen
+main runs before editors (`game_engine.cpp:710–726`); editors are created in
+ascending queue-or-y rank with editor-index ties (`editor_screen.cpp:54–87`),
+and background/hidden editor sprites do not retain live slots
+(`game_engine.cpp:483–508`). PUSH retains that arrival rank, including a fallback
+to original placement data for older saves; it places screen-main-created
+sprites before editors and later runtime sprites in creation order. The source
+allocator reuses inactive slots (`live_sprites_manager.cpp:65–95`); this port
+retains monotonic ids and does not reconstruct arbitrary historic slot reuse.
+All real multiple-selection pairs among the four procedures are the seven
+rock pairs on590, whose relative order is fully determined by editor draw rank.
+None of the four PUSH procedures calls `create_sprite`; source text effects do
+not reorder surviving editor candidates. The real editor4/11 overlap
+has source order11 then4, opposite native id order; the input test checks it.
+No global allocator change is needed for this class.
+
+| Procedure | Original placement(s) | Result/gate |
+| --- | --- | --- |
+| `s1-h1-4` | 1, 414, 446 | Furniture refusal text; no quest flag or passage opens. Two type0 placements on446 are source background rather than live PUSH targets. |
+| `s1-roc` | 277, 601 | Strength4 plus east6 moves the rock toward350 and sets `rock_placement=1`; west4 returns it toward285 and clears the flag. The277 placement covers the Bonca cave opening. |
+| `s2-idol` | 579 | Refuses pushing. Its main removes it only after `caveguy>4`; pushing itself does not remove it. |
+| `s3-rock` | 590, vision1 | Refuses pushing. Screen main selects this barrier while `story<8`; pushing does not bypass story progression. |
+
+Tests deliberately place Dink adjacent to unchanged source objects and skip
+startup/progression for those labelled scenarios. They exercise physical-key
+input, all four source procedures and their actual dialogue/quest effects;
+forward, strafe and overhead movement; repeated animation/release; overlapping
+candidates and source ordering; inclusive-edge selection; and negative controls
+for short contact, no PUSH procedure, a bare mask and diagonal movement.
+The earned-save export and continuation are separate campaign evidence.
+
+The scripted mover already completes at a gap below1px, so the moved rock can
+finish at349.58 rather than exactly350. Tests check script completion, its
+flag and that existing tolerance. Original integer-endpoint fidelity for other
+scripts comparing `sp_x` is outside this dispatch change.
