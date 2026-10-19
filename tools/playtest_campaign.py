@@ -757,8 +757,8 @@ class Campaign:
             self._call(label + "-level-choice-settle", lambda: self.session.wait(3))
         raise RouteFailure("level-up repeatedly interrupted earned save", "harness")
 
-    def _warp(self, screen: int, target: int, point: tuple[float, float], label: str) -> dict[str, Any]:
-        """Use a map's ordinary scripted door/edge warp and require its target."""
+    def _walk_to_authored_door_trigger(self, screen: int, target: int, point: tuple[float, float], label: str) -> dict[str, Any]:
+        """Walk through an authored door trigger with ordinary input; require its target."""
         approaches = []
         if screen == 409 and point == (397.0, 301.0):
             # Approach below the roadside prop, then along the cottage's
@@ -795,7 +795,7 @@ class Campaign:
         self._walk_point(440, (60.0, 20.0), 24.0, "ethel-north-road-approach")
         self._cross(408, "ethel-to-north-road", (320.0, -50.0))
         self._cross(409, "ethel-to-ethel-outdoor", (650.0, 200.0))
-        self._warp(409, 2, (397.0, 301.0), "ethel-enter-house")
+        self._walk_to_authored_door_trigger(409, 2, (397.0, 301.0), "ethel-enter-house")
 
         state = self.talk_to_script("s1-h2-o", "ethel")
         if not any("Ask after her pet" in str(button.get("text", ""))
@@ -810,7 +810,7 @@ class Campaign:
         # Leave Ethel's house before searching. FINDDUCK rolls when its map is
         # entered.  Read the live actor list at each entry rather than walking
         # speculative patterns through prop-dense village maps.
-        self._warp(2, 409, (314.0, 433.0), "ethel-leave-before-search")
+        self._walk_to_authored_door_trigger(2, 409, (314.0, 433.0), "ethel-leave-before-search")
         duck_state: dict[str, Any] | None = None
         for attempt in range(6):
             # 409 -> 408 -> 440 is the actual west/north route.  Do not ask a
@@ -864,7 +864,7 @@ class Campaign:
             self._cross(409, "duck-to-ethel-road", (320.0, -50.0))
         elif duck_screen != 409:
             raise RouteFailure("duck search ended on unexpected map %s" % state.get("screen"))
-        self._warp(409, 2, (397.0, 301.0), "ethel-return-house")
+        self._walk_to_authored_door_trigger(409, 2, (397.0, 301.0), "ethel-return-house")
         # S1-H2-O main, not talk(), acknowledges Quackers on the ordinary
         # house-entry script and advances the flag to 4.  Do not walk through
         # the cottage furniture toward Ethel while that automatic dialogue is
@@ -873,14 +873,14 @@ class Campaign:
         state = self.observe("ethel-complete")
         if int(state.get("globals", {}).get("old_womans_duck", 0)) != 4:
             raise RouteFailure("re-entering Ethel's house did not mark duck returned", "game suspected")
-        self._warp(2, 409, (314.0, 433.0), "ethel-leave-house")
+        self._walk_to_authored_door_trigger(2, 409, (314.0, 433.0), "ethel-leave-house")
         self._leave_ethel_outdoor("ethel-return-south-road")
         self._walk_point(408, (60.0, 395.0), 8.0, "ethel-return-408-south")
         self._cross(440, "ethel-return-east-road", (60.0, 650.0))
         self._walk_point(440, (60.0, 230.0), 12.0, "ethel-return-440-west")
         self._cross(439, "ethel-return-west-road", (-50.0, 230.0))
         self._walk_point(439, (560.0, 326.0), 24.0, "ethel-return-439-east")
-        self._warp(439, 1, (368.0, 280.0), "ethel-home-warp")
+        self._walk_to_authored_door_trigger(439, 1, (368.0, 280.0), "ethel-home-warp")
         state = self.observe("ethel-home-returned")
         if int(state.get("screen", -1)) != 1:
             raise RouteFailure("normal Ethel return route did not enter home map")
@@ -924,7 +924,7 @@ class Campaign:
         self.wizard_cave()
         self.wizard_reward()
         # Return along the source-map corridor to the Stonebrook bridge.
-        self._warp(6, 251, (467.0, 387.0), "terris-wizard-leave")
+        self._walk_to_authored_door_trigger(6, 251, (467.0, 387.0), "terris-wizard-leave")
         self.travel_route([283, 315, 314, 346, 378, 377, 376, 375, 407, 406, 405, 404], "terris-bridge-road")
         state = self.observe("terris-toll-before")
         gold = int(state.get("globals", {}).get("gold", 0))
@@ -941,7 +941,7 @@ class Campaign:
         self.checkpoint("terris-toll-complete", state)
         self.travel_route([403, 435, 467, 499, 500], "terris-town-road")
         self.navigate(500, (261.0, 350.0), "terris-maria-door")
-        self._warp(500, 36, (261.0, 329.0), "terris-enter-maria")
+        self._walk_to_authored_door_trigger(500, 36, (261.0, 329.0), "terris-enter-maria")
         return self.terris_arrival()
 
     def wizard_training(self) -> dict[str, Any]:
@@ -949,7 +949,7 @@ class Campaign:
         # allows story>=3; the introductory 376 scene was earned before LETTER.
         self.travel_route([440, 408, 376, 377, 378, 346, 314, 315, 283, 251], "wizard-cabin-road")
         self.navigate(251, (264.0, 345.0), "wizard-cabin-door")
-        self._warp(251, 6, (264.0, 319.0), "wizard-enter-cabin")
+        self._walk_to_authored_door_trigger(251, 6, (264.0, 319.0), "wizard-enter-cabin")
         self.navigate(6, (440.0, 195.0), "wizard-teacher-approach")
         self.talk_to_script("s1-mh-m", "wizard-teacher")
         self.await_button("Tell him you're worthy", limit=200)
@@ -966,7 +966,7 @@ class Campaign:
         return self.earned_save("wizard-training")
 
     def wizard_cave(self) -> dict[str, Any]:
-        self._warp(6, 251, (467.0, 387.0), "wizard-leave-cabin")
+        self._walk_to_authored_door_trigger(6, 251, (467.0, 387.0), "wizard-leave-cabin")
         self.travel_route([283, 315, 314, 346, 378, 377, 376, 375, 374, 373, 372, 340, 341, 309, 277], "wizard-cave-road")
         return self.cave_from_rock()
 
@@ -1037,10 +1037,10 @@ class Campaign:
 
     def wizard_reward(self) -> dict[str, Any]:
         self.travel_route([99, 131], "wizard-cave-return")
-        self._warp(131, 277, (288.0, 397.0), "wizard-leave-cave")
+        self._walk_to_authored_door_trigger(131, 277, (288.0, 397.0), "wizard-leave-cave")
         self.travel_route([309, 341, 340, 372, 373, 374, 375, 376, 377, 378, 346, 314, 315, 283, 251], "wizard-reward-road")
         self.navigate(251, (264.0, 345.0), "wizard-reward-door")
-        self._warp(251, 6, (264.0, 319.0), "wizard-reward-enter")
+        self._walk_to_authored_door_trigger(251, 6, (264.0, 319.0), "wizard-reward-enter")
         self.navigate(6, (346.0, 220.0), "wizard-scroll-approach")
         before = self.observe("wizard-reward-before")
         self.talk_to_script("s1-mh-f", "wizard-scroll")
@@ -1112,7 +1112,7 @@ class Campaign:
         self._walk_point(440, (60.0, 230.0), 8.0, "letter-return-west-road")
         self._cross(439, "letter-return-cottage-road", (-50.0, 230.0))
         self._walk_point(439, (560.0, 326.0), 8.0, "letter-door-east")
-        self._warp(439, 1, (368.0, 280.0), "letter-enter-home")
+        self._walk_to_authored_door_trigger(439, 1, (368.0, 280.0), "letter-enter-home")
         return self.letter_read()
 
     def letter_read(self) -> dict[str, Any]:
@@ -1309,7 +1309,7 @@ class Campaign:
             raise RouteFailure("home exterior fire scene changed story before its source completion", "game suspected")
         self.checkpoint("alktree-home-fire", exterior)
         self._walk_point(439, (560.0, 326.0), 8.0, "alktree-fire-door-east")
-        self._warp(439, 1, (368.0, 280.0), "alktree-return-home")
+        self._walk_to_authored_door_trigger(439, 1, (368.0, 280.0), "alktree-return-home")
         # S1-H1-S moves the frozen player through the doorway after the fifth
         # grief line.  The host preserves that scripted move and starts
         # S1-H1-O outside, so require both stages as one uninterrupted trace.

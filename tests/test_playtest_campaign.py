@@ -101,7 +101,7 @@ def test_door_approach_stops_on_an_unexpected_map(monkeypatch):
     campaign = Campaign(DelayedDialogue([{"screen": 409, "x": 270, "y": 392}]))
     monkeypatch.setattr(campaign, "_walk_point", lambda *args: {"screen": 441})
     with pytest.raises(RouteFailure, match="entered unexpected map 441") as exc:
-        campaign._warp(409, 2, (397, 301), "ethel-return-house")
+        campaign._walk_to_authored_door_trigger(409, 2, (397, 301), "ethel-return-house")
     assert exc.value.kind == "harness"
 
 

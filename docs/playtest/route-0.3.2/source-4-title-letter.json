@@ -1,0 +1,55 @@
+{
+  "base": "9e0a51f",
+  "date": "2026-10-19",
+  "trace": "source-4-title-letter.jsonl.gz",
+  "sha256": "c85a94754399611597b91ca28a2e685828297038a2e624059f29517eef613821",
+  "compressed_bytes": 331348,
+  "uncompressed_bytes": 26916163,
+  "records": 10193,
+  "protocol_commands": 5096,
+  "command_counts": {
+    "observe": 2820,
+    "screenshot": 26,
+    "menu_key": 101,
+    "wait": 417,
+    "look": 320,
+    "hold": 1408,
+    "pause": 4
+  },
+  "controller_calls_through_letter_save": 2276,
+  "original_full_run_controller_calls": 2478,
+  "source_report_ok": false,
+  "source_report_sha256": "fad73dc83917ababbb613f481ec8be7385e52864226de0b45a29284ca5cfc08f",
+  "original_trace_sha256": "044873d2c94cc26263110be945bd11e579bf220581c89e2ba9e76a16296c5ed0",
+  "end_checkpoint": "terris-letter-earned-save",
+  "last_command_id": "5096",
+  "end_frame": 19666,
+  "end_screen": 439,
+  "end_position": [
+    362.416656494141,
+    303.0
+  ],
+  "end_globals": {
+    "story": 6.0,
+    "pig_story": 1.0,
+    "old_womans_duck": 4.0,
+    "nuttree": 2.0,
+    "letter": 2.0,
+    "s2-map": 1.0,
+    "s2-aunt": 0.0
+  },
+  "sanitization": {
+    "changes": {
+      "session_path": 5097,
+      "screenshot_path": 26
+    },
+    "rules": [
+      "Replace only save.session_path with <isolated-session>.",
+      "Replace screenshot-response absolute path with the repository-relative committed capture path; screenshot command filenames stay unchanged.",
+      "Keep every command and all other response fields unchanged, including redundant observations and all telemetry."
+    ],
+    "privacy_scan": "No /home/, /tmp/, identity environment keys or email-shaped strings. Generated Godot @Button identifiers are retained.",
+    "all_input_commands_unchanged": true
+  },
+  "scope": "All native protocol records from campaign startup through the normal Save adventure/close-menu checkpoint after letter/map completion; later navigation and failure remain excluded, source report stays false."
+}
