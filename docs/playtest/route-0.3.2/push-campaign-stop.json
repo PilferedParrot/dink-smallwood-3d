@@ -1,0 +1,133 @@
+{
+  "implementation_sha": "eb9b27ca4c07b9eb5de9d7e7016a5d691e17e520",
+  "export_sha256": "b4b8c783521e8e29e2cc2798cac0eb2077144084cdd1a71e2c51561495d0f3c1",
+  "initial_earned_save_sha256": "5d275b27c644cac8ed569e04533fbcfdc82bcee6a66a7ea381e27a8d5a57f7c3",
+  "source_report_sha256": "b2706b40e73059502592594cbf091fc1ddd86e0a48da06021b88f8cccb724a0c",
+  "retained_raw_report_sha256": "601f85fd689a01022b5938ffb11fd224917c133f2199faa523932dea6f092b8d",
+  "setup": "Normal Continue of an unmodified earned campaign checkpoint; no progression or entity injection. Each leg ends with a normal in-game save; reports bind the source report and save hashes back to P1's earned pre-push checkpoint. Runtime is editor engine with the export embedded resources and external real-input bridge; actual executable startup/F9 is a separate proof.",
+  "commands": 104,
+  "error_as_recorded": "could not cross into map 99 at wizard-bonca-road-99",
+  "failure_class_as_recorded": "bot/incomplete",
+  "reassessment": "Game campaign edge-crossing failure: unconditional target-indoor rule rejects this authored open seam. Dink can escape in three other directions; this is not a zero-motion trap. Later modal speech is a separate failure.",
+  "quest": {
+    "strength": 4.0,
+    "life": 8.0,
+    "wizard_see": 2.0,
+    "rock_placement": 1.0,
+    "story": 6.0
+  },
+  "cross_commands": 38,
+  "cross_commands_before_modal_speech": 18,
+  "before_modal_with_released_controls": 8,
+  "before_modal_with_push_animation_nocontrol": 10,
+  "nocontrol_explanation": "Ten nonmodal samples are the ordinary PUSH animation playing against the blocked edge after600ms; frozen is false. They are not a script freeze. Eight samples, including the first failed crossing, have nocontrol0.",
+  "first_released_cross": {
+    "screen": 131,
+    "x": 289.375,
+    "y": 0.750836372375488,
+    "cardinal_blocked": {
+      "east": false,
+      "north": true,
+      "south": false,
+      "west": false
+    },
+    "frozen": false,
+    "disabled": 0,
+    "nocontrol": 0,
+    "modal": false,
+    "dialogue": false,
+    "recent_dialogue": [
+      "In a cave to the west Dink.",
+      "I won't fail you.",
+      "Here Dink, take this.  This red potion will strengthen you.",
+      "It's .. it's moving...",
+      "Can we leave now? <shiver>"
+    ],
+    "scripts": {
+      "dialogue_busy": false,
+      "entities": [
+        {
+          "id": 1985,
+          "script": "s1-h1-3"
+        }
+      ],
+      "generation": 4,
+      "screen_script": "s1-caves",
+      "vm_live_tasks": 0
+    }
+  },
+  "last_released_cross": {
+    "screen": 131,
+    "x": 290.008544921875,
+    "y": 0.750836372375488,
+    "cardinal_blocked": {
+      "east": false,
+      "north": true,
+      "south": false,
+      "west": false
+    },
+    "frozen": false,
+    "disabled": 0,
+    "nocontrol": 0,
+    "modal": false,
+    "dialogue": false,
+    "recent_dialogue": [
+      "In a cave to the west Dink.",
+      "I won't fail you.",
+      "Here Dink, take this.  This red potion will strengthen you.",
+      "It's .. it's moving...",
+      "Can we leave now? <shiver>"
+    ],
+    "scripts": {
+      "dialogue_busy": false,
+      "entities": [
+        {
+          "id": 1985,
+          "script": "s1-h1-3"
+        }
+      ],
+      "generation": 4,
+      "screen_script": "s1-caves",
+      "vm_live_tasks": 1
+    }
+  },
+  "final_state_with_later_speech": {
+    "screen": 131,
+    "x": 290.013671875,
+    "y": 0.750836372375488,
+    "cardinal_blocked": {
+      "east": false,
+      "north": true,
+      "south": false,
+      "west": false
+    },
+    "frozen": false,
+    "disabled": 0,
+    "nocontrol": 0,
+    "modal": true,
+    "dialogue": true,
+    "recent_dialogue": [
+      "I won't fail you.",
+      "Here Dink, take this.  This red potion will strengthen you.",
+      "It's .. it's moving...",
+      "Can we leave now? <shiver>",
+      "I'm scared."
+    ],
+    "scripts": {
+      "dialogue_busy": true,
+      "entities": [
+        {
+          "id": 1985,
+          "script": "s1-h1-3"
+        }
+      ],
+      "generation": 4,
+      "screen_script": "s1-caves",
+      "vm_live_tasks": 1
+    }
+  },
+  "owner_intervention": "push-indoor-owner.json",
+  "class_inventory": "push-indoor-edges.json",
+  "earned_extent": "Normal input pushed277 rock, used authored S1-HOLE entrance to131, and walked to131 north edge. Bonca99/100, wizard reward and Terris not reached. Retained normal save is the pre-push checkpoint; no scenario intervention is used as campaign progress.",
+  "retained_normal_save_sha256": "ca4c7bbeee2e304e819bb129526610e7a95898bacbeee803322bbd316a0fb171"
+}

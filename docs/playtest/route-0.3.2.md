@@ -487,3 +487,35 @@ and the other assets have not received a full presentation judgment.
 | 92 | 9 | `beach-09.png` | 26 |
 | 92 | 10 | `beach-10.png` | 44 |
 | 92 | 11 | `beach-11.png` | 49 |
+
+### Earned continuation to the next real stop
+
+The fixed packed-resource run normally Continues the untouched earned save,
+pushes the rock and enters 131. The labelled Enter workaround lets it traverse
+the cave to its north edge. After 104 commands, it stops at
+(290.0137,0.7508), trying to cross into 99 on the route to Bonca 100. The
+[compact stop evidence](route-0.3.2/push-campaign-stop.json) preserves the raw
+`bot/incomplete` classification and records the source-based reassessment as
+a **game campaign edge-crossing failure**. Bonca, the wizard reward and Terris
+remain uncompleted; the retained normal save is still the pre-push checkpoint.
+
+This crossing failed before the later ambient card: 18 crossing commands were
+nonmodal, 8 with controls fully released and10 during ordinary PUSH-animation
+nocontrol. The first failed crossing already had released controls. All 18
+north probes were blocked; east/south/west remained free. The later “I'm
+scared.” card does not explain the initial crossing refusal.
+
+`fps_game.gd:344` rejects every target screen with `indoor=true`; the connected
+cave screens 131/99/100 all have that original Dink.dat bit. FreeDink
+`freedink.cpp:132–242` permits linked unlocked edges and uses indoor only for
+`last_map`. In a labelled [source-engine intervention](route-0.3.2/push-indoor-owner.json),
+original `W` held for 12 physics ticks stays on 131, while changing only 99's in-memory indoor flag makes
+the same probe free and the same input reaches 99. It changes no source or saved game and
+is ownership evidence only. Both causes are recorded in DIRECTION.md.
+
+The [full indoor-edge class](route-0.3.2/push-indoor-edges.json) contains 115
+adjacent pairs and 230 directed metadata refusals. Current automated-route
+members are 131→99, 99→100, 100→99 and99→131. Every other pair is listed and tagged
+outside this route's scope. This inventory does not assert 115 physically open
+seams: source hardness, walls, locks and script state may legitimately stop
+other edges. The 570-screen outdoor static survey does not cover this class.

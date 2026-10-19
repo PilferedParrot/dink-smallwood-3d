@@ -2358,3 +2358,42 @@ certify this fidelity claim. This unit retains the production UI behavior. The c
 Enter when initial or mid-walk text appears, an explicit workaround for the
 game defect; its tests cover both timings. The first stalled trace remains
 recorded with its original classification and the source-based reassessment.
+
+### Next earned stop: indoor cave edge (2026-10-19)
+
+On the reviewed PUSH build, normal input pushes the rock, enters 131 through
+`S1-HOLE`, and walks to 131's north edge. The intended next screen is 99, then 100
+for Bonca. The crossing stops at y 0.7508. The technical owner is the unconditional
+`target.indoor` rejection in `fps_game.gd:344`, introduced in `f98c39d` with the
+continuous-neighbor collision work. All 131/99/100 carry the original indoor bit,
+read directly from Dink.dat (`tools/import_assets.py:21–27,89–98`). FreeDink's
+`did_player_cross_screen` (`freedink.cpp:132–242`) allows a linked, unlocked
+neighbor and uses indoor only to decide whether to update `last_map`.
+
+The development cause is a misapplied boundary heuristic: an indoor target was
+classified as an invalid continuous-world neighbor. The accompanying coverage
+was explicitly 570 **outdoor** screens; it excluded the indoor class where the
+cave route crosses adjacent screens. This diagnosis follows the condition and
+the recorded scope of `f98c39d`, rather than attributing a private intention to
+its author. An indoor bit alone is not evidence of an impassable seam.
+
+The compact earned [stop record](playtest/route-0.3.2/push-campaign-stop.json)
+separates 18 nonmodal crossing attempts: 8 with controls released, 10 with ordinary
+PUSH-animation nocontrol after the source delay. Frozen remains false; those
+animation samples are not a script freeze. A later ambient card is a separate
+modal-speech defect. North is blocked while east/south/west are free: this is
+an authored campaign edge-crossing failure, not a zero-motion trap.
+
+A labelled [ownership intervention](playtest/route-0.3.2/push-indoor-owner.json)
+starts a scenario at the measured stop, with map startup skipped. Original `W` held for 12 physics ticks
+stays on 131; changing only 99's indoor flag in memory frees the same north probe
+and the same input reaches 99. No source/save is changed, and this intervention is never
+counted as earned progression. Production seam behavior is unchanged in PUSH.
+
+The [complete metadata census](playtest/route-0.3.2/push-indoor-edges.json)
+lists 115 adjacent indoor pairs and both directed refusals (230), with scripts
+and source hashes. It tags the current planned route 131→99→100 and reverse
+100→99→131. The other pairs are outside this automated route's scope, not
+certified irrelevant to the wider campaign. Adjacency is not proof of a
+physically open seam: source hardness, walls, locks and arrival state still
+need their own checks. Only 131→99 has the live ownership intervention here.
