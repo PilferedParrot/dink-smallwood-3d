@@ -94,8 +94,14 @@ func _run() -> void:
 	check(game.bindings.look_label().contains("right F13"),"Look labels name remapped direction")
 	await tap(KEY_SPACE)
 	check(game.fps_vertical_velocity == 0,"Old Space cannot jump")
+	# Jump is edge-triggered in physics. The generic helper yields a render
+	# frame, so a manual consumer call afterward can miss the just-pressed edge.
+	# Let the actual physics loop consume it instead.
+	game.set_physics_process(true)
 	await event(BINDINGS.key(KEY_H),true)
-	game._fps_update_jump(0.1)
+	await physics_frame
+	await process_frame
+	game.set_physics_process(false)
 	await event(BINDINGS.key(KEY_H),false)
 	check(game.fps_jump_height > 0,"Remapped jump reaches consumer")
 	await tap(KEY_F14)

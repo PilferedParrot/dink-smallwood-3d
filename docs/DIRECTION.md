@@ -2279,3 +2279,10 @@ F9 cannot be assigned away. Refuse and one-action swaps are transactional with
 atomic writes; resets use the same conflict rules. Hints query the current
 binding and keyboard layout, including title/settings text on keyboard input.
 See `docs/INPUT_BINDINGS.md` for the data/API contract.
+
+The consumer fixture distinguishes held input from a one-frame edge: disabling
+physics and yielding a render frame before manually polling jump loses
+`is_action_just_pressed`. That was a harness oversight, not a game failure.
+Jump coverage now lets the real physics loop consume its physical input event;
+held-input probes retain deterministic manual stepping. Engine semantics:
+[Input.is_action_just_pressed](https://docs.godotengine.org/en/stable/classes/class_input.html#class-input-method-is-action-just-pressed).
