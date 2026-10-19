@@ -19,6 +19,12 @@ def run(profile, device, phase):
 
 
 @pytest.mark.parametrize('device',['keyboard','mouse','pad'])
+def test_each_device_navigates_all_groups_captures_and_cancels(tmp_path, device):
+    result = run(tmp_path,device,'navigation')
+    assert result.returncode == 0 and 'CONTROLS PASS '+device+' navigation' in result.stdout and 'SCRIPT ERROR' not in result.stderr, result.stdout+result.stderr
+
+
+@pytest.mark.parametrize('device',['keyboard','mouse','pad'])
 def test_device_only_remapping_swap_cancel_reset_and_restart(tmp_path, device):
     for phase in ['write','read']:
         result = run(tmp_path,device,phase)

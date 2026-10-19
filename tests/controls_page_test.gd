@@ -152,6 +152,10 @@ func run() -> void:
 		await finish()
 		return
 	await frame("controls")
+	if phase == "navigation":
+		await navigation()
+		await finish()
+		return
 	if phase == "read":
 		check(game.bindings.events("attack").has(expected_record()),"Restart restores saved "+device+" attack binding")
 		var text: String = game.bindings.event_label(expected_record())
@@ -219,6 +223,29 @@ func run() -> void:
 		check(game.ui.hint.text.contains(game.bindings.short_label("attack")+"  Attack"),"Rendered gameplay hint follows remapped input")
 		await frame("gameplay-hint")
 	await finish()
+func navigation() -> void:
+	# Independent of the pending mutation API; this is not the complete G1 gate.
+	await activate("attack_0")
+	check(game.ui.controls_menu.state == "capture","Device-only slot selection opens listening")
+	await new_input()
+	check(game.ui.controls_menu.state == "proposal","Device-only capture opens review")
+	await activate("cancel")
+	check(game.ui.controls_menu.state == "list","Device-only review cancellation returns focus")
+	await activate("group_menu")
+	await activate("ui_end_add")
+	check(game.ui.controls_menu.state == "capture","Device-only navigation reaches final menu row")
+	if device == "pad":
+		await pad(JOY_BUTTON_B)
+		check(game.ui.controls_menu.state == "proposal","B remains bindable")
+		await pad(JOY_BUTTON_B)
+	elif device == "keyboard": await key(KEY_ESCAPE)
+	else: await activate("cancel")
+	check(game.ui.controls_menu.state == "list","Device-only cancellation recovers from the bottom row")
+	await activate("group_2d")
+	await activate("group_global")
+	check(button("escape_0") != null and button("escape_0").disabled,"Reserved Escape is visibly immutable")
+	await activate("back")
+	check(game.ui.page == "settings","Device-only Back returns to Settings")
 func recovery() -> void:
 	# Deliberately use every menu row; every mutation still uses real screen input.
 	await activate("group_menu")
