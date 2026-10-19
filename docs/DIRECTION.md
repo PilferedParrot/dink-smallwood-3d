@@ -2292,8 +2292,12 @@ Our `_dialogue` makes every `say_stop` a blocking card (`fps_game.gd:687–740`,
 (289,354.25), all four collision probes were free, frozen=false and nocontrol=0,
 while the cave-noise card owned the stop. The technical cause is treating script
 suspension as player-input blocking. The development error was conflating those
-two engine semantics and omitting non-frozen speech/movement coverage. This
-unit retains the production UI behavior. The continuation presses ordinary
+two engine semantics and omitting non-frozen speech/movement coverage. The
+existing `speech_semantics_test.gd:50` explicitly expects `ui.modal` for
+`say_stop`, while its Python test calls this original blocking semantics;
+it checks script waiting and card ownership without attempting player
+movement. That test encodes the same assumption, so a green suite cannot
+certify this fidelity claim. This unit retains the production UI behavior. The continuation presses ordinary
 Enter when initial or mid-walk text appears, an explicit workaround for the
 game defect; its tests cover both timings. The first stalled trace remains
 recorded with its original classification and the source-based reassessment.
