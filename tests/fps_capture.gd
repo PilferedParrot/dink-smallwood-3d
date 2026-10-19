@@ -138,6 +138,35 @@ func _run() -> void:
 # {"name", "x", "y", "yaw", "pitch"} (the player's eye in the screen's source pixels, as the other options),
 # or {"name", "original": true}: the original's camera (orthographic, 45 degrees down, as the prototype's
 # _original_view), the screen's 600 x 400 picture with the fog off.
+func _source_mask_material(old: Material) -> Material:
+	if old is StandardMaterial3D:
+		var mat: StandardMaterial3D = old.duplicate()
+		mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+		mat.emission_enabled = false
+		if mat.albedo_texture == null or mat.albedo_texture.resource_name != "inferred_continuation_mask": mat.albedo_color = Color.BLACK
+		return mat
+	if old is ShaderMaterial:
+		var mat: ShaderMaterial = old.duplicate()
+		var shader := Shader.new()
+		shader.code = old.shader.code.replace("ALBEDO =", "ALBEDO = vec3(0.0) *").replace("ALBEDO=", "ALBEDO=vec3(0.0)*").replace("EMISSION =", "EMISSION = vec3(0.0) *").replace("EMISSION=", "EMISSION=vec3(0.0)*")
+		mat.shader = shader
+		return mat
+	var black := StandardMaterial3D.new()
+	black.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	black.albedo_color = Color.BLACK
+	return black
+
+func _blacken_for_source_mask(node: Node) -> void:
+	# An instance override wins over every surface override: replace it first.
+	# Shader colour is blackened without changing its alpha/depth calculation.
+	if node is GeometryInstance3D and node.material_override != null:
+		node.material_override = _source_mask_material(node.material_override)
+	elif node is MeshInstance3D and node.mesh != null:
+		for i in node.mesh.get_surface_count(): node.set_surface_override_material(i,_source_mask_material(node.get_active_material(i)))
+	elif node is MultiMeshInstance3D: node.material_override = _source_mask_material(null)
+	if node is SpriteBase3D: node.modulate = Color.BLACK
+	for child in node.get_children(): _blacken_for_source_mask(child)
+
 func _shoot(game, view: Dictionary, out_dir: String) -> void:
 	var cam: Camera3D = game.camera
 	var original := bool(view.get("original", false))
@@ -165,12 +194,19 @@ func _shoot(game, view: Dictionary, out_dir: String) -> void:
 	# facing as seen from the camera); the batch is frozen, so redraw them once for this view.
 	for id in game.entities.keys(): game._update_visual(id)
 	if game.fp_world != null and game.fp_world.has_method("face_neighbours"): game.fp_world.face_neighbours()
+	if "--building-source-mask" in OS.get_cmdline_user_args():
+		_blacken_for_source_mask(game)
+		if environment:
+			environment.background_mode = Environment.BG_COLOR
+			environment.background_color = Color.BLACK
+			environment.fog_enabled = false
 	await RenderingServer.frame_post_draw
 	await RenderingServer.frame_post_draw
 	var img := get_root().get_texture().get_image()
 	if original:
 		var rows := int(round(img.get_width() * (400.0 / sqrt(2.0)) / 600.0))
 		img = img.get_region(Rect2i(0, (img.get_height() - rows) / 2, img.get_width(), rows))
+		if "--building-source-mask" in OS.get_cmdline_user_args(): img.save_png(out_dir.path_join(str(view.name)+"-native.png"))
 		img.resize(600, 400, Image.INTERPOLATE_LANCZOS)
 	img.save_png(out_dir.path_join(str(view.name) + ".png"))
 	print("SHOT ", view.name)

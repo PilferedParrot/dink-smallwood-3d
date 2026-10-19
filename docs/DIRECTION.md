@@ -2895,3 +2895,36 @@ Pause, after Pause and during menu navigation; an unknown replacement still
 fails without selection. The observed replacement of an already open Pause
 menu is a separate UX finding, not changed by this unit. Route screenshots now
 use actual checkpoint names rather than the similarly named input trace labels.
+
+## Native material in unsupported fitted strips — October 19
+
+What broke: a fitted plane sometimes extends a few texels beyond the original
+sprite's jagged alpha silhouette. The nearest-colour hole filler extruded one
+edge pixel into a visible stripe fan. The cottage's UVs still had native source
+scale and full rank. Why we made it: we generalized seam padding into visible
+surface material and accepted original-camera coverage without testing local
+pixel provenance at eye level.
+
+`building_continuation.gd` now copies existing authored material at integer
+source-pixel spacing into these unsupported strips. It preserves composed doors,
+signs and shadows, geometry, and the original UV lattice. A connected strip first
+takes one translated patch from its own material domain; where that cannot fit,
+a periodic authored square from that domain supplies the continuation. These
+pixels are inferred surface material, not newly painted artwork. Singleton holes
+retain their previous padding. Local donor support, provenance Jacobians and
+repeated runs distinguish the old fan from native material; whole-face density
+alone cannot do that.
+
+Compatible donor maps share atlases. Huts must share their repeated source bands:
+one material per repaired quad would exceed the existing 128-role render-priority
+limit. Conflicting maps remain separate. Crops retain eight source pixels of
+wrapped padding; domains whose original camera selects mip levels retain the
+full native lattice so cropping cannot move authored samples. Across the direct
+constructor probe, unique RGBA texture payload including mips is 97,770,300 bytes,
+versus 67,891,704 before; this is a software-renderer resource measurement, not a
+hardware frame-rate result.
+
+The separate 328 source/UV-deduplicated rank-1 hut bands remain excluded from
+this repair; they are not passing controls. Castle wall, tower, block and cap
+emitters were not measured here. See [building-continuations.md](building-continuations.md)
+for the source-derived method, regeneration and rendered mask contract.
