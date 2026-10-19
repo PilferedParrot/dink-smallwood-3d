@@ -1,0 +1,129 @@
+{
+  "implementation_sha": "9cae768a1669b0146f8b9b06bdead7a8940cafd2",
+  "export_sha256": "5467026b37454066398ae2cc0590029c150f640a67b6f23c4169eb13a931b519",
+  "earned_save_sha256": "5d275b27c644cac8ed569e04533fbcfdc82bcee6a66a7ea381e27a8d5a57f7c3",
+  "setup": "Normal Continue of an unmodified earned map277 pre-push save; no scenario/progression injection. OS D1.2s pushes east, release allows original script completion, D0.1s passes the old collision boundary; F9 records actual executable state.",
+  "states": [
+    {
+      "player": {
+        "dir": 8,
+        "x": 225.000366210938,
+        "y": 180.999481201172
+      },
+      "camera": {
+        "pitch": -0.08,
+        "yaw": -6.28151762741595
+      },
+      "rock": {
+        "x": 285.0,
+        "y": 180.0,
+        "active": 1.0,
+        "script": "s1-roc"
+      },
+      "globals": {
+        "strength": 4.0,
+        "wizard_see": 2.0,
+        "rock_placement": 0.0
+      }
+    },
+    {
+      "player": {
+        "dir": 6,
+        "x": 230.250366210938,
+        "y": 180.879364013672
+      },
+      "camera": {
+        "pitch": -0.08,
+        "yaw": -6.28151762741595
+      },
+      "rock": {
+        "x": 349.16666666667,
+        "y": 180.0,
+        "active": 1.0,
+        "script": "s1-roc"
+      },
+      "globals": {
+        "strength": 4.0,
+        "wizard_see": 2.0,
+        "rock_placement": 1.0
+      }
+    },
+    {
+      "player": {
+        "dir": 6,
+        "x": 240.750366210938,
+        "y": 180.861785888672
+      },
+      "camera": {
+        "pitch": -0.08,
+        "yaw": -6.28151762741595
+      },
+      "rock": {
+        "x": 349.16666666667,
+        "y": 180.0,
+        "active": 1.0,
+        "script": "s1-roc"
+      },
+      "globals": {
+        "strength": 4.0,
+        "wizard_see": 2.0,
+        "rock_placement": 1.0
+      }
+    }
+  ],
+  "f9_records": [
+    {
+      "state": "before",
+      "record": "push-export-before.json",
+      "image": "push-export-before.png",
+      "original_record_sha256": "57ef30ecc87e97f8f909e9adca2246c79faab8a1bb3f4f6d2581961186b003d0",
+      "published_record_sha256": "2d0e043c840196f2387a030b92a83dba0c3f9d4b49e27823858477b84179eeed",
+      "image_sha256": "32992e2cbf521c4fbf5f858844892e278c22006f5cae26339d164e6b71ca07c1",
+      "change": "Only screenshot basename rewritten; game state retained."
+    },
+    {
+      "state": "pushed",
+      "record": "push-export-pushed.json",
+      "image": "push-export-pushed.png",
+      "original_record_sha256": "ebb1f920b104766d315801969b821488fb14adc1eef42ef5951f8a6c416af444",
+      "published_record_sha256": "4da278fe63820eb8546a483190824e53ec88c2fb4da2b2171126d05082090fd3",
+      "image_sha256": "6b90c3b5b40258f5d07b992776c7cb912f90acd87c030ff685fe01dd490d8e92",
+      "change": "Only screenshot basename rewritten; game state retained."
+    },
+    {
+      "state": "passage",
+      "record": "push-export-passage.json",
+      "image": "push-export-passage.png",
+      "original_record_sha256": "43ecd198fe6c942e082cb57ea684a874859cacfa018df9a844ff61479c9fb248",
+      "published_record_sha256": "ac735af71661075010bac2449d52e093cf64c0391ba9339b5168f18931fa14ef",
+      "image_sha256": "5e9c6b1f04c48ada4d7baf50c1d128f223367d3c88ebbfa3e6ddf0718c90055e",
+      "change": "Only screenshot basename rewritten; game state retained."
+    }
+  ],
+  "visual": {
+    "setup": "Normal Continue of unchanged earned save, packed resources; ordinary mouse look turns east, held W45 starts push, release and wait allow the original script to finish. No scenario or state injection.",
+    "kind": "Editor engine with exported embedded resources and external real-input bridge; normal Continue of same earned save;12 normal ticks settle the150ms HUD refresh before camera/frames.",
+    "frames": [
+      {
+        "image": "push-east-before.png",
+        "sha256": "4cf8dbaa23f55681bb13cbc78cef325d669f61999521b9072a53bb78a1e152dd"
+      },
+      {
+        "image": "push-east-after.png",
+        "sha256": "9af8d1e971ccf7178e3154cc38d362aa49cc1919ac9c131349933f299028df5b"
+      }
+    ],
+    "before": {
+      "screen": 277,
+      "x": 225.000366210938,
+      "y": 180.999481201172,
+      "yaw": -7.83732506149798
+    },
+    "after": {
+      "screen": 277,
+      "x": 230.249633789062,
+      "y": 179.804565429688,
+      "yaw": -7.83732506149798
+    }
+  }
+}

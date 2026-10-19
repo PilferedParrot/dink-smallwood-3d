@@ -369,3 +369,110 @@ The earned-prefix assertions and selected rendered frames do not certify the
 whole campaign, every possible save, or the overall player experience. An
 unfinished milestone remains unfinished even when its preceding quest flags
 and controls are verified. No release, deployment or publishing is implied.
+
+
+## PUSH follow-up on build `9cae768` — 2026-10-19
+
+The same unmodified earned pre-push save now runs `S1-ROC.push` through normal
+movement. Source implementation: `9cae768a1669b0146f8b9b06bdead7a8940cafd2`;
+the Linux release-preset executable SHA-256 is
+`5467026b37454066398ae2cc0590029c150f640a67b6f23c4169eb13a931b519`.
+This is a local test build of 0.3.2, not a release or an installed-game change.
+
+The [focused input cases](route-0.3.2/push-input.json) pass all 15 scenarios.
+The [same cave case on 434db5a](route-0.3.2/push-must-fail.json) fails with zero
+PUSH calls and `rock_placement=0`. All four original PUSH procedures run through
+physical input, including FPS forward/strafe and the overhead controller;
+short contact, anonymous mask, no-procedure and diagonal controls hold. Tests
+also cover strict 600 ms timing, animation/release/escape, soft scripted targets
+beside tile collision, inclusive selection edges, all matches and the actual
+map 590 editor 11-before-4 order. The source derivation and both causes of the
+missing interaction are in [DIRECTION.md](../DIRECTION.md#campaign-push-dispatch-2026-10-19).
+
+### Actual executable, same earned save
+
+`tools/repro_cave_rock.py --expect-push` normally Continues the earned save
+(hash `5d275b27c644cac8ed569e04533fbcfdc82bcee6a66a7ea381e27a8d5a57f7c3`).
+OS D for 1.2 s initiates the push; release lets the original rock script finish. F9
+records the flag changing 0→1 and rock x 285→349.1666667, within the existing
+scripted mover's below 1 px completion tolerance. A further D for 0.1 s reaches
+x240.7504, beyond the old collision boundary 231. Strength remains 4 and the
+script releases Dink's controls. This is normal Continue and OS input, with
+no scenario setup, quest mutation or direct procedure invocation.
+
+The [proof and record manifest](route-0.3.2/push-proof.json) bind the executable,
+earned save and all three [before](route-0.3.2/push-export-before.json),
+[pushed](route-0.3.2/push-export-pushed.json) and
+[passage](route-0.3.2/push-export-passage.json) F9 records to native images.
+Published records rewrite only the screenshot basename. The earned camera
+faces north, so the D strafe proof observes the interaction in state while the
+rock itself lies outside the image.
+
+A separate **rendered packed-resource check** normally Continues the same save,
+uses ordinary mouse look to face east, and W for 45 physics ticks to initiate the push. It releases
+movement and waits for script completion. It runs the editor engine with the
+export's embedded resources and external input bridge, rather than certifying
+the executable's startup loop a second time. Twelve normal physics ticks settle
+the 150 ms HUD refresh before the first image; an earlier capture before that
+refresh is retained privately as a harness presentation failure. Both settled
+frames show the earned life 8/10 and attack 4.
+
+![Before, facing the cave rock](route-0.3.2/push-east-before.png)
+
+![After the original push script, facing the uncovered crack](route-0.3.2/push-east-after.png)
+
+### Findings uncovered past the rock
+
+The first packed continuation completed the authored `S1-HOLE` transition and
+reached 131 (289,377), with `rock_placement=1`. Its next request to navigate on 277
+was a **harness failure**: it assumed the old screen persisted after held input
+and an asynchronous entrance. The controller now accepts either 277 or the
+authored 131 destination; tests reject unexpected transitions. The first trace
+remains retained rather than being replaced by a passing result.
+
+The next run stopped at 131 (289,354.25) during `S1-CAVES.noise`, with all four
+collision probes free, frozen=false and nocontrol=0. The modal text was “This
+cave sucks, let's leave...” (`S1-CAVES.noise:42`). The recorded classifier was
+`bot/incomplete`; comparison with FreeDink reclassifies the underlying stop as
+a **game control-fidelity failure**, not a physical trap. Original `say_stop`
+yields its script without freezing Dink; our dialogue card makes movement
+modal. Binding, text-lifetime and human-brain source citations and both causes
+are recorded in DIRECTION.md. The controller's ordinary Enter handling for
+initial or mid-walk cards is an explicit **workaround**, not a game repair.
+
+The uncovered crack also exposes a **game presentation failure**. `S1-HOLE`
+uses sequence 89/frame 9, `lands/Details/crack-09.png`; `_model_key` sends all
+`lands/Details` frames >=7 to `grass`, and this active type 1 sprite is not painted
+into the ground. It appears as upright jagged blades, although the portal
+script still functions. The technical cause is the wrong standing category;
+the development error is a folder/frame heuristic applied to a mixed image
+family instead of deriving the surface orientation from the source asset.
+Neither this renderer rule nor production dialogue behavior changes here.
+
+The [classification inventory](route-0.3.2/push-details-grass.json) lists all 18
+sequence/frame pairs reaching that default grass branch, with authored source
+placements. The known 89/9 case is included; 89/6 is an inert boundary control
+for this branch. Classification is not a count of visible failures: type 0
+instances can be painted on the ground, visions/persistence affect arrivals,
+and the other assets have not received a full presentation judgment.
+
+| Sequence | Frame | File under `assets/graphics/lands/Details/` | Authored placements |
+| --- | --- | --- | ---: |
+| 89 | 7 | `crack-07.png` | 0 |
+| 89 | 8 | `crack-08.png` | 0 |
+| 89 | 9 | `crack-09.png` | 5 |
+| 89 | 10 | `crack-10.png` | 11 |
+| 90 | 7 | `grave-07.png` | 27 |
+| 90 | 8 | `grave-08.png` | 99 |
+| 90 | 9 | `grave-09.png` | 4 |
+| 90 | 10 | `grave-10.png` | 12 |
+| 90 | 11 | `grave-11.png` | 1 |
+| 90 | 12 | `grave-12.png` | 3 |
+| 90 | 13 | `grave-13.png` | 1 |
+| 90 | 14 | `grave-14.png` | 0 |
+| 90 | 15 | `grave-15.png` | 0 |
+| 92 | 7 | `beach-07.png` | 36 |
+| 92 | 8 | `beach-08.png` | 22 |
+| 92 | 9 | `beach-09.png` | 26 |
+| 92 | 10 | `beach-10.png` | 44 |
+| 92 | 11 | `beach-11.png` | 49 |
