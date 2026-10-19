@@ -341,7 +341,9 @@ func _blocked(pos: Vector2, mover: int, from: Vector2 = Vector2.INF) -> bool:
 	var target: int = destination.screen
 	# There is no horizontal seam between the last and first columns of a row.
 	var column := (current_screen-1)%32
-	if locked or not world.screens.has(str(target)) or bool(world.screens[str(target)].get("indoor",false)) \
+	# FreeDink 109.6 freedink.cpp:132-242 uses indoor only for last_map.
+	# Linked rooms use the same incoming collision check as outdoor neighbors.
+	if locked or not world.screens.has(str(target)) \
 			or (pos.x < 20.0 and column == 0) or (pos.x >= 620.0 and column == 31): return true
 	var arrival := neighbour_arrival_state(target)
 	var saved_screen := current_screen

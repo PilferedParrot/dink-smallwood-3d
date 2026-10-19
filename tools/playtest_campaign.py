@@ -306,6 +306,7 @@ class Campaign:
             "title", "opening", "sack-collected", "to-pig-farm", "pig-story", "save-reload",
             "letter-complete", "wizard-training-earned-save", "wizard-rock-pushed",
             "wizard-bonca-defeated", "wizard-reward-earned-save", "terris-toll-complete",
+            "cross-wizard-bonca-road-99", "cross-wizard-bonca-road-100",
             "terris-arrival-complete",
         }:
             self._call("screenshot-" + name, lambda: self.session.screenshot(name + ".png"))

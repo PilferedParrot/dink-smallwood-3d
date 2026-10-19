@@ -6,6 +6,9 @@ var samples := 0
 var crossings := 0
 var rejected := 0
 var grids := 0
+var indoor_landings := 0
+var indoor_landing_traps := 0
+var only_sources: Array[int] = []
 var edge_coverage := {
 	"west": {"candidates":0,"walkable":0,"crossings":0,"rejected":0,"x_sum":0,"y_sum":0},
 	"east": {"candidates":0,"walkable":0,"crossings":0,"rejected":0,"x_sum":0,"y_sum":0},
@@ -17,6 +20,8 @@ var host_path := "res://../tests/collision_survey_host.gd"
 
 func _initialize() -> void:
 	for arg in OS.get_cmdline_user_args():
+		if arg.begins_with("--sources="):
+			for value in arg.trim_prefix("--sources=").split(",",false): only_sources.append(int(value))
 		if arg.begins_with("--report="): report_path = arg.trim_prefix("--report=")
 		if arg.begins_with("--host="): host_path = arg.trim_prefix("--host=")
 	_run.call_deferred()
@@ -42,6 +47,11 @@ func _run() -> void:
 	for key in game.world.screens:
 		if not game.world.screens[key].get("indoor",false): screens.append(int(key))
 	screens.sort()
+	if not only_sources.is_empty():
+		var filtered: Array[int] = []
+		for n in screens:
+			if n in only_sources: filtered.append(n)
+		screens = filtered
 	for n in screens:
 		game.load_map(n,false)
 		var exits: Array = []
@@ -73,12 +83,16 @@ func _run() -> void:
 				coverage.rejected += 1
 				if not escapes(game._position2(1)): failures.append({"kind":"rejected_trap","source":n,"p":[p.x,p.y]})
 				continue
-			if not game.world.screens.has(str(target)) or game.world.screens[str(target)].get("indoor",false): continue
+			if not game.world.screens.has(str(target)): continue
+			var indoor: bool = bool(game.world.screens[str(target)].get("indoor",false))
+			if indoor: indoor_landings += 1
 			crossings += 1
 			coverage.crossings += 1
 			game.load_map(target,false)
 			var q: Vector2 = destination.position
-			if not escapes(q): failures.append({"kind":"landing_trap","source":n,"target":target,"p":[q.x,q.y]})
+			if not escapes(q):
+				if indoor: indoor_landing_traps += 1
+				failures.append({"kind":"landing_trap","source":n,"target":target,"indoor":indoor,"p":[q.x,q.y]})
 			game.load_map(n,false)
 		# Every ordinary walkable 10px grid point. No placed point inside a solid
 		# is counted as reachable; subpixel boundaries are covered by input cases.
@@ -88,7 +102,7 @@ func _run() -> void:
 				if game._blocked(p,1): continue
 				grids += 1
 				if not escapes(p): failures.append({"kind":"grid_trap","source":n,"p":[p.x,p.y]})
-	var result := {"screens":screens.size(),"edge_coverage":edge_coverage,"edge_samples":samples,"crossings":crossings,"rejected":rejected,"grid_samples":grids,"failures":failures,"fixture":"vision0 editor layer; no startup scripts; every 1px edge cell, 10px interior grid"}
+	var result := {"host":host_path,"requested_sources":only_sources,"screens":screens.size(),"edge_coverage":edge_coverage,"edge_samples":samples,"crossings":crossings,"rejected":rejected,"grid_samples":grids,"indoor_landings":indoor_landings,"indoor_landing_traps":indoor_landing_traps,"failures":failures,"fixture":"vision0 editor layer; no startup scripts; outdoor source screens, all admitted target types; every 1px edge cell, 10px interior grid"}
 	if not report_path.is_empty():
 		var file := FileAccess.open(report_path,FileAccess.WRITE)
 		file.store_string(JSON.stringify(result,"\t"))

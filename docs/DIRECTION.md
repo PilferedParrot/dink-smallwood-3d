@@ -2397,3 +2397,73 @@ and source hashes. It tags the current planned route 131→99→100 and reverse
 certified irrelevant to the wider campaign. Adjacency is not proof of a
 physically open seam: source hardness, walls, locks and arrival state still
 need their own checks. Only 131→99 has the live ownership intervention here.
+
+## Indoor and mixed screen-edge links — 2026-10-19
+
+The cave's earned 131→99 crossing was stopped by the target's indoor bit in
+FPS `_blocked`, before any incoming collision test. `git blame` assigns that
+clause to f98c39d, “Preserve continuous FPS crossings and check incoming
+collision.” Its stated protection was to prevent discontinuous landings inside
+a target solid; its survey certified 570 outdoor screens. The second cause was
+a misapplied indoor-is-separate-world heuristic, reinforced by a renderer that
+composes outdoor neighbors but renders indoor rooms separately. The implementation
+and its verification stopped short of checking linked indoor maps. The commit
+states no independent reason for making the indoor bit solid.
+
+GNU FreeDink 109.6 `freedink.cpp:132–242` tests an active keyboard-brain player's
+crossing at x<20,x>619,y<0,y>399, unless walk_off_screen is set. It follows logical
+screen−1,+1,−32,+32 when the candidate is in 1..768, `map.loc[candidate]>0`, and the
+source is unlocked. `EditorMap.cpp:43–63` reads these loc/music/indoor arrays from
+Dink.dat. There is no `adjacentloc` symbol in this version; the inline loc checks
+implement that rule. Indoor affects only the last outdoor map remembered for the
+map view: `freedink.cpp:148,172,196,223,830`, `dinkc_bindings.cpp:670`, map use at
+`freedink.cpp:853`. It is not a collision flag.
+
+Movement hardness is evaluated before crossing (`freedink.cpp:80–129`).
+`live_screen.cpp:216–239` clamps out-of-range queries when screenlocked, otherwise
+returns zero beyond the current screen. Raw source tile masks and unscaled frame
+hardboxes are filled at `live_screen.cpp:132–169`, `game_engine.cpp:477–503,570–577`.
+FreeDink does not test target hardness first. On success it updates departure
+time, loads the target, resets movement/freeze/lock and music (`game_engine.cpp:
+325–373`), updates last_map only outdoors, resets vision/scripts, runs screen
+main, places sprites, then runs their mains (`game_engine.cpp:700–734`). It lands
+at 20/619/0/399 on the crossed axis. FPS retains its intentional continuous 600×400
+arrival, incoming-solid veto, one-pixel movement subdivision and no-row-wrap
+protection. This unit removes only the indoor eligibility clause; source and
+target startup, scripts, music and lock behavior still use the existing loader.
+
+The native class checker distinguishes link eligibility, source boundary hardness
+and FPS incoming collision. Empty-target fixtures isolate the metadata rule for
+all 230 directed indoor links and 16 mixed links. A separately implemented Python
+raw-mask census validates every original boundary count. Raw vision0 unlocked
+source data has 229 raw-open indoor edges;34→66 south is entirely raw-hard,
+including its exit warp. All 16 mixed edges are raw-open. “Open” means at least one free source boundary point; it does not
+certify reachability from a spawn or arbitrary script/persistence states. FPS's
+fitted-source collision and incoming-solid veto are intentional physical
+differences, reported individually rather than called original equivalence.
+
+FreeDink's inline ±1 arithmetic would also accept 22 mixed directed row-wrap links
+between a row's last column and the next row's first. They are listed separately
+outside the 115 geometric indoor pairs, as retained FPS no-row-wrap differences;
+16 mixed geometric links therefore means 38 mixed inline loc links. The retained
+row guard has its own negative control.
+
+The first green census passed all 246 metadata cases but rejected a flawed
+negative control: 34→66 south is entirely hard in the original raster because
+bar exit sprite 16 is a hard warp to 498. `update_frame.cpp:347–353` calls
+`special_block` for that movement result before the edge crossing. The static
+FPS collision host skips warp hardness and does not execute transitions, so its
+25 free south points cannot certify the final exit choice. The control had
+conflated an event-triggering hard warp with an ordinary solid, stopping the
+derivation at the raster. The corrected census checks an ordinary wall point
+(screen 34, x=50, y=399), and a separate real-input fixture tests the wall stop and the
+authored 34→498 redirect, never 66. These fixtures skip campaign startup and are
+labelled as such; earned cave progression remains a separate test.
+
+The first full input fixture did observe 34→498, never 66, but its reverse check
+failed because the injected x=50,y=347 pose was inside left wall sprites 11 and
+23. The selected south wall alone did not establish a valid approach. This was
+another fixture oversight: collision ownership was checked for one wall rather
+than every intersecting owner. The corrected fixture uses x=100 and requires
+native free approach/retreat probes and a blocked forward probe before input,
+recording the sprite owners and tile hardness. The game needs no change for it.
