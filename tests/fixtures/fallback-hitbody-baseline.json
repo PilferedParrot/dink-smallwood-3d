@@ -581,34 +581,34 @@
       "key": "bed",
       "path": "assets/graphics/inside/details/inacc-03.png",
       "body_center": [
-        -1.17499995231628,
-        0.752499997615814,
-        1.07500004768372
+        -1.53374981880188,
+        0.279999971389771,
+        0.987500071525574
       ],
       "model_center": [
-        -1.17499995231628,
-        0.752500057220459,
-        1.07500004768372
+        -1.53374993801117,
+        0.280000001192093,
+        0.987500071525574
       ],
       "body_size": [
-        1.48224997520447,
-        1.50499999523163,
-        0.699999988079071
+        2.11749982833862,
+        0.559999942779541,
+        1.08500003814697
       ],
       "model_size": [
-        1.48225009441376,
-        1.50500011444092,
-        0.700000107288361
+        2.1175000667572,
+        0.560000002384186,
+        1.08500003814697
       ],
       "treatment": "unchanged-followup",
       "source_type": 1,
       "known_defect": {
-        "reason": "Size70 bed is outside the source fit size100 contract; legacy proxy retained.",
+        "reason": "Size70 bed now takes the P4b bed fit (INTEGRATE-2 merge); its body spans the hardbox exactly in x but exceeds it in depth (north -2.8 px, south +10.5 px). Not a pass of the hardbox registration gate.",
         "body_edge_offsets_px": {
-          "west": 27.05499935150138,
-          "north": 8.399994850158492,
-          "east": 1.6450014114380025,
-          "south": 6.299996376037424
+          "west": 7.62939453e-06,
+          "north": -2.80000400543213,
+          "east": 3.81469727e-06,
+          "south": 10.4999914169312
         },
         "measurement": "Native legacy ray-body XZ edges minus source hardbox edges, source pixels; editor-static fixture."
       }
