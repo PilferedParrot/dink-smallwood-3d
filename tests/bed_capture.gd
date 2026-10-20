@@ -37,12 +37,12 @@ func _bed_provenance(node: Node, solids) -> void:
 			if not solids.bed_parts.textures.has(domain):continue
 			var donors: Array=solids.bed_parts.textures[domain].donors
 			var image:=Image.create(121,93,false,Image.FORMAT_RGBA8)
-			var visible_face:=face in [1,2,4]
+			var visible_face: bool=face in [1,2,4]
 			if part=="bed:frame" and face==4:visible_face=false
 			if part=="bed:post1" and face!=4:visible_face=false
 			for y in 93:
 				for x in 121:
-					var authored:=visible_face and int(donors[y*121+x])==y*121+x
+					var authored: bool=visible_face and int(donors[y*121+x])==y*121+x
 					image.set_pixel(x,y,Color.CYAN if authored else Color.MAGENTA)
 			var mat: StandardMaterial3D=old.duplicate()
 			mat.albedo_texture=ImageTexture.create_from_image(image)
