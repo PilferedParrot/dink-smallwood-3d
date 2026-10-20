@@ -14,8 +14,10 @@ func settle(count := 14) -> void:
 func shot(ui, surface: String, size: Vector2i, plain: bool, scale: float) -> void:
 	await settle(8)
 	var image := root.get_texture().get_image()
-	var card: Rect2 = ui.panel.get_global_rect().grow(40).intersection(Rect2(Vector2.ZERO, Vector2(size)))
-	image = image.get_region(Rect2i(card))
+	# The window is stretched to the base view (a 1920x1080 window shows 1422x800 units): crop in window pixels.
+	var ratio := Vector2(image.get_size()) / root.get_visible_rect().size
+	var card: Rect2 = ui.panel.get_global_rect().grow(40).intersection(root.get_visible_rect())
+	image = image.get_region(Rect2i(Rect2(card.position * ratio, card.size * ratio)))
 	image.save_png("%s/%s-%d-%s-%d.png" % [out, surface, size.x, "plain" if plain else "dink", roundi(scale * 100)])
 
 func step(scroll: ScrollContainer, notches: int) -> void:
@@ -31,7 +33,9 @@ func run() -> void:
 	for size in [Vector2i(1280, 800), Vector2i(1920, 1080)]:
 		for plain in [false, true]:
 			for scale in [1.0, 1.5, 2.0]:
+				DisplayServer.window_set_size(size)
 				root.size = size
+				await settle(4)
 				var ui = UI.new()
 				root.add_child(ui)
 				ui.set_text_scale(scale)
