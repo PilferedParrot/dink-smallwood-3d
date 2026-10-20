@@ -509,14 +509,14 @@ func _fit_dialogue_panel() -> void:
 		# Give the focused answer its full height first. The prompt has its own
 		# viewport and cannot push the selected action below the fold.
 		prompt_height = minf(choice_prompt.get_combined_minimum_size().y, maxf(0, available - answer_height))
-		# Whole lines: round down to the last line that fits, up to the first line when that is less.
-		prompt_height = choice_prompt_fit.whole_height(prompt_height, minf(prompt_height, float(choice_prompt.get_line_height())))
+		# Whole lines: the nearest line edge to the share, never below the first line.
+		prompt_height = choice_prompt_fit.whole_height(prompt_height, minf(prompt_height, float(choice_prompt.get_line_height())), maxf(0, available_height - chrome - answer_height))
 		if choice_prompt_box.custom_minimum_size.y != prompt_height:
 			choice_prompt_box.custom_minimum_size.y = prompt_height
-	# The text area gets whole lines (or whole answers): rounded down from the share the caps allow, or up to the
-	# reading floor when rounding down would go below it (by less than one atom; the 35% cap yields to the floor).
+	# The text area gets whole lines (or whole answers): the nearest line edge to the share the caps allow (up when the
+	# next line is at least half in and the screen has room), never below the reading floor.
 	var floor_height := answer_height if answer != null else readable_body
-	var shown: float = menu_fit.whole_height(maxf(0, height - chrome - prompt_height), floor_height)
+	var shown: float = menu_fit.whole_height(maxf(0, height - chrome - prompt_height), floor_height, maxf(0, available_height - chrome - prompt_height))
 	height = chrome + prompt_height + shown
 	# All speech and choices share one footprint, even when blocking speech
 	# hides the HUD. Include the vines, which can outgrow a short timed card.

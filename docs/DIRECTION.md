@@ -3118,16 +3118,19 @@ scroll areas were left out of the whole-line fit because the timed scroll moves 
 
 **Rule** (resting frames; the same atoms as the menu fit: each line of a Label by its glyph box, each button whole):
 at rest every top and bottom edge of the speech viewport, the prompt viewport and the answers viewport is an atom edge.
-The card takes the whole-atom height at or below its cap; when that is below the reading floor (two prose lines, a prompt line,
-the focused answer) it takes the floor, which is itself a whole atom. Wheel, page and key steps land on atom tops. The timed
+The card takes the NEAREST whole-atom height to the share its cap allows (down below half a line, up from half a line, and
+up only while it fits the screen), so it may pass the 35% cap by at most half a line; never below the reading floor (two prose
+lines, a prompt line, the focused answer), which wins over the cap. Wheel, page and key steps land on atom tops. The timed
 scroll stays continuous at the reading pace (body height over reading seconds, about 17 characters per second) and passes
 through partial lines while it moves; it opens on a whole line and ends on one, and the fit stands down only while the timer
 drives it. A line's spacing is blank, not part of the line, so a viewport of k lines is k pitches less one spacing, and the
 scroll's last position is a line top.
 
-**Cost**: rounding down shows up to one line less per card at some scales (100% Dink font: 3.59 → 3.00 lines of speech); where
-the old viewport was already whole (150%, 200%) nothing changes. The empty strip the old height left under the text is gone, so
-cards at 100% are 24 px shorter.
+**Cost** (`tmp`-free table: lines-table.md in the unit's evidence): nearest rounding replaces the first round-down, which cost readers
+too much (100% Dink font speech 3.59 → 3.00 lines; choice prompt at 150% 1.63 → 1.00). Final: 100% Dink speech 3.59 → 4.00 lines,
+prompt 3.71 → 4.00 (card 14 px taller than the pixel cap); 150% prompt 1.63/1.93 → 2.00; 100% plain 4.06 → 4.00; 150%/200% speech
+unchanged (already at the floor). The empty strip the old height left under the text is gone. The A1a cap oracle allows the cap
+plus half an atom per scroll area (`allowance` in `tests/text_layout_oracle.gd`).
 
 **Why it was wrong (two roots)**: the card height and the scroll rests were never tied to the line pitch (an oversight when the
 35% cap was written in pixels), and A1a-2 recorded the class as "not fitted here" because a continuous timed scroll seemed to

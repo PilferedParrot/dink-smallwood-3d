@@ -63,7 +63,7 @@ func reading_limits(tag: String) -> Dictionary:
 	else:
 		var label:Label=ui.column.get_child(0)
 		ideal=minf(label.get_combined_minimum_size().y,label.get_line_height()*2+label.get_theme_constant("line_spacing"))
-	var row={"tag":tag,"window":[root.size.x,root.size.y],"scale":ui.text_scale,"height":ui.panel.size.y,"cap35":ui.root.size.y*0.35,"fixed":fixed,"ideal":ideal,"fixed_plus_ideal":fixed+ideal,"oracle":READING_LAYOUT.defects(ui)}
+	var row={"tag":tag,"window":[root.size.x,root.size.y],"scale":ui.text_scale,"height":ui.panel.size.y,"cap35":ui.root.size.y*0.35,"allowance":READING_LAYOUT.allowance(ui),"fixed":fixed,"ideal":ideal,"fixed_plus_ideal":fixed+ideal,"oracle":READING_LAYOUT.defects(ui)}
 	print("LIMIT ",JSON.stringify(row))
 	return row
 
@@ -71,7 +71,7 @@ func check_padding_controls(limits: Dictionary) -> void:
 	var ui=game.ui
 	ui.set_process(false)
 	var saved: Vector2=ui.panel.size
-	ui.panel.size.y=maxf(limits.cap35,limits.fixed_plus_ideal)+40
+	ui.panel.size.y=maxf(limits.cap35+limits.allowance,limits.fixed_plus_ideal)+40
 	await settle()
 	var errors=READING_LAYOUT.defects(ui)
 	check("Card exceeds35% without a native reading minimum requiring it" in errors, "Exact wrapped-choice oracle rejects padding above native floor")

@@ -64,6 +64,11 @@ func timed(tag: String) -> void:
 	check(ui.menu_box.get_global_rect().end.y - scroll.get_global_rect().end.y < 1.0, "%s: empty strip under the timed text" % tag)
 	var spacing := float(label.get_theme_constant("line_spacing"))
 	check(absf((scroll.size.y + spacing) / pitch - roundf((scroll.size.y + spacing) / pitch)) * pitch < 1.0, "%s: the timed viewport is not whole lines (%.1f px of pitch %.1f)" % [tag, scroll.size.y, pitch])
+	# Round 2: the card's viewport is the NEAREST whole line to the share the 35% cap allows (within half a line of it),
+	# unless the reading floor (two lines) is the larger.
+	var share: float = ui.root.size.y * 0.35 - (ui.panel.size.y - scroll.size.y)
+	var floor_px := 2.0 * pitch - spacing
+	check(scroll.size.y >= floor_px - 1.0 and (scroll.size.y <= floor_px + 1.0 or absf(scroll.size.y - share) <= pitch / 2.0 + 1.0), "%s: the timed viewport %.1f px is not the nearest whole line to the cap share %.1f (pitch %.1f)" % [tag, scroll.size.y, share, pitch])
 	var off_grid := 0
 	var moved := 0
 	var largest := 0.0

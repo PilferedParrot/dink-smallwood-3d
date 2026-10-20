@@ -181,12 +181,14 @@ func _straddled(found: Array[Vector2], y: float) -> bool:
 		if atom.x < y - 0.5 and atom.y > y + 0.5: return true
 	return false
 
-# The height a card should give this area so that it ends on a whole atom: the last atom
-# bottom that fits `slot` from the top. When that is less than `floor_height` (the reading
-# floor: a whole atom or whole lines by construction, the focused control or two lines),
-# the floor itself, since a window that starts on the atom it is for ends on a boundary.
-# A card larger than its content keeps `slot`. Measured on the live layout.
-func whole_height(slot: float, floor_height := 0.0) -> float:
+# The height a card should give this area so that it ends on a whole atom: the atom bottom
+# nearest to `slot` (the share the caps allow): the lower one when `slot` is nearer to it, the
+# upper one when that is nearer or it is half way, so a card never gains or loses more than
+# half an atom against the cap. The upper bottom is allowed only while it fits `limit` (the
+# screen). Never below `floor_height` (the reading floor: a whole atom or whole lines by
+# construction, the focused control or two lines), which wins over the cap. A card larger than
+# its content keeps `slot`. Measured on the live layout.
+func whole_height(slot: float, floor_height := 0.0, limit := INF) -> float:
 	var scroll: ScrollContainer = _scroll_ref.get_ref()
 	if not is_instance_valid(scroll) or scroll.get_child_count() == 0: return slot
 	var content: Control = scroll.get_child(0)
@@ -194,7 +196,12 @@ func whole_height(slot: float, floor_height := 0.0) -> float:
 	_atoms(content, content.get_global_rect().position.y, found)
 	if found.is_empty() or content.size.y <= slot + 0.5: return slot
 	var down := 0.0
+	var up := INF
 	for atom in found:
-		if atom.y <= slot + 0.5 and not _straddled(found, atom.y): down = maxf(down, atom.y)
-	if down >= floor_height - 0.5 and down > 0.5: return down
+		if _straddled(found, atom.y): continue
+		if atom.y <= slot + 0.5: down = maxf(down, atom.y)
+		else: up = minf(up, atom.y)
+	var pick := down
+	if up <= limit + 0.5 and (down < 0.5 or up - slot <= slot - down): pick = up
+	if pick >= floor_height - 0.5 and pick > 0.5: return pick
 	return floor_height if floor_height > 0.0 else slot
