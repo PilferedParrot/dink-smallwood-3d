@@ -26,3 +26,8 @@ def test_text_options_persist_across_process_restart(tmp_path):
     for phase in ['write','read']:
         result = launch(tmp_path, 'text_settings_test.gd', phase, deadline=90)
         assert result.returncode == 0 and 'TEXT SETTINGS PASS' in result.stdout and 'SCRIPT ERROR' not in result.stderr, result.stdout+result.stderr
+
+
+def test_held_text_and_readable_marks_clear_hud_at_each_size_and_font(tmp_path):
+    result = launch(tmp_path, 'viewmodel_text_test.gd', deadline=180)
+    assert result.returncode == 0 and 'VIEWMODEL TEXT PASS' in result.stdout and 'SCRIPT ERROR' not in result.stderr, result.stdout+result.stderr

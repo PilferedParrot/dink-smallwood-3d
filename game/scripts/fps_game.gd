@@ -477,6 +477,41 @@ func _fps_update_viewmodel(delta: float) -> void:
 			fps_viewmodel.scale = Vector3.ONE * 0.42
 			fps_viewmodel.position.y -= fps_feed_use * 0.12
 			fps_viewmodel.rotation_degrees.x += fps_feed_use * 18.0
+		_fps_clear_viewmodel_reading_area()
+
+# Label3D text and explicitly marked mesh/sprite artwork share this rule. Held
+# fist/bow/sword assets currently contain no readable marks; FEED is a Label3D.
+func _fps_clear_viewmodel_reading_area() -> void:
+	if not is_instance_valid(fps_viewmodel) or not fps_viewmodel.is_visible_in_tree(): return
+	var occluders: Array[Rect2] = []
+	if ui.status_dock.visible:
+		occluders.append(ui.status_dock.get_global_transform() * ui.status_dock.art_rect())
+		if ui.status_dock.readout.visible: occluders.append(ui.status_dock.readout.get_global_rect())
+	if ui.hint_backing.visible: occluders.append(ui.hint_backing.get_global_rect())
+	if ui.panel.visible: occluders.append(ui.panel.get_global_rect())
+	var lift := 0.0
+	var nodes: Array[Node] = [fps_viewmodel]
+	while not nodes.is_empty():
+		var node: Node = nodes.pop_back()
+		for child in node.get_children(): nodes.append(child)
+		if not node is GeometryInstance3D or not node.is_visible_in_tree(): continue
+		if not node is Label3D and not bool(node.get_meta("readable_mark", false)): continue
+		var points: Array[Vector3] = []
+		var box: AABB = node.get_aabb()
+		for x in [box.position.x, box.end.x]:
+			for y in [box.position.y, box.end.y]:
+				for z in [box.position.z, box.end.z]: points.append(node.global_transform * Vector3(x,y,z))
+		var bounds := _fps_projected_bounds(points)
+		for rect in occluders:
+			if bounds.end.x < rect.position.x-8 or bounds.position.x > rect.end.x+8: continue
+			for point in points:
+				var screen := camera.unproject_position(point)
+				var local := camera.to_local(point)
+				var cleared := camera.to_local(camera.project_position(Vector2(screen.x, rect.position.y-8), -local.z))
+				lift = maxf(lift, cleared.y-local.y)
+	# The viewmodel is camera-parented. A camera-local vertical translation
+	# preserves its font size, depth, rotation and the label's place on the prop.
+	fps_viewmodel.position.y += lift
 
 func _fps_make_feed_viewmodel() -> Node3D:
 	var root := Node3D.new()
