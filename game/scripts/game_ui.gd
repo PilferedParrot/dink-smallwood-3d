@@ -784,6 +784,7 @@ func set_text_scale(value: float) -> void:
 	dialogue_layout_key = Vector4.INF
 	timed_layout_key = Vector4.INF
 	_layout_for(page)
+	_focus_changed(get_viewport().gui_get_focus_owner())
 
 func set_plain_font(value: bool) -> void:
 	plain_font = value
@@ -792,6 +793,7 @@ func set_plain_font(value: bool) -> void:
 	status_dock.queue_redraw()
 	dialogue_layout_key = Vector4.INF
 	timed_layout_key = Vector4.INF
+	_focus_changed(get_viewport().gui_get_focus_owner())
 
 func show_title(has_save: bool) -> void:
 	cancel_speech()
