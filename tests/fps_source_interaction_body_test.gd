@@ -5,6 +5,24 @@ const FP = preload("res://scripts/fp_world.gd")
 const SOURCE_BODY = preload("res://scripts/source_interaction_body.gd")
 const TARGETS = preload("res://scripts/entity_hit_targets.gd")
 const SCALE := 0.025
+# Source world.json screen:editor-index identities for active scripted ground
+# art, and the subset removed from the standing decorative census. The old
+# rock 481:2 was outside that census; 192:5 leaves both its thorn/total counts.
+const ACTIVE_GROUND := {
+	"180:1": [89,9,"s6-hole2",0],
+	"192:5": [90,12,"thorn",1],
+	"209:4": [89,9,"s1-hole3",0],
+	"243:13": [89,9,"s6-hole",0],
+	"277:2": [89,9,"s1-hole",0],
+	"481:2": [92,1,"s5-sec1",1],
+}
+const DECORATIVE_DEPARTURES := {
+	"180:1": [89,9,"s6-hole2",0],
+	"192:5": [90,12,"thorn",1],
+	"209:4": [89,9,"s1-hole3",0],
+	"243:13": [89,9,"s6-hole",0],
+	"277:2": [89,9,"s1-hole",0],
+}
 
 class FakeBuildings:
 	extends RefCounted
@@ -138,6 +156,9 @@ func _run() -> void:
 	var thorn_count := 0
 	var decorative_count := 0
 	var mismatched := 0
+	var excluded: Dictionary = {}
+	var departures: Dictionary = {}
+	var excluded_thorns := 0
 	for sn in host.world["screens"]:
 		for source in host.world["screens"][sn].get("sprites", []):
 			if str(source.get("script","")) == "": continue
@@ -145,6 +166,16 @@ func _run() -> void:
 			e["pseq"] = e["seq"]
 			e["pframe"] = e["frame"]
 			var key := world.model_key(e)
+			if key == "ground_detail" and int(e.get("type",1)) == 1:
+				var identity := "%s:%d" % [sn,int(e["index"])]
+				excluded[identity] = [int(e.seq),int(e.frame),str(e.script),int(e.hard)]
+				if DECORATIVE_DEPARTURES.has(identity):
+					departures[identity] = excluded[identity]
+					if str(e.script) == "thorn": excluded_thorns += 1
+				var flat_node := Node3D.new()
+				check(not helper.handles(e,key) and not helper.add(flat_node,e,47,key,true)
+					and flat_node.get_child_count() == 0,"ground art has no standing ray body " + identity)
+				flat_node.free()
 			if not helper.handles(e,key): continue
 			decorative_count += 1
 			if str(e["script"]) == "thorn": thorn_count += 1
@@ -161,7 +192,9 @@ func _run() -> void:
 				if s == null or not close((s.shape as BoxShape3D).size.x,r.size.x*SCALE) or not close((s.shape as BoxShape3D).size.z,r.size.y*SCALE):
 					mismatched += 1
 			node.free()
-	check(thorn_count == 139 and decorative_count == 145 and mismatched == 0,
+	check(excluded == ACTIVE_GROUND,"itemized active scripted ground placements: " + str(excluded))
+	check(departures == DECORATIVE_DEPARTURES,"itemized decorative departures: " + str(departures))
+	check(thorn_count == 139-excluded_thorns and decorative_count == 145-departures.size() and mismatched == 0,
 		"all scripted decorative placements: thorn=%d decorative=%d mismatch=%d" % [thorn_count,decorative_count,mismatched])
 	host.free()
 	if failures.is_empty():

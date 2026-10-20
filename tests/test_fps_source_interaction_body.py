@@ -26,4 +26,4 @@ def test_source_interaction_body_native(tmp_path: Path) -> None:
     done = subprocess.run(command, cwd=ROOT, env=env, capture_output=True, text=True, timeout=90)
     output = done.stdout + done.stderr
     assert done.returncode == 0 and "SCRIPT ERROR" not in output, output
-    assert "SOURCE INTERACTION BODY PASS thorn=139 decorative=145" in output
+    assert "SOURCE INTERACTION BODY PASS thorn=138 decorative=140" in output

@@ -23,6 +23,11 @@ func _run() -> void:
 	root.add_child(game)
 	await process_frame
 	await game._new_game()
+	# _new_game defers the opening editor mains to the idle flush at the next
+	# process frame. Let them register before cancelling unrelated scripts,
+	# or Mother's delayed line
+	# can replace the isolated speaker's card during the camera assertions.
+	await process_frame
 	game.vm.cancel_all()
 	game.playing = true
 	game.entities[1]["frozen"] = false

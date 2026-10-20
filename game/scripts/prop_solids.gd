@@ -71,6 +71,17 @@ func class_of(path: String) -> String:
 func node(path: String) -> Node3D:
 	return buildings.node_from(surfaces(path))
 
+# Ground artwork needs no fitted volume: reuse the flat-prop surface with
+# its full source image, including the shadow pixels already on the ground.
+func ground_node(path: String) -> Node3D:
+	var key := "ground:"+path
+	if not cache.has(key):
+		var image: Image = buildings.image(path)
+		if image == null: return null
+		cache[key] = _flat(path,{"size":[image.get_width(),image.get_height()],
+			"rows":[0,image.get_height()],"cols":[0,image.get_width()],"keep_shadow":true})
+	return buildings.node_from(cache[key])
+
 func surfaces(path: String) -> Array:
 	if cache.has(path): return cache[path]
 	var fit: Dictionary = fits[path]
@@ -467,8 +478,9 @@ func _flat(path: String, fit: Dictionary) -> Array:
 	var img: Image = buildings.image(path)
 	var data := img.get_data()
 	var dither: PackedByteArray = buildings.dither_mask(img)
-	for p in dither.size():
-		if dither[p]: data[p*4 + 3] = 0
+	if not bool(fit.get("keep_shadow",false)):
+		for p in dither.size():
+			if dither[p]: data[p*4 + 3] = 0
 	img.set_data(img.get_width(), img.get_height(), false, Image.FORMAT_RGBA8, data)
 	var m := StandardMaterial3D.new()
 	m.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
