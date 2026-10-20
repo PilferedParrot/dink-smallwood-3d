@@ -190,7 +190,9 @@ func _round(path: String, fit: Dictionary) -> Array:
 			var a := i*cols + c
 			var d := (i + 1)*cols + c
 			index.append_array(PackedInt32Array([a, a + 1, d + 1, a, d + 1, d]))
-	# The top: its own ring, every point projected as drawn (the whole top is in the picture), and a fan to the axis.
+	# The top: its own ring, every point projected as drawn (the whole top is in the picture). A solid with a mouth (fit.mouth.r: the well's,
+	# tools/landmark_fit.py) has a rim: an annulus from the drawn rim to the mouth's edge, and no face inside it (_mouth is the shaft below);
+	# anything else closes its top with a fan to the axis.
 	var top := nodes.size() - 1
 	var th := float(nodes[top][0])
 	var tr := float(nodes[top][1])
@@ -199,11 +201,74 @@ func _round(path: String, fit: Dictionary) -> Array:
 		var t: float = buildings._hut_theta(c, n)
 		verts.append(Vector3(cx + tr*cos(t), th, zc + tr*sin(t))*S)
 		tex_uv.append(Vector2(cx + tr*cos(t), cz + k*tr*sin(t) - th)/size)
-	verts.append(Vector3(cx, th, zc)*S)
-	tex_uv.append(Vector2(cx, cz - th)/size)
-	for c in n:
-		index.append_array(PackedInt32Array([base + n, base + c, base + (c + 1) % n]))
+	if fit.has("mouth"):
+		var mr := float(fit.mouth.r)
+		for c in n:
+			var t: float = buildings._hut_theta(c, n)
+			verts.append(Vector3(cx + mr*cos(t), th, zc + mr*sin(t))*S)
+			tex_uv.append(Vector2(cx + mr*cos(t), cz + k*mr*sin(t) - th)/size)
+		for c in n:
+			var d := (c + 1) % n
+			index.append_array(PackedInt32Array([base + c, base + d, base + n + d, base + c, base + n + d, base + n + c]))
+	else:
+		verts.append(Vector3(cx, th, zc)*S)
+		tex_uv.append(Vector2(cx, cz - th)/size)
+		for c in n:
+			index.append_array(PackedInt32Array([base + n, base + c, base + (c + 1) % n]))
 	return [[_arrays(verts, tex_uv, index), _texture(path, fit)]]
+
+# The well's shaft (fit.mouth): the mouth's wall, straight down from the rim to the ground, and its floor, one plain dark colour. The
+# sprite draws the mouth as the far inner wall lit and a black lip, with no depth to read: the shaft's depth is the ground plane (named
+# inference) and its colour the mean of the DARKEST QUARTER of the mouth's own stone pixels (the picture's darkest stone, no tuned shade;
+# the outline's black and the posts excluded as in _flatten), so each frame (the glow differs) darkens from its own picture.
+func _mouth(path: String, base: Dictionary) -> Array:
+	var cx := float(base.cx)
+	var cz := float(base.cz)
+	var k := float(base.k)
+	var mr := float(base.mouth.r)
+	var rim := float(base.nodes[base.nodes.size() - 1][0])
+	var zc := cz - (1.0 - k)*float(base.nodes[0][1])
+	var img: Image = buildings.image(path)
+	var w := img.get_width()
+	var data := img.get_data()
+	var bits := Marshalls.base64_to_raw(str(base.mask))
+	var lums: Array = []
+	for y in img.get_height():
+		for x in w:
+			var p := y*w + x
+			var ex := (float(x) + 0.5 - cx)/mr
+			var ey := (float(y) + 0.5 - (cz - rim))/(k*mr)
+			if ex*ex + ey*ey > 1.0 or not (bits[p >> 3] >> (7 - (p & 7))) & 1 or data[p*4 + 3] < 128: continue
+			var l := 0.299*data[p*4] + 0.587*data[p*4 + 1] + 0.114*data[p*4 + 2]
+			if l > OUTLINE_LUM: lums.append([l, Vector3(data[p*4], data[p*4 + 1], data[p*4 + 2])])
+	var colour := Color(0.04, 0.04, 0.04)
+	if not lums.is_empty():
+		lums.sort_custom(func(a, b): return a[0] < b[0])
+		var quarter := maxi(1, lums.size()/4)
+		var sum := Vector3.ZERO
+		for i in quarter: sum += lums[i][1]
+		sum /= float(quarter)*255.0
+		colour = Color(sum.x, sum.y, sum.z)
+	else:
+		push_warning("well mouth: no stone pixel to take the shaft's colour from")
+	var n := 32
+	var verts := PackedVector3Array()
+	var index := PackedInt32Array()
+	for c in n + 1:
+		var t := TAU*float(c)/n
+		verts.append(Vector3(cx + mr*cos(t), rim, zc + mr*sin(t))*S)
+		verts.append(Vector3(cx + mr*cos(t), 0.0, zc + mr*sin(t))*S)
+	for c in n: index.append_array(PackedInt32Array([2*c, 2*c + 1, 2*c + 3, 2*c, 2*c + 3, 2*c + 2]))
+	var mid := verts.size()
+	verts.append(Vector3(cx, 0.0, zc)*S)
+	for c in n: index.append_array(PackedInt32Array([mid, 2*c + 1, 2*c + 3]))
+	var m := StandardMaterial3D.new()
+	m.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	m.albedo_color = colour
+	m.cull_mode = BaseMaterial3D.CULL_DISABLED
+	var none := PackedVector2Array()
+	none.resize(verts.size())
+	return [[_arrays(verts, none, index), m]]
 
 # --- box ------------------------------------------------------------------------------------------------------------
 # A box, or a stack of them on one lattice (fit.boxes: each box's offset X, Z of its footprint's middle from the lattice
@@ -347,6 +412,7 @@ func _compound(path: String, fit: Dictionary) -> Array:
 		var p: Dictionary = (part as Dictionary).duplicate()
 		p["zc"] = zc
 		out.append_array(_gable(path, p) if str(p.get("class", "")) == "gable" else _box(path, p))
+	if base.has("mouth"): out.append_array(_mouth(path, base)) # last: the posts and the roof keep their places in the list
 	return out
 
 # A gable roof (the well's; tools/landmark_fit.py): two planes from the ridge down to the eaves, a thatch thickness each, on the

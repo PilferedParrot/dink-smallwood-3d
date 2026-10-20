@@ -218,3 +218,144 @@ def test_the_wells_post_side_and_roof_thickness_are_the_drawn_woods_width_not_a_
         assert roof["h"] == pytest.approx(side, abs=0.02), (path, roof["h"], side)  # the roof is a beam's thickness
         assert [f["lit"][1] - f["dark"][0] for f in posts["flat"]] == [4, 4], posts["flat"]
         assert posts["faces"]["lit"][1] - posts["faces"]["dark"][0] == pytest.approx(4.0), posts["faces"]
+
+
+def _ray_hits(origin, target, parts):
+    """Möller-Trumbore over every triangle of the given dumped parts: does the segment origin -> target hit a face before the target?"""
+    import numpy as np
+
+    d = target - origin
+    for part in parts:
+        v = np.array(part["verts"], float)
+        t = np.array(part["index"], int).reshape(-1, 3)
+        a, b, c = v[t[:, 0]], v[t[:, 1]], v[t[:, 2]]
+        e1, e2 = b - a, c - a
+        h = np.cross(d, e2)
+        det = (e1 * h).sum(1)
+        ok = np.abs(det) > 1e-9
+        f = np.where(ok, 1.0 / np.where(ok, det, 1.0), 0.0)
+        s = origin - a
+        u = f * (s * h).sum(1)
+        q = np.cross(s, e1)
+        w = f * (q * d).sum(1)
+        tt = f * (e2 * q).sum(1)
+        if (ok & (u >= 0) & (w >= 0) & (u + w <= 1) & (tt > 1e-6) & (tt < 1 - 1e-6)).any():
+            return True
+    return False
+
+
+def _the_mouth_is_open(dump, fit):
+    """Returns (cap_faces, views_seen, shaft_faces): the faces of the base's top plane inside the mouth's radius, the (8 directions x 2
+    distances) eye-level views from which the mouth's centre, just under the rim, is seen past the base alone, and the faces below the rim
+    inside the mouth's radius."""
+    import numpy as np
+
+    base = fit["base"]
+    rim = float(base["nodes"][-1][0])
+    r_in = float(base["mouth"]["r"]) if "mouth" in base else float(base["nodes"][-1][1]) * 0.5
+    zc = base["cz"] - (1.0 - base["k"]) * base["nodes"][0][1]
+    axis = np.array([base["cx"], 0.0, zc])
+    v = np.array(dump["parts"][0]["verts"], float)
+    t = np.array(dump["parts"][0]["index"], int).reshape(-1, 3)
+    tri = v[t]
+    flat = np.nonzero((np.abs(tri[..., 1] - rim) < 0.01).all(1))[0]
+    # a face stands inside the mouth if it covers any point of the mouth's disc (a lid's fan triangles are large: their centroids lie outside)
+    rr, aa = np.meshgrid(np.linspace(0.0, r_in * np.cos(np.pi / 32) - 0.02, 12), np.linspace(0.0, 2 * np.pi, 48, endpoint=False))  # the ring is a 32-gon: its chords sit inside the circle
+    pts = np.stack([axis[0] + (rr * np.cos(aa)).ravel(), axis[2] + (rr * np.sin(aa)).ravel()], 1)
+    cap = 0
+    for i in flat:
+        a, b, c = tri[i][:, [0, 2]]
+        d = (b[1] - c[1]) * (a[0] - c[0]) + (c[0] - b[0]) * (a[1] - c[1])
+        if abs(d) < 1e-12:
+            continue
+        l1 = ((b[1] - c[1]) * (pts[:, 0] - c[0]) + (c[0] - b[0]) * (pts[:, 1] - c[1])) / d
+        l2 = ((c[1] - a[1]) * (pts[:, 0] - c[0]) + (a[0] - c[0]) * (pts[:, 1] - c[1])) / d
+        if ((l1 >= 0) & (l2 >= 0) & (l1 + l2 <= 1)).any():
+            cap += 1
+    shaft = 0
+    for part in dump["parts"][3:]:
+        pv = np.array(part["verts"], float)
+        pt = np.array(part["index"], int).reshape(-1, 3)
+        pc = pv[pt].mean(1)
+        shaft += int(((pc[:, 1] < rim - 0.01) & (np.hypot(pc[:, 0] - axis[0], pc[:, 2] - axis[2]) <= r_in + 0.01)).sum())
+    seen = 0
+    for k in range(8):
+        for dist in (70.0, 150.0):
+            ang = np.pi / 4 * k
+            eye = axis + np.array([dist * np.cos(ang), 0.0, dist * np.sin(ang)])
+            eye[1] = 1.6 / 0.025  # eye level, 1.6 m in source px (S = 0.025 m per px)
+            if not _ray_hits(eye, axis + np.array([0.0, rim - 2.0, 0.0]), dump["parts"][:1]):
+                seen += 1
+    return cap, seen, shaft
+
+
+def test_the_wells_mouth_is_open_from_every_side_and_a_lid_fails_it(tmp_path):
+    # P4d fix round 2, F1 (the blind review's finding 1: the round base closed its top with a fan to the axis, a solid lid between the posts).
+    # The mouth's radius is the sprite's own near lip (tools/landmark_fit.py mouth_radius: the end of the black band under the rim's centre,
+    # rows 87..90 of landm-01..03, stone again at row 91), re-measured here. The class: the opening is seen from 8 directions at two
+    # distances from eye level (a ray from the eye to the mouth's centre just under the rim is not stopped by the base), no face of the
+    # base's top plane stands inside the mouth's radius (counted), and the shaft's faces exist below the rim with a colour from the
+    # picture's darkest stone. Control: the same fit without a mouth is the lid (its fan's 32 faces cover the mouth, no view sees in).
+    import json
+    import sys
+
+    import numpy as np
+
+    sys.path.insert(0, str(ROOT / "tools"))
+    import prop_fit as P
+
+    path = "assets/graphics/struct/Landmark/landm-01.png"
+    fits = json.loads((ROOT / "game/prototype/landmarks.json").read_text())
+    fit = fits[path]
+    base = fit["base"]
+    rim = base["nodes"][-1][0]
+    for n in (1, 2, 3):
+        a = P.load(f"assets/graphics/struct/Landmark/landm-0{n}.png").astype(int)
+        lum = 0.299 * a[..., 0] + 0.587 * a[..., 1] + 0.114 * a[..., 2]
+        ends = []
+        for x in range(57, 71):
+            y = 83
+            while not (lum[y, x] <= 24 and lum[y + 1, x] <= 24):
+                y += 1
+            while lum[y, x] <= 24:
+                y += 1
+            ends.append(y)
+        assert float(np.median(ends)) == 91.0, (n, ends)
+        assert base["mouth"]["r"] == pytest.approx((91.0 - (base["cz"] - rim)) / base["k"], abs=0.01), base["mouth"]
+    assert 0.3 * base["nodes"][-1][1] < base["mouth"]["r"] < 0.8 * base["nodes"][-1][1], base["mouth"]  # a mouth inside a rim with a wall
+    dump = json.loads((_dump_well(tmp_path, "now") / "surfaces.json").read_text())
+    cap, seen, shaft = _the_mouth_is_open(dump, fit)
+    assert cap == 0 and seen == 16 and shaft > 0, (cap, seen, shaft)
+    shaft_rgb = np.array(dump["parts"][3]["colour"]) * 255
+    rgba = P.load(path)
+    mouth_rgb = _mouth_stone_pixels(rgba, fit)
+    y = np.sort(mouth_rgb @ np.array([0.299, 0.587, 0.114]))
+    assert float(shaft_rgb @ np.array([0.299, 0.587, 0.114])) == pytest.approx(float(y[: len(y) // 4].mean()), abs=6.0), (shaft_rgb, y[: len(y) // 4].mean())
+    assert float(shaft_rgb @ np.array([0.299, 0.587, 0.114])) < float(np.median(y)), "the shaft is the picture's dark, not its middle"
+    lid = json.loads(json.dumps(fits))
+    lid[path]["base"].pop("mouth")
+    (tmp_path / "lid.json").write_text(json.dumps({path: lid[path]}))
+    ldump = json.loads((_dump_well(tmp_path, "lid", str(tmp_path / "lid.json")) / "surfaces.json").read_text())
+    lcap, lseen, _ = _the_mouth_is_open(ldump, {**lid[path], "base": {**lid[path]["base"], "mouth": {"r": base["mouth"]["r"]}}})
+    assert lcap == 32 and lseen == 0, (lcap, lseen)
+
+
+def _mouth_stone_pixels(rgba, fit):
+    """The sprite's stone pixels inside the mouth's ellipse (not the base mask's posts, not the outline), independent of prop_solids.gd."""
+    import numpy as np
+    import sys
+
+    sys.path.insert(0, str(ROOT / "tools"))
+    import landmark_fit as L
+
+    base = fit["base"]
+    body, roof, base_m, posts, warm = L.segment(rgba)
+    post_px = np.zeros_like(body)
+    for p in posts:
+        post_px[p["top"]:p["foot"], p["x0"] - L.DARK:p["x1"] + L.DARK] = True
+    r = base["mouth"]["r"]
+    rim_row = base["cz"] - base["nodes"][-1][0]
+    ys, xs = np.mgrid[0:rgba.shape[0], 0:rgba.shape[1]]
+    inside = ((xs + 0.5 - base["cx"]) / r) ** 2 + ((ys + 0.5 - rim_row) / (base["k"] * r)) ** 2 <= 1.0
+    px = rgba[inside & base_m & ~post_px & (rgba[..., 3] >= 128)][:, :3].astype(float)
+    return px[px @ np.array([0.299, 0.587, 0.114]) > 24.0]

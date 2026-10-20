@@ -74,6 +74,28 @@ def segment(rgba: np.ndarray):
     return body, roof, base, posts, warm
 
 
+def mouth_radius(rgba: np.ndarray, cx: float, rim_row: float, rim_r: float, k: float) -> dict:
+    """The well's mouth, from the sprite's own near lip. The rim is a ring at the drawn rim height whose centre is on row rim_row = cz - rim.
+    Seen from the camera, the near inner lip is a run of the outline's black (a drawn gap; luminance <= OUTLINE_LUM, at least two rows) below
+    the ring's centre, and the rim's lit stone resumes under it. In each column of the middle half of the rim's width (the posts stand
+    outside it) the first row after that run is the lip's near edge: the median row over the columns gives the mouth's radius,
+    r = (row - rim_row) / k, since a ground circle of radius r is drawn k r rows below its centre. The far wall is not used: it is lit stone
+    the picture draws no edge on. Measured: the black band is rows 87..90 of landm-01..03 (columns 57..70), the stone resumes at row 91,
+    which makes the near rim annulus (rows 91..97) as thick as the far one (rows 66..72)."""
+    lum = 0.299 * rgba[..., 0].astype(float) + 0.587 * rgba[..., 1] + 0.114 * rgba[..., 2]
+    dark = (lum <= 24.0) & (rgba[..., 3] >= 128)
+    rows = []
+    for x in range(int(np.ceil(cx - 0.25 * rim_r)), int(cx + 0.25 * rim_r) + 1):
+        y = int(np.ceil(rim_row))
+        while y + 1 < dark.shape[0] and not (dark[y, x] and dark[y + 1, x]):
+            y += 1
+        while y < dark.shape[0] and dark[y, x]:
+            y += 1
+        rows.append(y)
+    row = float(np.median(rows))
+    return {'r': round((row - rim_row) / k, 2), 'lip_row': row, 'columns': [int(np.ceil(cx - 0.25 * rim_r)), int(cx + 0.25 * rim_r)]}
+
+
 def roof_fit(roof: np.ndarray, k: float, thick: float):
     """The slab's top parallelogram: (cx, cz, w, d, yaw) of its top face's centre (sprite px), by overlap with the silhouette."""
     from scipy.optimize import differential_evolution
@@ -159,6 +181,7 @@ def well_fit(rgba: np.ndarray, k: float | None) -> dict | None:
     cx, cz = base['cx'], base['cz']
     rim = float(base['nodes'][-1][0])
     base['mask'] = pack(base_tex)
+    base['mouth'] = mouth_radius(rgba, cx, cz - rim, float(base['nodes'][-1][1]), k)  # an opening, not a lid: prop_solids.gd _round, _mouth
     base['void_fill'] = True  # the stone's drawn gaps (pure black) take the nearest stone pixel (prop_solids.gd _texture)
     yaw = E['psi']
     c, s = abs(np.cos(yaw)), abs(np.sin(yaw))
