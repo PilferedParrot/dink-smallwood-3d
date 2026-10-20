@@ -36,7 +36,9 @@ func _run() -> void:
 		game.entities[mother]["y"] = 200.0
 		game._update_visual(mother)
 		for size in [Vector2i(1280,800), Vector2i(1920,1080)]:
-			for scale in [1.0, 1.3]:
+			for style in [{"scale":1.0,"plain":false},{"scale":1.5,"plain":false},{"scale":2.0,"plain":false},{"scale":1.0,"plain":true},{"scale":1.5,"plain":true},{"scale":2.0,"plain":true}]:
+				var scale: float = style.scale
+				game.ui.set_plain_font(style.plain)
 				root.size = size
 				game.ui.set_text_scale(scale)
 				await process_frame

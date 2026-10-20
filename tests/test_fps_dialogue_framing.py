@@ -14,7 +14,7 @@ def test_dialogue_camera_fits_rendered_actor_and_grief_room(tmp_path):
     env["XDG_CACHE_HOME"] = str(tmp_path / "cache")
     result = subprocess.run(
         [GODOT, "--headless", "--audio-driver", "Dummy", "--path", "game", "--script", str(ROOT / "tests/fps_dialogue_framing_test.gd")],
-        cwd=ROOT, env=env, capture_output=True, text=True, timeout=90,
+        cwd=ROOT, env=env, capture_output=True, text=True, timeout=180,
     )
     assert result.returncode == 0, result.stdout + result.stderr
     assert "FPS DIALOGUE FRAMING PASS" in result.stdout
