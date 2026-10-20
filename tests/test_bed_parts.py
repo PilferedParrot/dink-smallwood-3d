@@ -46,6 +46,12 @@ def test_bed_source_parts_regenerate_and_controls_discriminate(tmp_path):
         assert donor_report(patch, identity, masks[role])["ok"], (
             "Original hanging-cloth detail must remain green"
         )
+    contaminated = np.load(
+        ROOT / "tests/fixtures/bed_parts/cloth-contaminated-post-donors.npy"
+    )
+    # Actual packed first-fix atlas: a post outline included cloth in front of it.
+    assert np.count_nonzero(~masks["post"].ravel()[contaminated]) > 0
+    assert np.all(masks["post"].ravel()[identity[masks["post"]]])
     for role, texture in data["textures"].items():
         pixels = np.asarray(Image.open(ROOT / "game" / texture["path"]).convert("RGBA"))
         assert (tmp_path / "game" / texture["path"]).read_bytes() == (

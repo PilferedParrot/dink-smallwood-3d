@@ -479,7 +479,8 @@
     "isolated-290-22-mask.png": "86919c2efd93d6cb74f796ae965b027e061789449b5c8e2243d99b593a8379c6",
     "occluded-control-visibility.json": "66d512ea204497f4903f35b6932ea7a55105cbf4683e323db34cadb74ee125bf",
     "reviewed-meshes.json": "a33560e9a06517f487e0592ba50baddb030a397b88e6388248abf36124b687ae",
-    "reviewed-bedding-donors.npy": "bcc270fe8f47caed1e9c0657ee5b6325d64bff69a8cc774ac62970e4470c1d67"
+    "reviewed-bedding-donors.npy": "bcc270fe8f47caed1e9c0657ee5b6325d64bff69a8cc774ac62970e4470c1d67",
+    "cloth-contaminated-post-donors.npy": "4476a23976c13cc02da929587c266e056fdd8dec533a8e91382a1bc75bbae787"
   },
   "wall_tie_normalization": {
     "scope": "Test fixture only; production wall emitter remains unchanged.",
@@ -502,7 +503,12 @@
   },
   "contact_face_content_fix": {
     "bedding_height": 26.607142857142858,
-    "measurement_sha256": "5595f7868c791d8d7b5d27ef8754139077f3f372bbcacf82e2c3579a6747e53f",
+    "measurement_sha256": "61b54f84d3819296b27290584ca07d71fd4595e829e43b31438a4a675dbe073d",
     "mask_status": "All30 original registered masks unchanged; new geometry stays within the same source envelope."
+  },
+  "post_occlusion_fix": {
+    "red_candidate": "fafc1529380482644b1bbf9c2f2ccd9ec3502080",
+    "cause": "Post silhouette contained cloth occluding its shaft; subtract measured cloth polygons before selecting wood donors.",
+    "source_wood_preserved": 1401
   }
 }

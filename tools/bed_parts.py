@@ -28,7 +28,11 @@ SOURCE = "assets/graphics/inside/details/inacc-03.png"
 def domains(rgba, measurements):
     h, w = rgba.shape[:2]
     wood = np.zeros((h, w), bool)
-    for p in measurements["post_domains"] + measurements["frame_domains"]:
+    for p in measurements["post_domains"]:
+        wood |= polygon_mask(p, (0, 0, w, h))
+    for p in measurements["post_cloth_occlusions"]:
+        wood &= ~polygon_mask(p, (0, 0, w, h))
+    for p in measurements["frame_domains"]:
         wood |= polygon_mask(p, (0, 0, w, h))
     support = authored_mask(rgba)
     return {"wood": wood & support, "bedding": support & ~wood}
@@ -40,6 +44,8 @@ def face_domains(rgba, measurements):
     post = np.zeros((h, w), bool)
     for p in measurements["post_domains"]:
         post |= polygon_mask(p, (0, 0, w, h))
+    for p in measurements["post_cloth_occlusions"]:
+        post &= ~polygon_mask(p, (0, 0, w, h))
     polygons = {
         "bedding_top": measurements["bedding_top"],
         **measurements["cloth_side_domains"],
@@ -208,6 +214,11 @@ def build(root=ROOT):
             fallback = support & polygon_mask(
                 measurements["quilt_donor_domain"], (0, 0, w, h)
             )
+        elif domain == "post":
+            x, y, side = measurements["post_donor_square"]
+            fallback = np.zeros_like(support)
+            fallback[y : y + side, x : x + side] = True
+            assert np.all(fallback <= support)
         elif domain in measurements["cloth_donor_squares"]:
             x, y, side = measurements["cloth_donor_squares"][domain]
             fallback = np.zeros_like(support)

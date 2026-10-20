@@ -114,3 +114,5 @@ Regenerate with Python providing NumPy, Pillow and SciPy:
 ```sh
 python tools/bed_parts.py --audit tmp/bed-parts-audit.json
 ```
+
+Post occlusion refinement: the source silhouette of a post also encloses cloth in front of its shaft. Two measured cloth polygons are subtracted before wood classification. Unknown post faces repeat an 8×8 authored wood square at (76,80); all 1,401 unoccluded source wood texels remain exact. The actual first-fix post donor map is retained as a negative control. Technical root cause: cloth occlusion was labeled as wood and repeated on reverse faces. Process root cause: we assumed the post outline was a material mask, then trusted that same coarse label in the gate. The calibrated gate now rejects that real atlas; this remains a measured source classification, with the ambiguous lower-right boundary retained conservatively.
