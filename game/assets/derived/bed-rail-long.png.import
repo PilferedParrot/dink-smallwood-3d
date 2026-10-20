@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://ddshuiik21uod"
-path="res://.godot/imported/bed-wood.png-3fd1cbb3b124393621411e5d3ae7c97b.ctex"
+uid="uid://bhnt1yqxs36f2"
+path="res://.godot/imported/bed-rail-long.png-6c12cc0a8edfd76e7449dc498ee04f21.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/derived/bed-wood.png"
-dest_files=["res://.godot/imported/bed-wood.png-3fd1cbb3b124393621411e5d3ae7c97b.ctex"]
+source_file="res://assets/derived/bed-rail-long.png"
+dest_files=["res://.godot/imported/bed-rail-long.png-6c12cc0a8edfd76e7449dc498ee04f21.ctex"]
 
 [params]
 

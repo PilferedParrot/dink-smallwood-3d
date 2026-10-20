@@ -13,6 +13,11 @@ from PIL import Image
 from scipy import ndimage
 
 try:
+    from .bed_contact import compute_height
+except ImportError:
+    from bed_contact import compute_height
+
+try:
     from .building_continuations import authored_mask, polygon_mask, native_tile
 except ImportError:
     from building_continuations import authored_mask, polygon_mask, native_tile
@@ -27,6 +32,80 @@ def domains(rgba, measurements):
         wood |= polygon_mask(p, (0, 0, w, h))
     support = authored_mask(rgba)
     return {"wood": wood & support, "bedding": support & ~wood}
+
+
+def face_domains(rgba, measurements):
+    h, w = rgba.shape[:2]
+    support = authored_mask(rgba)
+    post = np.zeros((h, w), bool)
+    for p in measurements["post_domains"]:
+        post |= polygon_mask(p, (0, 0, w, h))
+    polygons = {
+        "bedding_top": measurements["bedding_top"],
+        **measurements["cloth_side_domains"],
+        "rail_long": measurements["frame_domains"][0],
+        "rail_end": measurements["frame_domains"][1],
+    }
+    raw = {k: polygon_mask(p, (0, 0, w, h)) for k, p in polygons.items()}
+    rail = raw["rail_long"] | raw["rail_end"]
+    masks = {
+        k: v & support & ~post & (~rail if not k.startswith("rail_") else True)
+        for k, v in raw.items()
+    }
+    masks["post"] = post & support
+    masks["bedding_top"] &= ~(masks["cloth_long"] | masks["cloth_end"])
+    masks["cloth_long"] &= ~masks["cloth_end"]
+    masks["rail_long"] &= ~masks["rail_end"]
+    return masks
+
+
+def donor_report(uv, donors, allowed):
+    h, w = allowed.shape
+    sample = polygon_mask(uv, (0, 0, w, h))
+    selected = donors[sample]
+    wrong = int((~allowed.ravel()[selected]).sum())
+    return {
+        "samples": int(sample.sum()),
+        "wrong_domain": wrong,
+        "ok": bool(len(selected) and wrong == 0),
+    }
+
+
+def expected_face_domain(part, vertices, part_vertices):
+    """Classify emitted planes from geometry, independently of material tags."""
+    v = np.asarray(vertices, float)
+    all_v = np.asarray(part_vertices, float)
+    if part.startswith("post"):
+        return "post"
+    if part == "frame":
+        return "rail"
+    assert part == "bedding", part
+    if np.ptp(v[:, 1]) < 1e-6:
+        return (
+            "bedding_top" if abs(v[0, 1] - all_v[:, 1].max()) < 1e-6 else "cloth_long"
+        )
+    footprint = v[:, [0, 2]]
+    differences = footprint[:, None, :] - footprint[None, :, :]
+    delta = differences.reshape(-1, 2)[
+        np.linalg.norm(differences.reshape(-1, 2), axis=1).argmax()
+    ]
+    axis = np.array([68.0, 35.0])
+    cosine = abs(delta @ axis) / (np.linalg.norm(delta) * np.linalg.norm(axis))
+    return "cloth_long" if cosine > 0.9 else "cloth_end"
+
+
+def post_heights_from_source(measurements):
+    visible = []
+    for cap, foot in zip(measurements["post_caps"], measurements["post_feet"]):
+        if foot is not None:
+            corner = min(cap, key=lambda p: (abs(p[0] - foot[0]), -p[1]))
+            visible.append(float(foot[1] - corner[1]))
+    return [
+        float(np.median(visible))
+        if foot is None
+        else float(foot[1] - min(cap, key=lambda p: (abs(p[0] - foot[0]), -p[1]))[1])
+        for cap, foot in zip(measurements["post_caps"], measurements["post_feet"])
+    ]
 
 
 def texture(rgba, support, fallback=None):
@@ -120,28 +199,42 @@ def build(root=ROOT):
     ), controls
     assert not controls["unfixed_composite"]["ok"]
     textures = {}
-    for role in ("wood", "bedding"):
-        # Like P4a's doors/signs, pillows are authored features, not donors for
-        # missing plain material. Continue only the quilt into bedding holes.
-        fallback = masks[role]
-        if role == "bedding":
-            fallback = fallback & polygon_mask(
+    face_masks = face_domains(rgba, measurements)
+    for domain, support in face_masks.items():
+        fallback = support
+        if domain.startswith("rail_"):
+            fallback = face_masks["rail_long"] | face_masks["rail_end"]
+        elif domain == "bedding_top":
+            fallback = support & polygon_mask(
                 measurements["quilt_donor_domain"], (0, 0, w, h)
             )
-        out, ids, method = texture(rgba, masks[role], fallback)
-        path = f"assets/derived/bed-{role}.png"
+        elif domain in measurements["cloth_donor_squares"]:
+            x, y, side = measurements["cloth_donor_squares"][domain]
+            fallback = np.zeros_like(support)
+            fallback[y : y + side, x : x + side] = True
+            assert np.all(fallback <= support)
+        out, ids, method = texture(rgba, support, fallback)
+        path = f"assets/derived/bed-{domain.replace('_', '-')}.png"
         (root / "game" / path).parent.mkdir(parents=True, exist_ok=True)
         Image.fromarray(out).save(root / "game" / path)
-        textures[role] = {
+        textures[domain] = {
             "path": path,
             "donors": ids.ravel().tolist(),
-            "inferred": int((~masks[role]).sum()),
+            "inferred": int((~support).sum()),
             "method": method,
         }
     # Source extrema provide the shared post height. Quilt and rail heights are
     # measured down the visible long edge, not from a desired world dimension.
     top = np.asarray(measurements["bedding_top"], float)
-    height = float(fit["height"])
+    post_heights = post_heights_from_source(measurements)
+    contact_fit = compute_height(
+        {
+            "bedding_top": top.tolist(),
+            "post_caps": measurements["post_caps"],
+            "post_heights": post_heights,
+        }
+    )
+    height = float(contact_fit["height"])
     left, front = top[3], top[2]
     x = float(measurements["long_edge_sample"]["x"])
     edge_y = float(
@@ -174,7 +267,9 @@ def build(root=ROOT):
         "source": SOURCE,
         "source_sha256": hashlib.sha256(source.read_bytes()).hexdigest(),
         "size": [w, h],
-        "post_height": height,
+        "post_height": float(fit["height"]),
+        "bedding_height": height,
+        "contact_fit": contact_fit,
         "bedding_top": top.tolist(),
         "post_caps": measurements["post_caps"],
         "post_heights": post_heights,

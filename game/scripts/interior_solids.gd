@@ -603,7 +603,7 @@ func bed_surfaces(fit: Dictionary, path: String, o: Vector2) -> Array:
 		push_error("Missing source-derived bed parts")
 		return []
 	var out: Array = []
-	var h := float(bed_parts.post_height)
+	var h := float(bed_parts.bedding_height)
 	var base: Array = []
 	for p in bed_parts.bedding_top: base.append(Vector2(float(p[0]), float(p[1]) + h))
 	_bed_part(out, fit, path, o, base, float(bed_parts.levels.bedding_bottom), h, "bedding", "bedding")
@@ -622,16 +622,32 @@ func _bed_part(out: Array, fit: Dictionary, path: String, o: Vector2, base: Arra
 	var ids: Array[int] = []
 	for p in base: ids.append(mb.vert(p.x, lo, p.y, _proj(p, lo, Vector2.ZERO)))
 	for i in range(1, ids.size() - 1): mb.tri(ids[0], ids[i + 1], ids[i])
-	var mesh := mb.mesh()
+	# Keep one physical mesh per part, with independently sourced face content.
+	# A side is cloth hanging over the edge, not a projection of the quilt top.
+	var complete := mb.mesh()
+	var arrays := complete.surface_get_arrays(0)
+	var indices: PackedInt32Array = arrays[Mesh.ARRAY_INDEX]
+	var mesh := ArrayMesh.new()
 	mesh.resource_name = "bed:" + part
-	var mat := material(str(bed_parts.textures[role].path))
-	mat.set_meta("bed_role", role)
-	out.append([mesh, mat])
+	for face in 6:
+		var domain := "post"
+		if part == "bedding":
+			domain = "bedding_top" if face == 4 else ("cloth_end" if face in [1,3] else "cloth_long")
+		elif part == "frame":
+			domain = "rail_end" if face in [1,3] else "rail_long"
+		var face_arrays: Array = arrays.duplicate()
+		face_arrays[Mesh.ARRAY_INDEX] = indices.slice(face*6,face*6+6)
+		mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES,face_arrays)
+		var mat := material(str(bed_parts.textures[domain].path))
+		mat.set_meta("bed_role",role)
+		mat.set_meta("bed_domain",domain)
+		mesh.surface_set_material(face,mat)
+	out.append([mesh,mesh.surface_get_material(0)])
 
 func bed_surface_height(at: Vector2) -> float:
 	var top := PackedVector2Array()
 	for p in bed_parts.bedding_top: top.append(Vector2(float(p[0]), float(p[1])))
-	var h := float(bed_parts.post_height)
+	var h := float(bed_parts.bedding_height)
 	var best := h if Geometry2D.is_point_in_polygon(at, top) else 0.0
 	var rail := PackedVector2Array()
 	var rail_height := float(bed_parts.levels.frame_top)

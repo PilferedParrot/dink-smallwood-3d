@@ -25,6 +25,28 @@ func _stable_wall_ties(game) -> void:
 		var copy: Material=original.duplicate()
 		copy.render_priority=index
 		mesh.set_surface_override_material(surface,copy)
+# Diagnostic tint classification only; it never changes the production atlas.
+# Cyan = measured visible source face with an unchanged authored sample.
+# Magenta = continued texel, reverse/underside face, or inferred rear-post side.
+func _bed_provenance(node: Node, solids) -> void:
+	for mesh in _meshes(node):
+		var part:=str(mesh.mesh.resource_name)
+		for face in mesh.mesh.get_surface_count():
+			var old: StandardMaterial3D=mesh.get_active_material(face)
+			var domain: String=str(old.get_meta("bed_domain",""))
+			if not solids.bed_parts.textures.has(domain):continue
+			var donors: Array=solids.bed_parts.textures[domain].donors
+			var image:=Image.create(121,93,false,Image.FORMAT_RGBA8)
+			var visible_face:=face in [1,2,4]
+			if part=="bed:frame" and face==4:visible_face=false
+			if part=="bed:post1" and face!=4:visible_face=false
+			for y in 93:
+				for x in 121:
+					var authored:=visible_face and int(donors[y*121+x])==y*121+x
+					image.set_pixel(x,y,Color.CYAN if authored else Color.MAGENTA)
+			var mat: StandardMaterial3D=old.duplicate()
+			mat.albedo_texture=ImageTexture.create_from_image(image)
+			mesh.set_surface_override_material(face,mat)
 func _capture_setup(game, view: Dictionary) -> void:
 	if bool(view.get("stable_wall_ties",false)):_stable_wall_ties(game)
 	if bool(view.get("original",false)) and not bool(view.get("retain_ceiling",false)):_cutaway(game.scene_root,game.fp_world)
@@ -45,6 +67,9 @@ func _capture_setup(game, view: Dictionary) -> void:
 	if view.has("target_x") or view.has("prop_path"):
 		assert(is_instance_valid(wanted),"Missing gallery prop")
 		_gallery(game.scene_root,wanted)
+		if bool(view.get("bed_provenance",false)):
+			game.fp_world.environment.fog_enabled=false
+			_bed_provenance(wanted,game.fp_world.solids)
 func _model_box(node: Node3D) -> AABB:
 	var found:=false;var out:=AABB()
 	for child in node.get_children():

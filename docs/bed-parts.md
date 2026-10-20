@@ -1,99 +1,116 @@
 # Source-derived bed parts
 
 The source is `game/assets/graphics/inside/details/inacc-03.png` (121 × 93).
-`game/data/bed_measurements.json` records pixel landmarks on its post caps,
-post feet, bedding boundary and the visible rail. These are measurements of the
-source art, not measurements of a first-person screenshot. The hidden rear
-post's foot is inferred using the median of the three visible post heights.
-The measured cap-to-foot spans are 31, 32 and 29 source pixels. The bedding's
-reference height is the existing silhouette-derived 31 pixels; a sample down
-its long edge gives the cloth/rail join and rail thickness. Adjacent source
-rows share a physical boundary, so there is no air gap between rail and quilt.
+`game/data/bed_measurements.json` records pixel landmarks on post caps, feet,
+quilt edges and rails. A bed contains six closed convex prisms: bedding, frame
+and four posts. Each physical part has separate material surfaces. All 16 source
+beds use the assembly, including the 70% instance; source size scales geometry,
+height metadata, ray triangles and placement-height queries together. Source
+movement hardness is unchanged.
 
-`tools/bed_parts.py` emits `game/data/bed_parts.json` and two derived textures.
-A bed consists of bedding, a rail frame and four post prisms, with closed
-undersides. It keeps the source projection `(X, Z - Y)` and the sprite hotspot.
-The source's 70% instance uses the same assembly scaled uniformly, including
-its ray body and height metadata. Source movement hardness is unchanged.
-The bedding remains a planar approximation: pillow relief and individual cloth
-folds are not reconstructed by this change.
+## Parts meet in physical space
 
-Authored wood and bedding samples are preserved byte for byte. Where a part's
-projection has no authored samples of that part, P4a's native authored-square
-continuation supplies pixels from that part's own domain. Every donor index is
-recorded. Missing bedding takes quilt donors; pillows remain authored features
-and are not repeated into missing quilt. Missing wood takes wood, including
-unseen post faces. These regions and the reverse sides are inferred material.
-They are not a recovery of unseen original artwork. Native repetition can show
-joins or repeated grain; the local gate does not certify those appearances.
+The three visible post heights are 31, 32 and 29 source pixels. The hidden rear
+foot uses their median 31, an explicitly inferred dimension. Each post's ground
+footprint is its measured cap plus its height in sourceZ. The source bedding
+corners must fall within the corresponding post footprints. Intersecting those
+four vertical scanline constraints gives bedding height 25.5..27.7142857 pixels;
+its midpoint 26.6071429 gives clearance inside all four posts. The top's source
+projection remains `(X,Z-Y)`: changing height also changes physicalZ by the same
+amount. Cloth/rail heights use the same ground reference and measured edge
+rows, so bedding meets frame, and both overlap each post. The rail's 3 pixel
+thickness is measured from the source; it is not enlarged for a target view.
 
-Opposite bed faces translate to their authored counterparts. A point reflection
-through the centre reverses both axes: it puts the source head's pillow pattern
-at the foot on the opposite long side. Translation preserves position along
-the long axis. The shared prism helper's existing behavior remains the default
-for its other callers; the bed explicitly selects preservation of its ends.
+The previous 31 pixel bedding height was inherited from the outer silhouette,
+without checking contact against the individually measured posts. That left
+real gaps. The technical cause was inconsistent physical footprints; the
+process cause was conflating post height with bedding height and stopping the
+geometry check at size and solidity. The contact gate consumes actual emitted
+indexed vertices, derives each convex XZ footprint and Y interval, and requires
+positive overlap for all nine bedding/frame/post contacts. A four-source-pixel
+outward post displacement stays red with correct materials; a uniformly scaled
+and translated complete bed stays green. Its convex-envelope method applies to
+these closed prism parts, not to arbitrary concave furniture.
 
-The technical causes were an undivided prism receiving several physical parts'
-art and a reverse-face mapping that exchanged the bed's ends. The process
-causes were accepting the silhouette's box fit as the object's internal form,
-then generalizing point symmetry to directional furniture. Previous tests
-checked size and solidity without checking part ownership or end alignment.
+## Every face uses its own source region
 
-The census covers all 16 bed sprites on 14 screens, including the 70% bed on
-screen 66. The same interior prism helper also emits the already separate
-legs of `table-09`, `table-01` and `table-07`. The adjacent prop-box constructor
-is separate code: its source family has 18 chest frames and eight crate/stack
-frames. Their geometry is not changed by the bed option. Wood/bedding masks
-cannot certify a chest lid or the arrangement of stacked crates; those need
-their own component references and rendered inspection.
+The measured visible source domains are:
+
+| Surface | Source region |
+|---|---|
+| Bedding top | `(44,9),(112,44),(77,62),(9,27)` |
+| Long hanging cloth | `(9,27),(77,62),(70,74),(12,44)` |
+| End hanging cloth | `(77,62),(112,44),(108,56),(85,68)` |
+| Long rail | `(12,44),(70,74),(70,78),(12,48)` |
+| End rail | `(85,68),(108,56),(108,61),(85,73)` |
+| Posts | Four measured post polygons |
+
+Post pixels own occluded corners; rails own cloth/rail joins; hanging cloth owns
+its shared edge with the top. Authored pixels inside each assigned domain remain
+byte-exact. Unknown samples use P4a's native authored-square continuation, with
+every donor recorded. Long cloth uses only long-cloth donors; end cloth uses
+only end-cloth donors. Top continuation uses quilt donors, excluding pillows.
+The thin diagonal long rail has no 3×3 authored square alone, so unseen rail
+samples use the union of the two rail regions. No rail borrows cloth or posts.
+Opposite faces translate to their visible counterparts, preserving head/foot
+position; the shared prism helper's default behavior for other callers remains.
+
+A single pooled cloth atlas previously allowed a vertical face to borrow top
+quilt/pillow content. Wood-versus-cloth purity could not detect that. This was
+a gate-design error: the first mechanism found was treated as a sufficient
+account of the visible defect. The new gate classifies actual emitted planes
+from geometry, checks actual imported RGBA hashes, then checks every sampled
+donor against that face's independently measured source region. The reviewed
+`18897e8` meshes/donors are committed as a red calibration artifact. Top borrowing
+and long/end-swapped all-cloth controls stay red; original side samples and the
+correct emitted faces stay green. The earlier local role gate still rejects
+all five original unsplit faces while retaining authored grain and multicolour
+bedding controls.
+
+Reverse faces, missing samples, the frame's hidden top and the inferred rear
+post sides are identified in the four-view diagnostic tint sheets. Cyan marks
+a directly sampled authored pixel on a measured visible surface; magenta marks
+continuation, a reverse/underside face or an inferred rear-post side. These are
+rendered from the same geometry and donor maps as the normal pictures.
+
+Pillows and cloth folds still have planar geometry. A uniform cloth prism also
+has a longer end hanging area than the source's end strip; extra end pixels
+are inferred from end cloth. The gate certifies contact and face provenance,
+not grain repetition, join appearance, drape geometry or shadow fidelity.
+
+## Class and camera regression
+
+The census covers 16 beds on 14screens. The shared interior prism helper also
+emits already separate legs of table-09/table-01/table-07. The adjacent separate
+box constructor has 18 chest frames and 8 crate/stack frames. Their four-side
+inspection records unresolved open-lid flattening and broken composite stacks;
+the bed gates do not certify those props.
+
+G2 compares 14 room cutaways and 16 isolated bed pictures from the original camera.
+Only inferred ceilings/beams are hidden in room views. Rooms 6/36 hide their
+beds behind source walls: a white-with-original-alpha mutation has zero visible
+pixels and the first centre ray hits a wall. Their whole frames remain compared;
+the isolated fixtures visibly expose all 16 actual beds. An intact-ceiling
+control stays red for visibility. Every material mutation uses a fresh map.
+
+Masks were independently projected before after-renders: actual baseline mesh
+bounds plus source envelope X0..121, Y0..32, Z31..93 at each hotspot/size, with
+raster quantization and Boolean Lanczos3 support. They include the old70%
+stand-in. The contact/face-content fix retains those same masks byte-for-byte.
+An unrelated outside pixel mutation must fail. The fixtures skip scripts and
+campaign progression and disable shadows; a ceiling-obscured false zero-change
+pass was inspected and rejected before registration.
+
+Pre-existing wall overlaps have depth ties. On the unchanged base, perturbing
+only wall resource slots flips every wall strip previously reported outside
+the bed masks. Geometry arrays/textures remain unchanged. Unique fixture-only
+wall priorities make opposite allocations identical on both affected screens.
+G2 applies the same deterministic entity-id/child/surface order to both packs.
+This holds a nuisance variable fixed; it does not fix or certify production
+wall ordering. The original-camera claim is explicitly this controlled fixture.
 
 Regenerate with Python providing NumPy, Pillow and SciPy:
 
 ```sh
 python tools/bed_parts.py --audit tmp/bed-parts-audit.json
 ```
-
-G1 first rejects all five actual baseline faces using local 3×3 windows that
-mix separately measured wood and bedding domains. Authored wood grain and a
-multi-colour bedding patch stay green; the unrepaired composite stays red.
-Native constructor tests then check all 36 emitted part faces, their actual
-imported texture bytes against donor provenance, and all 16 instances' scaled
-height/ray geometry. A separate control fails on the legacy head/foot
-reflection and passes the bed mapping. These checks measure the named material
-and mapping mechanisms, not general fidelity of arbitrary composite props.
-
-G2 compares fourteen room cutaways and sixteen isolated bed pictures. The
-room fixtures hide only inferred ceiling and beam material instances; source
-walls remain. Screens 6 and 36 naturally hide their beds behind fitted foreground
-walls (the white-bed mutation is invisible, and the first physics ray hit is a
-wall). Their whole pictures remain compared. Separate isolated fixtures expose
-each of all sixteen actual source beds from the same original camera.
-
-The masks are generated before examining any after-render. They contain the
-baseline mesh bounds and the measured candidate envelope, projected at the
-source hotspot and size, plus conservative raster and Lanczos3 kernel support.
-They include the old 70% stand-in's bounds. Frozen editor-layer fixtures skip
-scripts and campaign progression and disable shadows in both pictures. Zero
-changes are permitted outside these masks; an unrelated pixel mutation must
-fail the same mask. A rendered white-with-original-alpha bed mutation proves
-visibility inside the actual camera crop. An intact-ceiling control must fail
-this visibility condition. Each mutation starts from a fresh map scenario.
-
-The first exterior-style camera fixture saw only an indoor ceiling and gave a
-misleading zero-change result. Its frames were inspected and that result was
-rejected. The technical cause was camera occlusion; the process cause was
-reusing an outdoor harness without validating its indoor view first. These
-controls cover the camera's ability to see the changed object as well as pixel
-immutability. The gate remains a controlled source-projection regression, not
-a certificate of shadow appearance or campaign play.
-
-The room regression also exposed pre-existing wall depth ties. A control on the
-unchanged base pack perturbs only wall mesh/material resource slots: it flips
-all wall-strip pixels previously reported outside the bed masks. Geometry
-arrays and textures are unchanged. Opposite allocation orders give identical
-pictures when wall surfaces have unique test-only priorities. G2 therefore
-sets that same deterministic entity-id/child/surface order on both packs,
-retaining the original masks. This holds an unrelated nuisance variable fixed;
-it does not fix the production wall instability or certify its chosen winner.
-The room pictures are explicitly this normalized source-camera fixture, rather
-than a claim that arbitrary production resource allocations yield equal pixels.
