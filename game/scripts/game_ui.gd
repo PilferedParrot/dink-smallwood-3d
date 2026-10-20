@@ -1103,12 +1103,6 @@ func show_journal(text: String) -> void:
 func show_settings(settings: Dictionary) -> void:
 	_clear("Settings & controls", "settings")
 	_button("Controls", "controls")
-	var font_button := _button("", "plain_font")
-	font_button.set_meta("setting_key", "plain_font")
-	font_button.toggle_mode = true
-	font_button.set_pressed_no_signal(bool(settings.get("plain_font", false)))
-	font_button.toggled.connect(_plain_font_changed.bind(font_button))
-	font_button.text = "Font: Plain (Atkinson Hyperlegible)" if font_button.button_pressed else "Font: Default"
 	for setting in [["master", "Master volume", 0.0, 1.0, 0.1, 0.8], ["music", "Music volume", 0.0, 1.0, 0.05, 0.55], ["sfx", "Sound effects", 0.0, 1.0, 0.1, 0.8], ["text_scale", "Text size", 0.85, 2.0, 0.05, 1.0], ["mouse_sensitivity", "Mouse sensitivity", 0.0005, 0.006, 0.0005, 0.002], ["fov", "Field of view", 60.0, 105.0, 1.0, 80.0], ["controller_sensitivity", "Controller look sensitivity", 0.5, 4.0, 0.1, 2.0], ["controller_deadzone", "Controller stick dead zone", 0.05, 0.4, 0.05, 0.2]]:
 		var key: String = setting[0]
 		var value_label := _label(setting[1], 18)
@@ -1127,6 +1121,13 @@ func show_settings(settings: Dictionary) -> void:
 		slider.value_changed.connect(_setting_readout.bind(value_label, str(setting[1]), key))
 		column.add_child(slider)
 		_setting_readout(slider.value, value_label, str(setting[1]), key)
+		if key == "text_scale":
+			var font_button := _button("", "plain_font")
+			font_button.set_meta("setting_key", "plain_font")
+			font_button.toggle_mode = true
+			font_button.set_pressed_no_signal(bool(settings.get("plain_font", false)))
+			font_button.toggled.connect(_plain_font_changed.bind(font_button))
+			font_button.text = "Font: Plain (Atkinson Hyperlegible)" if font_button.button_pressed else "Font: Default"
 	var invert := Button.new()
 	invert.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	invert.toggle_mode = true

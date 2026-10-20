@@ -39,6 +39,14 @@ func texts(node: Node, result: Array[Control]) -> void:
  if (node is Label or node is Button) and not node.text.is_empty(): result.append(node)
  for child in node.get_children(): texts(child, result)
 
+func visible_rect(node: Control, viewport: Rect2) -> Rect2:
+ var rect := node.get_global_rect().intersection(viewport)
+ var parent: Node = node.get_parent()
+ while parent != null:
+  if parent is ScrollContainer: rect = rect.intersection(parent.get_global_rect())
+  parent = parent.get_parent()
+ return rect
+
 # Intentionally uses public engine minima rather than the builder's layout variables.
 func defects(nodes: Array[Control], viewport: Rect2) -> Array[String]:
  var found: Array[String] = []
@@ -57,9 +65,11 @@ func defects(nodes: Array[Control], viewport: Rect2) -> Array[String]:
   for j in range(i + 1, nodes.size()):
    var a: Control = nodes[i]
    var b: Control = nodes[j]
-   if a.get_parent() != b.get_parent(): continue
-   if a.get_global_rect().grow(-1).intersects(b.get_global_rect().grow(-1)):
-    found.append("text siblings overlap: " + a.text.left(30) + " / " + b.text.left(30))
+   if a.is_ancestor_of(b) or b.is_ancestor_of(a): continue
+   var ra := visible_rect(a, viewport)
+   var rb := visible_rect(b, viewport)
+   if ra.size.x > 2 and ra.size.y > 2 and rb.size.x > 2 and rb.size.y > 2 and ra.grow(-1).intersects(rb.grow(-1)):
+    found.append("visible text overlaps: " + a.text.left(30) + " / " + b.text.left(30))
  return found
 
 func calibrate() -> void:
@@ -102,6 +112,11 @@ func scan(tag: String, save := true) -> void:
   check(not bounds.intersects(dock),"speech does not cover original status art")
   if ui.status_dock.has_method("readout_top"):
    check(bounds.end.y <= ui.status_dock.readout_top()+1,"speech stays above enlarged status values")
+ if ui.status_dock.visible and ui.text_scale > 1.3:
+  var art: Rect2 = ui.status_dock.get_global_transform() * ui.status_dock.art_rect()
+  check(ui.status_dock.readout.get_global_rect().end.y < art.position.y,"enlarged readout sits above original art")
+  for label in ui.status_dock.readout_labels.values():
+   check(label.get_theme_font_size("font_size") == roundi(15*ui.status_dock._dock_scale*ui.text_scale),"status keeps requested enlarged font")
  var boxes: Array = []
  for node in nodes:
   var r := node.get_global_rect()
