@@ -15,6 +15,7 @@ var case_tag := ""
 var only_large := false
 var large_window := false
 var only_tags: PackedStringArray = []
+var scales: Array = [1.0,1.5,2.0]
 
 func _initialize() -> void:
  for arg in OS.get_cmdline_user_args():
@@ -22,6 +23,9 @@ func _initialize() -> void:
   if arg == "--capture": capture = true
   if arg == "--large-only": only_large = true
   if arg == "--1080": large_window = true
+  if arg.begins_with("--scales="):
+   scales = []
+   for value in arg.trim_prefix("--scales=").split(","): scales.append(float(value))
   if arg.begins_with("--only="): only_tags = arg.trim_prefix("--only=").split(",")
  run.call_deferred()
 
@@ -172,7 +176,7 @@ func scan(tag: String, save := true) -> void:
  records.append({"tag":tag,"size":[root.size.x,root.size.y],"scale":ui.text_scale,"plain":ui.plain_font,"boxes":boxes})
  if capture and save and (only_tags.is_empty() or only_tags.has(tag)):
   await RenderingServer.frame_post_draw
-  root.get_texture().get_image().save_png(output_dir.path_join(tag + ".png"))
+  root.get_texture().get_image().save_png(output_dir.path_join("%s-%d-%s-%03d.png" % [tag,root.size.x,"plain" if ui.plain_font else "default",roundi(ui.text_scale*100)]))
 
 func focus_actions(tag: String) -> void:
  if capture and not only_tags.is_empty(): return
@@ -413,7 +417,7 @@ func run() -> void:
  for size in sizes:
   root.size = size
   for plain in ([true] if only_large else [false,true]):
-   for scale in ([2.0] if only_large else [1.0,1.5,2.0]):
+   for scale in ([2.0] if only_large else scales):
     ui.set_text_scale(scale)
     ui.set_plain_font(plain)
     check(is_equal_approx(ui.text_scale,scale),"requested scale preserved")
