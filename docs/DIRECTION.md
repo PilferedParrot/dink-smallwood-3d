@@ -3208,7 +3208,7 @@ the well (roof, base, posts), for the well and the save machine, `tests/fps_well
 wrong landmark's sprite, the mirrored well, the pre-P4d flat-slab well. **Measured:** roof T1 1.37 against the sprite's 1.44, T3 0.616 against 0.624,
 T2 pass; flat slab fails T1 (1.78) and T3 (0.88); R2 passes (roof 0.92 against floor 0.83, base 0.88 against 0.69, posts 0.82 against 0.45; the mirrored roof
 0.63 and posts 0.13 fail); the save machine R1 0.790 against its floor 0.775 (passes), the wrong landmark 0.32-0.38, the mirrored well 0.54 (fails).
-**R1 for the well FAILS: 0.730 against the registered floor 0.753** (the flat slab is no better, 0.736: a silhouette cannot see a pitch). The misses, by overlay:
+**R1 for the well FAILED on the first candidate (81bf41b): 0.730 against the registered floor 0.753** (passes after the lead's P1 correction below) (the flat slab is no better, 0.736: a silhouette cannot see a pitch). The misses, by overlay:
 the 2 px black outline left of each post (excluded from the geometry by F4, as the lead directed) and the rubble stones that stick out of the base
 (a solid of revolution has none), plus a 1-2 px ring where the base is narrower than the sprite's body. Kept as a strict `xfail` with this reason; the
 tolerance was not moved after the measurement. The mirrored save machine cannot be told from the real one (the ring is symmetric): said, not tested.
@@ -3233,4 +3233,19 @@ column means (not assumed two) and every column keeps its own mean (no darkest-q
 **F5 evidence.** One export of the final SHA, packed eye-level views (8 directions x 2 distances) and the provenance render, bound to the SHA and the export hash:
 `tmp/p4d-fix2/` (not committed). Limits kept: the base reads dark (the sprite's), no rubble stones, the shaft's depth is a ground plane, the pitch assumes an
 axis-aligned roof (the one hypothesis the prism check does not test).
+
+**Addendum, the lead's correction after viewing 81bf41b (same day; second attempts on both items, the last under the two-strike rule).**
+*P1, post geometry.* The lead's brief said "outline excluded geometrically"; that was wrong: the sprites are pre-rendered, so the dark edge is the
+object's own silhouette, not a line drawn outside it (R1's miss, the 2 px left of each post, says the same). The beam is now the six drawn columns
+(landm-01: x78..83; side = 6 / (|cos| + |sin|) = 4.24 px, the roof's thickness the same, the beam centred on x81); the material stays wood-only
+(windows on the wood's four columns: one shaded, three lit, found by the largest step between column means). With a 6 px beam the faces are 3 px
+each, as a 45 degree post gives (the shaded face: the edge's two columns and one wood column). *Prediction registered by the lead, before measuring:
+R1 then passes the floor.* **Measured: R1 0.758 against the floor 0.753 (passes by 0.0055: a thin margin, not robust); the flat-slab well 0.736 (fails,
+but that is incidental).** The first candidate's R1 failure (0.730) is therefore the post geometry, not the rubble stones alone; the stones still stand
+outside the base (a solid of revolution has none) and are part of what keeps R1 near its floor. The roof gates after P1: T1 1.37/1.44, T3 0.614/0.624,
+T2 2.6 px, R2 passes (roof 0.94, base 0.89, posts 1.00), the controls still fail. *P2, the shaft.* The flat dark shaft read as a dark disc at 70 px.
+The sprite draws the far inner wall lit, from the far lip (row 72.5 at the axis) down to the near lip (row 91), which just hides the floor: the wall's
+picture is the camera's own. The wall's vertices now take UV = (cx + X, cz - k |Z| - Y) in the base's texture (far half exactly as drawn, near half
+the far half's picture turned back, the huts' rule); only the floor is a plain dark part (the darkest quarter of the mouth's stone). Test: the wall
+vertices' UVs equal that projection to 0.01 px and the floor is one dark colour on the ground.
 
