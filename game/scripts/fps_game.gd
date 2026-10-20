@@ -252,8 +252,8 @@ func _fps_can_act() -> bool:
 	var player: Dictionary = entities[1]
 	return not bool(player.get("frozen", false)) and int(player.get("nocontrol", 0)) == 0
 
-# The swing sets nocontrol for its own animation (_set_animation to
-# base_attack+dir); that wait is the swing's timing and keeps a held repeat armed.
+# The weapon script sets nocontrol for the swing's animation (seq
+# base_attack+dir, cleared at animation end, game.gd:720); that wait is the swing's timing and keeps a held repeat armed.
 # A freeze or any other nocontrol (push, script) ends the hold: a fresh press is
 # needed afterwards.
 func _fps_repeat_interrupted() -> bool:
