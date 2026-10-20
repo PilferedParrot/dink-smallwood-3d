@@ -1479,10 +1479,13 @@ func _callback(procedure: String, minimum: int, maximum: int, context: Dictionar
 	var epoch: int = vm.epoch()
 	var owner_task := int(context.get("task_id",0))
 	var owner_sprite := int(context.sprite_id)
+	var instance_sprite := int(context.get("instance_sprite",owner_sprite))
 	await _callback_timer(maxf(0.01,float(randi_range(minimum,maxi(minimum,maximum)))/1000))
 	if epoch != vm.epoch(): return
-	if expected == generation or vm.task_sprite(owner_task,owner_sprite) == SCRIPT_OWNER_GLOBAL:
-		vm.run(str(context.script),procedure,int(context.sprite_id))
+	var owner_now: int = vm.task_sprite(owner_task,owner_sprite)
+	if expected == generation or owner_now == SCRIPT_OWNER_GLOBAL:
+		# Same script slot as the owner: its locals stay keyed by the instance, its ownership by the sprite.
+		vm.run(str(context.script),procedure,instance_sprite,false,owner_now)
 
 func _kill_after(id: int, milliseconds: float) -> void:
 	var expected := generation

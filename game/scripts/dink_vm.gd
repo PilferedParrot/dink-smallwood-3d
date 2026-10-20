@@ -312,7 +312,10 @@ func _set_task_sprite(task_id: int, sprite_id: int) -> void:
 func _host_call(command: String, args: Array, script: String, procedure: String, sprite_id: int, task_id: int, generation: int, locals: Dictionary) -> Variant:
 	if generation != _generation or not _live_tasks.has(task_id) or host == null or not host.has_method("dink_call"):
 		return null
-	var context := {"script": script, "procedure": procedure, "sprite_id": sprite_id, "task_id": task_id, "cancelled": false, "globals": globals, "locals": locals}
+	# `sprite_id` is the sprite the task is attached to now (script_attach may have moved it);
+	# `instance_sprite` names the instance whose locals the script keeps (a FreeDink script slot).
+	var instance_sprite: int = int(_live_tasks.get(task_id, {}).get("instance_sprite", sprite_id))
+	var context := {"script": script, "procedure": procedure, "sprite_id": sprite_id, "instance_sprite": instance_sprite, "task_id": task_id, "cancelled": false, "globals": globals, "locals": locals}
 	var value: Variant = await host.dink_call(command, args, context)
 	return null if generation != _generation or not _live_tasks.has(task_id) else value
 
