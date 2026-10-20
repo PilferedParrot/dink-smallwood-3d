@@ -1,5 +1,6 @@
 # Copyright 2026 PilferedParrot contributors. SPDX-License-Identifier: Apache-2.0
 extends RefCounted
+const INPUT_BINDINGS = preload("res://scripts/input_bindings.gd")
 ## One owner for automatic resets/focus corrections. Native user scrolling wins
 ## until focus changes. Native follow_focus supplies pad neighbor search; its
 ## provisional offset is reconciled after native sorting before drawing.
@@ -85,8 +86,7 @@ func set_position(value: float, manual: bool = true, emit_change: bool = true) -
 	applying = false
 
 func _user_input(event: InputEvent) -> void:
-	if event is InputEventMouseButton and event.pressed:
-		if event.button_index in [MOUSE_BUTTON_LEFT, MOUSE_BUTTON_WHEEL_UP, MOUSE_BUTTON_WHEEL_DOWN]: cancel()
+	if INPUT_BINDINGS.is_manual_scroll_gesture(event): cancel()
 
 func _value_changed(_value: float) -> void:
 	if not applying and not _queued and not _running: cancel()

@@ -21,6 +21,7 @@ func check(ok:bool,message:String) -> void:
 func settle(count:int=14) -> void:
 	for _i in count: await process_frame
 func run() -> void:
+	manual_gesture_class()
 	root.size=Vector2i(1280,800)
 	var ui=TrackingUI.new()
 	root.add_child(ui)
@@ -56,6 +57,17 @@ func run() -> void:
 	check(record.pending==0,"UI teardown releases pending waits before owner is freed")
 	print("FOCUS REFLOW PASS" if failures.is_empty() else "FOCUS REFLOW FAIL")
 	quit(0 if failures.is_empty() else 1)
+
+func manual_gesture_class() -> void:
+	for button in [MOUSE_BUTTON_LEFT,MOUSE_BUTTON_RIGHT,MOUSE_BUTTON_MIDDLE,MOUSE_BUTTON_WHEEL_UP,MOUSE_BUTTON_WHEEL_DOWN,MOUSE_BUTTON_WHEEL_LEFT,MOUSE_BUTTON_WHEEL_RIGHT]:
+		for pressed in [false,true]:
+			var event:=InputEventMouseButton.new()
+			event.button_index=button
+			event.pressed=pressed
+			var expected:bool=pressed and button in [MOUSE_BUTTON_LEFT,MOUSE_BUTTON_WHEEL_UP,MOUSE_BUTTON_WHEEL_DOWN]
+			check(UI.INPUT_BINDINGS.is_manual_scroll_gesture(event)==expected,"Binding owner classifies pressed/released pointer gesture "+str(button))
+	for event in [InputEventMouseMotion.new(),InputEventKey.new(),InputEventJoypadButton.new()]:
+		check(not UI.INPUT_BINDINGS.is_manual_scroll_gesture(event),"Other device events are not pointer scroll gestures")
 
 func cancellation_cases(ui:TrackingUI) -> void:
 	for scenario in ["hidden", "close", "page", "new-focus"]:

@@ -26,6 +26,9 @@ static func key(code: int) -> Dictionary:
 static func mouse(button: int) -> Dictionary:
 	return {"type":"mouse", "button":button}
 
+static func is_manual_scroll_gesture(event: InputEvent) -> bool:
+	return event is InputEventMouseButton and event.pressed and event.button_index in [MOUSE_BUTTON_LEFT, MOUSE_BUTTON_WHEEL_UP, MOUSE_BUTTON_WHEEL_DOWN]
+
 static func pad(button: int) -> Dictionary:
 	return {"type":"pad", "button":button}
 
