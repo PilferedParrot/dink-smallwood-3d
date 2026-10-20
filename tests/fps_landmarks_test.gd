@@ -74,11 +74,11 @@ func _run() -> void:
 		var size := hi - lo if pts.size() > 0 else Vector3.ZERO
 		print("LANDMARK ", int(e.get("index", -1)), " ", path, " ", kind, " ", cls, " ", snappedf(size.x, 0.001), " ", snappedf(size.z, 0.001), " ",
 			snappedf(size.y, 0.001), " ", snappedf(ns, 0.001), " ", snappedf(ew, 0.001), " ", layer, " ", str(e.get("script", "")).length() > 0)
-	# The well's fitted roof, whether or not the well stands as one in the game: the last surface of its compound is the roof. A gable is
+	# The well's fitted roof, whether or not the well stands as one in the game: the compound's third surface (base, posts, roof; then the shaft's floor) is the roof. A gable is
 	# higher along its ridge than at its eaves; the flat slab it replaced was one thickness (0.14 m) from end to end.
 	var wp := "assets/graphics/struct/Landmark/landm-01.png"
 	if world.props.has(wp):
-		var roof: Mesh = (world.props.surfaces(wp).back())[0]
+		var roof: Mesh = (world.props.surfaces(wp)[2])[0]
 		var rv: PackedVector3Array = roof.surface_get_arrays(0)[Mesh.ARRAY_VERTEX]
 		var ymin := 1e9
 		var ymax := -1e9

@@ -191,13 +191,13 @@ def well_fit(rgba: np.ndarray, k: float | None) -> dict | None:
     side = 0.0
     zs = []
     for p in posts:
-        w = p['x1'] - p['x0']
+        w = p['x1'] - p['x0'] + DARK  # the drawn silhouette: the wood and the dark edge on its left (pre-rendered sprite: the edge is the object's own)
         side = max(side, w / (c + s))
     for p in posts:
-        w = p['x1'] - p['x0']
+        w = p['x1'] - p['x0'] + DARK
         z = (p['foot'] - cz + rim) / k - w / 2
         zs.append(z)
-        boxes.append([round((p['x0'] + p['x1']) / 2 - cx, 2), round(z, 2)])
+        boxes.append([round((p['x0'] - DARK + p['x1']) / 2 - cx, 2), round(z, 2)])  # the middle of the six drawn columns
     zr = float(np.mean(zs))
     thick = side
     # The roof's ridge is the middle of its footprint: its midpoint M (the ridge's ends B and A') stands over the posts' middle in
@@ -220,9 +220,9 @@ def well_fit(rgba: np.ndarray, k: float | None) -> dict | None:
         u = float((np.array([b[0], b[1]]) - ctr) @ ex)
         u_near = max(0.0, abs(u) - side / 2)
         b.append(round(ridge - thick - rise * u_near / (rw / 2) - rim, 2))
-    # The drawn post is DARK columns of black outline, then its wood (four columns, the shaded half of it the left two). The outline is a
-    # drawing convention, not material and not width: the faces take the wood's columns only, at their drawn width (prop_solids.gd _texture,
-    # fit.flat), and the beam is as wide as the wood is (side * (|cos| + |sin|) = the wood's columns, above).
+    # The drawn post is DARK columns of black edge, then its wood (four columns). The sprites are pre-rendered: the edge is the object's own
+    # silhouette, so the BEAM (geometry) is the six drawn columns: side * (|cos| + |sin|) = wood + DARK, above. Its MATERIAL is wood only: the
+    # edge's black is no colour a face can have (prop_solids.gd _texture, fit.flat), and the faces' windows are the wood's columns.
     wp = posts[0]['x1'] - posts[0]['x0']
     assert all(p['x1'] - p['x0'] == wp for p in posts), 'the two posts are drawn as wide as each other'
     # Which wood columns are the shaded face and which the lit one is read from the sprite, not assumed: each column's mean luminance (the warm
@@ -235,7 +235,8 @@ def well_fit(rgba: np.ndarray, k: float | None) -> dict | None:
         vals = [lum[p['top']:p['foot'], p['x0'] + j][wood[p['top']:p['foot'], p['x0'] + j]] for p in posts]
         colmean.append(float(np.concatenate(vals).mean()))
     nd = 1 + int(np.argmax(np.abs(np.diff(colmean))))  # the shaded face's columns
-    faces = {'dark': [-wp / 2, -wp / 2 + nd], 'lit': [-wp / 2 + nd, wp / 2]}
+    mid = DARK / 2  # the wood run's middle lies this far right of the beam's (the beam is the wood plus the dark edge on its left)
+    faces = {'dark': [-wp / 2 + mid, -wp / 2 + mid + nd], 'lit': [-wp / 2 + mid + nd, wp / 2 + mid]}  # windows on the WOOD columns, relative to the beam's middle
     flat = [{'dark': [p['x0'], p['x0'] + nd], 'lit': [p['x0'] + nd, p['x1']], 'rows': [p['top'], p['foot']]} for p in posts]
     out_posts = {'class': 'box', 'faces': faces, 'flat': flat, 'size': base['size'], 'cx': cx, 'cz': cz, 'k': k, 'w': round(side, 2), 'd': round(side, 2),
                  'yaw': round(float(yaw), 4), 'h': round(ridge - thick - rise - rim, 2), 'boxes': boxes, 'mask': pack(post_px)}  # no void_fill: the post's outline is not a gap to fill but a convention to leave out (fit.flat)

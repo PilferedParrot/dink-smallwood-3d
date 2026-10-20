@@ -239,6 +239,16 @@ func _round(path: String, fit: Dictionary) -> Array:
 		for c in n:
 			var d := (c + 1) % n
 			index.append_array(PackedInt32Array([base + c, base + d, base + n + d, base + c, base + n + d, base + n + c]))
+		# The mouth's wall, rim down to the ground, seen from inside (the winding turned): the camera saw the far half of it exactly (UV = the
+		# projection (cx + X, cz + k Z - Y) with Z < 0), and never the near half, which takes the far half's picture turned back (|Z|: the huts' rule).
+		var wall := verts.size()
+		for yy in [th, 0.0]:
+			for c in n + 1:
+				var t: float = buildings._hut_theta(c % n, n)
+				verts.append(Vector3(cx + mr*cos(t), yy, zc + mr*sin(t))*S)
+				tex_uv.append(Vector2(cx + mr*cos(t), cz - k*mr*absf(sin(t)) - yy)/size)
+		for c in n:
+			index.append_array(PackedInt32Array([wall + c, wall + c + 1, wall + n + 1 + c + 1, wall + c, wall + n + 1 + c + 1, wall + n + 1 + c]))
 	else:
 		verts.append(Vector3(cx, th, zc)*S)
 		tex_uv.append(Vector2(cx, cz - th)/size)
@@ -246,10 +256,10 @@ func _round(path: String, fit: Dictionary) -> Array:
 			index.append_array(PackedInt32Array([base + n, base + c, base + (c + 1) % n]))
 	return [[_arrays(verts, tex_uv, index), _texture(path, fit)]]
 
-# The well's shaft (fit.mouth): the mouth's wall, straight down from the rim to the ground, and its floor, one plain dark colour. The
-# sprite draws the mouth as the far inner wall lit and a black lip, with no depth to read: the shaft's depth is the ground plane (named
-# inference) and its colour the mean of the DARKEST QUARTER of the mouth's own stone pixels (the picture's darkest stone, no tuned shade;
-# the outline's black and the posts excluded as in _flatten), so each frame (the glow differs) darkens from its own picture.
+# The well's shaft floor (fit.mouth; the wall is in _round, textured from the sprite's own far inner wall): a disc on the ground in one plain
+# dark colour. The sprite draws no depth: the shaft ends at the ground plane (named inference), and the floor's colour is the mean of the
+# DARKEST QUARTER of the mouth's own stone pixels (the picture's darkest stone, no tuned shade; the outline's black and the posts excluded as
+# in _flatten), so each frame (the glow differs) darkens from its own picture.
 func _mouth(path: String, base: Dictionary) -> Array:
 	var cx := float(base.cx)
 	var cz := float(base.cz)
@@ -283,14 +293,11 @@ func _mouth(path: String, base: Dictionary) -> Array:
 	var n := 32
 	var verts := PackedVector3Array()
 	var index := PackedInt32Array()
+	verts.append(Vector3(cx, 0.0, zc)*S)
 	for c in n + 1:
 		var t := TAU*float(c)/n
-		verts.append(Vector3(cx + mr*cos(t), rim, zc + mr*sin(t))*S)
 		verts.append(Vector3(cx + mr*cos(t), 0.0, zc + mr*sin(t))*S)
-	for c in n: index.append_array(PackedInt32Array([2*c, 2*c + 1, 2*c + 3, 2*c, 2*c + 3, 2*c + 2]))
-	var mid := verts.size()
-	verts.append(Vector3(cx, 0.0, zc)*S)
-	for c in n: index.append_array(PackedInt32Array([mid, 2*c + 1, 2*c + 3]))
+	for c in n: index.append_array(PackedInt32Array([0, 1 + c, 2 + c]))
 	var m := StandardMaterial3D.new()
 	m.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
 	m.albedo_color = PROV_DERIVED if provenance else colour

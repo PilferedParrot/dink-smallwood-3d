@@ -190,11 +190,12 @@ def _wood_columns(rgba, top, foot, x_from, x_to):
     return [x for x in range(x_from, x_to) if warm[top:foot, x].mean() >= 0.5]
 
 
-def test_the_wells_post_side_and_roof_thickness_are_the_drawn_woods_width_not_a_padded_run():
-    # P4d fix round 2, F4. The drawn post is two columns of black outline and four of wood (landm-01: x78,79 outline, x80..83 wood, x84 is
-    # background; the pad of DARK = 2 columns each side the fit used made it eight, one third too wide, and the roof's thickness with it).
-    # The beam's drawn width is side * (|cos| + |sin|) at the fitted yaw: the side is the wood's width over that. Re-measured here from the
-    # sprite by an independent column count; both posts, all three frames (one fit, three silhouettes).
+def test_the_wells_post_is_its_six_drawn_columns_and_the_materials_are_the_woods(tmp_path=None):
+    # P4d fix round 2, F4 then P1 (the lead's correction). The drawn post is six columns (landm-01 right post: x78,79 the dark edge, x80..83 wood,
+    # x84 background; the fit padded the wood by DARK = 2 each side and drew eight, one third too wide). The sprites are pre-rendered: the dark
+    # edge is the object's own silhouette edge, so the GEOMETRY is the six columns (side = 6 / (|cos| + |sin|) at the fitted yaw, the roof's
+    # thickness the same), and the MATERIAL stays wood-only (no outline in any donor, the faces' windows are the wood's columns). Re-measured here
+    # from the sprite by an independent column count; all three frames (one fit, three silhouettes).
     import json
 
     import numpy as np
@@ -208,16 +209,24 @@ def test_the_wells_post_side_and_roof_thickness_are_the_drawn_woods_width_not_a_
         path = f"assets/graphics/struct/Landmark/landm-0{n}.png"
         posts, roof = fits[path]["parts"]
         rgba = P.load(path)
-        for x_from, top, foot in ((76, 44, 84), (48, 61, 86)) if n < 3 else ():  # the right post, the left post: rows well inside each
-            # (frame 3's glow lights the outline's pixels, so its columns cannot be counted; it shares the fit of the other two)
-            cols = _wood_columns(rgba, top, foot, x_from, x_from + 10)
-            assert len(cols) == 4 and cols == list(range(cols[0], cols[0] + 4)), (path, x_from, cols)
+        if n < 3:  # (frame 3's glow lights the edge's pixels, so its columns cannot be counted; it shares the fit of the other two)
+            cols = _wood_columns(rgba, 44, 84, 76, 86)
+            assert cols == [80, 81, 82, 83], (path, cols)
+            a = rgba.astype(int)
+            lum = 0.299 * a[..., 0] + 0.587 * a[..., 1] + 0.114 * a[..., 2]
+            for x in (78, 79):  # the dark edge: opaque, at or below the outline's luminance in most rows of the post
+                assert ((a[44:84, x, 3] >= 128) & (lum[44:84, x] <= 24)).mean() >= 0.7, (path, x)
+            assert (a[44:66, 84, 3] < 128).mean() >= 0.9, path  # and nothing to its right above the stone: six columns, not eight
         yaw = posts["yaw"]
-        side = 4.0 / (abs(np.cos(yaw)) + abs(np.sin(yaw)))
+        side = 6.0 / (abs(np.cos(yaw)) + abs(np.sin(yaw)))
         assert posts["w"] == pytest.approx(side, abs=0.02) and posts["d"] == pytest.approx(side, abs=0.02), (path, posts["w"], side)
         assert roof["h"] == pytest.approx(side, abs=0.02), (path, roof["h"], side)  # the roof is a beam's thickness
-        assert [f["lit"][1] - f["dark"][0] for f in posts["flat"]] == [4, 4], posts["flat"]
-        assert posts["faces"]["lit"][1] - posts["faces"]["dark"][0] == pytest.approx(4.0), posts["faces"]
+        cx = fits[path]["cx"]
+        X = posts["boxes"][0][0]
+        assert cx + X == pytest.approx(81.0, abs=0.51), (path, cx + X)  # the beam is centred on the six columns x78..83
+        assert cx + X + posts["faces"]["dark"][0] == pytest.approx(80.0, abs=0.01) and cx + X + posts["faces"]["lit"][1] == pytest.approx(84.0, abs=0.01), posts["faces"]
+        assert [f["lit"][1] - f["dark"][0] for f in posts["flat"]] == [4, 4], posts["flat"]  # the materials: the wood's four columns only
+
 
 
 def _ray_hits(origin, target, parts):
@@ -454,9 +463,41 @@ def test_g1_the_save_machine_registers_to_its_sprite_and_the_wrong_landmark_does
     assert well["mirrored_iou"] < well["R1"]["floor"] - 0.1, well  # the mirrored well is a different picture
 
 
-@pytest.mark.xfail(strict=True, reason="measured 2026-10-20: the built well's whole silhouette registers at IoU 0.730 against the registered floor 0.753; "
-                   "the misses are the 2 px black outline left of each post (excluded from the geometry by F4) and the rubble stones that stick out of "
-                   "the base (a solid of revolution has none): see docs/DIRECTION.md, P4d fix round 2")
 def test_g1_the_whole_well_silhouette_registers_within_the_registered_band(g1_all):
-    well = g1_all["well"]
+    # R1, registered before it was measured (tools/well_g1.py): IoU with the sprite's body at or above the sprite's own 2 px band floor (0.753).
+    # History, kept: the first candidates failed it (0.730) because the post geometry left out the dark edge the pre-rendered sprite draws as
+    # the object's own silhouette (the lead's P1 correction, 2026-10-20: the beam is the six drawn columns); the floor was never moved.
+    well, flat = g1_all["well"], g1_all["flat"]
     assert well["R1"]["pass"], well["R1"]
+
+
+def test_the_wells_shaft_wall_is_the_sprites_far_inner_wall_projected_and_the_floor_is_dark(tmp_path):
+    # P4d fix round 2, P2 (the lead's view of the first candidate: the flat dark shaft read as a dark disc at 70 px, no depth cue). The sprite
+    # draws the mouth's far inner wall lit (rows 72.5..91 at the axis: from the far lip down to the near lip, which just hides the floor) and a
+    # black near lip: the wall's picture is the camera's own. Every vertex of the wall (radius = the mouth's, between the ground and the rim)
+    # must take UV = (cx + X, cz - k |Z| - Y) in the BASE's texture (X, Z from the axis): the far half exactly as drawn, the near half
+    # (never seen) the far half's picture turned back (the huts' rule). The floor is a separate part in one dark colour (the darkest quarter).
+    import json
+
+    import numpy as np
+
+    path = "assets/graphics/struct/Landmark/landm-01.png"
+    fit = json.loads((ROOT / "game/prototype/landmarks.json").read_text())[path]
+    base = fit["base"]
+    rim = base["nodes"][-1][0]
+    r = base["mouth"]["r"]
+    k = base["k"]
+    zc = base["cz"] - (1.0 - k) * base["nodes"][0][1]
+    dump = json.loads((_dump_well(tmp_path, "now") / "surfaces.json").read_text())
+    part = dump["parts"][0]
+    v = np.array(part["verts"], float)
+    uv = np.array(part["uvs"], float) * np.array(base["size"], float)
+    X, Z, Y = v[:, 0] - base["cx"], v[:, 2] - zc, v[:, 1]
+    wall = np.zeros(len(v), bool)
+    wall[-2 * 33:] = True  # the wall is the base mesh's last two rings (rim and ground, 32 + 1 around); the rim's annulus ring above is the picture as drawn
+    assert (np.abs(np.hypot(X, Z)[wall] - r) < 0.01).all() and Y[wall].min() < 0.01 and Y[wall].max() > rim - 0.01, (Y[wall].min(), Y[wall].max())
+    expect = np.stack([base["cx"] + X[wall], base["cz"] - k * np.abs(Z[wall]) - Y[wall]], 1)
+    assert np.abs(uv[wall] - expect).max() < 0.01, np.abs(uv[wall] - expect).max()
+    assert uv[wall][:, 1].min() >= base["cz"] - rim - k * r - 0.01 and uv[wall][:, 1].max() <= base["cz"] + 0.01  # rows 72.5..99.97 of the sprite
+    floor = dump["parts"][3]
+    assert "colour" in floor and np.array(floor["verts"], float)[:, 1].max() < 0.01, "the floor: one dark colour, on the ground"
