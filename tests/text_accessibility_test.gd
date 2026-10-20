@@ -127,6 +127,8 @@ func scan(tag: String, save := true) -> void:
   root.get_texture().get_image().save_png(output_dir.path_join(tag + ".png"))
 
 func focus_actions(tag: String) -> void:
+ var last_scroll := Vector2(-1,-1)
+ var frame_index := 0
  for node in ui._focusable_children(ui.panel):
   if not node.is_visible_in_tree() or (node is BaseButton and node.disabled): continue
   node.grab_focus()
@@ -142,6 +144,12 @@ func focus_actions(tag: String) -> void:
   if ui.menu_scroll.is_ancestor_of(node) or (ui.page == "controls" and ui.controls_menu.scroll.is_ancestor_of(node)):
    # Oversize wrapped labels can scroll; each focusable action must fit whole.
    check(area.grow(1).encloses(node.get_global_rect()),tag + " focused action fully visible: " + str(node.get_path()))
+  var scroll := Vector2(ui.menu_scroll.scroll_vertical, ui.controls_menu.scroll.scroll_vertical if ui.page == "controls" else 0)
+  if capture and scroll != last_scroll:
+   await RenderingServer.frame_post_draw
+   root.get_texture().get_image().save_jpg(output_dir.path_join(tag + "-scroll-%02d.jpg" % frame_index),0.95)
+   frame_index += 1
+  last_scroll = scroll
  await scan(tag + "-last",false)
 
 func matrix() -> void:
@@ -219,6 +227,8 @@ func matrix() -> void:
  ui.gameplay_hint_deadline_msec = Time.get_ticks_msec()+60000
  await scan("hud-help")
  check(ui.compass_label.get_theme_font_size("font_size") == roundi(18*ui.text_scale),"location respects text size")
+ ui.show_hud({"life":12,"lifemax":20,"strength":12,"defense":8,"magic":4,"gold":165,"exp":45,"level":2,"location":"Stonebrook"})
+ await scan("hud-normal")
  ui.notify("Adventure saved. You can continue exploring the village.")
  await scan("toast")
  ui.show_pause()
@@ -243,7 +253,7 @@ func run() -> void:
     print("TEXT MATRIX ",size," plain=",plain," scale=",scale," failures=",failures.size())
  if not output_dir.is_empty():
   var file := FileAccess.open(output_dir.path_join("geometry.json"),FileAccess.WRITE)
-  file.store_string(JSON.stringify({"records":records,"failures":failures,"packed":not OS.has_feature("editor"),"setup":"UI-only fixture bypasses progression and world scripts; native layout and focus; not campaign proof."},"\t"))
+  file.store_string(JSON.stringify({"records":records,"failures":failures,"packed":not OS.has_feature("editor"),"executable":OS.get_executable_path(),"bundled_font":FileAccess.file_exists("res://assets/fonts/AtkinsonHyperlegible-Regular.ttf"),"bundled_licence":FileAccess.file_exists("res://assets/fonts/AtkinsonHyperlegible-OFL.txt"),"setup":"UI-only fixture bypasses progression and world scripts; native layout and focus; not campaign proof."},"\t"))
  ui.cancel_speech()
  ui.queue_free()
  await process_frame
