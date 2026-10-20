@@ -167,6 +167,9 @@ func _blacken_for_source_mask(node: Node) -> void:
 	if node is SpriteBase3D: node.modulate = Color.BLACK
 	for child in node.get_children(): _blacken_for_source_mask(child)
 
+func _capture_setup(_game, _view: Dictionary) -> void:
+	pass
+
 func _shoot(game, view: Dictionary, out_dir: String) -> void:
 	var cam: Camera3D = game.camera
 	var original := bool(view.get("original", false))
@@ -194,6 +197,7 @@ func _shoot(game, view: Dictionary, out_dir: String) -> void:
 	# facing as seen from the camera); the batch is frozen, so redraw them once for this view.
 	for id in game.entities.keys(): game._update_visual(id)
 	if game.fp_world != null and game.fp_world.has_method("face_neighbours"): game.fp_world.face_neighbours()
+	_capture_setup(game, view)
 	if "--building-source-mask" in OS.get_cmdline_user_args():
 		_blacken_for_source_mask(game)
 		if environment:

@@ -21,6 +21,7 @@ var fits: Dictionary = {}
 var cache: Dictionary = {}
 var materials: Dictionary = {}
 var heights: Dictionary = {} # screen -> room height, source px
+var bed_parts: Dictionary = {}
 
 # A mesh being built: vertices at sprite px (X, Y, Z) shifted by `o` to the hotspot, their texture coordinates in sprite px.
 class MB:
@@ -57,6 +58,8 @@ func _init(fp) -> void:
 	var path := "res://data/interior.json"
 	var parsed: Variant = JSON.parse_string(FileAccess.get_file_as_string(path)) if FileAccess.file_exists(path) else null
 	fits = parsed if parsed is Dictionary else {}
+	var bed_data: Variant = JSON.parse_string(FileAccess.get_file_as_string("res://data/bed_parts.json"))
+	bed_parts = bed_data if bed_data is Dictionary else {}
 
 func fit_of(path: String) -> Dictionary:
 	var f: Variant = fits.get(path, {})
@@ -80,7 +83,10 @@ func walls_fitted(screen: int) -> bool:
 func handles(e: Dictionary, screen: int = -1) -> bool:
 	if screen < 0: screen = world.host.current_screen
 	var fit := fit_of(world.frame_path(e))
-	if absf(float(e.get("size", 100)) - 100.0) >= 0.5 or fit.is_empty(): return false
+	if fit.is_empty(): return false
+	# The source contains a 70% bed too. Its own art and all parts scale together.
+	if str(fit.get("kind", "")) != "bed" and absf(float(e.get("size", 100)) - 100.0) >= 0.5: return false
+	if float(e.get("size", 100)) <= 0.0: return false
 	# Frontal furniture can also be authored outdoors. Its source picture and
 	# hardness still define the solid; an indoor flag is not a shape property.
 	if not world.is_inside(screen):
@@ -287,11 +293,15 @@ func _normal(base: Array, i: int, c: Vector2) -> Vector2:
 func _proj(x: Vector2, y: float, anchor: Vector2) -> Vector2:
 	return Vector2(x.x + anchor.x, x.y + anchor.y - y)
 
-func _face_uv(base: Array, i: int, c: Vector2, x: Vector2, y: float, anchor: Vector2) -> Vector2:
+func _face_uv(base: Array, i: int, c: Vector2, x: Vector2, y: float, anchor: Vector2, keep_ends: bool = false) -> Vector2:
 	var n := base.size()
 	var nrm := _normal(base, i, c)
 	if nrm.y > SIDE_MIN: return _proj(x, y, anchor)
-	if -nrm.y > SIDE_MIN: return _proj(2.0 * c - x, y, anchor) # the far side: the seen face through the centre
+	if -nrm.y > SIDE_MIN:
+		# An opposite face translated through the part preserves its ends. A
+		# point reflection swaps the bed's head/foot, putting pillows at the foot.
+		if keep_ends: return _proj(x + 2.0*c - (base[i] as Vector2) - (base[(i+1)%n] as Vector2), y, anchor)
+		return _proj(2.0 * c - x, y, anchor)
 	# edge-on: continue the adjacent seen face round the shared corner
 	var best := -2.0
 	var shared := Vector2.ZERO
@@ -311,7 +321,7 @@ func _face_uv(base: Array, i: int, c: Vector2, x: Vector2, y: float, anchor: Vec
 	var s := (x - shared).length()
 	return _proj(shared + away * minf(s, length), y, anchor)
 
-func prism(mb: MB, base: Array, y0: float, y1: float, anchor: Vector2 = Vector2.ZERO, top: bool = true) -> void:
+func prism(mb: MB, base: Array, y0: float, y1: float, anchor: Vector2 = Vector2.ZERO, top: bool = true, keep_ends: bool = false) -> void:
 	var n := base.size()
 	var c := Vector2.ZERO
 	for p in base: c += p as Vector2
@@ -319,10 +329,10 @@ func prism(mb: MB, base: Array, y0: float, y1: float, anchor: Vector2 = Vector2.
 	for i in n:
 		var p: Vector2 = base[i]
 		var q: Vector2 = base[(i + 1) % n]
-		var a := mb.vert(p.x, y0, p.y, _face_uv(base, i, c, p, y0, anchor))
-		var b := mb.vert(q.x, y0, q.y, _face_uv(base, i, c, q, y0, anchor))
-		var cc := mb.vert(q.x, y1, q.y, _face_uv(base, i, c, q, y1, anchor))
-		var d := mb.vert(p.x, y1, p.y, _face_uv(base, i, c, p, y1, anchor))
+		var a := mb.vert(p.x, y0, p.y, _face_uv(base, i, c, p, y0, anchor, keep_ends))
+		var b := mb.vert(q.x, y0, q.y, _face_uv(base, i, c, q, y0, anchor, keep_ends))
+		var cc := mb.vert(q.x, y1, q.y, _face_uv(base, i, c, q, y1, anchor, keep_ends))
+		var d := mb.vert(p.x, y1, p.y, _face_uv(base, i, c, p, y1, anchor, keep_ends))
 		mb.quad(a, b, cc, d)
 	if top:
 		var ids: Array[int] = []
@@ -346,6 +356,8 @@ func add_entity(node: Node3D, e: Dictionary, id: int, collision: bool, screen: i
 		"post": surfaces = post_surfaces(fit, path, o)
 	if surfaces.is_empty(): return
 	var model := node_of(surfaces)
+	var bed_factor := float(e.get("size", 100)) / 100.0 if str(fit.kind) == "bed" else 1.0
+	model.scale = Vector3.ONE * bed_factor
 	node.add_child(model)
 	if collision:
 		if str(fit.kind) == "wall":
@@ -371,7 +383,7 @@ func add_entity(node: Node3D, e: Dictionary, id: int, collision: bool, screen: i
 			var hit: StaticBody3D = world.ray_body(model, id)
 			hit.collision_layer = 2 if not str(e.get("script", "")).is_empty() else 1 # scripted things are what the player talks to (update_visual)
 			node.add_child(hit)
-	node.set_meta("height", world.model_height(model))
+	node.set_meta("height", world.model_height(model) * bed_factor)
 	node.set_meta("interior_solid", true)
 	# A wall piece the map marks type 2 (never drawn) is the hardness of a stretch of wall the drawn pieces leave open (the
 	# corners): the room's walls stand there as well, as every hard region must show something.
@@ -603,11 +615,65 @@ func _shifted(surfaces: Array, o: Vector2) -> Array:
 
 # --- The bed ------------------------------------------------------------------------------------------------------------------
 func bed_surfaces(fit: Dictionary, path: String, o: Vector2) -> Array:
-	var mb := new_mb(path, fit, o)
+	if bed_parts.is_empty():
+		push_error("Missing source-derived bed parts")
+		return []
+	var out: Array = []
+	var h := float(bed_parts.bedding_height)
 	var base: Array = []
-	for p in fit.base: base.append(Vector2(float(p[0]), float(p[1])))
-	prism(mb, base, 0.0, float(fit.height))
-	return [[mb.mesh(), material(path)]]
+	for p in bed_parts.bedding_top: base.append(Vector2(float(p[0]), float(p[1]) + h))
+	_bed_part(out, fit, path, o, base, float(bed_parts.levels.bedding_bottom), h, "bedding", "bedding")
+	_bed_part(out, fit, path, o, base, float(bed_parts.levels.frame_bottom), float(bed_parts.levels.frame_top), "wood", "frame")
+	for i in bed_parts.post_caps.size():
+		var post_base: Array = []
+		var ph := float(bed_parts.post_heights[i])
+		for p in bed_parts.post_caps[i]: post_base.append(Vector2(float(p[0]), float(p[1]) + ph))
+		_bed_part(out, fit, path, o, post_base, 0.0, ph, "wood", "post%d" % i)
+	return out
+
+func _bed_part(out: Array, fit: Dictionary, path: String, o: Vector2, base: Array, lo: float, hi: float, role: String, part: String) -> void:
+	var mb := new_mb(path, fit, o)
+	prism(mb, base, lo, hi, Vector2.ZERO, true, true)
+	# The underside is a material surface too, visible through the open frame.
+	var ids: Array[int] = []
+	for p in base: ids.append(mb.vert(p.x, lo, p.y, _proj(p, lo, Vector2.ZERO)))
+	for i in range(1, ids.size() - 1): mb.tri(ids[0], ids[i + 1], ids[i])
+	# Keep one physical mesh per part, with independently sourced face content.
+	# A side is cloth hanging over the edge, not a projection of the quilt top.
+	var complete := mb.mesh()
+	var arrays := complete.surface_get_arrays(0)
+	var indices: PackedInt32Array = arrays[Mesh.ARRAY_INDEX]
+	var mesh := ArrayMesh.new()
+	mesh.resource_name = "bed:" + part
+	for face in 6:
+		var domain := "post"
+		if part == "bedding":
+			domain = "bedding_top" if face == 4 else ("cloth_end" if face in [1,3] else "cloth_long")
+		elif part == "frame":
+			domain = "rail_end" if face in [1,3] else "rail_long"
+		var face_arrays: Array = arrays.duplicate()
+		face_arrays[Mesh.ARRAY_INDEX] = indices.slice(face*6,face*6+6)
+		mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES,face_arrays)
+		var mat := material(str(bed_parts.textures[domain].path))
+		mat.set_meta("bed_role",role)
+		mat.set_meta("bed_domain",domain)
+		mesh.surface_set_material(face,mat)
+	out.append([mesh,mesh.surface_get_material(0)])
+
+func bed_surface_height(at: Vector2) -> float:
+	var top := PackedVector2Array()
+	for p in bed_parts.bedding_top: top.append(Vector2(float(p[0]), float(p[1])))
+	var h := float(bed_parts.bedding_height)
+	var best := h if Geometry2D.is_point_in_polygon(at, top) else 0.0
+	var rail := PackedVector2Array()
+	var rail_height := float(bed_parts.levels.frame_top)
+	for p in top: rail.append(p + Vector2(0, h - rail_height))
+	if Geometry2D.is_point_in_polygon(at, rail): best = maxf(best, rail_height)
+	for i in bed_parts.post_caps.size():
+		var cap := PackedVector2Array()
+		for p in bed_parts.post_caps[i]: cap.append(Vector2(float(p[0]), float(p[1])))
+		if Geometry2D.is_point_in_polygon(at, cap): best = maxf(best, float(bed_parts.post_heights[i]))
+	return best
 
 # --- Things square to the camera: the hearth, a shelf, a table ----------------------------------------------------------------
 # The body: its front face the rows from `split` down, at the plane z_f of the sprite's base row, the top face the rows above (down
@@ -986,8 +1052,7 @@ func surface_height(foot: Vector2, order: float, screen: int, vision: int) -> fl
 				if at.x >= float(dims.x0) and at.x <= float(dims.x1) and at.y + float(dims.y_top) >= float(dims.z_b) and at.y + float(dims.y_top) <= float(dims.z_f):
 					best = maxf(best, float(dims.y_top))
 			"bed":
-				var base: Array = []
-				for p in fit.base: base.append(Vector2(float(p[0]), float(p[1])))
-				var h := float(fit.height)
-				if Geometry2D.is_point_in_polygon(Vector2(at.x, at.y + h), PackedVector2Array(base)): best = maxf(best, h)
+				var factor := float(e.get("size", 100)) / 100.0
+				var local := (foot - Vector2(float(e.get("x", 0)), float(e.get("y", 0)))) / factor + o
+				best = maxf(best, bed_surface_height(local) * factor)
 	return best
