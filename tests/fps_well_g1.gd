@@ -3,8 +3,9 @@ extends SceneTree
 # camera whose picture is the sprite's, screen = (X, k Z - Y): looking north and down at elevation atan(k) (then v / cos = k Z - Y), the
 # vertical stretched back by 1/cos in tools/well_g1.py. The repo's original-camera view (fps_capture.gd) is a k = 1 camera and cannot
 # reproduce a sprite drawn at k = 0.5. Writes <out>/all.png (the whole well) and <out>/roof.png (its roof alone: the last mesh of the
-# compound), magenta background, and <out>/g1.json (the registration: sprite px <-> render px). Arguments: --out=DIR [--fits=FILE: a
-# landmarks.json to use instead of the checkout's, set before the screen loads: the flat-slab control].
+# compound: its third part), magenta background, and <out>/g1.json (the registration: sprite px <-> render px). Arguments: --out=DIR
+# [--target=well|save: which landmark (the save machine, a ring, has no roof shot)] [--fits=FILE: a landmarks.json to use instead of the
+# checkout's, set before the screen loads: the flat-slab control].
 # Verdict: written 2026-10-20 (Sonnet 5.5, P4d).
 const GAME = preload("res://scripts/fps_game.gd")
 const WIDTH_PX := 240.0 # the render's width in sprite px
@@ -20,9 +21,11 @@ func _hide_except(node: Node, keep: Node) -> void:
 func _run() -> void:
 	var out := ""
 	var fits := ""
+	var target_name := "well"
 	for arg in OS.get_cmdline_user_args():
 		if arg.begins_with("--out="): out = arg.trim_prefix("--out=")
 		if arg.begins_with("--fits="): fits = arg.trim_prefix("--fits=")
+		if arg.begins_with("--target="): target_name = arg.trim_prefix("--target=")
 	DirAccess.make_dir_recursive_absolute(out)
 	game = GAME.new()
 	game.test_mode = true
@@ -43,18 +46,28 @@ func _run() -> void:
 	game.playing = false
 	game.set_physics_process(false)
 	game.set_process(false)
-	var well_path := "assets/graphics/struct/Landmark/landm-01.png"
+	var well_path := ""
 	var node: Node3D = null
 	for id in game.entities.keys():
 		if id == 1: continue
-		if world.frame_path(game.entities[id]).to_lower().ends_with("landm-01.png") and game.visuals.get(id) != null: node = game.visuals[id]
+		var fp: String = world.frame_path(game.entities[id])
+		var low := fp.to_lower()
+		if (low.ends_with("landm-01.png") if target_name == "well" else "/inter/save/" in low) and game.visuals.get(id) != null:
+			node = game.visuals[id]
+			well_path = fp
 	var model: Node3D = node.get_node("Model")
 	print("MODEL ", model.get_class(), " basis ", model.global_transform.basis, " children ", model.get_child_count())
 	var fit: Dictionary = world.props.fits[well_path]
 	var k := float(fit.k)
 	var S: float = world.props.S
-	var base: Dictionary = fit.base
-	var zc := float(base.cz) - (1.0 - float(base.k))*float(base.nodes[0][1])
+	var zc := 0.0
+	var mid_row := 55.0 # the sprite's picture is centred on this height
+	if target_name == "well":
+		var base: Dictionary = fit.base
+		zc = float(base.cz) - (1.0 - float(base.k))*float(base.nodes[0][1])
+	else:
+		zc = float(fit.cz) - (1.0 - k)*float(fit.rf)
+		mid_row = float(fit.cz) - float(fit.size[1])/2.0
 	_hide_except(game, model)
 	var env: Environment = world.environment
 	if env:
@@ -67,7 +80,7 @@ func _run() -> void:
 	var theta := atan(k)
 	var f := Vector3(0, -sin(theta), -cos(theta))
 	var up := Vector3(0, cos(theta), -sin(theta))
-	var target := Vector3(float(fit.cx), 55.0, zc)*S # local to the model: the sprite's middle in x, 55 px up
+	var target := Vector3(float(fit.cx), mid_row, zc)*S # local to the model: the sprite's middle in x, 55 px up (the save machine: its picture's middle row)
 	var cam: Camera3D = game.camera
 	cam.projection = Camera3D.PROJECTION_ORTHOGONAL
 	cam.keep_aspect = Camera3D.KEEP_WIDTH
@@ -78,8 +91,8 @@ func _run() -> void:
 	var gpos := model.global_transform*(target - f*30.0)
 	cam.global_transform = Transform3D(Basis.looking_at(gb*f, gb*up), gpos)
 	game.ui.visible = false
-	var shots := {"all": -1}
-	for i in 2:
+	var shots := 1 if target_name == "save" else 2
+	for i in shots:
 		for j in 6: await process_frame
 		await RenderingServer.frame_post_draw
 		await RenderingServer.frame_post_draw
@@ -87,8 +100,8 @@ func _run() -> void:
 		img.save_png(out.path_join(("all" if i == 0 else "roof") + ".png"))
 		if i == 0:
 			var kids := model.get_children()
-			for n in kids.size() - 1: (kids[n] as Node3D).visible = false # the roof is the last mesh
-	var rec := {"k": k, "S": S, "cx": float(fit.cx), "cz": float(fit.cz), "zc": zc, "target": [target.x/S, target.y/S, target.z/S], "width_px": WIDTH_PX,
+			for n in kids.size(): (kids[n] as Node3D).visible = n == 2 # the roof is the compound's third part (base, posts, roof, then the shaft)
+	var rec := {"path": well_path, "k": k, "S": S, "cx": float(fit.cx), "cz": float(fit.cz), "zc": zc, "target": [target.x/S, target.y/S, target.z/S], "width_px": WIDTH_PX,
 		"window": [root.get_texture().get_width(), root.get_texture().get_height()], "theta": theta}
 	var fh := FileAccess.open(out.path_join("g1.json"), FileAccess.WRITE)
 	fh.store_string(JSON.stringify(rec))
