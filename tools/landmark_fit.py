@@ -46,6 +46,7 @@ POST_RUN = 10   # a post is a run of warm pixels at least this long in one colum
 WARM = 8        # red minus blue: wood is warm, the well's stone is not
 D_MIN = 65      # the roof is at least this long (px): the free fit (55) stops short of the left tip the picture draws, leaving a post's top uncovered
 EDGE_FIT = {'ridge': (42, 78), 'eave': (66, 104), 'rake': (3, 23)}  # the roof's clean edges, in sprite px (columns, columns, rows)
+OUTLINE_LUM = 24.0  # the drawn posts' luminance: the outline's black is below 20, the wood above 40 (prop_solids.gd OUTLINE_LUM)
 DARK = 2        # the black outline the sprite draws on a post's left (px): left out of its geometry and its colours, and out of the base's texture
 
 
@@ -224,8 +225,18 @@ def well_fit(rgba: np.ndarray, k: float | None) -> dict | None:
     # fit.flat), and the beam is as wide as the wood is (side * (|cos| + |sin|) = the wood's columns, above).
     wp = posts[0]['x1'] - posts[0]['x0']
     assert all(p['x1'] - p['x0'] == wp for p in posts), 'the two posts are drawn as wide as each other'
-    faces = {'dark': [-wp / 2, 0.0], 'lit': [0.0, wp / 2]}
-    flat = [{'dark': [p['x0'], p['x0'] + wp // 2], 'lit': [p['x0'] + wp // 2, p['x1']], 'rows': [p['top'], p['foot']]} for p in posts]
+    # Which wood columns are the shaded face and which the lit one is read from the sprite, not assumed: each column's mean luminance (the warm
+    # pixels outside the roof, outline excluded), averaged over the posts, and the split is the largest step between neighbouring columns
+    # (landm-01: 75, 100, 99, 99: one shaded column, three lit). Both faces keep the drawn columns' own colours (prop_solids.gd _flatten).
+    lum = 0.299 * rgba[..., 0].astype(float) + 0.587 * rgba[..., 1] + 0.114 * rgba[..., 2]
+    wood = warm & ~roof & (lum > OUTLINE_LUM)
+    colmean = []
+    for j in range(wp):
+        vals = [lum[p['top']:p['foot'], p['x0'] + j][wood[p['top']:p['foot'], p['x0'] + j]] for p in posts]
+        colmean.append(float(np.concatenate(vals).mean()))
+    nd = 1 + int(np.argmax(np.abs(np.diff(colmean))))  # the shaded face's columns
+    faces = {'dark': [-wp / 2, -wp / 2 + nd], 'lit': [-wp / 2 + nd, wp / 2]}
+    flat = [{'dark': [p['x0'], p['x0'] + nd], 'lit': [p['x0'] + nd, p['x1']], 'rows': [p['top'], p['foot']]} for p in posts]
     out_posts = {'class': 'box', 'faces': faces, 'flat': flat, 'size': base['size'], 'cx': cx, 'cz': cz, 'k': k, 'w': round(side, 2), 'd': round(side, 2),
                  'yaw': round(float(yaw), 4), 'h': round(ridge - thick - rise - rim, 2), 'boxes': boxes, 'mask': pack(post_px)}  # no void_fill: the post's outline is not a gap to fill but a convention to leave out (fit.flat)
     out_roof = {'class': 'gable', 'size': base['size'], 'cx': cx, 'cz': cz, 'k': k, 'w': round(rw, 2), 'd': round(rd, 2),

@@ -158,3 +158,45 @@ def main():
 
 if __name__ == '__main__':
     main()
+
+
+def thatch_projection(roof: dict, rgba: np.ndarray):
+    """The roof's seen slope as the camera drew it, reconstructed independently of prop_solids.gd _thatch: the patch (across the ridge's
+    length by down the slope, one texel a source pixel), each texel the sprite's pixel where the original camera drew that point of the
+    slope (bilinear, from the roof's lit planks one pixel in from their edge). Returns (colour (th, tw, 3), drawn (th, tw))."""
+    H, W = rgba.shape[:2]
+    bits = np.unpackbits(np.frombuffer(__import__('base64').b64decode(roof['mask']), np.uint8))[:H * W].reshape(H, W).astype(bool)
+    inner = bits.copy()
+    inner[1:-1, 1:-1] = bits[1:-1, 1:-1] & bits[:-2, 1:-1] & bits[2:, 1:-1] & bits[1:-1, :-2] & bits[1:-1, 2:]
+    inner[0, :] = inner[-1, :] = False
+    inner[:, 0] = inner[:, -1] = False
+    cx, cz, k = roof['cx'], roof['cz'], roof['k']
+    hw, hd, ridge, rise, thick = roof['w'] / 2, roof['d'] / 2, roof['ridge'], roof['rise'], roof['h']
+    slope = float(np.hypot(hw, rise))
+    sa, ca = rise / slope, hw / slope
+    tw, th = int(np.ceil(2 * hd)), int(np.ceil(slope + thick * sa))
+    centre = np.array(roof['boxes'][0][:2], float)
+    across = np.array([np.cos(roof['yaw']), np.sin(roof['yaw'])])
+    along = np.array([-across[1], across[0]])
+    seen = 1.0 if across[1] >= 0 else -1.0
+    colour = np.zeros((th, tw, 3))
+    drawn = np.zeros((th, tw), bool)
+    for j in range(th):
+        s = (j + 0.5) * (slope + thick * sa) / th
+        if s > slope:
+            continue
+        for i in range(tw):
+            v = -hd + (i + 0.5) * 2 * hd / tw
+            q = centre + seen * s * ca * across + v * along
+            fx, fy = cx + q[0] - 0.5, cz + k * q[1] - (ridge - s * sa) - 0.5
+            x0, y0 = int(np.floor(fx)), int(np.floor(fy))
+            if x0 < 0 or y0 < 0 or x0 + 1 >= W or y0 + 1 >= H or not inner[y0:y0 + 2, x0:x0 + 2].all():
+                continue
+            tx, ty = fx - x0, fy - y0
+            c = np.zeros(3)
+            for dy in (0, 1):
+                for dx in (0, 1):
+                    c += rgba[y0 + dy, x0 + dx, :3].astype(float) * ((tx if dx else 1 - tx) * (ty if dy else 1 - ty))
+            colour[j, i] = c
+            drawn[j, i] = True
+    return colour, drawn

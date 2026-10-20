@@ -24,6 +24,15 @@ var buildings # sprite_buildings.gd
 var S := 0.025 # metres per source pixel
 var fits: Dictionary = {}
 var cache: Dictionary = {} # sprite path -> [[mesh, texture or material], ...]
+# Provenance render (tests/fps_capture.gd --provenance=1, tools/well_provenance.py): every texture of the SAME build, as the engine hands it to
+# the material, painted by where each texel came from instead of by its colour. PROJECTED: the sprite's own pixel, mapped by the camera's
+# projection or a kept part of it; FILLED: a pixel the sprite does not hold (masked out, void, or not drawn by the camera), taken from its
+# neighbours or from a donor patch of the same cloth; DERIVED: a colour computed from drawn pixels (a post's wood columns' mean, the shaft's
+# darkest stone), not a pixel of them.
+var provenance := false
+const PROV_PROJECTED := Color8(40, 200, 60)
+const PROV_FILLED := Color8(255, 150, 0)
+const PROV_DERIVED := Color8(60, 120, 255)
 const WELL_SEEN := 0.342 # cos 70 degrees: a face (or ring point) the camera sees within 70 degrees of head-on is seen well (HUT_GRAZE)
 
 func _init(b, scale: float) -> void:
@@ -99,13 +108,33 @@ func _texture(path: String, fit: Dictionary = {}) -> ImageTexture:
 			if not (bits[p >> 3] >> (7 - (p & 7))) & 1 or (voids and data[p*4] == 0 and data[p*4 + 1] == 0 and data[p*4 + 2] == 0): data[p*4 + 3] = 0
 		img.set_data(img.get_width(), img.get_height(), false, Image.FORMAT_RGBA8, data)
 		if fit.has("flat"): _flatten(img, fit.flat)
+	if provenance:
+		var pdata := img.get_data()
+		var w := img.get_width()
+		for p in w*img.get_height():
+			var c := PROV_PROJECTED if pdata[p*4 + 3] >= 128 else PROV_FILLED
+			pdata[p*4] = c.r8
+			pdata[p*4 + 1] = c.g8
+			pdata[p*4 + 2] = c.b8
+			pdata[p*4 + 3] = 255
+		if fit.has("flat"):
+			for post in fit.flat:
+				for x in range(int(post.dark[0]), int(post.lit[1])):
+					for y in img.get_height():
+						var o := (y*w + x)*4
+						pdata[o] = PROV_DERIVED.r8
+						pdata[o + 1] = PROV_DERIVED.g8
+						pdata[o + 2] = PROV_DERIVED.b8
+		img.set_data(w, img.get_height(), false, Image.FORMAT_RGBA8, pdata)
+		return buildings._texture(img)
 	return buildings._texture(buildings.filled(img))
 
 # A post's wood, one material along its whole height (fit.flat: per post, the columns of its shaded wood and of its lit wood, and the
 # rows it is drawn on). The black outline the sprite draws round the post (a pixel convention, not wood) is left out of every donor
 # (OUTLINE_LUM: the drawn posts' luminance has its outline below 20 and its wood above 40; the roof's shadow on the post's foot is
-# outline-black too), so a lit column is the mean of its wood pixels down the post, one colour per column; the shaded face is the mean of
-# the darkest quarter of the wood pixels (the picture's own darkest wood, no tuned shade).
+# outline-black too), so every column of wood, shaded or lit, is the mean of its own wood pixels down the post: one colour per column,
+# each from its own drawn pixels (which columns are the shaded face is the fit's: tools/landmark_fit.py, the largest step between columns).
+# `shade` (the darkest quarter of all the wood) only stands in for a column with no wood pixel.
 const OUTLINE_LUM := 24.0
 func _flatten(img: Image, posts: Array) -> void:
 	var w := img.get_width()
@@ -264,7 +293,7 @@ func _mouth(path: String, base: Dictionary) -> Array:
 	for c in n: index.append_array(PackedInt32Array([mid, 2*c + 1, 2*c + 3]))
 	var m := StandardMaterial3D.new()
 	m.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-	m.albedo_color = colour
+	m.albedo_color = PROV_DERIVED if provenance else colour
 	m.cull_mode = BaseMaterial3D.CULL_DISABLED
 	var none := PackedVector2Array()
 	none.resize(verts.size())
@@ -381,7 +410,7 @@ func _box(path: String, fit: Dictionary) -> Array:
 		# as more than a smear of the planks' grain, are the planks' mean colour.
 		var m := StandardMaterial3D.new()
 		m.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-		m.albedo_color = _mean_colour(path, fit)
+		m.albedo_color = PROV_DERIVED if provenance else _mean_colour(path, fit)
 		m.cull_mode = BaseMaterial3D.CULL_DISABLED
 		var none := PackedVector2Array()
 		none.resize(edge_v.size())
@@ -475,9 +504,9 @@ func _gable(path: String, fit: Dictionary) -> Array:
 
 # The seen slope of the roof as a patch of straw (patch px: across by the ridge's length, down by the slope's, one texel a source
 # pixel): each texel reads the sprite where the original camera drew that point of the slope (bilinear), from the pixels that are
-# straw: the roof's lit planks (fit.mask) one pixel in from their edge, so the outline and the shaded rim are not straw. What the
-# camera never drew (the overhang, a post's knob, the rim) is the straw itself: the largest rectangle of the patch that is drawn is
-# repeated, mirrored at each edge, over the whole patch (straw is the same cloth everywhere; a mirror leaves no seam and no streak).
+# straw: the roof's lit planks (fit.mask) one pixel in from their edge, so the outline and the shaded rim are not straw. Every texel the
+# camera drew keeps its own pixels. Only a texel it never drew (the overhang, a post's knob, the rim) is filled from the straw itself: the
+# largest all-drawn rectangle of the patch, repeated mirrored at each edge (straw is the same cloth everywhere; a mirror leaves no seam).
 func _thatch(path: String, fit: Dictionary, patch: Vector2, slope: float, seen: float) -> Image:
 	var img: Image = buildings.image(path)
 	var w := img.get_width()
@@ -555,8 +584,12 @@ func _thatch(path: String, fit: Dictionary, patch: Vector2, slope: float, seen: 
 		return r if r < n else 2*n - 1 - r
 	for j in th:
 		for i in tw:
+			if drawn[j*tw + i] == 1: # a texel the camera drew is the sprite's own: kept, never replaced by the donor's
+				var own: Vector3 = colour[j*tw + i]
+				out.set_pixel(i, j, PROV_PROJECTED if provenance else Color8(int(roundf(own.x)), int(roundf(own.y)), int(roundf(own.z)), 255))
+				continue
 			var rgb: Vector3 = colour[(best.position.y + mirror.call(j - best.position.y, best.size.y))*tw + best.position.x + mirror.call(i - best.position.x, best.size.x)]
-			out.set_pixel(i, j, Color8(int(roundf(rgb.x)), int(roundf(rgb.y)), int(roundf(rgb.z)), 255))
+			out.set_pixel(i, j, PROV_FILLED if provenance else Color8(int(roundf(rgb.x)), int(roundf(rgb.y)), int(roundf(rgb.z)), 255))
 	return out
 
 # --- ring -----------------------------------------------------------------------------------------------------------
