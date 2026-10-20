@@ -128,7 +128,9 @@ func _run() -> void:
 		game.caught_events.clear()
 		await key(KEY_E,true)
 		await key(KEY_E,false)
-		check(not has_event(game,id,"talk"),"occluded E cannot dispatch")
+		# Talk has no occlusion in FreeDink (freedink.cpp:240-305, a point-in-box test only), so
+		# the foreign solid that stops the ray (kept for aim and melee) does not stop Talk.
+		check(has_event(game,id,"talk"),"foreign solid does not stop Talk (original has no occlusion)")
 		blocker.queue_free()
 		await physics_frame
 		check(game._fps_ray_reaches(id),"removing foreign solid restores ray")

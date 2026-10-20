@@ -55,8 +55,7 @@ func run():
   await key(KEY_E,true)
   await key(KEY_E,false)
   check(wizard in game.talks,"approach E dispatches wizard TALK")
-  # A visible foreign occluder must still reject TALK: the fix must not
-  # disable physical occlusion or let an inside-body ray origin clear this.
+  # A visible foreign occluder must still stop the ray (aim, melee); it no longer stops TALK.
   var blocker := StaticBody3D.new()
   blocker.collision_layer = 1
   blocker.collision_mask = 0
@@ -77,7 +76,9 @@ func run():
   game.talks.clear()
   await key(KEY_E,true)
   await key(KEY_E,false)
-  check(wizard not in game.talks,"occluded E cannot dispatch wizard TALK")
+  # Talk has no occlusion in FreeDink (freedink.cpp:240-305, a point-in-box test only): the
+  # solid still blocks the ray, kept for aim and melee, but not Talk.
+  check(wizard in game.talks,"foreign solid does not stop wizard TALK (original has no occlusion)")
  game.queue_free()
  await process_frame
  if failures.is_empty(): print("FALLBACK WIZARD PASS")
