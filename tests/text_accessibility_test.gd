@@ -256,7 +256,7 @@ func run() -> void:
     print("TEXT MATRIX ",size," plain=",plain," scale=",scale," failures=",failures.size())
  if not output_dir.is_empty():
   var file := FileAccess.open(output_dir.path_join("geometry.json"),FileAccess.WRITE)
-  file.store_string(JSON.stringify({"records":records,"failures":failures,"packed":not OS.has_feature("editor"),"executable":OS.get_executable_path(),"bundled_font":ResourceLoader.exists("res://assets/fonts/AtkinsonHyperlegible-Regular.ttf"),"bundled_licence":FileAccess.file_exists("res://assets/fonts/AtkinsonHyperlegible-OFL.txt"),"setup":"UI-only fixture bypasses progression and world scripts; native layout and focus; not campaign proof."},"\t"))
+  file.store_string(JSON.stringify({"records":records,"failures":failures,"packed":not FileAccess.file_exists("res://project.godot") and not FileAccess.file_exists("res://scripts/game_ui.gd"),"editor_runtime":OS.has_feature("editor"),"resource_root":ProjectSettings.globalize_path("res://"),"executable":OS.get_executable_path(),"bundled_font":ResourceLoader.exists("res://assets/fonts/AtkinsonHyperlegible-Regular.ttf"),"bundled_licence":FileAccess.file_exists("res://assets/fonts/AtkinsonHyperlegible-OFL.txt"),"setup":"UI-only fixture bypasses progression and world scripts; native layout and focus; not campaign proof."},"\t"))
  ui.cancel_speech()
  ui.queue_free()
  await process_frame
