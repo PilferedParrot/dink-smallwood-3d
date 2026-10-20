@@ -28,6 +28,14 @@ func check(ok: bool, message: String) -> void:
 func settle() -> void:
  for i in 14: await process_frame
 
+func key(code: Key) -> void:
+ for pressed in [true,false]:
+  var event := InputEventKey.new()
+  event.keycode=code;event.physical_keycode=code;event.pressed=pressed
+  Input.parse_input_event(event);Input.flush_buffered_events()
+  await process_frame
+ await settle()
+
 func has_scroll(node: Node) -> bool:
  var parent: Node = node.get_parent()
  while parent != null:
@@ -134,6 +142,12 @@ func focus_actions(tag: String) -> void:
  var frame_index := 0
  for node in ui._focusable_children(ui.panel):
   if not node.is_visible_in_tree() or (node is BaseButton and node.disabled): continue
+  if capture:
+   var exposed: Rect2 = ui.menu_scroll.get_global_rect()
+   if ui.page == "controls": exposed = ui.controls_menu.scroll.get_global_rect()
+   # The complete census focuses every action. Packed exposure frames need
+   # only move to actions not already fully shown by the preceding frame.
+   if exposed.grow(1).encloses(node.get_global_rect()): continue
   node.grab_focus()
   await settle()
   var parent: Node = node.get_parent()
@@ -154,6 +168,11 @@ func focus_actions(tag: String) -> void:
    frame_index += 1
   last_scroll = scroll
  await scan(tag + "-last",false)
+ if ui.page != "dialogue":
+  await key(KEY_END)
+  if ui.page == "title":
+   check(ui.menu_scroll.get_global_rect().grow(1).encloses(ui.control_primer_label.get_global_rect()),"End exposes complete large-font title primer")
+  await scan(tag + "-end",capture)
 
 func matrix() -> void:
  ui.show_title(true)
@@ -220,6 +239,9 @@ func matrix() -> void:
  ui.show_choices("Will you help the village? " + "The prompt has its own reading viewport. ".repeat(14),["Yes, I will help the village.","Tell me more before I choose.","I need some time to think about it."])
  await scan("choices")
  await focus_actions("choices")
+ ui.show_choices("",["Let her know exactly how fruitless your search has been thus far","Leave"])
+ await scan("choices-without-prompt")
+ await focus_actions("choices-without-prompt")
  ui.cancel_speech()
  ui.close_menu()
  ui.show_speech("The last line remains readable.","Dink",1,0,true)

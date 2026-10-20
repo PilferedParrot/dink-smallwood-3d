@@ -463,13 +463,15 @@ func _fit_dialogue_panel() -> void:
 		readable_body = minf(body, label.get_line_height() * 2 + label.get_theme_constant("line_spacing"))
 	var answer: Control
 	var answer_height := 0.0
-	if choice_prompt_scroll.visible:
-		chrome -= choice_prompt_scroll.get_combined_minimum_size().y
-		body += choice_prompt.get_combined_minimum_size().y
+	if dialogue_mode and not dialogue_continue.visible and column.get_child_count() > 0:
 		answer = get_viewport().gui_get_focus_owner()
 		if answer == null or not column.is_ancestor_of(answer):
 			answer = column.get_child(0) if column.get_child_count() > 0 else null
 		answer_height = answer.get_combined_minimum_size().y if answer != null else 0.0
+		readable_body = answer_height
+	if choice_prompt_scroll.visible:
+		chrome -= choice_prompt_scroll.get_combined_minimum_size().y
+		body += choice_prompt.get_combined_minimum_size().y
 		readable_body = answer_height + minf(choice_prompt.get_combined_minimum_size().y, choice_prompt.get_line_height())
 	var height := minf(available_height, minf(chrome+body,maxf(chrome+readable_body,root.size.y*0.35)))
 	if choice_prompt_scroll.visible:
@@ -548,6 +550,23 @@ func _controls_text() -> String:
 	return "\n".join(lines)
 
 func _input(event: InputEvent) -> void:
+	if modal and page != "dialogue" and not (page == "controls" and controls_menu.state == "capture"):
+		# Reading must also reach labels after the final focusable action (the
+		# title primer, journal, credits). Native ScrollContainer has wheel and
+		# drag input; these are our already-configurable menu reading actions.
+		var reading_scroll: ScrollContainer = controls_menu.scroll if page == "controls" else menu_scroll
+		var direction := int(event.is_action_pressed("ui_page_down")) - int(event.is_action_pressed("ui_page_up"))
+		if event.is_action_pressed("ui_home") or event.is_action_pressed("ui_end") or direction != 0:
+			if event.is_action_pressed("ui_home"): reading_scroll.scroll_vertical = 0
+			elif event.is_action_pressed("ui_end"):
+				reading_scroll.scroll_vertical = ceili(reading_scroll.get_v_scroll_bar().max_value)
+			else:
+				var line := root.get_theme_font("font").get_height(menu_theme.default_font_size)
+				reading_scroll.scroll_vertical += roundi(direction * maxf(1,reading_scroll.size.y-line))
+			controller_active = event is InputEventJoypadButton or event is InputEventJoypadMotion
+			_update_hint()
+			get_viewport().set_input_as_handled()
+			return
 	if page == "dialogue" and not dialogue_mode and speech_lines.has(active_speech_id):
 		if bool(speech_lines[active_speech_id].waits) and event.is_action_pressed("talk") and not event.is_echo():
 			controller_active = event is InputEventJoypadButton or event is InputEventJoypadMotion

@@ -18,6 +18,12 @@ static func defects(ui) -> Array[String]:
   viewport += ui.choice_prompt_scroll.size.y
   if ui.choice_prompt_scroll.size.y+1 < line: errors.append("Choice prompt has no whole readable line")
   if ui.menu_scroll.size.y+1 < focus.size.y: errors.append("Focused answer cannot be read whole")
+ elif ui.dialogue_mode and not ui.dialogue_continue.visible and ui.column.get_child_count()>0:
+  var focus: Control = ui.get_viewport().gui_get_focus_owner()
+  if focus == null or not ui.column.is_ancestor_of(focus): focus = ui.column.get_child(0)
+  floor_height = focus.get_combined_minimum_size().y
+  ideal = floor_height
+  if viewport+1 < focus.size.y: errors.append("Prompt-free focused answer cannot be read whole")
  elif ui.column.get_child_count()>0 and ui.column.get_child(0) is Label:
   var label: Label = ui.column.get_child(0)
   floor_height = label.get_line_height()
