@@ -61,3 +61,8 @@ def test_controls_list_leaves_no_capacity_unused_at_any_scroll_stop(tmp_path):
 def test_focused_control_returns_to_view_when_the_player_changes_it_after_scrolling(tmp_path):
     result = launch(tmp_path, 'manual_scroll_focus_test.gd', deadline=200)
     assert result.returncode == 0 and 'MANUAL SCROLL FOCUS PASS' in result.stdout and 'SCRIPT ERROR' not in result.stderr, result.stdout+result.stderr
+
+
+def test_no_text_line_or_control_is_cut_at_either_edge_of_any_menu_scroll_area(tmp_path):
+    result = launch(tmp_path, 'scroll_edges_test.gd', deadline=290)
+    assert result.returncode == 0 and 'SCROLL EDGES PASS' in result.stdout and 'SCRIPT ERROR' not in result.stderr, result.stdout+result.stderr

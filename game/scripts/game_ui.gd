@@ -54,6 +54,8 @@ var status_dock: Control
 var equipment_stats: Dictionary = {}
 var dialogue_continue: Button
 var menu_scroll: ScrollContainer
+var menu_box: Control
+var menu_fit
 var choice_prompt_scroll: ScrollContainer
 var choice_prompt: Label
 var choice_prompt_axis := 0.0
@@ -80,6 +82,7 @@ var hint_backing: PanelContainer
 var heading_row: VBoxContainer
 # Coalesce focus and adaptive-layout requests before reading native geometry.
 const FOCUS_SCROLL_OWNER = preload("res://scripts/focus_scroll_owner.gd")
+const TEXT_SCROLL_FIT = preload("res://scripts/text_scroll_fit.gd")
 var focus_visibility_request := 0
 class FocusSortWait extends RefCounted:
 	signal finished(sorted: bool)
@@ -308,10 +311,16 @@ func _ready() -> void:
 	equipment_name.hide()
 	var scroll := ScrollContainer.new()
 	menu_scroll = scroll
-	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	_focus_scroll_owner(scroll)
-	contents.add_child(scroll)
+	# The box owns the page's slot; the scroll fills it, or is fitted inside it to whole lines.
+	menu_box = Control.new()
+	menu_box.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	menu_box.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	contents.add_child(menu_box)
+	menu_box.add_child(scroll)
+	scroll.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	menu_fit = TEXT_SCROLL_FIT.new(scroll, menu_box, self)
 	column = VBoxContainer.new()
 	column.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	column.add_theme_constant_override("separation", 8)
@@ -739,6 +748,7 @@ func _clear(title: String, next_page: String) -> void:
 		controls_menu.get_parent().remove_child(controls_menu)
 		controls_menu.queue_free()
 		controls_menu = null
+	menu_box.show()
 	menu_scroll.show()
 	control_primer_label = null
 	controls_label = null
@@ -766,6 +776,8 @@ func _clear(title: String, next_page: String) -> void:
 	modal = true
 	dialogue_mode = false
 	page = next_page
+	# Speech and choices size their own card to whole lines; every other page's scroll area is fitted.
+	menu_fit.begin_page(next_page not in ["dialogue", "loading"])
 	root.mouse_filter = Control.MOUSE_FILTER_STOP
 	_layout_for(next_page)
 	_set_playing_visuals(false)
@@ -1289,7 +1301,9 @@ func show_controls() -> void:
 	var parent_page := return_page
 	_clear("Controls", "controls")
 	return_page = parent_page
+	menu_box.hide()
 	menu_scroll.hide()
+	menu_fit.begin_page(false) # The Controls list fits its own scroll area.
 	controls_menu = CONTROLS_MENU.new()
 	controls_menu.ui = self
 	panel.get_child(0).add_child(controls_menu)
