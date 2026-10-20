@@ -19,6 +19,9 @@ var _direction := 0
 var _stable_top := 0.0
 var _applying := false
 var _key := ""
+# The timed speech scroll drives the position itself, continuously, at the reading pace;
+# while it does, the fit leaves the position alone (partial lines pass through in motion).
+var driven := false
 
 func _init(scroll: ScrollContainer, box: Control, ui: Node) -> void:
 	_scroll_ref = weakref(scroll)
@@ -35,6 +38,7 @@ func begin_page(on: bool) -> void:
 	var scroll: ScrollContainer = _scroll_ref.get_ref()
 	if not is_instance_valid(scroll): return
 	active = on
+	driven = false
 	_key = ""
 	_direction = 0
 	_stable_top = 0.0
@@ -48,7 +52,7 @@ func _changed() -> void:
 	_refit.call_deferred()
 
 func _value_changed(value: float) -> void:
-	if _applying or not active: return
+	if _applying or not active or driven: return
 	_direction = signi(roundi(value - _stable_top))
 	_changed()
 
@@ -61,8 +65,9 @@ func _atoms(node: Node, origin: float, found: Array[Vector2]) -> void:
 		var pitch := float(node.get_line_height()) + float(node.get_theme_constant("line_spacing"))
 		var top: float = node.get_global_rect().position.y - origin
 		var height: float = node.get_global_rect().size.y
+		# A line is its glyph box; the spacing below it is blank, not part of the line.
 		for line in maxi(1, node.get_line_count()):
-			found.append(Vector2(top + line * pitch, top + minf((line + 1) * pitch, height)))
+			found.append(Vector2(top + line * pitch, top + minf(line * pitch + float(node.get_line_height()), height)))
 	elif (children.is_empty() or node is BaseButton) and node is Control and node.get_global_rect().size.y > 0:
 		var rect: Rect2 = node.get_global_rect()
 		found.append(Vector2(rect.position.y - origin, rect.end.y - origin))
@@ -86,7 +91,7 @@ func _fit() -> void:
 	var scroll: ScrollContainer = _scroll_ref.get_ref()
 	var box: Control = _box_ref.get_ref()
 	var ui = _ui_ref.get_ref()
-	if not active or not is_instance_valid(scroll) or not is_instance_valid(box) or not is_instance_valid(ui) or not scroll.is_visible_in_tree() or scroll.get_child_count() == 0: return
+	if not active or driven or not is_instance_valid(scroll) or not is_instance_valid(box) or not is_instance_valid(ui) or not scroll.is_visible_in_tree() or scroll.get_child_count() == 0: return
 	var content: Control = scroll.get_child(0)
 	var slot: float = box.size.y
 	if slot < 1 or content.size.y < 1: return
@@ -175,3 +180,21 @@ func _straddled(found: Array[Vector2], y: float) -> bool:
 	for atom in found:
 		if atom.x < y - 0.5 and atom.y > y + 0.5: return true
 	return false
+
+# The height a card should give this area so that it ends on a whole atom: the last atom
+# bottom that fits `slot` from the top. When that is less than `floor_height` (the reading
+# floor: a whole atom or whole lines by construction, the focused control or two lines),
+# the floor itself, since a window that starts on the atom it is for ends on a boundary.
+# A card larger than its content keeps `slot`. Measured on the live layout.
+func whole_height(slot: float, floor_height := 0.0) -> float:
+	var scroll: ScrollContainer = _scroll_ref.get_ref()
+	if not is_instance_valid(scroll) or scroll.get_child_count() == 0: return slot
+	var content: Control = scroll.get_child(0)
+	var found: Array[Vector2] = []
+	_atoms(content, content.get_global_rect().position.y, found)
+	if found.is_empty() or content.size.y <= slot + 0.5: return slot
+	var down := 0.0
+	for atom in found:
+		if atom.y <= slot + 0.5 and not _straddled(found, atom.y): down = maxf(down, atom.y)
+	if down >= floor_height - 0.5 and down > 0.5: return down
+	return floor_height if floor_height > 0.0 else slot
