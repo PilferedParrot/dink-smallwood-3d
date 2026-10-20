@@ -77,9 +77,26 @@ func walls_fitted(screen: int) -> bool:
 	fitted_screens[screen] = ok
 	return ok
 
-func handles(e: Dictionary) -> bool:
-	if absf(float(e.get("size", 100)) - 100.0) >= 0.5 or fit_of(world.frame_path(e)).is_empty(): return false
-	return walls_fitted(world.host.current_screen) or not is_wall(e)
+func handles(e: Dictionary, screen: int = -1) -> bool:
+	if screen < 0: screen = world.host.current_screen
+	var fit := fit_of(world.frame_path(e))
+	if absf(float(e.get("size", 100)) - 100.0) >= 0.5 or fit.is_empty(): return false
+	# Frontal furniture can also be authored outdoors. Its source picture and
+	# hardness still define the solid; an indoor flag is not a shape property.
+	if not world.is_inside(screen):
+		if int(e.get("type",1)) != 1 or str(fit.get("kind","")) != "frontal": return false
+	# A plain front with neither a visible top nor legs gives no depth. Only
+	# a backing wall within its source hardness constrains that reconstruction.
+	# Otherwise keep the prior model: a room-wide or one-pixel box would both
+	# invent a form the source does not establish.
+	if str(fit.get("kind","")) == "frontal" and fit.get("legs",[]).is_empty() and fit.get("above",[]).is_empty() \
+			and float(fit.body.split) <= float(fit.body.rows[0]):
+		var o := hotspot(e)
+		var left := float(e.get("x",0))-o.x
+		var front := float(e.get("y",0))-o.y+float(fit.base)
+		var backing := wall_behind(e,left+float(fit.body.cols[0]),left+float(fit.body.cols[1]),front,screen)
+		if backing < 0.0 or front-backing-1.0 > world.hard_rect(e).size.y: return false
+	return walls_fitted(screen) or not is_wall(e)
 
 func is_wall(e: Dictionary) -> bool:
 	return str(fit_of(world.frame_path(e)).get("kind", "")) == "wall"
@@ -625,6 +642,11 @@ func frontal_dims(e: Dictionary, fit: Dictionary, o: Vector2, screen: int) -> Di
 		# One px short of the wall: a stack on the body's back edge (the chimney) would otherwise lie in the wall's own plane,
 		# and which of the two coplanar faces draws is luck (the plaster low-pass of 4415115 hid the chimney) (lead, 2026-10-08).
 		var limit := (top_left.y + z_f - zw - 1.0) if zw > 0.0 else float(world.hard_rect(e).size.y)
+		# Without a visible top, the picture gives no depth measurement. A
+		# distant wall is only an upper bound, not evidence that a shelf or
+		# bench fills the room: cap that inference by its authored hardness.
+		# FreeDink live_screen.cpp:148-164 defines those occupied ground rows.
+		if depth <= 0.0: limit = minf(limit,float(world.hard_rect(e).size.y))
 		depth = limit if depth <= 0.0 else minf(depth, limit)
 	return {"x0": x0, "x1": x1, "z_f": z_f, "z_b": z_f - depth, "depth": depth, "y_top": minf(z_f - split, room_height(screen)), "y_bot": z_f - float(body.rows[1])}
 
@@ -924,7 +946,7 @@ func recess_seat(e: Dictionary, size: Vector2, screen: int) -> Dictionary:
 	var order := float(e.get("que", 0)) if int(e.get("que", 0)) != 0 else float(e.get("y", 0))
 	for w in world.drawn_sprites(screen, int(world.host.vm.globals.get("vision", 0))):
 		var fit := fit_of(world.frame_path(w))
-		if str(fit.get("kind", "")) != "frontal" or not fit.has("opening") or not handles(w): continue
+		if str(fit.get("kind", "")) != "frontal" or not fit.has("opening") or not handles(w,screen): continue
 		var w_order := float(w.get("que", 0)) if int(w.get("que", 0)) != 0 else float(w.get("y", 0))
 		if order <= w_order: continue
 		var wo := hotspot(w)
@@ -942,7 +964,7 @@ func recess_seat(e: Dictionary, size: Vector2, screen: int) -> Dictionary:
 func surface_height(foot: Vector2, order: float, screen: int, vision: int) -> float:
 	var best := 0.0
 	for e in world.drawn_sprites(screen, vision):
-		if not handles(e): continue
+		if not handles(e,screen): continue
 		var e_order := float(e.get("que", 0)) if int(e.get("que", 0)) != 0 else float(e.get("y", 0))
 		if order <= e_order: continue
 		var fit := fit_of(world.frame_path(e))

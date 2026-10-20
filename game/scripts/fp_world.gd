@@ -952,7 +952,9 @@ func make_entity(e: Dictionary, id: int, parent: Node3D, collision: bool = true,
 	node.position = point(float(e.get("x",320)),float(e.get("y",200)))
 	if key.is_empty(): return node
 	if screen < 0: screen = host.current_screen
-	if interior and solids.handles(e):
+	# Preserve the existing indoor backdrop scope; the new outdoor allowance
+	# applies only to the current screen, not neighboring backdrop entities.
+	if (interior or screen == host.current_screen) and solids.handles(e,screen):
 		solids.add_entity(node,e,id,collision,screen)
 		return node
 	if key == "cottage" and not fitted_key(e,screen).is_empty():

@@ -330,7 +330,7 @@ def main() -> None:
     out['assets/graphics/' + p] = round_fit(p)
     p = 'inside/details/inacc-03.png'
     out['assets/graphics/' + p] = bed_fit(p)
-    for p in ('inacc-05', 'inacc-01', 'table-01', 'table-07'):
+    for p in ('inacc-05', 'inacc-01', 'inacc-02', 'inacc-04', 'table-01', 'table-02', 'table-07'):
         out['assets/graphics/inside/details/' + p + '.png'] = frontal_fit('inside/details/' + p + '.png')
     out['assets/graphics/inside/details/table-10.png'] = post_fit('inside/details/table-10.png')
     for k, v in out.items():
