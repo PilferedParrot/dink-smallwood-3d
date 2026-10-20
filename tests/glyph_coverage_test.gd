@@ -21,7 +21,8 @@ func calibrate() -> void:
  var fonts := ORACLE.fonts()
  for name in fonts:
   check(ORACLE.missing(fonts[name], "Health é · • … – − × °").is_empty(), name + ": covered look-alike text is accepted")
-  check(ORACLE.missing(fonts[name], "go ↗").size() == 1, name + ": a glyph no shipped font carries is rejected")
+  check(fonts[name].has_char(0xA0), name + ": the no-break space that binds key phrases has a glyph")
+  check(ORACLE.missing(fonts[name], "go \u2197").size() == 1, name + ": a glyph no shipped font carries is rejected")
   check(ORACLE.missing(fonts[name], "▶◀").size() == 2, name + ": both pager triangles are rejected")
 
 func run() -> void:

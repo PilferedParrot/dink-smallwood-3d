@@ -552,22 +552,32 @@ func _bindings_changed() -> void:
 	if page == "title": show_title(FileAccess.file_exists("user://adventure.json"))
 	elif page == "settings": show_settings(bindings.settings)
 
+# A key and its action are one phrase: no-break spaces keep wrapping from splitting
+# "Page Down" or leaving a key on one line and its verb on the next.
+const NO_BREAK_SPACE := "\u00A0"
+func _bound(text: String) -> String:
+	return text.replace(" ", NO_BREAK_SPACE)
+
+func _pair(keys: String, action: String) -> String:
+	return _bound(keys) + NO_BREAK_SPACE + NO_BREAK_SPACE + _bound(action)
+
 func _key(action: String) -> String:
 	return bindings.short_label(action,controller_active)
 
 func _navigation_hint() -> String:
-	return "%s / %s  Choose     %s or click  Confirm" % [_key("ui_up"),_key("ui_down"),_key("ui_accept")]
+	return _pair("%s / %s" % [_key("ui_up"),_key("ui_down")],"Choose") + "     " + _pair("%s or click" % _key("ui_accept"),"Confirm")
 
 func _gameplay_hint() -> String:
-	var text := "%s  Move" % bindings.movement_label(controller_active)
-	if bindings.context == "fps": text += "   %s  Look" % ("Mouse" if not controller_active else bindings.look_label())
-	text += "   %s  Attack   %s  Talk   %s  Equipment   %s  Pause" % [_key("attack"),_key("talk"),_key("inventory"),_key("pause")]
-	if not equipment_stats.get("spell_item",{}).is_empty(): text += "   %s  Magic" % _key("magic")
-	return text
+	var phrases: Array[String] = [_pair(bindings.movement_label(controller_active),"Move")]
+	if bindings.context == "fps": phrases.append(_pair("Mouse" if not controller_active else bindings.look_label(),"Look"))
+	for entry in [["attack","Attack"],["talk","Talk"],["inventory","Equipment"],["pause","Pause"]]: phrases.append(_pair(_key(entry[0]),entry[1]))
+	if not equipment_stats.get("spell_item",{}).is_empty(): phrases.append(_pair(_key("magic"),"Magic"))
+	return "   ".join(phrases)
 
 func _control_primer() -> String:
-	var look := " · Mouse look" if bindings.context == "fps" else ""
-	return "%s move%s\n%s talk · %s attack\n%s gear · %s pause · %s help" % [bindings.movement_label(),look,bindings.short_label("talk"),bindings.short_label("attack"),bindings.short_label("inventory"),bindings.short_label("pause"),bindings.short_label("help")]
+	var short := func(action: String, verb: String) -> String: return _bound("%s %s" % [bindings.short_label(action),verb])
+	var move := _bound(bindings.movement_label() + " move") + ((" · " + _bound("Mouse look")) if bindings.context == "fps" else "")
+	return "%s\n%s · %s\n%s · %s · %s" % [move,short.call("talk","talk"),short.call("attack","attack"),short.call("inventory","gear"),short.call("pause","pause"),short.call("help","help")]
 
 func _controls_group(ids: Array) -> String:
 	var parts: Array[String] = []
@@ -660,7 +670,7 @@ func _choice_prompt_step() -> float:
 func _update_hint() -> void:
 	if is_instance_valid(speech_dismiss_hint):
 		speech_dismiss_hint.visible = page == "dialogue" and not dialogue_mode and speech_lines.has(active_speech_id) and bool(speech_lines[active_speech_id].waits)
-		speech_dismiss_hint.text = "%s  Dismiss" % _key("talk")
+		speech_dismiss_hint.text = _pair(_key("talk"),"Dismiss")
 	if is_instance_valid(control_primer_label): control_primer_label.text = _control_primer()
 	if is_instance_valid(controls_label): controls_label.text = _controls_text()
 	if not is_instance_valid(hint): return
@@ -679,17 +689,17 @@ func _update_hint() -> void:
 			if dialogue_continue.visible:
 				# The focused action already gives its keyboard/controller cue.
 				hint.text = ""
-				dialogue_continue.text = "Continue   ·   " + _key("ui_accept")
+				dialogue_continue.text = _bound("Continue   ·   " + _key("ui_accept"))
 			else:
 				hint.text = _navigation_hint()
 				if choice_prompt_scroll.visible and choice_prompt_scroll.get_v_scroll_bar().max_value > choice_prompt_scroll.size.y:
-					hint.text += "     %s / %s  Read prompt" % [_key("ui_page_up"),_key("ui_page_down")]
+					hint.text += "     " + _pair("%s / %s" % [_key("ui_page_up"),_key("ui_page_down")],"Read prompt")
 		else:
 			var back := "Resume" if return_page == "game" else "Back"
 			hint.text = _navigation_hint()
 			if page == "settings":
-				hint.text += "     %s / %s  Adjust" % [_key("ui_left"),_key("ui_right")]
-			if page != "title": hint.text += "     " + _key("ui_cancel") + "  " + back
+				hint.text += "     " + _pair("%s / %s" % [_key("ui_left"),_key("ui_right")],"Adjust")
+			if page != "title": hint.text += "     " + _pair(_key("ui_cancel"),back)
 		return
 	hint.text = _gameplay_hint()
 
@@ -1142,7 +1152,6 @@ func _sync_feedback() -> void:
 	modal_feedback.visible = active and modal
 	if active and modal:
 		modal_feedback_text.text = toast.text
-		modal_feedback_text.tooltip_text = toast.text
 		modal_feedback.custom_minimum_size.x = 0
 
 func show_inventory(items: Array, magic_items: Array) -> void:

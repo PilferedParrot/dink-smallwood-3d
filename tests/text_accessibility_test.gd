@@ -4,6 +4,8 @@ extends SceneTree
 const READING_LAYOUT = preload("text_layout_oracle.gd")
 const UI = preload("res://scripts/game_ui.gd")
 const GLYPHS = preload("glyph_oracle.gd")
+const PHRASES = preload("phrase_oracle.gd")
+const TOOLTIPS = preload("tooltip_oracle.gd")
 var ui
 var failures: Array[String] = []
 var records: Array = []
@@ -104,6 +106,26 @@ func calibrate() -> void:
  check(not defects(pair,Rect2(Vector2.ZERO,root.size)).is_empty(),"calibration rejects parent overflow")
  parent.free()
 
+func phrase_label(text: String, width: float) -> Label:
+ var label := Label.new()
+ label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+ label.text = text
+ root.add_child(label)
+ label.size = Vector2(width,200)
+ return label
+
+func calibrate_phrases() -> void:
+ var split := phrase_label("Left / Right  Adjust     Esc  Back",150)
+ check(PHRASES.agrees(split),"phrase oracle reproduces native wrapping")
+ check(not PHRASES.split_phrases(split).is_empty(),"phrase oracle rejects a key split from its action")
+ split.free()
+ var bound := phrase_label("Left\u00A0/\u00A0Right\u00A0\u00A0Adjust     Esc\u00A0\u00A0Back",150)
+ check(PHRASES.agrees(bound) and PHRASES.split_phrases(bound).is_empty() and bound.get_line_count() > 1,"phrase oracle accepts wrapped whole phrases")
+ bound.free()
+ var wide := phrase_label("Left\u00A0/\u00A0Right\u00A0\u00A0Adjust\u00A0the\u00A0slider",60)
+ check(PHRASES.split_phrases(wide).is_empty(),"a phrase wider than the line may split")
+ wide.free()
+
 func scan(tag: String, save := true) -> void:
  case_tag = tag
  await settle()
@@ -123,7 +145,7 @@ func scan(tag: String, save := true) -> void:
   check(not bounds.intersects(dock),"speech does not cover original status art")
   if ui.status_dock.has_method("readout_top"):
    check(bounds.end.y <= ui.status_dock.readout_top()+1,"speech stays above enlarged status values")
- if ui.status_dock.visible and ui.text_scale > 1.3:
+ if ui.status_dock.visible and ui.status_dock.uses_readout():
   var art: Rect2 = ui.status_dock.get_global_transform() * ui.status_dock.art_rect()
   check(ui.status_dock.readout.get_global_rect().end.y < art.position.y,"enlarged readout sits above original art")
   for label in ui.status_dock.readout_labels.values():
@@ -135,6 +157,16 @@ func scan(tag: String, save := true) -> void:
   check(absent.is_empty(),GLYPHS.describe(node.text,"effective",absent) + " at " + str(node.get_path()))
   var r := node.get_global_rect()
   boxes.append({"text":node.text,"path":str(node.get_path()),"rect":[r.position.x,r.position.y,r.size.x,r.size.y],"font_size":node.get_theme_font_size("font_size"),"font":node.get_theme_font("font").get_font_name(),"scrolling":has_scroll(node)})
+ var carriers: Array = []
+ tooltip_texts(ui.root,carriers)
+ var shown: Array[String] = []
+ for node in nodes: shown.append(node.text)
+ for carrier in carriers:
+  for line in TOOLTIPS.duplicates(carrier.tooltip_text,shown): check(false,"tooltip repeats visible text: " + line)
+ for label in [ui.hint, ui.speech_dismiss_hint, ui.control_primer_label]:
+  if is_instance_valid(label) and label.is_visible_in_tree() and not label.text.is_empty():
+   check(PHRASES.agrees(label),"phrase oracle reproduces the wrapping of: " + label.text.left(40))
+   for phrase in PHRASES.split_phrases(label): check(false,"key and action split across lines: " + phrase)
  records.append({"tag":tag,"size":[root.size.x,root.size.y],"scale":ui.text_scale,"plain":ui.plain_font,"boxes":boxes})
  if capture and save:
   await RenderingServer.frame_post_draw
@@ -178,35 +210,90 @@ func find_tooltip(node: Node) -> PopupPanel:
   if found != null: return found
  return null
 
-func equipment_tooltip() -> void:
- case_tag = "equipment-tooltip"
- var button: Button = ui.column.get_node("EquipmentChest/Item0")
- button.grab_focus()
- await settle()
+func hover(control: Control) -> PopupPanel:
  var event := InputEventMouseMotion.new()
- event.position = root.get_final_transform() * button.get_global_rect().get_center()
+ event.position = root.get_final_transform() * control.get_global_rect().get_center()
  event.global_position = event.position
  Input.parse_input_event(event);Input.flush_buffered_events()
  await create_timer(0.65).timeout
- var popup := find_tooltip(root)
- check(popup != null,"native hover tooltip opens")
- if popup != null:
-  check(Rect2(Vector2.ZERO,root.size).encloses(Rect2(Vector2(popup.position),Vector2(popup.size))),"tooltip stays on screen")
+ return find_tooltip(root)
+
+func visible_texts() -> Array[String]:
+ var nodes: Array[Control] = []
+ texts(ui.root,nodes)
+ var found: Array[String] = []
+ for node in nodes: found.append(node.text)
+ return found
+
+func underlying_things(chest: Node) -> Array[Rect2]:
+ var found: Array[Rect2] = []
+ for button in chest._slot_buttons:
+  for child in button.get_children():
+   if child is Control and child.is_visible_in_tree(): found.append(root.get_final_transform() * child.get_global_rect())
+ return found
+
+func tooltip_texts(node: Node, result: Array) -> void:
+ if node is Control and node.is_visible_in_tree() and not node.tooltip_text.is_empty(): result.append(node)
+ for child in node.get_children(): tooltip_texts(child,result)
+
+func equipment_tooltip() -> void:
+ case_tag = "equipment-tooltip"
+ var chest = ui.column.get_node("EquipmentChest")
+ var button: Button = ui.column.get_node("EquipmentChest/Item0")
+ button.grab_focus()
+ await settle()
+ var popup: PopupPanel = await hover(button)
+ check(ui.equipment_name.text.contains("Long named weapon 0"),"hovering a slot names it in the Selected line")
+ check(popup == null,"hovering a slot opens no pointer popup repeating the Selected line")
+ var tooltips: Array = [popup]
+ # The chest's own page buttons are labelled; a pointer popup beside them covers the icons above.
+ var before := visible_texts()
+ for pager in [chest._page_next]:
+  pager.grab_focus()
+  await settle()
+  tooltips.append(await hover(pager))
+ var seen := 0
+ for tip in tooltips:
+  if tip == null: continue
+  seen += 1
   var nodes: Array[Control] = []
-  texts(popup,nodes)
+  texts(tip,nodes)
   check(not nodes.is_empty(),"native tooltip contains text")
+  var rect := Rect2(Vector2(tip.position),Vector2(tip.size))
+  check(Rect2(Vector2.ZERO,root.size).encloses(rect),"tooltip stays on screen")
   for label in nodes:
    check(label.get_theme_font_size("font_size") == roundi(18*ui.text_scale),"tooltip follows text size")
    if ui.plain_font: check(label.get_theme_font("font").get_font_name().contains("Atkinson"),"tooltip follows plain font")
-   check(Rect2(Vector2.ZERO,Vector2(popup.size)).grow(1).encloses(label.get_global_rect()),"tooltip text fits its window")
-  records.append({"tag":case_tag,"size":[root.size.x,root.size.y],"scale":ui.text_scale,"plain":ui.plain_font,"popup_position":[popup.position.x,popup.position.y],"popup_size":[popup.size.x,popup.size.y],"boxes":[]})
+   check(Rect2(Vector2.ZERO,Vector2(tip.size)).grow(1).encloses(label.get_global_rect()),"tooltip text fits its window")
+   for line in TOOLTIPS.duplicates(label.text,before): check(false,"tooltip repeats visible text: " + line)
+  for covered in TOOLTIPS.occluded(rect,underlying_things(chest)): check(false,"tooltip " + str(rect) + " covers a slot icon or marker at " + str(covered))
+  check(not TOOLTIPS.outside(rect,root.get_final_transform() * ui.panel.get_global_rect()),"tooltip stays inside its owning panel")
+  records.append({"tag":case_tag,"size":[root.size.x,root.size.y],"scale":ui.text_scale,"plain":ui.plain_font,"popup_position":[tip.position.x,tip.position.y],"popup_size":[tip.size.x,tip.size.y],"boxes":[]})
   if capture:
    await RenderingServer.frame_post_draw
    root.get_texture().get_image().save_png(output_dir.path_join("equipment-tooltip.png"))
- event = InputEventMouseMotion.new()
+ check(seen == 0,"the chest opens no pointer popups: any that opens is judged above and covers its neighbours")
+ # Static: no control on the page may carry tooltip text its visible neighbours already say.
+ var carriers: Array = []
+ tooltip_texts(ui.root,carriers)
+ for carrier in carriers:
+  if carrier is Button and chest.is_ancestor_of(carrier): carrier.grab_focus()
+  await settle()
+  for line in TOOLTIPS.duplicates(carrier.tooltip_text,visible_texts()): check(false,"tooltip text repeats visible text: " + line)
+ var event := InputEventMouseMotion.new()
  event.position = Vector2.ZERO;event.global_position = Vector2.ZERO
  Input.parse_input_event(event);Input.flush_buffered_events()
  await settle()
+
+func calibrate_tooltips() -> void:
+ var shown: Array[String] = ["Selected: Item: Long named weapon 0 · Equipped"]
+ check(not TOOLTIPS.duplicates("Item: Long named weapon 0 · Equipped",shown).is_empty(),"tooltip oracle rejects a repeat of the Selected line")
+ check(TOOLTIPS.duplicates("Show next magic slots",shown).is_empty(),"tooltip oracle accepts a tooltip with new meaning")
+ var icon: Array[Rect2] = [Rect2(100,100,50,50)]
+ check(not TOOLTIPS.occluded(Rect2(120,120,200,30),icon).is_empty(),"tooltip oracle rejects a popup over an icon")
+ check(TOOLTIPS.occluded(Rect2(300,300,200,30),icon).is_empty(),"tooltip oracle accepts a popup clear of icons")
+ check(TOOLTIPS.outside(Rect2(900,100,500,30),Rect2(0,0,1200,800)),"tooltip oracle rejects a popup past its panel")
+ check(not TOOLTIPS.outside(Rect2(100,100,500,30),Rect2(0,0,1200,800)),"tooltip oracle accepts a popup inside its panel")
 
 func status_boundaries() -> void:
  for sample in [
@@ -315,6 +402,8 @@ func run() -> void:
  root.size = Vector2i(1920,1080) if large_window else Vector2i(1280,800)
  case_tag="calibration"
  calibrate()
+ calibrate_phrases()
+ calibrate_tooltips()
  ui=UI.new()
  root.add_child(ui)
  var sizes := [root.size] if only_large else [Vector2i(1280,800),Vector2i(1920,1080)]
@@ -333,6 +422,7 @@ func run() -> void:
  ui.cancel_speech()
  ui.queue_free()
  await process_frame
+ for failure in failures: print("FAILURE ",failure)
  print("TEXT ACCESSIBILITY PASS" if failures.is_empty() else "TEXT ACCESSIBILITY FAIL " + str(failures.size()))
  quit(0 if failures.is_empty() else 1)
 

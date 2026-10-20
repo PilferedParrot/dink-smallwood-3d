@@ -63,7 +63,7 @@ func _run() -> void:
 	await process_frame
 	check(game.bindings.set_bindings("attack",[game.bindings.key(KEY_K)]).ok,"Attack remap")
 	check(game.bindings.set_bindings("talk",[game.bindings.key(KEY_J)]).ok,"Talk remap")
-	check(game.ui._control_primer().contains("K attack") and game.ui._control_primer().contains("J talk"),"Title primer follows both overrides")
+	check(game.ui._control_primer().replace("\u00A0"," ").contains("K attack") and game.ui._control_primer().replace("\u00A0"," ").contains("J talk"),"Title primer follows both overrides")
 	await frame("title")
 	game.playing = true
 	game.vm.cancel_all()
@@ -73,7 +73,7 @@ func _run() -> void:
 	game.fps_yaw = 0.55
 	game._sync_fps_camera()
 	await key(KEY_F1)
-	check(game.ui.hint.text.contains("K  Attack") and game.ui.hint.text.contains("J  Talk"),"Real F1 strip follows remapped gameplay")
+	check(game.ui.hint.text.replace("\u00A0"," ").contains("K  Attack") and game.ui.hint.text.replace("\u00A0"," ").contains("J  Talk"),"Real F1 strip follows remapped gameplay")
 	await frame("gameplay-help")
 	# Put menu controls on unusual keys; Escape and the pointer must recover.
 	var code := KEY_F13
@@ -90,7 +90,7 @@ func _run() -> void:
 	await click(button("Settings & controls"))
 	check(game.ui.page == "settings","Mouse still reaches settings")
 	check(game.ui._controls_text().contains("Attack: K") and game.ui._controls_text().contains("Talk / examine: J"),"Settings controls follow overrides")
-	check(game.ui.hint.text.contains(game.bindings.short_label("ui_left")) and game.ui.hint.text.contains(game.bindings.short_label("ui_cancel")),"Adjustment/back footer follows menu remaps")
+	check(game.ui.hint.text.replace("\u00A0"," ").contains(game.bindings.short_label("ui_left")) and game.ui.hint.text.replace("\u00A0"," ").contains(game.bindings.short_label("ui_cancel")),"Adjustment/back footer follows menu remaps")
 	await frame("settings")
 	await key(KEY_ESCAPE)
 	check(game.ui.page == "pause","Guaranteed Escape leaves settings")
@@ -106,7 +106,7 @@ func _run() -> void:
 	game.ui.show_choices("A long original prompt. ".repeat(100),["First answer","Second answer"])
 	await process_frame
 	check(game.ui.hint.text.contains(game.bindings.short_label("ui_accept")),"Choice confirm cue follows remap")
-	check(game.ui.hint.text.contains(game.bindings.short_label("ui_page_down")),"Overflow prompt cue follows remap")
+	check(game.ui.hint.text.replace("\u00A0"," ").contains(game.bindings.short_label("ui_page_down")),"Overflow prompt cue follows remap")
 	await frame("choices")
 	await key(int(game.bindings.events("ui_down")[0].physical))
 	await key(int(game.bindings.events("ui_accept")[0].physical))
