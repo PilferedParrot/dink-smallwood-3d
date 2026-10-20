@@ -52,6 +52,32 @@ Entities, native hardness, scripts, touch damage and portal logic are preserved.
 Raised details and real grass keep their previous keys and rendering, including
 the existing background painter for their type-0 copies.
 
+Five active scripted placements leave the standing interaction-body census.
+These identities use `world.json`'s one-based sprite `index`:
+
+| Screen:editor | Sequence/frame | Script | Source hard | Ground evidence |
+| --- | --- | --- | --- | --- |
+| 180:1 | 89/9 | `s6-hole2` | 0 | Crack opening |
+| 192:5 | 90/12 | `thorn` | 1 | Loose thorn fragment |
+| 209:4 | 89/9 | `s1-hole3` | 0 | Crack opening |
+| 243:13 | 89/9 | `s6-hole` | 0 | Crack opening |
+| 277:2 | 89/9 | `s1-hole` | 0 | Crack opening |
+
+None of these scripts sets `sp_hard` (`story.json`). Hard zero still blocks
+through the native source-hardbox path; hard one stays passable. The thorn
+script still sets contact damage. Removing a standing ray target changes
+neither movement hardness nor contact/portal execution. Map 132:1 is another
+89/9 scripted opening, but its type 0 already excluded it from this active-body
+census. The 145 decorative targets become 140; the thorn subset becomes 138
+from 139 because 192:5 is one of those same five exclusions. The test asserts
+the exact excluded identities, pictures and scripts as well as the totals.
+There are six active scripted ground placements in total: 481:2 is beach
+frame 92/1 (`s5-sec1`), source `hard=1`. It was an upright rock before this
+change and was outside the decorative census. Its starfish/scatter artwork
+now lies flat. `s5-sec1.hit` retains `sp_hard(...,1)` (source line 16), and
+the bomb-hit path uses the source hardbox rather than a visual ray body.
+The active-ground fixture includes this sixth identity and its hardness.
+
 The live displayed frame determines entry into and exit from this class. Frame,
 size, position and visibility changes follow the entity, without baking a stale
 picture into terrain. Stock `s2-sec1`, `s2-sec3` and `s3-sec1` death procedures

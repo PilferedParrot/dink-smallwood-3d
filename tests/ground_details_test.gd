@@ -46,6 +46,15 @@ func run() -> void:
 				check(planar == flat,"representation %d/%d scripted=%s expected_ground=%s got=%s" % [seq,frame,scripted,flat,planar])
 				if not flat: check(visual.get_node_or_null("Model") is Sprite3D,"upright card preserved %d/%d" % [seq,frame])
 				check(JSON.stringify(e)==snapshot,"source behavior/hardness preserved %d/%d" % [seq,frame])
+				# Movement uses source hardness, independently of standing ray bodies.
+				var saved_entities: Dictionary = game.entities
+				game.entities = {99001:e}
+				var center: Vector2 = game._hard_rect(e).get_center()
+				e.hard = 0
+				check(game._blocking_sprite(center,1)==99001,"hard-zero source still blocks %d/%d" % [seq,frame])
+				e.hard = 1
+				check(game._blocking_sprite(center,1)==0,"hard-one source stays passable %d/%d" % [seq,frame])
+				game.entities = saved_entities
 				if not scripted:
 					print("DETAIL ",seq," ",frame," ",flat," ",planar)
 					if frame>=7 and flat and not planar: known_failures+=1
@@ -69,6 +78,25 @@ func run() -> void:
 		for id in game.entities:
 			if int(game.entities[id].get("editor_num",0))==pair[1] and floor_surface(game.visuals[id]): owners+=1
 		check(owners==1,"one authored floor owner %s got%d" % [pair,owners])
+	# Unearned bomb-hit fixture: the sixth active scripted ground placement
+	# was a rock, outside the decorative-body census. Use the native brain-17
+	# source-hardbox dispatch, rather than directly calling its hit procedure.
+	game.vm.cancel_all()
+	game.load_map(481,false)
+	var starfish := 0
+	for id in game.entities:
+		if int(game.entities[id].get("editor_num",0))==2: starfish=int(id)
+	check(starfish!=0,"authored bomb-secret starfish exists")
+	if starfish!=0:
+		check(floor_surface(game.visuals[starfish]) and int(game.entities[starfish].hard)==1,"authored starfish is flat and passable")
+		var target: Dictionary = game.entities[starfish]
+		var bomb: int = int(await game.dink_call("create_sprite",[target.x,target.y,17,161,1],{}))
+		game.entities[bomb].script="dam-bomn"
+		game.entities[bomb].range=30;game.entities[bomb].speed=0
+		game.entities[bomb].brain_parm=1;game.entities[bomb].brain_parm2=1
+		game._update_ai(0.0)
+		for _i in 8: await process_frame
+		check(int(game.entities[starfish].get("active",1))==0 and int(game.entities[starfish].hard)==1,"native bomb hit executes original starfish secret")
 	# Stock scripts, not a made-up transition: secret trees become 89/10.
 	# Direct VM invocation skips earning their death; it executes the source die procedure.
 	for pair in [[307,"s2-sec1"],[659,"s2-sec3"],[710,"s3-sec1"]]:
