@@ -119,6 +119,7 @@ func scan(tag: String, save := true) -> void:
    check(label.get_theme_font_size("font_size") == roundi(15*ui.status_dock._dock_scale*ui.text_scale),"status keeps requested enlarged font")
  var boxes: Array = []
  for node in nodes:
+  if ui.plain_font: check(node.get_theme_font("font").get_font_name().contains("Atkinson"),"plain font reaches " + str(node.get_path()))
   var r := node.get_global_rect()
   boxes.append({"text":node.text,"path":str(node.get_path()),"rect":[r.position.x,r.position.y,r.size.x,r.size.y],"font_size":node.get_theme_font_size("font_size"),"font":node.get_theme_font("font").get_font_name(),"scrolling":has_scroll(node)})
  records.append({"tag":tag,"size":[root.size.x,root.size.y],"scale":ui.text_scale,"plain":ui.plain_font,"boxes":boxes})
@@ -253,7 +254,7 @@ func run() -> void:
     print("TEXT MATRIX ",size," plain=",plain," scale=",scale," failures=",failures.size())
  if not output_dir.is_empty():
   var file := FileAccess.open(output_dir.path_join("geometry.json"),FileAccess.WRITE)
-  file.store_string(JSON.stringify({"records":records,"failures":failures,"packed":not OS.has_feature("editor"),"executable":OS.get_executable_path(),"bundled_font":FileAccess.file_exists("res://assets/fonts/AtkinsonHyperlegible-Regular.ttf"),"bundled_licence":FileAccess.file_exists("res://assets/fonts/AtkinsonHyperlegible-OFL.txt"),"setup":"UI-only fixture bypasses progression and world scripts; native layout and focus; not campaign proof."},"\t"))
+  file.store_string(JSON.stringify({"records":records,"failures":failures,"packed":not OS.has_feature("editor"),"executable":OS.get_executable_path(),"bundled_font":ResourceLoader.exists("res://assets/fonts/AtkinsonHyperlegible-Regular.ttf"),"bundled_licence":FileAccess.file_exists("res://assets/fonts/AtkinsonHyperlegible-OFL.txt"),"setup":"UI-only fixture bypasses progression and world scripts; native layout and focus; not campaign proof."},"\t"))
  ui.cancel_speech()
  ui.queue_free()
  await process_frame
