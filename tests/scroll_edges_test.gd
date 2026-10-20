@@ -9,6 +9,7 @@ var failures: Array[String] = []
 var stops := 0
 var pages := 0
 var known := {}
+var known_stops := {}
 
 func _initialize() -> void: run.call_deferred()
 
@@ -20,7 +21,7 @@ func check(ok: bool, message: String) -> void:
 func settle(count := 8) -> void:
 	for _i in count: await process_frame
 
-func sweep(tag: String, scroll: ScrollContainer) -> void:
+func sweep(tag: String, scroll: ScrollContainer, open_class := "") -> void:
 	await settle(14)
 	pages += 1
 	var bar := scroll.get_v_scroll_bar()
@@ -37,6 +38,11 @@ func sweep(tag: String, scroll: ScrollContainer) -> void:
 		await settle(6)
 		stops += 1
 		var cut := EDGES.cuts(scroll)
+		if open_class != "":
+			# Named open class, outside this unit's scope: counted on every run, never silent.
+			known_stops[open_class] = int(known_stops.get(open_class, 0)) + 1
+			if not cut.is_empty(): known[open_class] = int(known.get(open_class, 0)) + 1
+			continue
 		check(cut.is_empty(), "%s stop %d (scroll %d of %d): cut at an edge: %s" % [tag, stops, scroll.scroll_vertical, maximum, str(cut.slice(0, 3))])
 		check(EDGES.shown(scroll) >= 1, "%s stop %d: the viewport shows no whole line or control" % [tag, stops])
 		if scroll == ui.menu_scroll:
@@ -107,6 +113,12 @@ func run() -> void:
 					ui.controls_menu._select_group(group)
 					await sweep(tag + " controls " + group, ui.controls_menu.scroll)
 				ui.cancel_speech()
+				ui.show_dialogue("Every line of a long conversation can be read. ".repeat(70), "Conversation")
+				await sweep(tag + " speech", ui.menu_scroll, "speech")
+				ui.show_choices("Will you help the village? " + "The prompt has its own reading viewport. ".repeat(14), ["Yes, I will help the village.", "Tell me more before I choose.", "I need some time to think about it."])
+				await sweep(tag + " choice prompt", ui.choice_prompt_scroll, "choice prompt")
+				await sweep(tag + " choice answers", ui.menu_scroll, "choice answers")
+				ui.cancel_speech()
 				ui.queue_free()
 				await process_frame
 	var by_page := {}
@@ -114,6 +126,8 @@ func run() -> void:
 		var name: String = failure.split(" stop ")[0].split(" plain=")[0] + " " + failure.split(" stop ")[0].split("scale=")[1].split(" ", true, 1)[1]
 		by_page[name] = int(by_page.get(name, 0)) + 1
 	for name in by_page: print("EDGE FAILURES ", name, " ", by_page[name])
+	for open_class in known_stops:
+		print("KNOWN OPEN CLASS ", open_class, ": a line or control is cut at an edge in ", known.get(open_class, 0), " of ", known_stops[open_class], " swept stops (speech/choice card sizing belongs to A1a's whole-line machinery; not fitted here)")
 	print("SCROLL EDGES pages=", pages, " stops=", stops)
 	print("SCROLL EDGES PASS" if failures.is_empty() else "SCROLL EDGES FAIL " + str(failures.size()))
 	quit(0 if failures.is_empty() else 1)
