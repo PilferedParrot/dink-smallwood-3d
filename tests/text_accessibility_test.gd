@@ -1,6 +1,7 @@
 # Copyright 2026 PilferedParrot contributors. SPDX-License-Identifier: Apache-2.0
 extends SceneTree
 ## UI fixture, not campaign progression. The same census can render packed resources.
+const READING_LAYOUT = preload("text_layout_oracle.gd")
 const UI = preload("res://scripts/game_ui.gd")
 var ui
 var failures: Array[String] = []
@@ -106,6 +107,7 @@ func scan(tag: String, save := true) -> void:
   if ui.hint_backing.visible:
    check(not ui.panel.get_global_rect().grow(-1).intersects(ui.hint_backing.get_global_rect().grow(-1)),"hint and panel stay apart")
  if ui.page == "dialogue":
+  for defect in READING_LAYOUT.defects(ui): check(false,defect)
   var dock: Rect2 = ui.status_dock.get_global_transform() * ui.status_dock.art_rect()
   var bounds: Rect2 = ui.panel.get_global_rect()
   for vine in [ui.vines_left,ui.vines_right]: bounds = bounds.merge(vine.get_global_rect())

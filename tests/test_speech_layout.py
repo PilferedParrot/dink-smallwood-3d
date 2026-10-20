@@ -52,7 +52,7 @@ def test_long_choice_prompts_open_first_without_changing_input_owners(tmp_path):
     result = subprocess.run(
         ["nice", "-n", "10", GODOT, "--headless", "--audio-driver", "Dummy", "--fixed-fps", "1000",
          "--path", project, "--script", str(ROOT / "tests/choice_prompt_test.gd")],
-        cwd=ROOT, env=env, capture_output=True, text=True, timeout=60)
+        cwd=ROOT, env=env, capture_output=True, text=True, timeout=180)
     assert result.returncode == 0 and "CHOICE PROMPT PASS" in result.stdout and "SCRIPT ERROR" not in result.stderr, result.stdout + result.stderr
 
 

@@ -362,7 +362,7 @@ func _process(_delta: float) -> void:
 	if page == "dialogue" and choice_prompt_scroll.visible:
 		choice_prompt_axis = Input.get_action_strength("ui_page_down") - Input.get_action_strength("ui_page_up")
 		if not is_zero_approx(choice_prompt_axis):
-			choice_prompt_scroll.scroll_vertical += roundi(choice_prompt_axis * choice_prompt_scroll.size.y * _delta)
+			choice_prompt_scroll.scroll_vertical += roundi(choice_prompt_axis * _choice_prompt_step() * _delta)
 		_update_hint()
 	# A top-level Container grows to a wrapped Label's minimum but does not
 	# shrink when that minimum falls. Startup can wrap before width settles;
@@ -446,19 +446,29 @@ func _layout_for(next_page: String) -> void:
 
 # Short speech uses only the height its heading, text and action need. The
 # former fixed 35% menu card left most of a one-line conversation empty.
-# Long dialogue retains that same height cap and its independent Continue.
+# The usual35% cap yields only to native full-line/focused-action minima at
+# large text sizes. Never trade the requested font size for a smaller card.
 func _fit_dialogue_panel() -> void:
 	var chrome := panel.get_combined_minimum_size().y-menu_scroll.get_combined_minimum_size().y
 	var body := column.get_combined_minimum_size().y
+	var bottom: float = status_dock.readout_top() - column.get_theme_constant("separation")
+	var available_height := maxf(1, bottom - column.get_theme_constant("separation"))
+	var readable_body := 0.0
+	if column.get_child_count() > 0 and column.get_child(0) is Label:
+		var label: Label = column.get_child(0)
+		readable_body = minf(body, label.get_line_height() * 2 + label.get_theme_constant("line_spacing"))
+	var answer: Control
+	var answer_height := 0.0
 	if choice_prompt_scroll.visible:
 		chrome -= choice_prompt_scroll.get_combined_minimum_size().y
 		body += choice_prompt.get_combined_minimum_size().y
-	var height := minf(chrome+body,maxf(chrome,root.size.y*0.35))
-	if choice_prompt_scroll.visible:
-		var answer: Control = get_viewport().gui_get_focus_owner()
+		answer = get_viewport().gui_get_focus_owner()
 		if answer == null or not column.is_ancestor_of(answer):
 			answer = column.get_child(0) if column.get_child_count() > 0 else null
-		var answer_height := answer.get_combined_minimum_size().y if answer != null else 0.0
+		answer_height = answer.get_combined_minimum_size().y if answer != null else 0.0
+		readable_body = answer_height + minf(choice_prompt.get_combined_minimum_size().y, choice_prompt.get_line_height())
+	var height := minf(available_height, minf(chrome+body,maxf(chrome+readable_body,root.size.y*0.35)))
+	if choice_prompt_scroll.visible:
 		var available := maxf(0, height - chrome)
 		# Give the focused answer its full height first. The prompt has its own
 		# viewport and cannot push the selected action below the fold.
@@ -468,9 +478,6 @@ func _fit_dialogue_panel() -> void:
 			_keep_choice_visible.call_deferred(answer, page_serial)
 	# All speech and choices share one footprint, even when blocking speech
 	# hides the HUD. Include the vines, which can outgrow a short timed card.
-	var bottom: float = status_dock.position.y + status_dock.art_rect().position.y - column.get_theme_constant("separation")
-	if status_dock.has_method("readout_top"):
-		bottom = status_dock.readout_top() - column.get_theme_constant("separation")
 	var top := bottom - maxf(height, SPEECH_VINE_SIZE.y)
 	var key := Vector4(chrome,body,height,top)
 	if key == dialogue_layout_key: return
@@ -547,7 +554,7 @@ func _input(event: InputEvent) -> void:
 		var direction := int(event.is_action_pressed("ui_page_down")) - int(event.is_action_pressed("ui_page_up"))
 		if direction != 0 and not event is InputEventJoypadMotion:
 			controller_active = event is InputEventJoypadButton
-			choice_prompt_scroll.scroll_vertical += roundi(direction * choice_prompt_scroll.size.y)
+			choice_prompt_scroll.scroll_vertical += roundi(direction * _choice_prompt_step())
 			get_viewport().set_input_as_handled()
 			_update_hint()
 			return
@@ -571,6 +578,12 @@ func _uses_gameplay_control(event: InputEvent) -> bool:
 	for action in bindings.gameplay_actions():
 		if event.is_action_pressed(action): return true
 	return false
+
+func _choice_prompt_step() -> float:
+	# A single-line viewport must page to the next baseline, not through
+	# fractional lines that never expose a complete row at large text sizes.
+	var pitch := float(choice_prompt.get_line_height() + choice_prompt.get_theme_constant("line_spacing"))
+	return pitch * maxf(1, floorf(choice_prompt_scroll.size.y / maxf(1,pitch)))
 
 func _update_hint() -> void:
 	if is_instance_valid(speech_dismiss_hint):

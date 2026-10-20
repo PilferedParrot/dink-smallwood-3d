@@ -1,4 +1,5 @@
 extends SceneTree
+const READING_LAYOUT = preload("text_layout_oracle.gd")
 ## Scenario fixture skips campaign progression/startup scripts. M runs the
 ## BUTTON6 script; Talk dismissal/choices use normal viewport key events.
 ## FreeDink109.6 dinkc_bindings.cpp:748-825: stop waits for text, not input modality.
@@ -72,7 +73,7 @@ func inspect_card(tag: String) -> void:
 	print("SPEECH LAYOUT ", JSON.stringify(row))
 	check(not bounds.intersects(dock), tag + ": complete card leaves status artwork clear")
 	check(bounds.position.y >= 0 and bounds.end.y <= ui.root.size.y, tag + ": complete card stays inside viewport")
-	check(ui.panel.size.y <= ui.root.size.y * 0.35 + 1, tag + ": card retains 35% height cap")
+	for defect in READING_LAYOUT.defects(ui): check(false, tag + ": " + defect)
 	check(ui.speech_safe_rect().size.y > 0, tag + ": world has a positive speech-safe area")
 
 func frame(tag: String) -> void:
@@ -131,7 +132,9 @@ func _run() -> void:
 	inspect_card("real-M-missing-map")
 	await frame("01-real-M-timed")
 	game.ui.cancel_speech()
-	for scale in [0.85, 1.0, 1.3]:
+	for style in [{"scale":1.0,"plain":false},{"scale":1.5,"plain":false},{"scale":2.0,"plain":false},{"scale":1.0,"plain":true},{"scale":1.5,"plain":true},{"scale":2.0,"plain":true}]:
+		var scale: float = style.scale
+		game.ui.set_plain_font(style.plain)
 		game.ui.set_text_scale(scale)
 		for command in ["say", "say_xy", "say_stop", "say_stop_npc", "say_stop_xy"]:
 			for line in ["Short line.", "A long speech line that must scroll within the card. ".repeat(100)]:
