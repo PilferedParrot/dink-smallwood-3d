@@ -1346,6 +1346,10 @@ func dink_call(command: String, args: Array, context: Dictionary) -> Variant:
 			vm.cancel_screen_tasks(int(context.get("task_id",0)))
 			load_map(int(vm.globals.get("player_map",current_screen)))
 		"force_vision":
+			# FreeDink109.6 dinkc_bindings.cpp:1321-1326 -> game_engine.cpp:706 kill_all_scripts()
+			# (dinkc.cpp:872-892): every script off sprite 1000 dies; the caller was attached to
+			# 1000 by the VM before this call, so it survives by ownership, not by exception.
+			vm.cancel_screen_tasks()
 			vm.globals["vision"] = int(a)
 			load_map(current_screen)
 		"editor_type", "editor_seq", "editor_frame":
