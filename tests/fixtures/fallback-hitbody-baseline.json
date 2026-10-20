@@ -603,7 +603,7 @@
       "treatment": "unchanged-followup",
       "source_type": 1,
       "known_defect": {
-        "reason": "Size70 bed now takes the P4b bed fit (INTEGRATE-2 merge); its body spans the hardbox exactly in x but exceeds it in depth (north -2.8 px, south +10.5 px). Not a pass of the hardbox registration gate.",
+        "reason": "Size70 bed now takes the P4b bed fit (INTEGRATE-2 merge); its body spans the hardbox exactly in x but exceeds it in depth (north -2.8 px, south +10.5 px). P4b bed fit vs hardbox: cause not yet decided between the original's art convention (a bed's foot drawn beyond its hardbox) and the fit. Not a pass of the hardbox registration gate.",
         "body_edge_offsets_px": {
           "west": 7.62939453e-06,
           "north": -2.80000400543213,
