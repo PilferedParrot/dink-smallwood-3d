@@ -31,6 +31,10 @@ func _init(scroll: ScrollContainer, ui: Node) -> void:
 func automatic_active() -> bool:
 	return not _manual and (_queued or _running or applying)
 
+# True while the player's own scrolling holds the view away from the focused control.
+func manual_holds() -> bool:
+	return _manual
+
 func _current(target: Control) -> bool:
 	var ui = _ui_ref.get_ref()
 	return is_instance_valid(ui) and ui.is_inside_tree() and ui.page_serial == _serial and is_instance_valid(target) and target.is_inside_tree() and target.is_visible_in_tree() and ui.get_viewport().gui_get_focus_owner() == target

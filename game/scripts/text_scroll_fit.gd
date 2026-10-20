@@ -98,10 +98,11 @@ func _fit() -> void:
 	for atom in found:
 		if atom.x > 0.5 and not tops.has(snappedf(atom.x, 0.01)) and not _straddled(found, atom.x): tops.append(snappedf(atom.x, 0.01))
 	tops.sort()
-	# The control the player is working with stays whole.
+	# The control the player is working with stays whole, unless the player has scrolled
+	# away from it: manual reading wins until focus or the control itself changes.
 	var must := Vector2(-1, -1)
 	var focus: Control = ui.get_viewport().gui_get_focus_owner()
-	if focus != null and content.is_ancestor_of(focus) and focus.is_visible_in_tree():
+	if focus != null and not ui._focus_scroll_owner(scroll).manual_holds() and content.is_ancestor_of(focus) and focus.is_visible_in_tree():
 		var rect: Rect2 = focus.get_global_rect()
 		var local := Vector2(rect.position.y - content.get_global_rect().position.y, rect.end.y - content.get_global_rect().position.y)
 		if local.y - local.x <= slot: must = local
@@ -127,6 +128,16 @@ func _fit() -> void:
 		if distance < best:
 			best = distance
 			chosen = top
+	# A step must not skip a line. Unless it arrives at an end of the page (Home, End), take
+	# the boundary nearest the place they asked for on the near side of it, provided it
+	# moves on from where the page was.
+	var at_end: bool = chosen <= 0.5 or chosen + float(heights[chosen]) >= height - 0.5
+	var reached := INF
+	for top in valid:
+		if at_end: break
+		if _direction > 0 and top > _stable_top + 0.5 and top <= current + 0.5 and (reached == INF or top > reached): reached = top
+		elif _direction < 0 and top < _stable_top - 0.5 and top >= current - 0.5 and (reached == INF or top < reached): reached = top
+	if reached != INF: chosen = reached
 	var viewport_height: float = heights[chosen]
 	var key := "%d|%d|%d|%d" % [roundi(chosen), roundi(viewport_height), roundi(slot), roundi(height)]
 	if key == _key and absf(scroll.scroll_vertical - chosen) < 1.0:

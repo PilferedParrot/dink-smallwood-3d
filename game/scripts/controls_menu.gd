@@ -250,7 +250,16 @@ func _snap_scroll(value: float) -> void:
 		# A large user-created action keeps native within-row scrolling.
 		target = value
 	elif value > previous_scroll and value > target and index+1 < rows.size():
-		target = rows[index+1].position.y
+		# A step never passes the row it asked for, so a page step cannot skip a row; it only
+		# moves on from the row the list was on (the wheel) or runs to the end (End).
+		var maximum: float = scroll.get_v_scroll_bar().max_value-scroll.get_v_scroll_bar().page
+		if value >= maximum-1 or target <= previous_scroll+0.5: target = rows[index+1].position.y
+	elif value < previous_scroll and value > 0.5:
+		# Backwards likewise: the first row boundary at or after the place asked for.
+		for row in rows:
+			if row.position.y >= value-0.5 and row.position.y < previous_scroll-0.5:
+				target = row.position.y
+				break
 	snapping_scroll = true
 	snap_target = target
 	ui._focus_scroll_owner(scroll).set_position(target, true, false)
