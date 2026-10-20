@@ -101,6 +101,9 @@ func _add_slot(item: Dictionary, action: String, index: int, col: int, row: int,
 	button.mouse_filter = Control.MOUSE_FILTER_STOP
 	# No tooltip: the Selected line above the chest already shows this text, larger,
 	# on hover and on focus. A pointer popup repeated it and covered the icons.
+	# The same text stays on the control as its accessible name and description.
+	button.accessibility_name = name
+	button.accessibility_description = description
 	button.set_meta("grid", Vector2i(col, row))
 	button.set_meta("spell", spell)
 	for state in ["normal", "hover", "pressed", "focus", "disabled"]:
