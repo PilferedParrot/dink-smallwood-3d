@@ -177,3 +177,44 @@ def test_every_face_of_the_wells_roof_keeps_the_straws_density(tmp_path):
     top = jac[0]
     for j in jac:
         assert abs(j["sigma_max"] / top["sigma_max"] - 1) <= 0.35 and abs(j["sigma_min"] / top["sigma_min"] - 1) <= 0.35, (j, top)
+
+
+def _wood_columns(rgba, top, foot, x_from, x_to):
+    """Independent of landmark_fit.segment: the columns of a post's drawn silhouette that hold wood (warm, above the outline's
+    luminance) in at least half of the post's rows."""
+    import numpy as np
+
+    a = rgba.astype(int)
+    lum = 0.299 * a[..., 0] + 0.587 * a[..., 1] + 0.114 * a[..., 2]
+    warm = (a[..., 3] >= 128) & (a[..., 0] - a[..., 2] > 8) & (lum > 24)
+    return [x for x in range(x_from, x_to) if warm[top:foot, x].mean() >= 0.5]
+
+
+def test_the_wells_post_side_and_roof_thickness_are_the_drawn_woods_width_not_a_padded_run():
+    # P4d fix round 2, F4. The drawn post is two columns of black outline and four of wood (landm-01: x78,79 outline, x80..83 wood, x84 is
+    # background; the pad of DARK = 2 columns each side the fit used made it eight, one third too wide, and the roof's thickness with it).
+    # The beam's drawn width is side * (|cos| + |sin|) at the fitted yaw: the side is the wood's width over that. Re-measured here from the
+    # sprite by an independent column count; both posts, all three frames (one fit, three silhouettes).
+    import json
+
+    import numpy as np
+    import sys
+
+    sys.path.insert(0, str(ROOT / "tools"))
+    import prop_fit as P
+
+    fits = json.loads((ROOT / "game/prototype/landmarks.json").read_text())
+    for n in (1, 2, 3):
+        path = f"assets/graphics/struct/Landmark/landm-0{n}.png"
+        posts, roof = fits[path]["parts"]
+        rgba = P.load(path)
+        for x_from, top, foot in ((76, 44, 84), (48, 61, 86)) if n < 3 else ():  # the right post, the left post: rows well inside each
+            # (frame 3's glow lights the outline's pixels, so its columns cannot be counted; it shares the fit of the other two)
+            cols = _wood_columns(rgba, top, foot, x_from, x_from + 10)
+            assert len(cols) == 4 and cols == list(range(cols[0], cols[0] + 4)), (path, x_from, cols)
+        yaw = posts["yaw"]
+        side = 4.0 / (abs(np.cos(yaw)) + abs(np.sin(yaw)))
+        assert posts["w"] == pytest.approx(side, abs=0.02) and posts["d"] == pytest.approx(side, abs=0.02), (path, posts["w"], side)
+        assert roof["h"] == pytest.approx(side, abs=0.02), (path, roof["h"], side)  # the roof is a beam's thickness
+        assert [f["lit"][1] - f["dark"][0] for f in posts["flat"]] == [4, 4], posts["flat"]
+        assert posts["faces"]["lit"][1] - posts["faces"]["dark"][0] == pytest.approx(4.0), posts["faces"]

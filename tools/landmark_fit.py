@@ -46,7 +46,7 @@ POST_RUN = 10   # a post is a run of warm pixels at least this long in one colum
 WARM = 8        # red minus blue: wood is warm, the well's stone is not
 D_MIN = 65      # the roof is at least this long (px): the free fit (55) stops short of the left tip the picture draws, leaving a post's top uncovered
 EDGE_FIT = {'ridge': (42, 78), 'eave': (66, 104), 'rake': (3, 23)}  # the roof's clean edges, in sprite px (columns, columns, rows)
-DARK = 2        # a post's shaded face is as wide again as its lit run's edge: px added each side
+DARK = 2        # the black outline the sprite draws on a post's left (px): left out of its geometry and its colours, and out of the base's texture
 
 
 def pack(mask: np.ndarray) -> str:
@@ -69,7 +69,8 @@ def segment(rgba: np.ndarray):
         ys, xs = np.nonzero(lab == i)
         if len(ys) < 3 * POST_RUN:
             continue  # a rope or a chain: a pixel wide
-        posts.append({'x0': int(xs.min()) - DARK, 'x1': int(xs.max()) + 1 + DARK, 'foot': int(ys.max()) + 1, 'top': int(ys.min())})
+        # x0..x1: the post's WOOD columns (the warm run); its outline is DARK black columns to the left of x0, drawn on top of the stone
+        posts.append({'x0': int(xs.min()), 'x1': int(xs.max()) + 1, 'foot': int(ys.max()) + 1, 'top': int(ys.min())})
     return body, roof, base, posts, warm
 
 
@@ -148,7 +149,7 @@ def well_fit(rgba: np.ndarray, k: float | None) -> dict | None:
     ys = np.nonzero(base_m.any(1))[0]
     post_px = np.zeros_like(body)
     for p in posts:
-        post_px[p['top']:p['foot'], p['x0']:p['x1']] = True
+        post_px[p['top']:p['foot'], p['x0'] - DARK:p['x1'] + DARK] = True  # the texture mask, outline and its margin included: not the geometry
     base_tex = base_m & ~post_px
     sub = rgba.copy()
     sub[..., 3] = np.where(base_m, 255, 0)
@@ -195,13 +196,13 @@ def well_fit(rgba: np.ndarray, k: float | None) -> dict | None:
         u = float((np.array([b[0], b[1]]) - ctr) @ ex)
         u_near = max(0.0, abs(u) - side / 2)
         b.append(round(ridge - thick - rise * u_near / (rw / 2) - rim, 2))
-    # The drawn post is DARK columns of black outline, then its wood (the lit run: four columns, the shaded half of it the left two). The outline is
-    # a drawing convention, not material: the faces take the wood's columns only, at their drawn width (prop_solids.gd _texture, fit.flat).
+    # The drawn post is DARK columns of black outline, then its wood (four columns, the shaded half of it the left two). The outline is a
+    # drawing convention, not material and not width: the faces take the wood's columns only, at their drawn width (prop_solids.gd _texture,
+    # fit.flat), and the beam is as wide as the wood is (side * (|cos| + |sin|) = the wood's columns, above).
     wp = posts[0]['x1'] - posts[0]['x0']
     assert all(p['x1'] - p['x0'] == wp for p in posts), 'the two posts are drawn as wide as each other'
-    ww = wp - 2 * DARK  # the wood's columns
-    faces = {'dark': [-wp / 2 + DARK, -wp / 2 + DARK + ww / 2], 'lit': [-wp / 2 + DARK + ww / 2, wp / 2 - DARK]}
-    flat = [{'dark': [p['x0'] + DARK, p['x0'] + DARK + ww // 2], 'lit': [p['x0'] + DARK + ww // 2, p['x1'] - DARK], 'rows': [p['top'], p['foot']]} for p in posts]
+    faces = {'dark': [-wp / 2, 0.0], 'lit': [0.0, wp / 2]}
+    flat = [{'dark': [p['x0'], p['x0'] + wp // 2], 'lit': [p['x0'] + wp // 2, p['x1']], 'rows': [p['top'], p['foot']]} for p in posts]
     out_posts = {'class': 'box', 'faces': faces, 'flat': flat, 'size': base['size'], 'cx': cx, 'cz': cz, 'k': k, 'w': round(side, 2), 'd': round(side, 2),
                  'yaw': round(float(yaw), 4), 'h': round(ridge - thick - rise - rim, 2), 'boxes': boxes, 'mask': pack(post_px)}  # no void_fill: the post's outline is not a gap to fill but a convention to leave out (fit.flat)
     out_roof = {'class': 'gable', 'size': base['size'], 'cx': cx, 'cz': cz, 'k': k, 'w': round(rw, 2), 'd': round(rd, 2),
