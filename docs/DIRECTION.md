@@ -3118,3 +3118,60 @@ parts, including the 70% bed. Opposite sides preserve the head and foot instead
 of rotating the pillow pattern to the other end. Source-pixel landmarks,
 recorded native-pixel donors, inference limits and regression controls are
 specified in [bed-parts.md](bed-parts.md).
+
+## Talk acquires its target by FreeDink's box rule — October 20
+
+Talk no longer asks a physics ray whether the eye can see the target's body. It
+tests Dink's point against each live sprite's box, as `run_through_tag_list_talk`
+does (`freedink.cpp:240-305`): the sprite's CURRENT-frame hardbox, unscaled by the
+sprite's size, grown 10 px on every side, then 50 px farther toward Dink for an
+east or west facing (`:268`, `:273`) and 35 px for north or south (`:278`, `:283`);
+every edge inclusive (`rect.cpp:81-91`). The first live sprite in slot order whose
+script has a `TALK` procedure answers; a sprite whose box holds Dink but whose
+script has none does not end the search. There is no ray, no visibility test, no
+hardness test and no occlusion in the original. Background sprites (type 0 and 2)
+never hold a live slot or a script (`game_engine.cpp:483-506`, `:580-584`), and
+brain 8 is excluded (`freedink.cpp:254`).
+
+Facing is the camera's ground heading, snapped to the nearest axis. A resting
+Dink's `dir` is always cardinal because the original freezes a diagonal one
+(`brain_keyboard.cpp:554-557`, 1 and 3 become 2, 7 and 9 become 8), so an exact
+45 degrees falls to north/south. `_direction()`'s 0.3 threshold is not reused: it
+would make east/west a 17 degree sliver beside a 146 degree north/south. A
+diagonal `dir` (only while Dink walks diagonally) extends nothing in the original;
+the camera never produces one.
+
+Slot order is the order PUSH already visits (`_push_dispatch_ids`, editor sprites
+by draw rank `editor_screen.cpp:54-87`). Code: `talk_acquire.gd` (the pure box,
+facing and inclusive test) and `fps_game.gd _talk_target()`.
+
+**Why this, and what broke.** The scroll in the wizard's cabin (map 6, `s1-mh-f`)
+is a flat prop; flat props get no body (`fp_world.gd:1711`), and Talk required the
+ray to reach the target's own body, so the earned route could never take its
+reward. Behind it, the chair's fallback body was the first ray hit on 6-9 of 9
+rays. The cause is not the scroll: two rules composed unchecked ("a flat frame has
+no body" for decoration; "Talk needs a body the ray reaches" as a stand-in for "the
+player can see it"). The stand-in is not the original's rule, so every body-fit
+error became a Talk failure (the wizard's bookshelf earlier, this scroll now).
+
+**Consequences, chosen by following the original.**
+- Talk reaches through a solid that is inside its box. The original does; Dink
+  cannot stand inside the solid, so the reach is at most 35 or 50 px past a face.
+  Three tests that pinned the occlusion of Talk now pin its absence, each citing
+  the source; the ray is unchanged for aim and melee.
+- Reach is shorter than the old 90 px cone in places (the old rule answered from
+  up to 90 px away in a 0.55 cone). The class census shows both directions.
+- The mounted-poster witness poses must also lie in the original's box; for a
+  poster hung low on a wall that is nearer than the old 25 px minimum.
+
+Tests: `tests/fps_talk_acquire_test.gd` (earned bonca-complete save in
+`tests/fixtures/talk`, real E input, seven reach poses, ten look-alike refusals 0.5
+px outside or with the target behind Dink, slot order, type 0 and brain 8, and a
+cited box table that fails when one row is flipped) and
+`tests/fps_talk_acquire_census.gd` (the 21 talk-able sprites on or behind a solid,
+old rule against new). Not changed, recorded as follow-ups: the scroll drawn on the
+floor, not the table top; the chair `ed21` fallback body's depth; the top-down
+`game.gd _talk()` (90 px nearest); and attack/hit acquisition, whose original box
+is different (`freedink.cpp:571`: hardbox -5/+5/-5/+10 with a 28/36 or range-based
+extension, no ray, every match in slot order) while `_fps_melee_hit_rect` already
+ports that box but still ANDs a 0.60 cone and the ray.

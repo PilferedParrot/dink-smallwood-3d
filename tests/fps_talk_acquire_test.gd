@@ -130,6 +130,24 @@ func run():
  got2 = await press_talk(game)
  check(got2 == [scroll],"brain 8 is excluded (freedink.cpp:254), got %s" % [got2])
  game.entities.erase(clone_id)
+ # Real data: sprites the editor marks type 0 yet whose script has a TALK procedure (97:35 is one of seven
+ # fountain pieces, 446:1 a hut piece). The original gives a type 0 sprite no script and no live slot
+ # (game_engine.cpp:483-506, 580-584), so standing on one must answer nobody.
+ for pair in [[97,35],[446,1]]:
+  game.vm.cancel_all()
+  game.vm.globals["vision"] = 0
+  game.load_map(pair[0],false)
+  for i in 3: await physics_frame
+  game.ui.close_menu()
+  var background := editor_id(game,pair[1])
+  check(background != 0 and int(game.entities[background].get("type",1)) == 0 and not game.vm._procedure_code(str(game.entities[background].get("script","")).to_lower(),"talk").is_empty(),
+   "%d:%d is a type 0 sprite with a TALK script" % pair)
+  if background == 0: continue
+  var spot: Vector2 = game._position2(background)
+  for dir in [8,2,6,4]:
+   await place(game,spot.x,spot.y,dir)
+   var got3 := await press_talk(game)
+   check(got3.is_empty(),"type 0 %d:%d, facing %d: Talk answered %s, expected nobody" % [pair[0],pair[1],dir,got3])
  game.queue_free()
  await process_frame
  table()
