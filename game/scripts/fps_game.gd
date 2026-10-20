@@ -402,7 +402,13 @@ func _apply_settings() -> void:
 	if is_instance_valid(music): music.volume_db = linear_to_db(maxf(0.0001, float(settings.music)))
 	if is_instance_valid(ui) and is_instance_valid(ui.root):
 		ui.set_text_scale(float(settings.text_scale))
+		ui.set_plain_font(bool(settings.get("plain_font", false)))
 		ui.speech_waits_for_me = bool(settings.get("speech_waits_for_me", false))
+		if is_instance_valid(fps_viewmodel):
+			for child in fps_viewmodel.get_children():
+				if child is Label3D:
+					child.font_size = roundi(32 * ui.text_scale)
+					child.font = ui.PLAIN_FONT if ui.plain_font else ThemeDB.fallback_font
 	_sync_fps_camera()
 
 func _speech_name(speaker: int, context: Dictionary) -> String:
@@ -495,7 +501,8 @@ func _fps_make_feed_viewmodel() -> Node3D:
 	root.add_child(tie)
 	var label := Label3D.new()
 	label.text = "FEED"
-	label.font_size = 32
+	label.font_size = roundi(32 * ui.text_scale)
+	if ui.plain_font: label.font = ui.PLAIN_FONT
 	label.modulate = Color("3b271c")
 	label.position = Vector3(0.0, 0.0, 0.44)
 	label.pixel_size = 0.0025

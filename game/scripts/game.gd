@@ -22,7 +22,7 @@ var editor_state: Dictionary = {}
 var items: Array = []
 var magic_items: Array = []
 var sound_slots: Dictionary = {}
-var settings := {"master":0.8,"music":0.55,"sfx":0.8,"text_scale":1.0,"camera_angle":50.0,"reduced_motion":false,"speech_waits_for_me":false}
+var settings := {"master":0.8,"music":0.55,"sfx":0.8,"text_scale":1.0,"plain_font":false,"camera_angle":50.0,"reduced_motion":false,"speech_waits_for_me":false}
 var scene_root: Node3D
 var camera: Camera3D
 var music: AudioStreamPlayer
@@ -1580,6 +1580,7 @@ func _apply_settings() -> void:
 		camera.look_at(Vector3.ZERO)
 	if is_instance_valid(ui) and is_instance_valid(ui.root):
 		ui.set_text_scale(float(settings.text_scale))
+		ui.set_plain_font(bool(settings.get("plain_font", false)))
 		ui.speech_waits_for_me = bool(settings.get("speech_waits_for_me", false))
 
 func _location() -> String:

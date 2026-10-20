@@ -16,10 +16,10 @@ var action := ""
 var slot := -1
 var record: Dictionary = {}
 var operation := "replace"
-var tabs: HBoxContainer
+var tabs: HFlowContainer
 var scroll: ScrollContainer
 var body: VBoxContainer
-var footer: HBoxContainer
+var footer: HFlowContainer
 var countdown: Label
 var cancel_button: Button
 var buttons: Dictionary = {}
@@ -45,7 +45,7 @@ func _ready() -> void:
 	ui.heading.add_theme_font_size_override("font_size",ui.menu_theme.default_font_size)
 	intro = _label("Pad buttons are named as on an Xbox controller",self)
 	intro.add_theme_font_size_override("font_size",roundi(DETAIL_FONT_SIZE*ui.text_scale))
-	tabs = HBoxContainer.new()
+	tabs = HFlowContainer.new()
 	add_child(tabs)
 	for area in GROUPS:
 		var tab := _button(GROUPS[area], "group_"+area, tabs)
@@ -73,7 +73,7 @@ func _ready() -> void:
 	spacer.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	spacer.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(spacer)
-	footer = HBoxContainer.new()
+	footer = HFlowContainer.new()
 	add_child(footer)
 	_build_list()
 

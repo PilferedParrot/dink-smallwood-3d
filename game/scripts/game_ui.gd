@@ -2,6 +2,7 @@
 extends CanvasLayer
 const INPUT_BINDINGS = preload("res://scripts/input_bindings.gd")
 const CONTROLS_MENU = preload("res://scripts/controls_menu.gd")
+const PLAIN_FONT = preload("res://assets/fonts/AtkinsonHyperlegible-Regular.ttf")
 var controls_menu: VBoxContainer
 var bindings
 var control_primer_label: Label
@@ -43,6 +44,7 @@ var timed_reading_done := false
 var speech_dismiss_hint: Label
 var page := "title"
 var text_scale := 1.0
+var plain_font := false
 var menu_theme: Theme
 var controller_active := false
 var title_art: TextureRect
@@ -75,6 +77,7 @@ var panel_style: StyleBoxTexture
 var title_panel_style: StyleBoxEmpty
 var panel_underlay: ColorRect
 var hint_backing: PanelContainer
+var heading_row: VBoxContainer
 var gameplay_hint_used := false
 var gameplay_hint_deadline_msec := 0
 const GAMEPLAY_HINT_SECONDS := 8.0
@@ -264,7 +267,7 @@ func _ready() -> void:
 	var contents := VBoxContainer.new()
 	contents.add_theme_constant_override("separation", 8)
 	panel.add_child(contents)
-	var heading_row := HBoxContainer.new()
+	heading_row = VBoxContainer.new()
 	heading_row.add_theme_constant_override("separation", 12)
 	contents.add_child(heading_row)
 	heading = Label.new()
@@ -278,7 +281,7 @@ func _ready() -> void:
 	modal_feedback_text = Label.new()
 	modal_feedback_text.add_theme_color_override("font_color", GOLD)
 	modal_feedback_text.add_theme_font_size_override("font_size", 20)
-	modal_feedback_text.clip_text = true
+	modal_feedback_text.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	modal_feedback.add_child(modal_feedback_text)
 	modal_feedback.hide()
 	choice_prompt_scroll = ScrollContainer.new()
@@ -313,10 +316,12 @@ func _ready() -> void:
 	dialogue_continue.hide()
 	contents.add_child(dialogue_continue)
 	speech_dismiss_hint = Label.new()
+	speech_dismiss_hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	speech_dismiss_hint.add_theme_font_size_override("font_size", 18)
 	speech_dismiss_hint.hide()
 	contents.add_child(speech_dismiss_hint)
 	menu_footer = Button.new()
+	menu_footer.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	menu_footer.custom_minimum_size.y = 48
 	menu_footer.focus_mode = Control.FOCUS_ALL
 	menu_footer.pressed.connect(_button_pressed.bind("back", null))
@@ -326,6 +331,7 @@ func _ready() -> void:
 	root.move_child(hint_backing, -1)
 	root.move_child(toast_backing, -1)
 	_set_playing_visuals(false)
+	set_text_scale(text_scale)
 
 func _vine(path: String) -> TextureRect:
 	var vine := TextureRect.new()
@@ -386,8 +392,15 @@ func _process(_delta: float) -> void:
 	var width := minf(available, text_width + 24)
 	hint_backing.offset_left = -width / 2; hint_backing.offset_right = width / 2
 	var height := maxf(38, hint.get_minimum_size().y + 12)
-	hint_backing.offset_bottom = -6 if modal else -150
+	var dock_top: float = status_dock.global_position.y + status_dock.art_rect().position.y
+	if status_dock.has_method("readout_top"): dock_top = status_dock.readout_top()
+	hint_backing.offset_bottom = -6 if modal else dock_top - root.size.y - 8
 	hint_backing.offset_top = hint_backing.offset_bottom - height
+	if panel.visible and page != "dialogue":
+		# Reserve the actual wrapped hint, including long remapped key names.
+		panel.offset_bottom = 0
+		var bottom := hint_backing.position.y - 8 if hint_backing.visible else root.size.y * 0.90
+		panel.offset_bottom = minf(0, bottom - panel.anchor_bottom * root.size.y)
 
 func _make_bar(fill: Color) -> ProgressBar:
 	var bar := ProgressBar.new()
@@ -414,8 +427,10 @@ func _layout_for(next_page: String) -> void:
 	panel.offset_top = 0
 	panel.offset_bottom = 0
 	if next_page == "title":
-		panel.anchor_left = 0.56; panel.anchor_right = 0.94
+		panel.anchor_left = 0.38 if text_scale > 1.3 else 0.56
+		panel.anchor_right = 0.96 if text_scale > 1.3 else 0.94
 		panel.anchor_top = 0.10; panel.anchor_bottom = 0.92
+		title_art.anchor_right = 0.34 if text_scale > 1.3 else 0.52
 		overlay.color = Color.BLACK
 	elif next_page == "dialogue":
 		panel.anchor_left = 0.12; panel.anchor_right = 0.88
@@ -454,6 +469,8 @@ func _fit_dialogue_panel() -> void:
 	# All speech and choices share one footprint, even when blocking speech
 	# hides the HUD. Include the vines, which can outgrow a short timed card.
 	var bottom: float = status_dock.position.y + status_dock.art_rect().position.y - column.get_theme_constant("separation")
+	if status_dock.has_method("readout_top"):
+		bottom = status_dock.readout_top() - column.get_theme_constant("separation")
 	var top := bottom - maxf(height, SPEECH_VINE_SIZE.y)
 	var key := Vector4(chrome,body,height,top)
 	if key == dialogue_layout_key: return
@@ -665,6 +682,7 @@ func _button(text: String, action: String, value: Variant = null) -> Button:
 	return button
 
 func _button_pressed(action: String, value: Variant) -> void:
+	if action == "plain_font": return # Its toggle emits the persisted setting.
 	if action == "controls":
 		show_controls()
 		return
@@ -694,9 +712,12 @@ func _focusable_children(node: Node) -> Array[Control]:
 	return found
 
 func set_text_scale(value: float) -> void:
-	text_scale = clampf(value, 0.85, 1.3)
+	text_scale = clampf(value, 0.85, 2.0)
 	if not is_instance_valid(root): return
 	menu_theme.default_font_size = roundi(22.0 * text_scale)
+	menu_theme.set_font_size("font_size", "TooltipLabel", roundi(18.0 * text_scale))
+	compass_label.add_theme_font_size_override("font_size", roundi(18.0 * text_scale))
+	compass_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	hint.add_theme_font_size_override("font_size", roundi(20.0 * text_scale))
 	toast.add_theme_font_size_override("font_size", roundi(22.0 * text_scale))
 	status_dock.set_text_scale(text_scale)
@@ -705,11 +726,23 @@ func set_text_scale(value: float) -> void:
 	equipment_name.add_theme_font_size_override("font_size", roundi(22.0 * text_scale))
 	modal_feedback_text.add_theme_font_size_override("font_size", roundi(20.0 * text_scale))
 	menu_footer.custom_minimum_size.y = roundi(48.0 * text_scale)
+	dialogue_continue.custom_minimum_size.y = roundi(52.0 * text_scale)
 	for node in column.get_children():
 		if node.has_meta("base_font_size"):
 			node.add_theme_font_size_override("font_size", roundi(float(node.get_meta("base_font_size")) * text_scale))
 		if node.has_meta("base_minimum_height"):
 			node.custom_minimum_size.y = roundi(float(node.get_meta("base_minimum_height")) * text_scale)
+	dialogue_layout_key = Vector4.INF
+	timed_layout_key = Vector4.INF
+	_layout_for(page)
+
+func set_plain_font(value: bool) -> void:
+	plain_font = value
+	if not is_instance_valid(root): return
+	menu_theme.default_font = PLAIN_FONT if plain_font else null
+	status_dock.queue_redraw()
+	dialogue_layout_key = Vector4.INF
+	timed_layout_key = Vector4.INF
 
 func show_title(has_save: bool) -> void:
 	cancel_speech()
@@ -1026,9 +1059,7 @@ func _sync_feedback() -> void:
 	if active and modal:
 		modal_feedback_text.text = toast.text
 		modal_feedback_text.tooltip_text = toast.text
-		var font_size := roundi(20.0 * text_scale)
-		var width := modal_feedback_text.get_theme_font("font").get_string_size(toast.text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size).x
-		modal_feedback.custom_minimum_size.x = minf(width + 32, 280)
+		modal_feedback.custom_minimum_size.x = 0
 
 func show_inventory(items: Array, magic_items: Array) -> void:
 	_clear("Your equipment", "inventory")
@@ -1072,7 +1103,13 @@ func show_journal(text: String) -> void:
 func show_settings(settings: Dictionary) -> void:
 	_clear("Settings & controls", "settings")
 	_button("Controls", "controls")
-	for setting in [["master", "Master volume", 0.0, 1.0, 0.1, 0.8], ["music", "Music volume", 0.0, 1.0, 0.05, 0.55], ["sfx", "Sound effects", 0.0, 1.0, 0.1, 0.8], ["text_scale", "Text size", 0.85, 1.3, 0.05, 1.0], ["mouse_sensitivity", "Mouse sensitivity", 0.0005, 0.006, 0.0005, 0.002], ["fov", "Field of view", 60.0, 105.0, 1.0, 80.0], ["controller_sensitivity", "Controller look sensitivity", 0.5, 4.0, 0.1, 2.0], ["controller_deadzone", "Controller stick dead zone", 0.05, 0.4, 0.05, 0.2]]:
+	var font_button := _button("", "plain_font")
+	font_button.set_meta("setting_key", "plain_font")
+	font_button.toggle_mode = true
+	font_button.set_pressed_no_signal(bool(settings.get("plain_font", false)))
+	font_button.toggled.connect(_plain_font_changed.bind(font_button))
+	font_button.text = "Font: Plain (Atkinson Hyperlegible)" if font_button.button_pressed else "Font: Default"
+	for setting in [["master", "Master volume", 0.0, 1.0, 0.1, 0.8], ["music", "Music volume", 0.0, 1.0, 0.05, 0.55], ["sfx", "Sound effects", 0.0, 1.0, 0.1, 0.8], ["text_scale", "Text size", 0.85, 2.0, 0.05, 1.0], ["mouse_sensitivity", "Mouse sensitivity", 0.0005, 0.006, 0.0005, 0.002], ["fov", "Field of view", 60.0, 105.0, 1.0, 80.0], ["controller_sensitivity", "Controller look sensitivity", 0.5, 4.0, 0.1, 2.0], ["controller_deadzone", "Controller stick dead zone", 0.05, 0.4, 0.05, 0.2]]:
 		var key: String = setting[0]
 		var value_label := _label(setting[1], 18)
 		var slider := HSlider.new()
@@ -1091,6 +1128,7 @@ func show_settings(settings: Dictionary) -> void:
 		column.add_child(slider)
 		_setting_readout(slider.value, value_label, str(setting[1]), key)
 	var invert := Button.new()
+	invert.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	invert.toggle_mode = true
 	invert.set_meta("setting_key", "controller_invert_y")
 	invert.text = "Invert controller vertical look"
@@ -1101,6 +1139,7 @@ func show_settings(settings: Dictionary) -> void:
 	_toggle_readout(invert.button_pressed, invert, "Invert controller vertical look")
 	column.add_child(invert)
 	var reduced := Button.new()
+	reduced.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	reduced.toggle_mode = true
 	reduced.set_meta("setting_key", "reduced_motion")
 	reduced.text = "Reduce camera movement"
@@ -1111,6 +1150,7 @@ func show_settings(settings: Dictionary) -> void:
 	_toggle_readout(reduced.button_pressed, reduced, "Reduce camera movement")
 	column.add_child(reduced)
 	var speech_wait := Button.new()
+	speech_wait.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	speech_wait.toggle_mode = true
 	speech_wait.set_meta("setting_key", "speech_waits_for_me")
 	speech_wait.focus_mode = Control.FOCUS_ALL
@@ -1133,6 +1173,10 @@ func show_controls() -> void:
 
 func _setting_changed(value: float, key: String) -> void:
 	action_requested.emit("setting", {"key": key, "value": value})
+
+func _plain_font_changed(value: bool, button: Button) -> void:
+	button.text = "Font: Plain (Atkinson Hyperlegible)" if value else "Font: Default"
+	action_requested.emit("setting", {"key":"plain_font", "value":value})
 
 func _draw_slider_focus(slider: HSlider) -> void:
 	if not slider.has_focus(): return
@@ -1169,7 +1213,7 @@ func _controller_invert_changed(value: bool) -> void:
 func show_credits() -> void:
 	_clear("Credits & support", "credits")
 	_label("Development release %s" % str(ProjectSettings.get_setting("application/config/version", "")), 18)
-	_label("3D adaptation · PilferedParrot\nOriginal Dink Smallwood · Seth A. Robinson\nArtwork · Justin Martin\nStory & world · Seth A. Robinson, Greg Smith, Justin Martin\nAdditional levels · Chris Bakker\nv1.08 fixes · Talmadge Bradley III\nFree audio · GNU FreeDink contributors\nEngine · Godot contributors", 20)
+	_label("3D adaptation · PilferedParrot\nOriginal Dink Smallwood · Seth A. Robinson\nArtwork · Justin Martin\nStory & world · Seth A. Robinson, Greg Smith, Justin Martin\nAdditional levels · Chris Bakker\nv1.08 fixes · Talmadge Bradley III\nFree audio · GNU FreeDink contributors\nEngine · Godot contributors\nOptional plain font · Atkinson Hyperlegible, Braille Institute (SIL OFL 1.1)", 20)
 	_label("New code: Apache 2.0. Original art, story and audio retain their own licenses. Detailed attributions are bundled in licenses/. This is an unofficial, modified adaptation.", 18)
 	_button("Support PilferedParrot on Patreon ↗", "patreon")
 	_button("Source code & full credits ↗", "source")

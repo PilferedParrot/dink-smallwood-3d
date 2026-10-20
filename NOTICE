@@ -43,3 +43,7 @@ sources: third_party/freedink-audio-source/.
 New code is Apache-2.0. Retain required license and attribution notices.
 Supporting the project is optional; no payment or patronage is required.
 Third-party assets retain their own licenses; Apache-2.0 does not replace them.
+
+Optional plain font: Atkinson Hyperlegible Regular.
+Copyright 2020 Braille Institute of America, Inc. SIL Open Font License 1.1;
+see licenses/AtkinsonHyperlegible-OFL.txt (also bundled in game/assets/fonts/).
