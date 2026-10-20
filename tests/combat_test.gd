@@ -12,11 +12,13 @@ class FakeUI extends RefCounted:
 class FakeVM extends RefCounted:
 	var globals: Dictionary = {}
 	var calls: Array = []
+	var owners: Array = []
 	var procedures: Dictionary = {}
 	func _procedure_code(script: String, procedure: String) -> Array:
 		return procedures.get(script.to_lower()+":"+procedure.to_lower(),[])
-	func run(script: String, procedure: String, sprite_id: int = 0, _new_instance: bool = false) -> Variant:
+	func run(script: String, procedure: String, sprite_id: int = 0, _new_instance: bool = false, owner_sprite: int = -1) -> Variant:
 		calls.append([script.to_lower(),procedure.to_lower(),sprite_id])
+		owners.append(owner_sprite)
 		if script.to_lower() == "lraise" and procedure.to_lower() == "raise":
 			globals["level"] = int(globals.get("level",1))+1
 			globals["lifemax"] = int(globals.get("lifemax",10))+3
@@ -76,6 +78,8 @@ func _test_magic_charge_and_gate() -> void:
 	_check(int(game.vm.globals.magic_level) == 100,"magic gauge did not recharge at the engine tick rate")
 	game._cast()
 	_check(game.vm.calls == [["item-fb","use",1]],"charged equipped magic should invoke its use procedure")
+	# FreeDink loads the magic script onto pseudo-sprite 1000 (inventory.cpp:422; dinkc_bindings.cpp:895).
+	_check(game.vm.owners == [1000],"equipped magic must run owned by sprite 1000")
 	game.free()
 
 func _test_melee_context_and_defense() -> void:
