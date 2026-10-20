@@ -3109,3 +3109,27 @@ the unchanged original aftermath regression cover it, alongside event re-entry
 controls. See [Script instances](SCRIPT_INSTANCES.md). The interrupted old gate
 and its failure remain separate evidence; only a new frozen gate can certify
 this corrected candidate.
+
+## Speech card and choice areas show whole lines — October 20
+
+A long speech at 100% showed three lines and 17 px of a fourth; a wheel step moved half a line; the choice prompt showed 3.7 lines
+and the answers scrolled by arbitrary pixels. The card was sized by pixel caps (35% of the window, the reading floor) and the
+scroll areas were left out of the whole-line fit because the timed scroll moves continuously.
+
+**Rule** (resting frames; the same atoms as the menu fit: each line of a Label by its glyph box, each button whole):
+at rest every top and bottom edge of the speech viewport, the prompt viewport and the answers viewport is an atom edge.
+The card takes the whole-atom height at or below its cap; when that is below the reading floor (two prose lines, a prompt line,
+the focused answer) it takes the floor, which is itself a whole atom. Wheel, page and key steps land on atom tops. The timed
+scroll stays continuous at the reading pace (body height over reading seconds, about 17 characters per second) and passes
+through partial lines while it moves; it opens on a whole line and ends on one, and the fit stands down only while the timer
+drives it. A line's spacing is blank, not part of the line, so a viewport of k lines is k pitches less one spacing, and the
+scroll's last position is a line top.
+
+**Cost**: rounding down shows up to one line less per card at some scales (100% Dink font: 3.59 → 3.00 lines of speech); where
+the old viewport was already whole (150%, 200%) nothing changes. The empty strip the old height left under the text is gone, so
+cards at 100% are 24 px shorter.
+
+**Why it was wrong (two roots)**: the card height and the scroll rests were never tied to the line pitch (an oversight when the
+35% cap was written in pixels), and A1a-2 recorded the class as "not fitted here" because a continuous timed scroll seemed to
+exclude a whole-line rule (a heuristic applied to the wrong unit: the rule is about rest, not about motion).
+Tests: `tests/scroll_edges_test.gd` (speech, timed speech, prompt, answers; look-alike control one pixel short; reachability).
