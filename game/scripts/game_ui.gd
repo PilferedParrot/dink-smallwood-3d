@@ -359,6 +359,10 @@ func _process(_delta: float) -> void:
 		if expired: cancel_speech_id(id)
 	if page == "dialogue": _fit_dialogue_panel()
 	if page == "dialogue" and not dialogue_mode: _advance_timed_speech(_delta)
+	if page == "dialogue" and not modal:
+		# Large speech can reach the aiming point. Keep the reticle from being
+		# drawn through the speaker or text; ordinary gameplay restores it.
+		crosshair.visible = not panel.get_global_rect().grow(3).intersects(crosshair.get_global_rect())
 	if page == "dialogue" and choice_prompt_scroll.visible:
 		choice_prompt_axis = Input.get_action_strength("ui_page_down") - Input.get_action_strength("ui_page_up")
 		if not is_zero_approx(choice_prompt_axis):
