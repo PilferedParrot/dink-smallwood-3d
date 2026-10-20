@@ -20,6 +20,79 @@
    116
   ]
  },
+ "assets/graphics/inside/details/inacc-02.png": {
+  "above": [],
+  "base": 77,
+  "body": {
+   "cols": [
+    0,
+    156
+   ],
+   "ratio": 1.94,
+   "rows": [
+    0,
+    71
+   ],
+   "split": 40
+  },
+  "kind": "frontal",
+  "legs": [
+   {
+    "cols": [
+     0,
+     9
+    ],
+    "rows": [
+     71,
+     77
+    ]
+   },
+   {
+    "cols": [
+     37,
+     46
+    ],
+    "rows": [
+     71,
+     77
+    ]
+   },
+   {
+    "cols": [
+     73,
+     82
+    ],
+    "rows": [
+     71,
+     77
+    ]
+   },
+   {
+    "cols": [
+     110,
+     118
+    ],
+    "rows": [
+     71,
+     77
+    ]
+   },
+   {
+    "cols": [
+     138,
+     155
+    ],
+    "rows": [
+     71,
+     77
+    ]
+   }
+  ],
+  "size": [
+   156,
+   77
+  ]
+ },
  "assets/graphics/inside/details/inacc-03.png": {
   "base": [
    [
@@ -47,6 +120,27 @@
    93
   ],
   "top_back_error": 0.0
+ },
+ "assets/graphics/inside/details/inacc-04.png": {
+  "above": [],
+  "base": 120,
+  "body": {
+   "cols": [
+    0,
+    135
+   ],
+   "rows": [
+    0,
+    120
+   ],
+   "split": 0
+  },
+  "kind": "frontal",
+  "legs": [],
+  "size": [
+   135,
+   120
+  ]
  },
  "assets/graphics/inside/details/inacc-05.png": {
   "above": [
@@ -132,6 +226,48 @@
   "size": [
    94,
    58
+  ]
+ },
+ "assets/graphics/inside/details/table-02.png": {
+  "above": [],
+  "base": 24,
+  "body": {
+   "cols": [
+    0,
+    94
+   ],
+   "rows": [
+    0,
+    10
+   ],
+   "split": 0
+  },
+  "kind": "frontal",
+  "legs": [
+   {
+    "cols": [
+     3,
+     9
+    ],
+    "rows": [
+     15,
+     24
+    ]
+   },
+   {
+    "cols": [
+     83,
+     89
+    ],
+    "rows": [
+     15,
+     24
+    ]
+   }
+  ],
+  "size": [
+   94,
+   24
   ]
  },
  "assets/graphics/inside/details/table-07.png": {
