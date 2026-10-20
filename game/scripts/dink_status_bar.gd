@@ -111,13 +111,21 @@ func _process(_delta: float) -> void:
 	readout.size.y = readout.get_combined_minimum_size().y
 	readout.position.y = _dock_y - readout.size.y - 6
 
+func _display_stats() -> Dictionary:
+	var values := _stats.duplicate()
+	values.lifemax = maxi(1, int(_stats.get("lifemax", 10)))
+	values.life = clampi(int(_stats.get("life", 10)), 0, values.lifemax)
+	values.level = maxi(1, int(_stats.get("level", 1)))
+	values.exp = maxi(0, int(_stats.get("exp", 0)))
+	return values
+
 func _update_readout() -> void:
 	if not is_instance_valid(readout): return
-	var level := maxi(1, int(_stats.get("level", 1)))
-	readout_labels.life.text = "Life %d / %d" % [int(_stats.get("life", 10)), maxi(1, int(_stats.get("lifemax", 10)))]
+	var values := _display_stats()
+	readout_labels.life.text = "Life %d / %d" % [values.life, values.lifemax]
 	for field in [["strength", "Attack"], ["defense", "Defense"], ["magic", "Magic"], ["gold", "Coins"], ["level", "Lv"]]:
-		readout_labels[field[0]].text = "%s %d" % [field[1], int(_stats.get(field[0], 1 if field[0] == "level" else 0))]
-	readout_labels.exp.text = "EXP %d / %d" % [maxi(0, int(_stats.get("exp", 0))), mini(99999, 100 * level * level)]
+		readout_labels[field[0]].text = "%s %d" % [field[1], int(values.get(field[0], 0))]
+	readout_labels.exp.text = "EXP %d / %d" % [values.exp, mini(99999, 100 * values.level * values.level)]
 
 func update_stats(stats: Dictionary) -> void:
 	_stats = stats.duplicate(true)
@@ -207,8 +215,9 @@ func _draw() -> void:
 		_draw_value(font, str(int(_stats.get("defense", 0))), ART_DEFENSE_RECT, number_fs)
 		_draw_value(font, str(int(_stats.get("magic", 0))), ART_MAGIC_RECT, number_fs)
 
-	var life_max := maxi(1, int(_stats.get("lifemax", 10)))
-	var life := clampi(int(_stats.get("life", 10)), 0, life_max)
+	var values := _display_stats()
+	var life_max: int = values.lifemax
+	var life: int = values.life
 	var health_rect := Rect2(Vector2(x, _dock_y) + ART_HEALTH_RECT.position * scale_factor, ART_HEALTH_RECT.size * scale_factor)
 	draw_rect(health_rect, COLOR_HEALTH_BG)
 	var health_fill := Rect2(health_rect.position, Vector2(health_rect.size.x * float(life) / float(life_max), health_rect.size.y))
@@ -218,8 +227,8 @@ func _draw() -> void:
 		_draw_value(font, "%d / %d" % [life, life_max], ART_HEALTH_VALUE_RECT, fs, HORIZONTAL_ALIGNMENT_CENTER)
 		_draw_value(font, str(int(_stats.get("gold", 0))), ART_COINS_RECT, number_fs)
 
-	var level := maxi(1, int(_stats.get("level", 1)))
-	var exp_value := maxi(0, int(_stats.get("exp", 0)))
+	var level: int = values.level
+	var exp_value: int = values.exp
 	var exp_target := mini(99999, 100 * level * level)
 	if _text_scale <= 1.3:
 		_draw_value(font, "EXP", Rect2(404, 38, 110, 22), fs, HORIZONTAL_ALIGNMENT_CENTER)

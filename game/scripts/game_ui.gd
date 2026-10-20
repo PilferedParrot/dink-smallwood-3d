@@ -93,6 +93,7 @@ const CHOICE_BACKDROP = preload("res://assets/graphics/inter/Text-box/main-03.pn
 const LOGO = preload("res://assets/graphics/Startme/options/dinkl-01.png")
 
 func _ready() -> void:
+	get_viewport().gui_focus_changed.connect(_focus_changed)
 	layer = 10
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	if bindings == null:
@@ -481,7 +482,6 @@ func _fit_dialogue_panel() -> void:
 		var prompt_height := minf(choice_prompt.get_combined_minimum_size().y, maxf(0, available - answer_height))
 		if choice_prompt_scroll.custom_minimum_size.y != prompt_height:
 			choice_prompt_scroll.custom_minimum_size.y = prompt_height
-			_keep_choice_visible.call_deferred(answer, page_serial)
 	# All speech and choices share one footprint, even when blocking speech
 	# hides the HUD. Include the vines, which can outgrow a short timed card.
 	var top := bottom - maxf(height, SPEECH_VINE_SIZE.y)
@@ -492,10 +492,23 @@ func _fit_dialogue_panel() -> void:
 	panel.anchor_bottom = 0
 	panel.offset_top = top
 	panel.offset_bottom = top + height
+	if answer != null:
+		_keep_focus_visible.call_deferred(answer, page_serial)
 
-func _keep_choice_visible(answer: Control, serial: int) -> void:
-	if serial == page_serial and is_instance_valid(answer) and answer.is_inside_tree():
-		menu_scroll.ensure_control_visible(answer)
+func _focus_changed(control: Control) -> void:
+	if control != null and is_instance_valid(root) and root.is_ancestor_of(control):
+		_keep_focus_visible(control, page_serial)
+
+func _keep_focus_visible(control: Control, serial: int) -> void:
+	# Native focus-follow can run before an adaptive card, equipment description
+	# or menu body finishes resizing. Recheck after the nested layout settles.
+	await get_tree().process_frame
+	await get_tree().process_frame
+	if serial != page_serial or not is_instance_valid(control) or not control.is_inside_tree() or get_viewport().gui_get_focus_owner() != control: return
+	var parent := control.get_parent()
+	while parent != null:
+		if parent is ScrollContainer: parent.ensure_control_visible(control)
+		parent = parent.get_parent()
 
 func _bindings_changed() -> void:
 	_update_hint()
@@ -1133,7 +1146,8 @@ func _describe_equipment(text: String, label: Label) -> void:
 func show_journal(text: String) -> void:
 	_clear("Adventure journal", "journal")
 	_label(text, 22)
-	_button("Back to paused adventure", "back")
+	menu_footer.text = "Back to paused adventure"
+	menu_footer.show()
 	_focus()
 
 func show_settings(settings: Dictionary) -> void:

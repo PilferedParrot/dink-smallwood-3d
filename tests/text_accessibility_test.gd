@@ -150,12 +150,6 @@ func focus_actions(tag: String) -> void:
    if exposed.grow(1).encloses(node.get_global_rect()): continue
   node.grab_focus()
   await settle()
-  var parent: Node = node.get_parent()
-  while parent != null:
-   if parent is ScrollContainer:
-    parent.ensure_control_visible(node)
-   parent = parent.get_parent()
-  await settle()
   var area: Rect2 = ui.menu_scroll.get_global_rect()
   if ui.page == "controls" and ui.controls_menu.scroll.is_ancestor_of(node): area = ui.controls_menu.scroll.get_global_rect()
   if ui.menu_scroll.is_ancestor_of(node) or (ui.page == "controls" and ui.controls_menu.scroll.is_ancestor_of(node)):
@@ -174,10 +168,59 @@ func focus_actions(tag: String) -> void:
    check(ui.menu_scroll.get_global_rect().grow(1).encloses(ui.control_primer_label.get_global_rect()),"End exposes complete large-font title primer")
   await scan(tag + "-end",capture)
 
+func find_tooltip(node: Node) -> PopupPanel:
+ if node is PopupPanel and node.visible: return node
+ for child in node.get_children():
+  var found := find_tooltip(child)
+  if found != null: return found
+ return null
+
+func equipment_tooltip() -> void:
+ case_tag = "equipment-tooltip"
+ var button: Button = ui.column.get_node("EquipmentChest/Item0")
+ button.grab_focus()
+ await settle()
+ var event := InputEventMouseMotion.new()
+ event.position = root.get_final_transform() * button.get_global_rect().get_center()
+ event.global_position = event.position
+ Input.parse_input_event(event);Input.flush_buffered_events()
+ await create_timer(0.65).timeout
+ var popup := find_tooltip(root)
+ check(popup != null,"native hover tooltip opens")
+ if popup != null:
+  check(Rect2(Vector2.ZERO,root.size).encloses(Rect2(Vector2(popup.position),Vector2(popup.size))),"tooltip stays on screen")
+  var nodes: Array[Control] = []
+  texts(popup,nodes)
+  check(not nodes.is_empty(),"native tooltip contains text")
+  for label in nodes:
+   check(label.get_theme_font_size("font_size") == roundi(18*ui.text_scale),"tooltip follows text size")
+   if ui.plain_font: check(label.get_theme_font("font").get_font_name().contains("Atkinson"),"tooltip follows plain font")
+   check(Rect2(Vector2.ZERO,Vector2(popup.size)).grow(1).encloses(label.get_global_rect()),"tooltip text fits its window")
+  records.append({"tag":case_tag,"size":[root.size.x,root.size.y],"scale":ui.text_scale,"plain":ui.plain_font,"popup_position":[popup.position.x,popup.position.y],"popup_size":[popup.size.x,popup.size.y],"boxes":[]})
+  if capture:
+   await RenderingServer.frame_post_draw
+   root.get_texture().get_image().save_png(output_dir.path_join("equipment-tooltip.png"))
+ event = InputEventMouseMotion.new()
+ event.position = Vector2.ZERO;event.global_position = Vector2.ZERO
+ Input.parse_input_event(event);Input.flush_buffered_events()
+ await settle()
+
+func status_boundaries() -> void:
+ for sample in [
+  {"stats":{"life":-3,"lifemax":10,"level":0,"exp":-5},"life":"Life 0 / 10","level":"Lv 1","exp":"EXP 0 / 100"},
+  {"stats":{"life":25,"lifemax":10,"level":2,"exp":350},"life":"Life 10 / 10","level":"Lv 2","exp":"EXP 350 / 400"},
+  {"stats":{"life":8,"lifemax":0,"level":40,"exp":100000},"life":"Life 1 / 1","level":"Lv 40","exp":"EXP 100000 / 99999"}]:
+  ui.status_dock.update_stats(sample.stats)
+  for field in ["life","level","exp"]:
+   check(ui.status_dock.readout_labels[field].text == sample[field],"status boundary " + field + ": " + str(sample.stats))
+
 func matrix() -> void:
+ status_boundaries()
  ui.show_title(true)
  await scan("title")
  await focus_actions("title")
+ ui._button_pressed("new_game",null)
+ await scan("loading")
  ui.show_pause()
  await scan("pause")
  await focus_actions("pause")
@@ -206,6 +249,7 @@ func matrix() -> void:
  ui.controls_menu._finish({"ok":false,"error":"menu_device_required","device":"keyboard"})
  await scan("binding-error")
  ui.show_journal("You have explored Stonebrook.\n\nRecent conversations\n\n" + "A long journal entry remains readable while scrolling. ".repeat(50))
+ check(ui.menu_footer.visible,"journal Back stays pinned outside the reading viewport")
  await scan("journal")
  await focus_actions("journal")
  ui.show_credits()
@@ -219,6 +263,7 @@ func matrix() -> void:
  ui.show_inventory(items,spells)
  await scan("equipment")
  await focus_actions("equipment")
+ await equipment_tooltip()
  var chest = ui.column.get_node("EquipmentChest")
  chest._turn_page(1)
  await scan("equipment-magic-page")
@@ -261,6 +306,8 @@ func matrix() -> void:
  await scan("modal-feedback")
 
 func run() -> void:
+ # Embed the native popup only so viewport captures include the tooltip window.
+ root.gui_embed_subwindows = true
  root.size = Vector2i(1920,1080) if large_window else Vector2i(1280,800)
  case_tag="calibration"
  calibrate()
