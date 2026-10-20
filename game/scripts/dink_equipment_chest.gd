@@ -75,8 +75,8 @@ func _rebuild() -> void:
 		_pager.position = Vector2(25, 405)
 		_pager.size.x = 550
 		add_child(_pager)
-		_page_prev = _make_page_button("◀ Prev", Vector2(25, 405), _spell_page > 0, -1)
-		_page_next = _make_page_button("Next ▶", Vector2(108, 405), (_spell_page + 1) * 8 < _spells.size(), 1)
+		_page_prev = _make_page_button("< Prev", Vector2(25, 405), _spell_page > 0, -1)
+		_page_next = _make_page_button("Next >", Vector2(108, 405), (_spell_page + 1) * 8 < _spells.size(), 1)
 		var page_label := Label.new()
 		page_label.text = "Magic %d / %d" % [_spell_page + 1, ceili(float(_spells.size()) / 8.0)]
 		page_label.add_theme_font_size_override("font_size", roundi(13.0 * _text_scale))

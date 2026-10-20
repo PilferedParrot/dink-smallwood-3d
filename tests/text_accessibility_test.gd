@@ -3,6 +3,7 @@ extends SceneTree
 ## UI fixture, not campaign progression. The same census can render packed resources.
 const READING_LAYOUT = preload("text_layout_oracle.gd")
 const UI = preload("res://scripts/game_ui.gd")
+const GLYPHS = preload("glyph_oracle.gd")
 var ui
 var failures: Array[String] = []
 var records: Array = []
@@ -130,6 +131,8 @@ func scan(tag: String, save := true) -> void:
  var boxes: Array = []
  for node in nodes:
   if ui.plain_font: check(node.get_theme_font("font").get_font_name().contains("Atkinson"),"plain font reaches " + str(node.get_path()))
+  var absent := GLYPHS.missing(node.get_theme_font("font"),node.text)
+  check(absent.is_empty(),GLYPHS.describe(node.text,"effective",absent) + " at " + str(node.get_path()))
   var r := node.get_global_rect()
   boxes.append({"text":node.text,"path":str(node.get_path()),"rect":[r.position.x,r.position.y,r.size.x,r.size.y],"font_size":node.get_theme_font_size("font_size"),"font":node.get_theme_font("font").get_font_name(),"scrolling":has_scroll(node)})
  records.append({"tag":tag,"size":[root.size.x,root.size.y],"scale":ui.text_scale,"plain":ui.plain_font,"boxes":boxes})

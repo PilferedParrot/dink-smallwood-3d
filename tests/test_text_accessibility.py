@@ -41,3 +41,8 @@ def test_competing_focus_reflow_and_canceled_layout_waits(tmp_path):
 def test_focused_actions_are_whole_from_first_drawn_frame(tmp_path):
     result = launch(tmp_path, 'focus_draw_test.gd', deadline=300, rendered=True)
     assert result.returncode == 0 and 'FOCUS DRAW PASS' in result.stdout and 'SCRIPT ERROR' not in result.stderr, result.stdout+result.stderr
+
+
+def test_every_authored_glyph_is_in_a_bundled_font(tmp_path):
+    result = launch(tmp_path, 'glyph_coverage_test.gd', deadline=90)
+    assert result.returncode == 0 and 'GLYPH COVERAGE PASS' in result.stdout and 'SCRIPT ERROR' not in result.stderr, result.stdout+result.stderr

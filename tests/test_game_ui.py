@@ -55,4 +55,4 @@ def test_controller_callbacks_bind_each_choice_and_setting_key():
 
 
 def test_public_support_link_remains_in_credits():
-    assert "Support PilferedParrot on Patreon ↗" in UI_SCRIPT.read_text()
+    assert "Support PilferedParrot on Patreon (opens your browser)" in UI_SCRIPT.read_text()
