@@ -63,9 +63,11 @@ func _atoms(node: Node, origin: float, found: Array[Vector2]) -> void:
 		var height: float = node.get_global_rect().size.y
 		for line in maxi(1, node.get_line_count()):
 			found.append(Vector2(top + line * pitch, top + minf((line + 1) * pitch, height)))
-	elif children.is_empty() and node is Control and node.get_global_rect().size.y > 0:
+	elif (children.is_empty() or node is BaseButton) and node is Control and node.get_global_rect().size.y > 0:
 		var rect: Rect2 = node.get_global_rect()
 		found.append(Vector2(rect.position.y - origin, rect.end.y - origin))
+	# A button is one atom, icon and frame together; a chest slot is a button holding a picture.
+	if node is BaseButton: return
 	for child in children: _atoms(child, origin, found)
 
 func _refit() -> void:

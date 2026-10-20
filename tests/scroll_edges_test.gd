@@ -124,6 +124,8 @@ func run() -> void:
 	var by_page := {}
 	for failure in failures:
 		var name: String = failure.split(" stop ")[0].split(" plain=")[0] + " " + failure.split(" stop ")[0].split("scale=")[1].split(" ", true, 1)[1]
+		var kind := "cut" if failure.contains("cut at an edge") else ("waste" if failure.contains("empty under") else "collapsed")
+		name += " [" + kind + "]"
 		by_page[name] = int(by_page.get(name, 0)) + 1
 	for name in by_page: print("EDGE FAILURES ", name, " ", by_page[name])
 	for open_class in known_stops:
