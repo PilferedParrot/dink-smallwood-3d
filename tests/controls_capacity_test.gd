@@ -25,21 +25,42 @@ func spare(menu) -> float:
 	var gap: float = menu.get_theme_constant("separation")
 	return menu.get_global_rect().end.y - menu.footer.size.y - gap - menu.scroll.get_global_rect().end.y - gap
 
-func hidden_below(menu) -> bool:
-	return menu.body.size.y > menu.scroll.scroll_vertical + menu.scroll.size.y + 1
+func leaves(node: Node, found: Array[Control]) -> void:
+	var children: Array[Control] = []
+	for child in node.get_children():
+		if child is Control and child.visible: children.append(child)
+	if children.is_empty() and node is Control: found.append(node)
+	for child in children: leaves(child, found)
 
-func shortest_remaining(menu) -> float:
-	var shortest := INF
-	for row in menu.rows:
-		if row.position.y + 1 >= menu.scroll.scroll_vertical + menu.scroll.size.y or row.position.y > menu.scroll.scroll_vertical + 1: shortest = minf(shortest, row.size.y)
-	return shortest
+# The first control below the viewport edge: what the leftover space could still show.
+func next_hidden(menu) -> Control:
+	var all: Array[Control] = []
+	leaves(menu.body, all)
+	var edge: float = menu.scroll.get_global_rect().end.y
+	var next: Control
+	for control in all:
+		if control.get_global_rect().position.y >= edge - 1 and (next == null or control.get_global_rect().position.y < next.get_global_rect().position.y): next = control
+	return next
 
-# Returns the wasted pixels when a row of the shortest remaining height would have fit.
+# Controls the viewport edge cuts through (taller-than-viewport ones scroll natively).
+func cut_controls(menu) -> Array[String]:
+	var all: Array[Control] = []
+	leaves(menu.body, all)
+	var area: Rect2 = menu.scroll.get_global_rect()
+	var found: Array[String] = []
+	for control in all:
+		var rect := control.get_global_rect()
+		if rect.size.y > area.size.y or rect.intersection(area).size.y <= 1: continue
+		if not area.grow(1).encloses(rect): found.append(str(control.get("text")) if control is Button or control is Label else str(control.name))
+	return found
+
+# Returns the wasted pixels when the next hidden control would have fit in the empty space.
 func waste(menu) -> float:
-	if not hidden_below(menu): return 0.0
-	var gap: float = menu.body.get_theme_constant("separation")
+	var next := next_hidden(menu)
+	if next == null: return 0.0
 	var free := spare(menu)
-	return free if free >= shortest_remaining(menu) + gap else 0.0
+	# Fits if its far edge lands inside the empty space under the rows.
+	return free if next.get_global_rect().end.y <= menu.scroll.get_global_rect().end.y + free + 1 else 0.0
 
 func calibrate() -> void:
 	ui = UI.new()
@@ -50,13 +71,15 @@ func calibrate() -> void:
 	await settle()
 	var menu = ui.controls_menu
 	check(waste(menu) == 0.0, "calibration: the page as shipped is a fully used look-alike")
-	var shipped: int = menu.scroll.size_flags_vertical
-	menu.scroll.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+	check(cut_controls(menu).is_empty(), "calibration: the page as shipped cuts no control")
+	menu.set_process(false)
 	menu.scroll.custom_minimum_size.y = 40
 	await settle()
 	check(waste(menu) > 0.0, "calibration: a viewport much shorter than the page is reported as wasting capacity")
-	menu.scroll.size_flags_vertical = shipped
-	menu.scroll.custom_minimum_size.y = 0
+	menu.scroll.custom_minimum_size.y = 100
+	await settle()
+	check(not cut_controls(menu).is_empty(), "calibration: a viewport edge through a heading or button is reported")
+	menu.set_process(true)
 	await settle()
 	ui.queue_free()
 	await process_frame
@@ -83,7 +106,10 @@ func run() -> void:
 						stops += 1
 						var wasted := waste(menu)
 						worst = maxf(worst, wasted)
-						check(wasted == 0.0, "%s plain=%s scale=%.2f tab=%s stop=%d: %d px empty under the rows while a row of %d px was left hidden" % [size, plain, scale, group, index, wasted, shortest_remaining(menu)])
+						var next := next_hidden(menu)
+						check(wasted == 0.0, "%s plain=%s scale=%.2f tab=%s stop=%d: %d px empty under the rows while the next control (%d px) was left hidden" % [size, plain, scale, group, index, wasted, next.size.y if next != null else 0])
+						var cut := cut_controls(menu)
+						check(cut.is_empty(), "%s plain=%s scale=%.2f tab=%s stop=%d: viewport edge cuts through %s" % [size, plain, scale, group, index, str(cut)])
 				ui.queue_free()
 				await process_frame
 	print("CONTROLS CAPACITY stops=", stops, " worst_waste=", worst)

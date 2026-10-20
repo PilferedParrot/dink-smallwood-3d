@@ -32,9 +32,11 @@ var pending_modifier: Dictionary = {}
 var cancel_pressed_msec := -1
 var pending_cancel: Dictionary = {}
 var intro: Label
+var spacer: Control
 var rows: Array[Control] = []
 var snapping_scroll := false
 var previous_scroll := 0.0
+var snap_target := -1.0
 
 func _ready() -> void:
 	bindings = ui.bindings
@@ -68,6 +70,10 @@ func _ready() -> void:
 	body.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	body.add_theme_constant_override("separation",ui.column.get_theme_constant("separation"))
 	scroll.add_child(body)
+	spacer = Control.new()
+	spacer.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	spacer.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(spacer)
 	footer = HFlowContainer.new()
 	add_child(footer)
 	_build_list()
@@ -116,11 +122,11 @@ func _clear_body() -> void:
 	rows.clear()
 	tabs.visible = state == "list"
 	intro.visible = state == "list"
-	# The list owns every pixel between the tabs and the footer; prompts size to content.
-	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL if state == "list" else Control.SIZE_FILL
+	spacer.visible = state == "list"
 	scroll.custom_minimum_size.y = 0
 	ui._focus_scroll_owner(scroll).request_reset(ui.page_serial, true)
 	previous_scroll = 0
+	snap_target = -1.0
 	if state == "list": ui._layout_for("controls")
 
 func _select_group(area: String) -> void:
@@ -219,7 +225,9 @@ func _capture(id: String, index: int) -> void:
 	if focus != null: focus.release_focus()
 
 func _process(_delta: float) -> void:
-	if state == "list": return
+	if state == "list":
+		_fit_rows()
+		return
 	_fit_prompt()
 	if state != "capture": return
 	if cancel_pressed_msec >= 0 and Time.get_ticks_msec()-cancel_pressed_msec >= roundi(CANCEL_HOLD_SECONDS*1000):
@@ -230,7 +238,10 @@ func _process(_delta: float) -> void:
 	if seconds == 0: _build_list()
 
 func _snap_scroll(value: float) -> void:
-	if state != "list" or snapping_scroll or rows.is_empty() or ui._focus_scroll_owner(scroll).automatic_active(): return
+	if state != "list" or snapping_scroll or rows.is_empty(): return
+	if ui._focus_scroll_owner(scroll).automatic_active():
+		snap_target = -1.0 # Focus-driven scrolling moved the list; size from where it is.
+		return
 	var index := 0
 	for i in rows.size():
 		if rows[i].position.y <= value: index = i
@@ -241,9 +252,43 @@ func _snap_scroll(value: float) -> void:
 	elif value > previous_scroll and value > target and index+1 < rows.size():
 		target = rows[index+1].position.y
 	snapping_scroll = true
+	snap_target = target
 	ui._focus_scroll_owner(scroll).set_position(target, true, false)
 	previous_scroll = scroll.scroll_vertical
 	snapping_scroll = false
+
+# Whole controls only: the viewport ends where the last control that fits ends, so the
+# list uses the space below the rows without ever cutting a heading or a button through.
+# Rows are the scroll stops; a row too tall for the viewport keeps native scrolling.
+func _fit_rows() -> void:
+	if rows.is_empty() or size.y <= 0: return
+	var gap := get_theme_constant("separation")
+	var available := size.y-tabs.get_combined_minimum_size().y-footer.get_combined_minimum_size().y-intro.get_combined_minimum_size().y-gap*4
+	# The viewport is sized from the row the player scrolled to. A scroll that was clamped
+	# while the viewport was still long is re-applied once the viewport has shrunk.
+	var top := snap_target if snap_target >= 0 else float(scroll.scroll_vertical)
+	var maximum: float = scroll.get_v_scroll_bar().max_value-scroll.get_v_scroll_bar().page
+	if snap_target >= 0 and scroll.scroll_vertical != roundi(snap_target) and snap_target <= maximum+1 and not ui._focus_scroll_owner(scroll).automatic_active(): ui._focus_scroll_owner(scroll).set_position(snap_target,true,false)
+	var end := top
+	for row in rows:
+		for control in _row_controls(row):
+			var bottom: float = control.get_global_rect().end.y-body.get_global_rect().position.y
+			if bottom > top+1 and bottom <= top+available+1: end = maxf(end, bottom)
+	# One control taller than the viewport keeps native scrolling.
+	scroll.custom_minimum_size.y = maxf(1,minf(available,end-top if end > top+1 else available))
+
+# Every leaf the player reads or presses.
+func _row_controls(row: Control) -> Array[Control]:
+	var found: Array[Control] = []
+	var pending: Array[Control] = [row]
+	while not pending.is_empty():
+		var node: Control = pending.pop_back()
+		var children: Array[Control] = []
+		for child in node.get_children():
+			if child is Control and child.visible: children.append(child)
+		if children.is_empty() and node != row: found.append(node)
+		pending.append_array(children)
+	return found
 
 func _fit_prompt() -> void:
 	var chrome: float = ui.panel.get_combined_minimum_size().y-scroll.get_combined_minimum_size().y

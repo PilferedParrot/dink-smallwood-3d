@@ -93,6 +93,25 @@ func run() -> void:
 				previous_readout = readout
 				report.append({"tag": tag, "readout": readout, "strength": drawn.get("strength", dock.readout_labels.life.get_theme_font_size("font_size")), "ink": ink})
 				print("STATUS ", JSON.stringify(report.back()))
+	# The floor: a viewport too narrow for numerals of MIN_VALUE_SIZE inside the art's rects
+	# moves them to the readout rather than drawing them smaller. The game stretches its
+	# canvas to at least 1280 wide, so a bare SubViewport stands in for the narrow case.
+	for width in [400, 1280]:
+		var box := SubViewport.new()
+		box.size = Vector2i(width, 300)
+		box.render_target_update_mode = SubViewport.UPDATE_ALWAYS
+		root.add_child(box)
+		var bar = BAR.new()
+		box.add_child(bar)
+		bar.size = Vector2(width, 196)
+		bar.update_stats({"life": 12, "lifemax": 20, "strength": 888, "defense": 888, "magic": 888, "gold": 999999, "exp": 99999, "level": 99})
+		await draw_frames()
+		if bar.has_method("uses_readout"):
+			var narrow: bool = width < 900
+			check(bar.uses_readout() == narrow, "%d px wide: the readout shows the numbers exactly when the art cannot hold the minimum size (shown: %s)" % [width, bar.uses_readout()])
+			for field in bar.drawn_sizes(): check(bar.drawn_sizes()[field] >= MINIMUM, "%d px wide: %s drawn below the minimum" % [width, field])
+			print("STATUS FLOOR width=", width, " readout=", bar.uses_readout(), " drawn=", bar.drawn_sizes().values().min() if not bar.drawn_sizes().is_empty() else "none")
+		box.queue_free()
 	for line in report: if line.tag.contains("scale=1.00"): check(not line.readout and line.ink > 0, line.tag + ": original art shows its numbers at 100%")
 	ui.queue_free()
 	await process_frame
