@@ -221,16 +221,18 @@ func _model_key(e: Dictionary) -> String:
 	return "crate" if not str(e.get("script","")).is_empty() else "rock"
 
 # Source-art classes, not the sequence's frame threshold: cracks are openings,
-# beach art is ground scatter, and bones/sticks/loose thorns lie on the floor.
-# Skull faces, log trunks and the four raised thorn bushes keep their existing
-# upright representation. See docs/ground-details.md for every frame's evidence.
+# selected beach scatter and loose fragments lie on the floor. The conch and
+# shadowed twig, skull faces, log trunks and raised thorn bushes keep their
+# upright active representation. The inventory and its ambiguities are in
+# docs/ground-details.md; source type-0 background ownership stays independent.
 func ground_detail(path: String) -> bool:
 	if not "/lands/details/" in path: return false
 	var file := path.get_file()
-	if file.begins_with("crack-") or file.begins_with("beach-"): return true
+	if file.begins_with("crack-"): return true
+	if file.begins_with("beach-"): return file != "beach-04.png"
 	return file in ["grave-01.png","grave-02.png","grave-03.png","grave-04.png",
 		"grave-11.png","grave-12.png","grave-13.png","grave-14.png","grave-15.png",
-		"fores-01.png","fores-05.png"]
+		"fores-05.png"]
 
 # The two kinds of bridge art (struct/Bridge), by the art's own file: brdge-04, 07, 09 and 11 are rope railings
 # drawn standing (the near railing of an east-west bridge is a sprite of its own, drawn after the deck, in front

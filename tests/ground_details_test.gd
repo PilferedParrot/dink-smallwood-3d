@@ -25,8 +25,9 @@ func run() -> void:
 	root.add_child(game)
 	await process_frame
 	game.vm.cancel_all()
-	# Independent inventory from inspected source pixels: see docs/ground-details.md.
-	var ground := {89:range(1,11),90:[1,2,3,4,11,12,13,14,15],91:[1,5],92:range(1,12)}
+	# Authored inventory consistency, not a classifier of source pixels.
+	# Independent partial shadow cues are checked by the Python wrapper.
+	var ground := {89:range(1,11),90:[1,2,3,4,11,12,13,14,15],91:[5],92:[1,2,3,5,6,7,8,9,10,11]}
 	var count := 0
 	var known_failures := 0
 	for seq in [89,90,91,92]:
