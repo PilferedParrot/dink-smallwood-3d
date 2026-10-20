@@ -658,7 +658,7 @@ func paint_background(sprites: Array, img: Image) -> void:
 # Whether a sprite is a background sprite painted into its screen's ground (paint_background).
 func paints_ground(e: Dictionary, screen: int) -> bool:
 	if source_firs != null and source_firs.handles(e): return false
-	if model_key(e) == "ground_detail": return true # active portals/hazards can still be ground art
+	if model_key(e) == "ground_detail": return false # one live flat-prop surface, including type 0
 	if model_key(e) == "bridge_deck": return true # whatever its type: the map draws a deck as an upright sprite
 	if (effective_type(e) != 0 and not static_death_art(e)) or source_path(e).contains("/struct/"): return false
 	if kit_member(e,screen): return false
@@ -967,6 +967,9 @@ func make_entity(e: Dictionary, id: int, parent: Node3D, collision: bool = true,
 	node.position = point(float(e.get("x",320)),float(e.get("y",200)))
 	if key.is_empty(): return node
 	if screen < 0: screen = host.current_screen
+	if key == "ground_detail":
+		add_ground_detail(node,e)
+		return node
 	if interior and solids.handles(e):
 		solids.add_entity(node,e,id,collision,screen)
 		return node
@@ -999,7 +1002,7 @@ func make_entity(e: Dictionary, id: int, parent: Node3D, collision: bool = true,
 		return node
 	if paints_ground(e,screen):
 		node.set_meta("ground_painted",true) # painted into the ground (paint_background)
-		if static_death_art(e) or key == "ground_detail":
+		if static_death_art(e):
 			# The picture already belongs to the floor texture. Keep
 			# its source rectangle for framing, without another upright actor.
 			var display: Vector2i = display_frame(e)
@@ -1163,6 +1166,32 @@ func create_visual(id: int) -> void:
 	host.visuals[id] = node
 	update_visual(id)
 
+func ground_detail_signature(e: Dictionary) -> String:
+	var display := display_frame(e)
+	return "%d:%d:%s" % [display.x,display.y,e.get("size",100)]
+
+func add_ground_detail(node: Node3D, e: Dictionary) -> void:
+	var display := display_frame(e)
+	var frame: Dictionary = host._frame(display.x,display.y)
+	var path := str(frame.get("path",""))
+	var image := sprite_image(path)
+	if image == null: return
+	var model: Node3D = props.ground_node(path)
+	if model == null: return
+	var factor := maxf(0.01,float(e.get("size",100))/100.0)
+	var offset := Vector2(-float(frame.get("dx",0)),-float(frame.get("dy",0)))*SCALE*factor
+	model.name = "Model"
+	model.position = Vector3(offset.x,0,offset.y)
+	model.scale = Vector3.ONE*factor
+	for surface in model.get_children():
+		if surface is GeometryInstance3D: surface.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	node.add_child(model)
+	node.set_meta("floor_detail",true)
+	node.set_meta("floor_art_path",path)
+	node.set_meta("floor_art_rect",Rect2(offset,Vector2(image.get_size())*SCALE*factor))
+	node.set_meta("height",0.0)
+	node.set_meta("ground_detail_signature",ground_detail_signature(e))
+
 func update_visual(id: int) -> void:
 	if not host.entities.has(id) or not host.visuals.has(id): return
 	var e: Dictionary = host.entities[id]
@@ -1187,6 +1216,23 @@ func update_visual(id: int) -> void:
 			var texture := clean_texture(path)
 			if texture != null: set_sprite_texture(shadow,path,texture,d)
 		return
+	# Secret-tree death scripts replace their standing frame with 89/10.
+	# Follow the displayed frame on entry, exit, animation and scale changes;
+	# a baked floor image cannot represent these live state changes.
+	var display := display_frame(e)
+	var displayed_path := str(host._frame(display.x,display.y).get("path","")).to_lower()
+	var was_ground := str(node.get_meta("model_key","")) == "ground_detail"
+	if was_ground or ground_detail(displayed_path):
+		var shown := e.duplicate()
+		shown["pseq"] = display.x
+		shown["pframe"] = display.y
+		var is_ground := model_key(shown) == "ground_detail"
+		if was_ground != is_ground or (is_ground and str(node.get_meta("ground_detail_signature","")) != ground_detail_signature(e)):
+			var old := node
+			node = make_entity(shown,id,old.get_parent())
+			host.visuals[id] = node
+			old.get_parent().remove_child(old)
+			old.queue_free()
 	var visible: bool = int(e.get("active",1)) != 0 and int(e.get("nodraw",0)) == 0 and int(e.get("disabled",0)) == 0 and (int(e.get("type",1)) != 2 or node.get_meta("hard_wall",false))
 	node.visible = visible
 	var key: String = node.get_meta("model_key","")

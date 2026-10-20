@@ -42,18 +42,31 @@ hardness independently. Thus live/scripted status does not imply vertical
 surface orientation. The [GNU FreeDink source mirror](https://github.com/gitGNU/gnu_freedink)
 provides the engine's upstream provenance; the cited lines refer to 109.6.
 
-`fp_world.gd` reuses its existing background composition and hotspot mapping
-for ground details regardless of source type. Each has one floor owner and
-no additional upright card, shadow twin or ray body. The renderer preserves
-the entity, source hardness, script, touch damage and portal behavior. Its
-floor rectangle remains available to dialogue camera framing. Raised details
-and real grass keep their previous keys and rendering.
+`fp_world.gd` reuses `prop_solids.gd`'s existing flat-prop quad for every
+ground-class instance, including source type 0. These instances are excluded
+from background composition, so there is exactly one visible owner. The
+source image, hotspot and size determine the plane and its camera-framing
+rectangle. Ground shadow pixels stay in the image; the plane casts no new
+shadow and adds no ray body. Its floor offset is the same as other flat props.
+Entities, native hardness, scripts, touch damage and portal logic are preserved.
+Raised details and real grass keep their previous keys and rendering, including
+the existing background painter for their type-0 copies.
+
+The live displayed frame determines entry into and exit from this class. Frame,
+size, position and visibility changes follow the entity, without baking a stale
+picture into terrain. Stock `s2-sec1`, `s2-sec3` and `s3-sec1` death procedures
+(source lines 22–27, retained in `game/data/story.json`) turn trees into frame
+89/10 on maps 307, 659 and 710. Those holes use the same flat surface immediately
+and after save/load. Runtime-created ground frames follow the same rule.
 
 The technical defect was the Details `frame >= 7` fallback to standing grass
 (and standing rocks below 7). The development mistake was applying an unchecked
-frame-number heuristic to a mixed artwork family. The earlier 18-frame branch
+frame-number heuristic to a mixed artwork family. Live nodes also retained
+their initial standing representation when scripts switched their picture;
+static frame checks alone missed those source-script transitions. The earlier 18-frame branch
 inventory included four raised thorn bushes; it was not a ground-art census.
 `tests/ground_details_test.gd` exercises all 41 frames as active sprites both
-with and without scripts, floor ownership for authored active uses, and real
-grass as an additional look-alike control. Its unchanged-renderer failure
+with and without scripts, single ownership for authored uses, real grass as a look-alike control, the
+three stock tree-to-hole scripts, save/load and all ground frames entering,
+scaling, moving, hiding and returning to standing vegetation. Its unchanged-renderer failure
 includes all 14 ground frames in that earlier 18-frame inventory.
