@@ -32,7 +32,6 @@ var pending_modifier: Dictionary = {}
 var cancel_pressed_msec := -1
 var pending_cancel: Dictionary = {}
 var intro: Label
-var spacer: Control
 var rows: Array[Control] = []
 var snapping_scroll := false
 var previous_scroll := 0.0
@@ -69,10 +68,6 @@ func _ready() -> void:
 	body.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	body.add_theme_constant_override("separation",ui.column.get_theme_constant("separation"))
 	scroll.add_child(body)
-	spacer = Control.new()
-	spacer.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	spacer.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	add_child(spacer)
 	footer = HFlowContainer.new()
 	add_child(footer)
 	_build_list()
@@ -121,7 +116,8 @@ func _clear_body() -> void:
 	rows.clear()
 	tabs.visible = state == "list"
 	intro.visible = state == "list"
-	spacer.visible = state == "list"
+	# The list owns every pixel between the tabs and the footer; prompts size to content.
+	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL if state == "list" else Control.SIZE_FILL
 	scroll.custom_minimum_size.y = 0
 	ui._focus_scroll_owner(scroll).request_reset(ui.page_serial, true)
 	previous_scroll = 0
@@ -223,9 +219,7 @@ func _capture(id: String, index: int) -> void:
 	if focus != null: focus.release_focus()
 
 func _process(_delta: float) -> void:
-	if state == "list":
-		_fit_rows()
-		return
+	if state == "list": return
 	_fit_prompt()
 	if state != "capture": return
 	if cancel_pressed_msec >= 0 and Time.get_ticks_msec()-cancel_pressed_msec >= roundi(CANCEL_HOLD_SECONDS*1000):
@@ -250,21 +244,6 @@ func _snap_scroll(value: float) -> void:
 	ui._focus_scroll_owner(scroll).set_position(target, true, false)
 	previous_scroll = scroll.scroll_vertical
 	snapping_scroll = false
-
-func _fit_rows() -> void:
-	if rows.is_empty() or size.y <= 0: return
-	var gap := get_theme_constant("separation")
-	var available := size.y-intro.get_combined_minimum_size().y-tabs.get_combined_minimum_size().y-footer.get_combined_minimum_size().y-gap*4
-	var start := 0
-	for i in rows.size():
-		if rows[i].position.y <= scroll.scroll_vertical+1: start=i
-	var extent := 0.0
-	for i in range(start,rows.size()):
-		var candidate := rows[i].position.y+rows[i].size.y-rows[start].position.y
-		if candidate > available: break
-		extent = candidate
-	# Oversize custom actions retain native scrolling so every slot stays reachable.
-	scroll.custom_minimum_size.y = maxf(1,minf(available,extent if extent>0 else available))
 
 func _fit_prompt() -> void:
 	var chrome: float = ui.panel.get_combined_minimum_size().y-scroll.get_combined_minimum_size().y

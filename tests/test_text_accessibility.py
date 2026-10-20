@@ -46,3 +46,13 @@ def test_focused_actions_are_whole_from_first_drawn_frame(tmp_path):
 def test_every_authored_glyph_is_in_a_bundled_font(tmp_path):
     result = launch(tmp_path, 'glyph_coverage_test.gd', deadline=90)
     assert result.returncode == 0 and 'GLYPH COVERAGE PASS' in result.stdout and 'SCRIPT ERROR' not in result.stderr, result.stdout+result.stderr
+
+
+def test_status_numbers_follow_text_size_across_the_whole_range(tmp_path):
+    result = launch(tmp_path, 'status_numbers_test.gd', deadline=240, rendered=True)
+    assert result.returncode == 0 and 'STATUS NUMBERS PASS' in result.stdout and 'SCRIPT ERROR' not in result.stderr, result.stdout+result.stderr
+
+
+def test_controls_list_leaves_no_capacity_unused_at_any_scroll_stop(tmp_path):
+    result = launch(tmp_path, 'controls_capacity_test.gd', deadline=280)
+    assert result.returncode == 0 and 'CONTROLS CAPACITY PASS' in result.stdout and 'SCRIPT ERROR' not in result.stderr, result.stdout+result.stderr
