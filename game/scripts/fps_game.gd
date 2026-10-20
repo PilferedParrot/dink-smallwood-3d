@@ -174,6 +174,9 @@ func _after_script_position_set(id: int, key: String) -> void:
 	entities[1]["y"] = live.y
 
 func load_map(number: int, run_scripts: bool = true) -> void:
+	# A screen change ends a toggled sprint and a held attack repeat. `changing` is set and
+	# cleared inside one load_map call, so a physics tick never sees it: release here.
+	if world.screens.has(str(number)): _fps_release_sprint_and_repeat()
 	entity_hit_targets.reset()
 	_fps_restore_dialogue_camera()
 	if fp_world != null and entities.has(1) and world.screens.has(str(number)):

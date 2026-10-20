@@ -14,6 +14,7 @@ class ProbeGame extends GAME:
 	var moved := Vector2.ZERO
 	var ticks := 0
 	var swing_ticks: Array[int] = []
+	var real_transitions := false
 	func _physics_process(delta: float) -> void:
 		ticks += 1
 		super(delta)
@@ -24,7 +25,8 @@ class ProbeGame extends GAME:
 			fired += 1
 			swing_ticks.append(ticks)
 	func _move_entity(_id: int, displacement: Vector2, _ignore := false) -> void: moved += displacement
-	func _transitions(_scripted := false, _from: Vector2 = Vector2.INF) -> void: pass
+	func _transitions(scripted := false, from: Vector2 = Vector2.INF) -> void:
+		if real_transitions: super(scripted, from)
 	func _update_ai(_delta: float) -> void: pass
 
 var failures: Array[String] = []
@@ -76,9 +78,9 @@ func find_buttons(node: Node, out: Dictionary) -> void:
 	if node is Button and node.has_meta("setting_key"): out[str(node.get_meta("setting_key"))] = node
 	for child in node.get_children(): find_buttons(child, out)
 
-func min_gap() -> int:
+func gap_of(stamps: Array) -> int:
 	var gap := 1 << 30
-	for i in range(1, game.swing_ticks.size()): gap = mini(gap, game.swing_ticks[i] - game.swing_ticks[i - 1])
+	for i in range(1, stamps.size()): gap = mini(gap, int(stamps[i]) - int(stamps[i - 1]))
 	return gap
 
 func hold_count(frames: int) -> int:
@@ -104,6 +106,97 @@ func spam_count(frames: int) -> int:
 		await event(BINDINGS.key(KEY_K), false)
 		game._physics_process(DT)
 	return game.fired
+
+# Real screen changes: sprint toggled on and a held, armed repeat must both end at
+# the map lifecycle itself. load_map sets and clears `changing` inside one call, so no
+# physics tick ever sees it; the old test faked a persistent `changing` flag.
+func arm_both() -> void:
+	await event(BINDINGS.key(KEY_W), true)
+	await event(BINDINGS.key(KEY_G), true)
+	await event(BINDINGS.key(KEY_G), false)
+	step(2)
+	game.attack_cooldown = 0.0
+	game.fired = 0
+	await event(BINDINGS.key(KEY_K), true)
+	step(1)
+
+func assert_released(label: String) -> void:
+	check(not game.sprint_latched and not game.ui.sprint_active, label + ": toggled sprint ended")
+	check(not game.fps_repeat_armed, label + ": attack repeat disarmed")
+	var fired := game.fired
+	step(150)
+	check(game.fired == fired, "%s: held attack fires nothing more without a fresh press (%d -> %d)" % [label, fired, game.fired])
+
+func check_map_changes() -> void:
+	var cases := {
+		"scripts-disabled load_map": func(): game.load_map(440, false),
+		"scripted load_map": func(): game.load_map(440, true),
+		"edge transition": func():
+			game.real_transitions = true
+			var pos := Vector2(625.0, 200.0)
+			game.entities[1].x = pos.x
+			game.entities[1].y = pos.y
+			game.warp_cooldown = 0.0
+			game._transitions(false, Vector2(615.0, 200.0)),
+	}
+	for label in cases:
+		await new_game({"attack_repeat": true, "sprint_mode": "toggle"})
+		await arm_both()
+		var before := game.current_screen
+		check(game.sprint_latched and game.fps_repeat_armed and game.fired == 1, label + ": armed before the change (control)")
+		cases[label].call()
+		check(game.current_screen != before, label + ": the screen really changed (%d -> %d)" % [before, game.current_screen])
+		assert_released(label)
+		await event(BINDINGS.key(KEY_K), false)
+		await event(BINDINGS.key(KEY_W), false)
+		step(2)
+		# a fresh press after the change works again
+		game.attack_cooldown = 0.0
+		game.fired = 0
+		await event(BINDINGS.key(KEY_K), true)
+		step(1)
+		check(game.fired == 1, label + ": a fresh press fires on the new screen")
+		await event(BINDINGS.key(KEY_K), false)
+		step(2)
+	# warp (door) dispatch: find a screen with a live warp sprite
+	var warp_label := "warp transition"
+	await new_game({"attack_repeat": true, "sprint_mode": "toggle"})
+	var found := false
+	for key in game.world.screens:
+		var n := int(key)
+		game.load_map(n, false)
+		for id in game.entities:
+			if id == 1: continue
+			var e: Dictionary = game.entities[id]
+			if e.get("warp") != null and int(e.get("active", 1)) != 0 and game.world.screens.has(str(int(e.warp.get("map", 0)))) and int(e.warp.map) != n:
+				found = true
+				break
+		if found: break
+	check(found, "A screen with a warp sprite exists for the warp case")
+	if found:
+		game.real_transitions = true
+		game.playing = true
+		game.entities[1].frozen = false
+		game.entities[1].nocontrol = 0
+		game.warp_cooldown = 0.0
+		await arm_both()
+		var warp_entity: Dictionary = {}
+		for id in game.entities:
+			if id != 1 and game.entities[id].get("warp") != null: warp_entity = game.entities[id]
+		var rect: Rect2 = game._warp_trigger_rect(warp_entity)
+		var centre := rect.get_center()
+		var before_screen := game.current_screen
+		game.entities[1].x = centre.x
+		game.entities[1].y = centre.y
+		game.warp_cooldown = 0.0
+		# Portal exits refuse a player in a swing (nocontrol); the swing ends first, the repeat stays armed.
+		game.entities[1].nocontrol = 0
+		check(game.sprint_latched and game.fps_repeat_armed, warp_label + ": still armed at the doorway (control)")
+		game._transitions(false, centre - Vector2(0, 2))
+		check(game.current_screen != before_screen, warp_label + ": the screen really changed (%d -> %d)" % [before_screen, game.current_screen])
+		assert_released(warp_label)
+		await event(BINDINGS.key(KEY_K), false)
+		await event(BINDINGS.key(KEY_W), false)
 
 func _run() -> void:
 	var phase := OS.get_cmdline_user_args()[0]
@@ -147,15 +240,19 @@ func _run() -> void:
 	# ---- attack repeat on ----
 	await new_game({"attack_repeat": true})
 	var held := await hold_count(150)
+	# Held timestamps are read here, before spam_count() clears and refills the buffer.
+	var swing_ticks_hold := game.swing_ticks.duplicate()
 	spam = await spam_count(150)
 	check(held > 1, "Option on: held attack repeats: %d" % held)
-	var swing_ticks_hold := game.swing_ticks.duplicate()
 	# The swing's own timing is the floor for both: 0.45 s = 27 ticks at 60 Hz.
 	# The fastest possible press cycle needs a tick that sees the button up
 	# (2 ticks), so spam can land 1 tick later than a hold at the boundary.
 	var swing_ticks := ceili(0.45 / DT)
-	game.swing_ticks = swing_ticks_hold
-	check(min_gap() >= swing_ticks, "Held repeat never swings faster than the 0.45 s swing (min gap %d ticks)" % min_gap())
+	check(swing_ticks_hold.size() == held, "Held timestamps are the held run's (%d stamps, %d swings)" % [swing_ticks_hold.size(), held])
+	check(gap_of(swing_ticks_hold) >= swing_ticks, "Held repeat never swings faster than the 0.45 s swing (min gap %d ticks)" % gap_of(swing_ticks_hold))
+	# Gate must be able to fail: six swings with one early swing balanced by a later long gap.
+	var mutant: Array[int] = [1, 28, 55, 70, 97, 150]
+	check(mutant.size() == held and gap_of(mutant) < swing_ticks, "Mutant (early swing, later long gap, same count) is caught by the min-gap gate")
 	check(held <= int(150.0 / swing_ticks) + 1, "Held repeat count within the swing-time bound: %d" % held)
 	check(held == 6, "Held repeat swings once per 0.45 s cooldown: %d in 150 ticks" % held)
 	check(spam >= 1 and held >= spam and held - spam <= 1, "Repeat stays within one tick-aligned swing of the fastest press-spam (held %d, spam %d)" % [held, spam])
@@ -268,7 +365,7 @@ func _run() -> void:
 	await event(BINDINGS.key(KEY_W), true)
 	check(is_equal_approx(step_move(0.3) / walk, 1.0) and not game.ui.sprint_active, "Toggle: stopping ends sprint")
 	# menu, pause, freeze, screen change each end it
-	for cause in ["modal", "frozen", "nocontrol", "changing"]:
+	for cause in ["modal", "frozen", "nocontrol"]:
 		await event(BINDINGS.key(KEY_G), true)
 		await event(BINDINGS.key(KEY_G), false)
 		check(is_equal_approx(step_move(0.3) / walk, 1.55), "Toggle on before " + cause)
@@ -298,6 +395,7 @@ func _run() -> void:
 	check(is_equal_approx(step_move(0.3) / walk, 1.0), "Switching to hold clears a toggled sprint")
 	await event(BINDINGS.key(KEY_W), false)
 
+	await check_map_changes()
 	game.vm.cancel_all()
 	print("HOLD REPEAT READ PASS" if failures.is_empty() else "HOLD REPEAT READ FAIL")
 	quit(0 if failures.is_empty() else 1)
