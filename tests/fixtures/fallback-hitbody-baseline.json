@@ -29,7 +29,17 @@
         2.40000009536743
       ],
       "treatment": "unchanged-followup",
-      "source_type": 1
+      "source_type": 1,
+      "known_defect": {
+        "reason": "No measured stair geometry for this source frame; legacy proxy retained.",
+        "body_edge_offsets_px": {
+          "west": -35.99999237060558,
+          "north": -45.000002861023006,
+          "east": -11.99999237060561,
+          "south": -25.999989509582605
+        },
+        "measurement": "Native legacy ray-body XZ edges minus source hardbox edges, source pixels; editor-static fixture."
+      }
     },
     {
       "screen": 4,
@@ -116,7 +126,17 @@
         1.20000028610229
       ],
       "treatment": "unchanged-followup",
-      "source_type": 1
+      "source_type": 1,
+      "known_defect": {
+        "reason": "Oblique tabletop and legs lack a measured source form; legacy proxy retained.",
+        "body_edge_offsets_px": {
+          "west": -6.99999904632574,
+          "north": 17.99999856948844,
+          "east": -6.999997138976994,
+          "south": 18.000000476837243
+        },
+        "measurement": "Native legacy ray-body XZ edges minus source hardbox edges, source pixels; editor-static fixture."
+      }
     },
     {
       "screen": 6,
@@ -145,7 +165,17 @@
         1.0
       ],
       "treatment": "unchanged-followup",
-      "source_type": 1
+      "source_type": 1,
+      "known_defect": {
+        "reason": "Chair geometry lacks a measured source form; legacy proxy retained.",
+        "body_edge_offsets_px": {
+          "west": 9.0,
+          "north": 12.000000953674316,
+          "east": -19.000001907348803,
+          "south": 15.000000953674316
+        },
+        "measurement": "Native legacy ray-body XZ edges minus source hardbox edges, source pixels; editor-static fixture."
+      }
     },
     {
       "screen": 6,
@@ -174,7 +204,17 @@
         1.0
       ],
       "treatment": "unchanged-followup",
-      "source_type": 1
+      "source_type": 1,
+      "known_defect": {
+        "reason": "Chair geometry lacks a measured source form; legacy proxy retained.",
+        "body_edge_offsets_px": {
+          "west": 9.00000381469738,
+          "north": 11.999999284744263,
+          "east": -18.999998092651424,
+          "south": 14.999996900558443
+        },
+        "measurement": "Native legacy ray-body XZ edges minus source hardbox edges, source pixels; editor-static fixture."
+      }
     },
     {
       "screen": 33,
@@ -232,7 +272,17 @@
         1.20000028610229
       ],
       "treatment": "unchanged-followup",
-      "source_type": 1
+      "source_type": 1,
+      "known_defect": {
+        "reason": "Oblique tabletop and legs lack a measured source form; legacy proxy retained.",
+        "body_edge_offsets_px": {
+          "west": -7.0,
+          "north": 17.999998569488596,
+          "east": -7.000007629394418,
+          "south": 18.000005245208996
+        },
+        "measurement": "Native legacy ray-body XZ edges minus source hardbox edges, source pixels; editor-static fixture."
+      }
     },
     {
       "screen": 34,
@@ -551,7 +601,17 @@
         0.700000107288361
       ],
       "treatment": "unchanged-followup",
-      "source_type": 1
+      "source_type": 1,
+      "known_defect": {
+        "reason": "Size70 bed is outside the source fit size100 contract; legacy proxy retained.",
+        "body_edge_offsets_px": {
+          "west": 27.05499935150138,
+          "north": 8.399994850158492,
+          "east": 1.6450014114380025,
+          "south": 6.299996376037424
+        },
+        "measurement": "Native legacy ray-body XZ edges minus source hardbox edges, source pixels; editor-static fixture."
+      }
     },
     {
       "screen": 67,
@@ -697,7 +757,17 @@
       ],
       "treatment": "unchanged-followup",
       "source_type": 1,
-      "support": "unmeasured-depth-without-backing-wall"
+      "support": "unmeasured-depth-without-backing-wall",
+      "known_defect": {
+        "reason": "Plain shelf front has no observed depth or backing wall within source hardness; legacy proxy retained.",
+        "body_edge_offsets_px": {
+          "west": 3.814697436155257e-06,
+          "north": 22.500002861023006,
+          "east": -1.1444091796875e-05,
+          "south": 22.50000858306896
+        },
+        "measurement": "Native legacy ray-body XZ edges minus source hardbox edges, source pixels; editor-static fixture."
+      }
     },
     {
       "screen": 68,
@@ -726,7 +796,17 @@
         2.40000009536743
       ],
       "treatment": "unchanged-followup",
-      "source_type": 1
+      "source_type": 1,
+      "known_defect": {
+        "reason": "No measured stair geometry for this source frame; legacy proxy retained.",
+        "body_edge_offsets_px": {
+          "west": -19.0,
+          "north": -33.99999618530259,
+          "east": 20.0,
+          "south": 15.000007629394588
+        },
+        "measurement": "Native legacy ray-body XZ edges minus source hardbox edges, source pixels; editor-static fixture."
+      }
     },
     {
       "screen": 68,
@@ -755,7 +835,17 @@
         2.40000009536743
       ],
       "treatment": "unchanged-followup",
-      "source_type": 1
+      "source_type": 1,
+      "known_defect": {
+        "reason": "No measured stair geometry for this source frame; legacy proxy retained.",
+        "body_edge_offsets_px": {
+          "west": -19.00000381469718,
+          "north": -33.99999618530259,
+          "east": 19.99999618530279,
+          "south": 15.000007629394588
+        },
+        "measurement": "Native legacy ray-body XZ edges minus source hardbox edges, source pixels; editor-static fixture."
+      }
     },
     {
       "screen": 70,
@@ -2901,7 +2991,17 @@
         1.20000028610229
       ],
       "treatment": "unchanged-followup",
-      "source_type": 1
+      "source_type": 1,
+      "known_defect": {
+        "reason": "Oblique tabletop and legs lack a measured source form; legacy proxy retained.",
+        "body_edge_offsets_px": {
+          "west": -7.000003814697379,
+          "north": 18.00000095367443,
+          "east": -7.000001907348576,
+          "south": 18.000002861023205
+        },
+        "measurement": "Native legacy ray-body XZ edges minus source hardbox edges, source pixels; editor-static fixture."
+      }
     },
     {
       "screen": 137,
@@ -3887,7 +3987,17 @@
         1.32500028610229
       ],
       "treatment": "unchanged-followup",
-      "source_type": 1
+      "source_type": 1,
+      "known_defect": {
+        "reason": "Table geometry lacks a measured source form; legacy proxy retained.",
+        "body_edge_offsets_px": {
+          "west": 15.999988555908203,
+          "north": 18.50000143051139,
+          "east": 16.00000381469738,
+          "south": 18.499998569488582
+        },
+        "measurement": "Native legacy ray-body XZ edges minus source hardbox edges, source pixels; editor-static fixture."
+      }
     },
     {
       "screen": 162,
@@ -3945,7 +4055,17 @@
         2.40000009536743
       ],
       "treatment": "unchanged-followup",
-      "source_type": 1
+      "source_type": 1,
+      "known_defect": {
+        "reason": "No measured stair geometry for this source frame; legacy proxy retained.",
+        "body_edge_offsets_px": {
+          "west": 0.9999961853028196,
+          "north": 26.999996185302777,
+          "east": 2.999996185302791,
+          "south": 54.99999999999994
+        },
+        "measurement": "Native legacy ray-body XZ edges minus source hardbox edges, source pixels; editor-static fixture."
+      }
     },
     {
       "screen": 164,
@@ -4699,7 +4819,17 @@
         1.20000028610229
       ],
       "treatment": "unchanged-followup",
-      "source_type": 1
+      "source_type": 1,
+      "known_defect": {
+        "reason": "Oblique tabletop and legs lack a measured source form; legacy proxy retained.",
+        "body_edge_offsets_px": {
+          "west": -7.0,
+          "north": 17.999998569488596,
+          "east": -7.000007629394418,
+          "south": 18.000005245208996
+        },
+        "measurement": "Native legacy ray-body XZ edges minus source hardbox edges, source pixels; editor-static fixture."
+      }
     },
     {
       "screen": 196,
@@ -5279,7 +5409,17 @@
         1.20000028610229
       ],
       "treatment": "unchanged-followup",
-      "source_type": 1
+      "source_type": 1,
+      "known_defect": {
+        "reason": "Oblique tabletop and legs lack a measured source form; legacy proxy retained.",
+        "body_edge_offsets_px": {
+          "west": -7.0,
+          "north": 17.999994754791004,
+          "east": -7.000007629394418,
+          "south": 18.000001430511418
+        },
+        "measurement": "Native legacy ray-body XZ edges minus source hardbox edges, source pixels; editor-static fixture."
+      }
     },
     {
       "screen": 226,
@@ -5337,7 +5477,17 @@
         1.20000028610229
       ],
       "treatment": "unchanged-followup",
-      "source_type": 1
+      "source_type": 1,
+      "known_defect": {
+        "reason": "Oblique tabletop and legs lack a measured source form; legacy proxy retained.",
+        "body_edge_offsets_px": {
+          "west": -7.0,
+          "north": 17.999994754791004,
+          "east": -7.000007629394418,
+          "south": 18.000001430511418
+        },
+        "measurement": "Native legacy ray-body XZ edges minus source hardbox edges, source pixels; editor-static fixture."
+      }
     },
     {
       "screen": 226,
@@ -5424,7 +5574,17 @@
         1.0
       ],
       "treatment": "unchanged-followup",
-      "source_type": 1
+      "source_type": 1,
+      "known_defect": {
+        "reason": "Chair geometry lacks a measured source form; legacy proxy retained.",
+        "body_edge_offsets_px": {
+          "west": 9.000001430511418,
+          "north": 11.999996185302791,
+          "east": -19.000005245208968,
+          "south": 14.999996185302791
+        },
+        "measurement": "Native legacy ray-body XZ edges minus source hardbox edges, source pixels; editor-static fixture."
+      }
     },
     {
       "screen": 260,
@@ -5453,7 +5613,17 @@
         1.0
       ],
       "treatment": "unchanged-followup",
-      "source_type": 1
+      "source_type": 1,
+      "known_defect": {
+        "reason": "Chair geometry lacks a measured source form; legacy proxy retained.",
+        "body_edge_offsets_px": {
+          "west": 9.000000476837272,
+          "north": 11.999996185302791,
+          "east": -19.00000143051159,
+          "south": 14.999996185302791
+        },
+        "measurement": "Native legacy ray-body XZ edges minus source hardbox edges, source pixels; editor-static fixture."
+      }
     },
     {
       "screen": 260,
@@ -5482,7 +5652,17 @@
         1.0
       ],
       "treatment": "unchanged-followup",
-      "source_type": 1
+      "source_type": 1,
+      "known_defect": {
+        "reason": "Chair geometry lacks a measured source form; legacy proxy retained.",
+        "body_edge_offsets_px": {
+          "west": 9.000002384185791,
+          "north": 11.999996185302791,
+          "east": -18.999994754791373,
+          "south": 14.999996185302791
+        },
+        "measurement": "Native legacy ray-body XZ edges minus source hardbox edges, source pixels; editor-static fixture."
+      }
     },
     {
       "screen": 260,
@@ -5511,7 +5691,17 @@
         1.0
       ],
       "treatment": "unchanged-followup",
-      "source_type": 1
+      "source_type": 1,
+      "known_defect": {
+        "reason": "Chair geometry lacks a measured source form; legacy proxy retained.",
+        "body_edge_offsets_px": {
+          "west": 21.000005245208996,
+          "north": -1.9073488033427566e-06,
+          "east": -15.000001430511418,
+          "south": 2.9999980926511967
+        },
+        "measurement": "Native legacy ray-body XZ edges minus source hardbox edges, source pixels; editor-static fixture."
+      }
     },
     {
       "screen": 260,
@@ -5540,7 +5730,17 @@
         1.0
       ],
       "treatment": "unchanged-followup",
-      "source_type": 1
+      "source_type": 1,
+      "known_defect": {
+        "reason": "Chair geometry lacks a measured source form; legacy proxy retained.",
+        "body_edge_offsets_px": {
+          "west": 21.00000095367443,
+          "north": 6.198883014008061e-06,
+          "east": -15.00000095367443,
+          "south": 3.0000014305114178
+        },
+        "measurement": "Native legacy ray-body XZ edges minus source hardbox edges, source pixels; editor-static fixture."
+      }
     },
     {
       "screen": 260,
@@ -5569,7 +5769,17 @@
         1.0
       ],
       "treatment": "unchanged-followup",
-      "source_type": 1
+      "source_type": 1,
+      "known_defect": {
+        "reason": "Chair geometry lacks a measured source form; legacy proxy retained.",
+        "body_edge_offsets_px": {
+          "west": 21.00000381469704,
+          "north": 6.198883014008061e-06,
+          "east": -15.000007629394588,
+          "south": 3.0000014305114178
+        },
+        "measurement": "Native legacy ray-body XZ edges minus source hardbox edges, source pixels; editor-static fixture."
+      }
     },
     {
       "screen": 260,
@@ -5598,7 +5808,17 @@
         1.0
       ],
       "treatment": "unchanged-followup",
-      "source_type": 1
+      "source_type": 1,
+      "known_defect": {
+        "reason": "Chair geometry lacks a measured source form; legacy proxy retained.",
+        "body_edge_offsets_px": {
+          "west": -10.000007629394418,
+          "north": 7.999999761581421,
+          "east": 9.0,
+          "south": -8.000000238418579
+        },
+        "measurement": "Native legacy ray-body XZ edges minus source hardbox edges, source pixels; editor-static fixture."
+      }
     },
     {
       "screen": 260,
