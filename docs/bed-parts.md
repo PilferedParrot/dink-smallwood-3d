@@ -86,3 +86,14 @@ reusing an outdoor harness without validating its indoor view first. These
 controls cover the camera's ability to see the changed object as well as pixel
 immutability. The gate remains a controlled source-projection regression, not
 a certificate of shadow appearance or campaign play.
+
+The room regression also exposed pre-existing wall depth ties. A control on the
+unchanged base pack perturbs only wall mesh/material resource slots: it flips
+all wall-strip pixels previously reported outside the bed masks. Geometry
+arrays and textures are unchanged. Opposite allocation orders give identical
+pictures when wall surfaces have unique test-only priorities. G2 therefore
+sets that same deterministic entity-id/child/surface order on both packs,
+retaining the original masks. This holds an unrelated nuisance variable fixed;
+it does not fix the production wall instability or certify its chosen winner.
+The room pictures are explicitly this normalized source-camera fixture, rather
+than a claim that arbitrary production resource allocations yield equal pixels.

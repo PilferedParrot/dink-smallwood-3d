@@ -30,10 +30,14 @@ def test_bed_original_camera_changes_only_inside_committed_source_envelopes(tmp_
             "screen": 1,
             "original": True,
             "retain_ceiling": True,
+            "stable_wall_ties": True,
         }
     ]
     order = [n for n in manifest["screens"] if n != 1] + [1]
-    views += [{"name": str(n), "screen": n, "original": True} for n in order]
+    views += [
+        {"name": str(n), "screen": n, "original": True, "stable_wall_ties": True}
+        for n in order
+    ]
     views += manifest["isolated_views"]
     bundle = tmp_path / "views.json"
     bundle.write_text(json.dumps(views))

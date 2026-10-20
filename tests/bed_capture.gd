@@ -6,7 +6,27 @@ var gallery_path: String=""
 func _cutaway(node: Node, world) -> void:
 	if node is MeshInstance3D and node.material_override!=null and node.material_override in [world.materials.get("ceiling"),world.materials.get("beam")]: node.visible=false
 	for child in node.get_children():_cutaway(child,world)
+# Fixture-only: source wall faces have pre-existing equal-depth overlaps whose
+# opaque winner otherwise follows recycled renderer resource slots. Keep that
+# nuisance variable fixed on BOTH packs; production materials are not modified.
+func _stable_wall_ties(game) -> void:
+	var ids: Array=game.visuals.keys();ids.sort()
+	var surfaces: Array=[]
+	for id in ids:
+		var visual: Node3D=game.visuals[id]
+		if str(visual.get_meta("model_key",""))!="wall":continue
+		for mesh in _meshes(visual):
+			for surface in mesh.mesh.get_surface_count():surfaces.append([mesh,surface])
+	assert(surfaces.size()<=Material.RENDER_PRIORITY_MAX+1,"Fixture wall order exceeds renderer priority range")
+	for index in surfaces.size():
+		var mesh: MeshInstance3D=surfaces[index][0]
+		var surface: int=surfaces[index][1]
+		var original: Material=mesh.get_active_material(surface)
+		var copy: Material=original.duplicate()
+		copy.render_priority=index
+		mesh.set_surface_override_material(surface,copy)
 func _capture_setup(game, view: Dictionary) -> void:
+	if bool(view.get("stable_wall_ties",false)):_stable_wall_ties(game)
 	if bool(view.get("original",false)) and not bool(view.get("retain_ceiling",false)):_cutaway(game.scene_root,game.fp_world)
 	var wanted: Node=null
 	if view.has("prop_path"):
