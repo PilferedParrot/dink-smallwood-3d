@@ -47,6 +47,8 @@ var text_scale := 1.0
 var plain_font := false
 var menu_theme: Theme
 var controller_active := false
+var sprint_mode := "hold"
+var sprint_active := false
 var title_art: TextureRect
 var vines_left: TextureRect
 var vines_right: TextureRect
@@ -558,11 +560,24 @@ func _key(action: String) -> String:
 func _navigation_hint() -> String:
 	return "%s / %s  Choose     %s or click  Confirm" % [_key("ui_up"),_key("ui_down"),_key("ui_accept")]
 
+func set_sprint_state(mode: String, active: bool) -> void:
+	if sprint_mode == mode and sprint_active == active: return
+	sprint_mode = mode
+	sprint_active = active
+	_update_hint()
+
+# Names the behaviour honestly: a held sprint reads as a hold, a toggled one
+# says it toggles and shows whether it is on.
+func _sprint_label() -> String:
+	if sprint_mode == "toggle": return "%s  Sprint %s" % [_key("sprint"), "ON (press to stop)" if sprint_active else "(press to toggle)"]
+	return "%s  Hold to sprint" % _key("sprint")
+
 func _gameplay_hint() -> String:
 	var text := "%s  Move" % bindings.movement_label(controller_active)
 	if bindings.context == "fps": text += "   %s  Look" % ("Mouse" if not controller_active else bindings.look_label())
 	text += "   %s  Attack   %s  Talk   %s  Equipment   %s  Pause" % [_key("attack"),_key("talk"),_key("inventory"),_key("pause")]
 	if not equipment_stats.get("spell_item",{}).is_empty(): text += "   %s  Magic" % _key("magic")
+	if bindings.context == "fps": text += "   " + _sprint_label()
 	return text
 
 func _control_primer() -> String:
@@ -580,7 +595,7 @@ func _controls_text() -> String:
 	var lines: Array[String] = ["Move: " + bindings.movement_label() + " / " + bindings.movement_label(true)]
 	if bindings.context == "fps": lines[0] += "    Aim: mouse / " + bindings.look_label(true,true)
 	lines.append(_controls_group(["attack","magic"]))
-	lines.append(_controls_group(["talk","jump","sprint"]))
+	lines.append(_controls_group(["talk","jump"]) + ("    Sprint: %s (%s)" % [_key("sprint"), "press to toggle" if sprint_mode == "toggle" else "hold"] if bindings.context == "fps" else ""))
 	var equipment := _controls_group(["inventory"])
 	if bindings.context == "fps":
 		var slots: Array[String] = []
@@ -1245,8 +1260,35 @@ func show_settings(settings: Dictionary) -> void:
 	speech_wait.toggled.connect(_toggle_readout.bind(speech_wait, "Speech waits for me"))
 	_toggle_readout(speech_wait.button_pressed, speech_wait, "Speech waits for me")
 	column.add_child(speech_wait)
+	if bindings.context == "fps":
+		var sprint := Button.new()
+		sprint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		sprint.toggle_mode = true
+		sprint.set_meta("setting_key", "sprint_mode")
+		sprint.focus_mode = Control.FOCUS_ALL
+		sprint.set_pressed_no_signal(str(settings.get("sprint_mode", "hold")) == "toggle")
+		sprint.toggled.connect(_sprint_mode_changed.bind(sprint))
+		_sprint_mode_readout(sprint.button_pressed, sprint)
+		column.add_child(sprint)
+		var repeat := Button.new()
+		repeat.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		repeat.toggle_mode = true
+		repeat.set_meta("setting_key", "attack_repeat")
+		repeat.focus_mode = Control.FOCUS_ALL
+		repeat.set_pressed_no_signal(settings.get("attack_repeat", false) == true)
+		repeat.toggled.connect(func(value: bool): action_requested.emit("setting", {"key":"attack_repeat", "value":value}))
+		repeat.toggled.connect(_toggle_readout.bind(repeat, "Attack repeats while held"))
+		_toggle_readout(repeat.button_pressed, repeat, "Attack repeats while held")
+		column.add_child(repeat)
 	_button("Done", "back")
 	_focus()
+
+func _sprint_mode_readout(toggle: bool, button: Button) -> void:
+	button.text = "Sprint: Toggle (press once to start, again or stopping ends it)" if toggle else "Sprint: Hold"
+
+func _sprint_mode_changed(value: bool, button: Button) -> void:
+	_sprint_mode_readout(value, button)
+	action_requested.emit("setting", {"key":"sprint_mode", "value":"toggle" if value else "hold"})
 
 func show_controls() -> void:
 	var parent_page := return_page
