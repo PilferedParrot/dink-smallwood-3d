@@ -3109,3 +3109,12 @@ the unchanged original aftermath regression cover it, alongside event re-entry
 controls. See [Script instances](SCRIPT_INSTANCES.md). The interrupted old gate
 and its failure remain separate evidence; only a new frozen gate can certify
 this corrected candidate.
+
+## Beds retain their parts and their ends
+
+The bed's source picture is now assigned to separate bedding, rail and post
+solids instead of one undivided box. All sixteen source instances use those
+parts, including the 70% bed. Opposite sides preserve the head and foot instead
+of rotating the pillow pattern to the other end. Source-pixel landmarks,
+recorded native-pixel donors, inference limits and regression controls are
+specified in [bed-parts.md](bed-parts.md).
