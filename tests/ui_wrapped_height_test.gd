@@ -54,10 +54,10 @@ func check_toast(label: String) -> void:
 
 func reading_limits(tag: String) -> Dictionary:
 	var ui=game.ui
-	var fixed:float=ui.panel.size.y-ui.menu_scroll.size.y
+	var fixed:float=ui.panel.size.y-ui.menu_box.size.y
 	var ideal:float=0
 	if ui.choice_prompt_scroll.visible:
-		fixed-=ui.choice_prompt_scroll.size.y
+		fixed-=ui.choice_prompt_box.size.y
 		var focus:Control=ui.get_viewport().gui_get_focus_owner()
 		ideal=ui.choice_prompt.get_line_height()+focus.get_combined_minimum_size().y
 	else:

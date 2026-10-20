@@ -19,12 +19,14 @@ static func allowance(ui) -> float:
  return slack
 static func defects(ui) -> Array[String]:
  var errors: Array[String] = []
- var fixed: float = ui.panel.size.y - ui.menu_scroll.size.y
+ # Chrome is what the card holds besides the SLOTS of its scroll areas: an empty strip under a fitted viewport
+ # is not chrome, it is padding the card must not carry.
+ var fixed: float = ui.panel.size.y - ui.menu_box.size.y
  var ideal := 0.0
  var floor_height := 0.0
  var viewport: float = ui.menu_scroll.size.y
  if ui.choice_prompt_scroll.visible:
-  fixed -= ui.choice_prompt_scroll.size.y
+  fixed -= ui.choice_prompt_box.size.y
   var focus: Control = ui.get_viewport().gui_get_focus_owner()
   if focus == null or not ui.column.is_ancestor_of(focus): focus = ui.column.get_child(0)
   var line := float(ui.choice_prompt.get_line_height())

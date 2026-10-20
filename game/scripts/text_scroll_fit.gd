@@ -15,6 +15,9 @@ var _ui_ref: WeakRef
 var _queued := false
 var _running := false
 var _again := false
+# A fit waits a frame for the scroll bar to take its viewport; a newer layout does not wait behind it.
+var _waiting := false
+var _generation := 0
 var _direction := 0
 var _stable_top := 0.0
 var _applying := false
@@ -77,7 +80,7 @@ func _atoms(node: Node, origin: float, found: Array[Vector2]) -> void:
 
 func _refit() -> void:
 	_queued = false
-	if _running:
+	if _running and not _waiting:
 		_again = true
 		return
 	_running = true
@@ -88,6 +91,8 @@ func _refit() -> void:
 		_changed()
 
 func _fit() -> void:
+	_generation += 1
+	var mine := _generation
 	var scroll: ScrollContainer = _scroll_ref.get_ref()
 	var box: Control = _box_ref.get_ref()
 	var ui = _ui_ref.get_ref()
@@ -154,8 +159,11 @@ func _fit() -> void:
 	_apply_top(scroll, chosen)
 	if absf(scroll.get_v_scroll_bar().value - chosen) > 1.0:
 		# The scroll bar had not yet taken the new viewport; once more after it has.
+		_waiting = true
 		await scroll.get_tree().process_frame
-		if not is_instance_valid(scroll) or not active: return
+		_waiting = false
+		# A layout that arrived meanwhile has fitted the page already, from a fresher slot.
+		if mine != _generation or not is_instance_valid(scroll) or not active: return
 		_apply_top(scroll, chosen)
 	_stable_top = chosen
 	_direction = 0
