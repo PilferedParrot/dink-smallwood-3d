@@ -3130,11 +3130,9 @@ project's castle k is 0.4878; Q7's camera gives sin 31.96 = 0.529; tan 31.96 = 0
 heights are apparent, Y = y cos(e): the two readings agree). The well alone takes its own k; the project's is untouched (`--well-k 0.4878`
 refits under it, for comparison). A repo-wide note, not changed here: every fitted solid's heights are apparent pixels, so all are
 vertically short by cos(e) (about 0.85) against their ground; consistent among themselves, so the well matches the cottages beside it.
-**Surfaces and donors.** The slope the camera saw is the sprite projected back; the far slope, undersides and eave edges are that slope's
-thatch (a pitched roof is symmetric about its ridge); a gable end is a plane the camera saw edge-on, so its straw is the slope's thatch
-read in the end's own plane (across by u, down by the height below the ridge, from the drawn left end), where the old mapping stretched one
-row into chevrons. The palette's pure black inside the base and the posts (31% of the base's pixels: the drawn gaps between stones, a
-post's shaded face) takes the nearest lit pixel of the same part (`void_fill`, `prop_solids.gd _texture`). Named inference, not original.
+**Surfaces and donors.** (Revised by the fix round below.) The slope the camera saw is the sprite projected back; the far slope, undersides, eave
+edges and ends are that slope's thatch (a pitched roof is symmetric about its ridge). The palette's pure black inside the BASE (31% of its
+pixels: the drawn gaps between stones) takes the nearest lit pixel of the same part (`void_fill`, `prop_solids.gd _texture`). Named inference, not original.
 **Gates.** G1 (`tests/fps_well_g1.gd`, `tools/well_g1.py`): the built solid rendered alone through the sprite's camera and read by the same
 instrument as the sprite. Pre-registered: T1 rake slope within 0.15 of 1.44, T2 prism gap at most 3 px, T3 apparent pitch within 0.10 of
 0.62. Built: 1.35, 2.7 px, 0.60: pass. The flat slab (the RC3 fit, commit 53bf89f, same instrument): 0.66, 1.0 px, 0.10: T1 and T3 FAIL, T2
@@ -3146,3 +3144,34 @@ resolution, about 9%. Evidence: `tmp/p4d-evidence/` (not committed).
 of the same picture: it reads as dark stone, no longer black blocks, but the mouth is not a hole. The posts are two, as drawn. The roof's
 depth against height is resolved only by the posts' feet (silhouette degenerate). Tests: `test_fps_landmarks.py` (the well is a compound
 solid; its pitch re-measured from the sprite, the flat control fails), `test_fps_cards.py` (the well is no card).
+
+### P4d fix round: the well's materials at eye level (2026-10-20; Sonnet 5.5 unit, lead's view of the first candidate e13b2ed)
+
+The lead's view of the 8-direction sheet: structure right, materials not. **W1 posts** read light tan with vertical streaks where the sprite's
+posts are dark wood with a narrow lit edge. Measured first (`tools/well_materials.py`, on the engine's own mesh and texture dumped by
+`tests/fps_well_dump.gd`; every side face of the posts sampled by area, the texel the UV lands on): mean luminance 94.4 against the sprite's
+post pixels' 63.6 (+48%), darkest quartile 45 against 0. **What broke:** the post's palette black (its shaded face, two drawn columns of six) was
+replaced by the nearest lit pixel (`void_fill`, applied to the posts as to the stone), so both faces of every post were the lit run, and the lit
+run's four columns stretched into vertical stripes. **Why we made it:** a heuristic misapplied. The void rule was written for the stone base (black
+gaps between stones are not a colour a solid has on every side) and extended to the posts by analogy, with no measurement of what a post's black is:
+here it is a face, not a gap. **Fix:** no `void_fill` on the posts; `fit.faces` (the drawn post's dark and lit column spans, from `landmark_fit.py`)
+maps the face the camera saw turned to the right (the sprite's light) to the lit columns and the other to the dark columns, each at its drawn
+width and down the post's own rows; a face never seen takes the opposite one's (the box rule), so every side shows one dark and one lit face.
+After: 63.5 against 63.6, dark quartile 0.0 against 0.0. Pre-registered: mean within 15%, dark quartile at most 10 levels above. The control
+(the old void-filled build, run by the same test) fails both. Class of the bug: any part whose black is a drawn face, not a gap; the posts were
+the only such part in the compound.
+**W2 roof** read as scrambled diagonal stripes, dark lines across the slope and streaks on the ends. Density first: the old top, underside and
+eave faces were at 0.8-1.06 texels per true px (no smear at a constant density, so the projection was not wrong on the slope); the ENDS were
+stretched 4.6 to 1 (sigma 1.47 along, 0.32 across). The rest was the picture itself: the sprite's pixel grid, projected onto a roof yawed 45
+degrees, lands as diamonds (the diagonal stripes), and wherever a UV left the roof's lit planks (the overhang, the rim, a post's knob) the texture
+was the nearest pixel filled outward (the dark lines and streaks). **What broke:** the straw was read from the sprite in place, with no patch of
+its own. **Why:** reasoning that stopped short: "exact projection" is right for the one slope the camera saw and was extended to faces it
+cannot describe (ends, undersides, overhang), where the exact projection has nothing to read. **Fix** (`prop_solids.gd _thatch`): the straw is
+a patch rectified into the slope's own axes (across the ridge, down the slope, one texel a source pixel, bilinear), read from the lit planks one
+pixel in from their edge; what the camera never drew is that patch's own largest drawn rectangle repeated mirrored (no seam, no streak). Every
+face cuts it by its own two axes; the ends and the eave's edge take a band of it as wide as the thickness. After: every face within 1% of the
+top slope's density on both axes (pre-registered 35%). Geometry, G1 and the collision are unchanged. The thatch is now a named inference
+(a mirrored repeat of the sprite's own straw), not the original's pixels, wherever it is not the one slope the camera saw.
+**Still open.** The posts' drawn width is six columns (two dark, four lit), not the eight the fit assumed (the lit run plus DARK = 2 each side):
+the right pad is background, so the post's side may be a third too thick (it sets the roof's 5.7 px thickness); not changed (geometry, G1).
+The posts' lit run is also unequal to the dark one (4:2), which a 45 degree post would not give. Both are questions for the geometry, not the material.

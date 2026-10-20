@@ -195,8 +195,12 @@ def well_fit(rgba: np.ndarray, k: float | None) -> dict | None:
         u = float((np.array([b[0], b[1]]) - ctr) @ ex)
         u_near = max(0.0, abs(u) - side / 2)
         b.append(round(ridge - thick - rise * u_near / (rw / 2) - rim, 2))
-    out_posts = {'class': 'box', 'size': base['size'], 'cx': cx, 'cz': cz, 'k': k, 'w': round(side, 2), 'd': round(side, 2),
-                 'yaw': round(float(yaw), 4), 'h': round(ridge - thick - rise - rim, 2), 'boxes': boxes, 'mask': pack(post_px), 'void_fill': True}
+    # The drawn post is its shaded columns (DARK of them, black) then its lit run: the box's two faces seen take those, at their drawn width.
+    wp = posts[0]['x1'] - posts[0]['x0']
+    assert all(p['x1'] - p['x0'] == wp for p in posts), 'the two posts are drawn as wide as each other'
+    faces = {'dark': [-wp / 2, -wp / 2 + DARK], 'lit': [-wp / 2 + DARK, wp / 2 - DARK]}
+    out_posts = {'class': 'box', 'faces': faces, 'size': base['size'], 'cx': cx, 'cz': cz, 'k': k, 'w': round(side, 2), 'd': round(side, 2),
+                 'yaw': round(float(yaw), 4), 'h': round(ridge - thick - rise - rim, 2), 'boxes': boxes, 'mask': pack(post_px)}  # no void_fill: the post's shaded face is drawn black, and a post is half shaded faces
     out_roof = {'class': 'gable', 'size': base['size'], 'cx': cx, 'cz': cz, 'k': k, 'w': round(rw, 2), 'd': round(rd, 2),
                 'yaw': round(float(yaw), 4), 'h': round(thick, 2), 'boxes': [[round(xr, 2), round(zr, 2), round(ridge - rise - thick, 2)]],
                 'pitch': round(pitch, 3), 'rise': round(rise, 2), 'ridge': round(ridge, 2), 'rake_slope': round(E['rake_slope'], 3),

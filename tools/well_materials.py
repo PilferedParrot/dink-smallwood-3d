@@ -1,0 +1,152 @@
+#!/usr/bin/env python3
+"""The well's materials at eye level (docs/DIRECTION.md, "P4d fix round"): what the built faces SHOW, measured from the engine's own
+mesh and texture (tests/fps_well_dump.gd) against the sprite, not from the fit's numbers.
+
+    python tools/well_materials.py <dump dir> [--label NAME] [--json out.json]
+
+W1 posts. Every side face of the posts is sampled uniformly by its true area; each sample is the texel the face's UV lands on (the
+engine samples nearest). The reference is the sprite's own post pixels (the drawn posts' columns, between the roof and the stone, the
+roof's and the stone's pixels excluded). Both are summarised by the mean luminance and the mean luminance of the darkest quartile.
+Pre-registered before the first measurement (2026-10-20): the faces are made of the same pixels at their drawn width, so the mean
+luminance must agree within 15 % of the sprite's, and the darkest quartile may sit at most 10 levels (of 255) above the sprite's (the
+sprite's dark face is near black: a face filled with the lit edge is 60-100 levels above it).
+W2 roof. Each face of the roof (a slope's top, its underside, its eave's edge, its two ends) is a plane that takes the sprite's picture
+by UV. Its Jacobian (texels per true px, along the face's two in-plane axes) is the density of the straw drawn on it: sigma_down is
+along the slope (the sprite's rows along it), sigma_ridge along the ridge. A UV error shows as a face whose densities differ from the
+top slope's (stretched, a sigma near 0 is a smear). Pre-registered: every face of the roof keeps both densities within 35 % of the top
+slope's (a plane of the same straw is cut from the same cloth; a thickness face cannot match exactly because the picture's rows come
+from the slope it is cut from, hence 35 %), and no face has a density below 0.4 of the top slope's.
+"""
+from __future__ import annotations
+import argparse, json, sys
+from pathlib import Path
+import numpy as np
+from PIL import Image
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import landmark_fit as L  # noqa: E402
+import prop_fit as P  # noqa: E402
+
+LUM = np.array([0.299, 0.587, 0.114])
+
+
+def lum(rgb: np.ndarray) -> np.ndarray:
+    return np.asarray(rgb, float) @ LUM
+
+
+def stats(rgb: np.ndarray) -> dict:
+    y = np.sort(lum(rgb))
+    q = y[:max(1, len(y) // 4)]
+    return {'n': int(len(y)), 'mean_lum': float(y.mean()), 'dark_quartile_lum': float(q.mean()), 'mean_rgb': [float(v) for v in np.mean(rgb, axis=0)]}
+
+
+def sprite_posts() -> np.ndarray:
+    rgba = P.load('assets/graphics/struct/Landmark/landm-01.png')
+    body, roof, base, posts, warm = L.segment(rgba)
+    region = np.zeros_like(body)
+    for p in posts:
+        region[p['top']:p['foot'], p['x0']:p['x1']] = True
+    region &= body & ~roof & ~base
+    return rgba[region][:, :3].astype(float)
+
+
+def triangles(part: dict, size):
+    v = np.array(part['verts'], float)
+    uv = np.array(part['uvs'], float) * np.array(size, float)
+    idx = np.array(part['index']).reshape(-1, 3)
+    return v, uv, idx
+
+
+def sample_faces(part: dict, tex: np.ndarray, size, rng, per_area=4.0, vertical_only=True):
+    """Texels under points drawn uniformly by true area over the part's (vertical) faces. Returns an (n, 3) array of RGB."""
+    v, uv, idx = triangles(part, size)
+    out = []
+    for t in idx:
+        a, b, c = v[t]
+        n = np.cross(b - a, c - a)
+        area = np.linalg.norm(n) / 2
+        if area < 1e-9 or (vertical_only and abs(n[1]) / (2 * area) > 0.5):
+            continue
+        m = max(1, int(round(area * per_area)))
+        r = rng.random((m, 2))
+        f = r.sum(1) > 1
+        r[f] = 1 - r[f]
+        w = np.column_stack([1 - r.sum(1), r[:, 0], r[:, 1]])
+        p = w @ uv[t]
+        x = np.clip(np.floor(p[:, 0]).astype(int), 0, size[0] - 1)
+        y = np.clip(np.floor(p[:, 1]).astype(int), 0, size[1] - 1)
+        out.append(tex[y, x, :3].astype(float))
+    return np.concatenate(out)
+
+
+def face_jacobians(part: dict, size) -> list:
+    """Per quad (four vertices): (sigma_ridge, sigma_down) texels per true px, from the quad's first triangle, in the quad's own plane:
+    the in-plane axis along the face's top edge (horizontal: the ridge direction for a slope) and the one across it."""
+    v, uv, idx = triangles(part, size)
+    out = []
+    for q in range(len(v) // 4):
+        P4 = v[4 * q:4 * q + 4]
+        U4 = uv[4 * q:4 * q + 4]
+        e1 = P4[1] - P4[0]
+        e2 = P4[3] - P4[0]
+        # orthonormal in-plane basis from e1 (a), then the part of e2 orthogonal to it (b)
+        a = e1 / np.linalg.norm(e1)
+        b = e2 - a * (e2 @ a)
+        b /= np.linalg.norm(b)
+        M = np.array([[e1 @ a, e2 @ a], [e1 @ b, e2 @ b]])  # plane coordinates of the two edges (columns)
+        D = np.column_stack([U4[1] - U4[0], U4[3] - U4[0]])  # their UV deltas
+        J = D @ np.linalg.inv(M)  # UV per plane unit: 2x2
+        s = np.linalg.svd(J, compute_uv=False)
+        out.append({'quad': q, 'len_e1': float(np.linalg.norm(e1)), 'len_e2': float(np.linalg.norm(e2)), 'sigma_max': float(s[0]), 'sigma_min': float(s[1]),
+                    'aspect': float(s[0] / max(s[1], 1e-9)), 'area_uv_per_true': float(abs(np.linalg.det(J)))})
+    return out
+
+
+NAMES = ['top', 'under', 'eave', 'end-', 'end+']
+
+
+def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument('dir')
+    ap.add_argument('--label', default='')
+    ap.add_argument('--json')
+    a = ap.parse_args()
+    d = Path(a.dir)
+    dump = json.loads((d / 'surfaces.json').read_text())
+    parts = dump['parts']
+    rng = np.random.default_rng(1)
+    rgba0 = P.load('assets/graphics/struct/Landmark/landm-01.png')
+    size = (rgba0.shape[1], rgba0.shape[0])
+    res = {'label': a.label}
+    # W1
+    tex = np.array(Image.open(d / parts[1]['texture']).convert('RGBA'))
+    built = stats(sample_faces(parts[1], tex, size, rng))
+    ref = stats(sprite_posts())
+    res['W1_posts'] = {'sprite': ref, 'built': built,
+                       'mean_rel_err': built['mean_lum'] / ref['mean_lum'] - 1,
+                       'T_mean': abs(built['mean_lum'] / ref['mean_lum'] - 1) <= 0.15,
+                       'dark_quartile_excess': built['dark_quartile_lum'] - ref['dark_quartile_lum'],
+                       'T_dark': built['dark_quartile_lum'] - ref['dark_quartile_lum'] <= 10.0}
+    # W2
+    tsize = Image.open(d / parts[2]['texture']).size
+    jac = face_jacobians(parts[2], tsize)
+    for j in jac:
+        j['name'] = ('s0-' if j['quad'] < 5 else 's1-') + NAMES[j['quad'] % 5]
+    res['W2_roof'] = {'faces': jac}
+    top = jac[0]
+    fails = []
+    for j in jac:
+        j['rel_max'] = j['sigma_max'] / top['sigma_max']
+        j['rel_min'] = j['sigma_min'] / top['sigma_min']
+        j['ok'] = abs(j['rel_max'] - 1) <= 0.35 and abs(j['rel_min'] - 1) <= 0.35 and j['rel_min'] >= 0.4 and j['rel_max'] >= 0.4
+        if not j['ok']:
+            fails.append(j['name'])
+    res['W2_roof']['reference_face'] = top['name']
+    res['W2_roof']['failing_faces'] = fails
+    print(json.dumps(res, indent=1))
+    if a.json:
+        Path(a.json).write_text(json.dumps(res, indent=1))
+
+
+if __name__ == '__main__':
+    main()

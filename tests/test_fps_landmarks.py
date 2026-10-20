@@ -100,3 +100,65 @@ def test_the_wells_pitch_is_measured_from_its_own_edges_and_a_flat_slab_fails_it
     assert roof["ridge"] - roof["rise"] > roof["boxes"][0][2] - 1e-6  # the eaves stand above the underside's lowest edge
     for X, Z, y0, h in posts["boxes"]:  # a post's top is in the roof's underside, below its top
         assert y0 + h <= roof["ridge"] - roof["h"] + 0.6 and y0 + h > roof["ridge"] - roof["rise"] - roof["h"] - 1, (X, Z, y0, h)
+
+
+def _dump_well(tmp_path, name, fits=None):
+    """tests/fps_well_dump.gd: the well's built meshes and textures (headless), read by tools/well_materials.py."""
+    env = {k: v for k, v in os.environ.items() if k != "WAYLAND_DISPLAY"}
+    env.update({"XDG_CONFIG_HOME": str(tmp_path / "c"), "XDG_DATA_HOME": str(tmp_path / "d"), "XDG_CACHE_HOME": str(tmp_path / "k")})
+    out = tmp_path / name
+    args = [GODOT, "--headless", "--audio-driver", "Dummy", "--path", str(ROOT / "game"), "--script", str(ROOT / "tests/fps_well_dump.gd"), "--",
+            f"--out={out}"] + ([f"--fits={fits}"] if fits else [])
+    result = subprocess.run(args, cwd=ROOT, env=env, capture_output=True, text=True, timeout=600, check=False)
+    assert "SCRIPT ERROR" not in result.stderr, result.stderr[-2000:]
+    assert (out / "surfaces.json").is_file(), result.stdout[-2000:] + result.stderr[-2000:]
+    return out
+
+
+def _materials(out):
+    import json
+    import sys
+
+    sys.path.insert(0, str(ROOT / "tools"))
+    import numpy as np
+    import well_materials as M
+    from PIL import Image
+    import prop_fit as P
+
+    dump = json.loads((out / "surfaces.json").read_text())
+    rgba = P.load("assets/graphics/struct/Landmark/landm-01.png")
+    size = (rgba.shape[1], rgba.shape[0])
+    tex = np.array(Image.open(out / dump["parts"][1]["texture"]).convert("RGBA"))
+    built = M.stats(M.sample_faces(dump["parts"][1], tex, size, np.random.default_rng(1)))
+    ref = M.stats(M.sprite_posts())
+    tsize = Image.open(out / dump["parts"][2]["texture"]).size
+    jac = M.face_jacobians(dump["parts"][2], tsize)
+    return built, ref, jac
+
+
+def test_the_wells_posts_show_the_sprites_colours_and_a_filled_dark_face_fails_it(tmp_path):
+    # P4d fix round W1: every side face of the posts, sampled by area, has the sprite's own post pixels' mean luminance (within 15 %) and
+    # dark quartile (at most 10 levels above): the shaded face is the sprite's black, the lit one its lit run, each at its drawn width.
+    # Control (the old build: the posts' pure black replaced by the nearest lit pixel, void_fill) is +48 % brighter and 45 levels
+    # above in its dark quartile: the instrument can fail.
+    import json
+
+    built, ref, _ = _materials(_dump_well(tmp_path, "now"))
+    assert abs(built["mean_lum"] / ref["mean_lum"] - 1) <= 0.15, (built, ref)
+    assert built["dark_quartile_lum"] - ref["dark_quartile_lum"] <= 10.0, (built, ref)
+    path = "assets/graphics/struct/Landmark/landm-01.png"
+    fits = json.loads((ROOT / "game/prototype/landmarks.json").read_text())
+    fits[path]["parts"][0]["void_fill"] = True
+    fits[path]["parts"][0].pop("faces")
+    (tmp_path / "old.json").write_text(json.dumps({path: fits[path]}))
+    old, _, _ = _materials(_dump_well(tmp_path, "old", str(tmp_path / "old.json")))
+    assert old["mean_lum"] / ref["mean_lum"] - 1 > 0.15 and old["dark_quartile_lum"] - ref["dark_quartile_lum"] > 10.0, (old, ref)
+
+
+def test_every_face_of_the_wells_roof_keeps_the_straws_density(tmp_path):
+    # P4d fix round W2: the straw is one rectified patch; each face of the roof (a slope's top, underside, eave edge, two ends) has the
+    # top slope's texel density along both its axes within 35 % (the old mapping stretched the ends 4.6 to 1: sigma 1.47 and 0.32).
+    _, _, jac = _materials(_dump_well(tmp_path, "now"))
+    top = jac[0]
+    for j in jac:
+        assert abs(j["sigma_max"] / top["sigma_max"] - 1) <= 0.35 and abs(j["sigma_min"] / top["sigma_min"] - 1) <= 0.35, (j, top)
