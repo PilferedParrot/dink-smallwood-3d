@@ -506,7 +506,32 @@ func _focus_changed(control: Control) -> void:
 		for scroll in root.find_children("*", "ScrollContainer", true, false):
 			if scroll.has_meta("focus_scroll_owner"): scroll.get_meta("focus_scroll_owner").note_focus_lost()
 	if control != null and is_instance_valid(root) and root.is_ancestor_of(control):
+		_watch_interaction(control)
 		_keep_focus_visible(control, page_serial)
+
+# Changing the focused control is an interaction with it: after a manual scroll it
+# must come back into view, or the player edits something they cannot see.
+func _watch_interaction(control: Control) -> void:
+	if control is Range:
+		var changed := _range_interacted.bind(control)
+		if not control.value_changed.is_connected(changed): control.value_changed.connect(changed)
+	elif control is BaseButton:
+		var toggled_call := _toggle_interacted.bind(control)
+		var pressed_call := _button_interacted.bind(control)
+		if not control.toggled.is_connected(toggled_call): control.toggled.connect(toggled_call)
+		if not control.pressed.is_connected(pressed_call): control.pressed.connect(pressed_call)
+
+func _range_interacted(_value: float, control: Control) -> void:
+	_reveal_interacted(control)
+
+func _toggle_interacted(_on: bool, control: Control) -> void:
+	_reveal_interacted(control)
+
+func _button_interacted(control: Control) -> void:
+	_reveal_interacted(control)
+
+func _reveal_interacted(control: Control) -> void:
+	if is_instance_valid(control) and get_viewport() != null and get_viewport().gui_get_focus_owner() == control: _keep_focus_visible(control, page_serial, true)
 
 func _focus_request_current(control: Control, serial: int, request: int) -> bool:
 	return request == focus_visibility_request and serial == page_serial and is_inside_tree() and is_instance_valid(control) and control.is_inside_tree() and control.is_visible_in_tree() and get_viewport().gui_get_focus_owner() == control
@@ -534,7 +559,7 @@ func _focus_scroll_owner(scroll: ScrollContainer):
 		scroll.set_meta("focus_scroll_owner", FOCUS_SCROLL_OWNER.new(scroll, self))
 	return scroll.get_meta("focus_scroll_owner")
 
-func _keep_focus_visible(control: Control, serial: int) -> void:
+func _keep_focus_visible(control: Control, serial: int, interaction: bool = false) -> void:
 	focus_visibility_request += 1
 	var request := focus_visibility_request
 	if not _focus_request_current(control, serial, request): return
@@ -542,7 +567,7 @@ func _keep_focus_visible(control: Control, serial: int) -> void:
 	while parent != null:
 		if parent is ScrollContainer:
 			var owner = _focus_scroll_owner(parent)
-			if owner.request_focus(control, serial): await owner.settled
+			if owner.request_focus(control, serial, interaction): await owner.settled
 			if not _focus_request_current(control, serial, request): return
 		parent = parent.get_parent()
 

@@ -14,6 +14,7 @@ var capture := false
 var case_tag := ""
 var only_large := false
 var large_window := false
+var only_tags: PackedStringArray = []
 
 func _initialize() -> void:
  for arg in OS.get_cmdline_user_args():
@@ -21,6 +22,7 @@ func _initialize() -> void:
   if arg == "--capture": capture = true
   if arg == "--large-only": only_large = true
   if arg == "--1080": large_window = true
+  if arg.begins_with("--only="): only_tags = arg.trim_prefix("--only=").split(",")
  run.call_deferred()
 
 func check(ok: bool, message: String) -> void:
@@ -168,11 +170,12 @@ func scan(tag: String, save := true) -> void:
    check(PHRASES.agrees(label),"phrase oracle reproduces the wrapping of: " + label.text.left(40))
    for phrase in PHRASES.split_phrases(label): check(false,"key and action split across lines: " + phrase)
  records.append({"tag":tag,"size":[root.size.x,root.size.y],"scale":ui.text_scale,"plain":ui.plain_font,"boxes":boxes})
- if capture and save:
+ if capture and save and (only_tags.is_empty() or only_tags.has(tag)):
   await RenderingServer.frame_post_draw
   root.get_texture().get_image().save_png(output_dir.path_join(tag + ".png"))
 
 func focus_actions(tag: String) -> void:
+ if capture and not only_tags.is_empty(): return
  var last_scroll := Vector2(-1,-1)
  var frame_index := 0
  for node in ui._focusable_children(ui.panel):

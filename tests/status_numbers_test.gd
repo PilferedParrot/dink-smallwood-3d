@@ -9,8 +9,12 @@ const SCALES := [1.0, 1.05, 1.15, 1.3, 1.35, 1.5, 2.0]
 var ui
 var failures: Array[String] = []
 var report: Array = []
+var output_dir := ""
 
-func _initialize() -> void: run.call_deferred()
+func _initialize() -> void:
+	for arg in OS.get_cmdline_user_args():
+		if arg.begins_with("--out-dir="): output_dir = arg.trim_prefix("--out-dir=")
+	run.call_deferred()
 
 func check(ok: bool, message: String) -> void:
 	if not ok:
@@ -64,6 +68,11 @@ func run() -> void:
 				var image := root.get_texture().get_image()
 				check(image.get_size() == Vector2i(size), "captured " + str(image.get_size()) + " for a " + str(size) + " window")
 				var ink := ink_pixels(image, strength_rect())
+				if not output_dir.is_empty():
+					var top: float = minf(dock.readout_top(), dock.global_position.y + dock.art_rect().position.y) - 8.0
+					var crop: Rect2 = root.get_final_transform() * Rect2(0, top, root.size.x / root.get_final_transform().get_scale().x, 400.0)
+					crop = crop.intersection(Rect2(Vector2.ZERO, Vector2(image.get_size())))
+					image.get_region(Rect2i(crop)).save_png(output_dir.path_join("status-%d-%s-%03d.png" % [size.x, "plain" if plain else "default", roundi(scale * 100)]))
 				if readout:
 					check(drawn.is_empty(), tag + ": the art carries no numbers once the readout shows them")
 					var readout_size: int = dock.readout_labels.life.get_theme_font_size("font_size")

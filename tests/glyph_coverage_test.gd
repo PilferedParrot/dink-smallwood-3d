@@ -25,8 +25,38 @@ func calibrate() -> void:
   check(ORACLE.missing(fonts[name], "go \u2197").size() == 1, name + ": a glyph no shipped font carries is rejected")
   check(ORACLE.missing(fonts[name], "▶◀").size() == 2, name + ": both pager triangles are rejected")
 
+# A player's own layout can name a key in a script neither bundled font carries (Cyrillic
+# here). That label may use the system fallback: it is the player's data, not authored text.
+# Machine-dependent by nature, so it skips (and says so) when no installed font has it.
+func fallback_row() -> void:
+ var sample := "\u0416"
+ var plain: FontFile = ORACLE.PLAIN
+ check(not plain.has_char(0x416), "plain font itself lacks the Cyrillic sample (so only a fallback can draw it)")
+ var strict := FontFile.new()
+ strict.data = plain.data
+ strict.allow_system_fallback = false
+ var strict_line := TextLine.new()
+ strict_line.add_string(sample, strict, 24)
+ var open_line := TextLine.new()
+ open_line.add_string(sample, plain, 24)
+ var strict_missing := glyph_missing(strict_line)
+ check(strict_missing, "look-alike: with system fallback off the sample has no glyph")
+ if OS.get_system_fonts().is_empty():
+  print("GLYPH FALLBACK ROW SKIPPED: no installed system fonts on this machine")
+  return
+ var drawn := not glyph_missing(open_line)
+ print("GLYPH FALLBACK ROW ", "renders through the system fallback" if drawn else "no installed font carries it (tofu on this machine)")
+ check(drawn, "a non-Latin key label renders through the system fallback, not as tofu")
+
+func glyph_missing(line: TextLine) -> bool:
+ for glyph in TextServerManager.get_primary_interface().shaped_text_get_glyphs(line.get_rid()):
+  # A glyph the shaper cannot find is drawn as a hex box: no font owns it.
+  if glyph.get("font_rid", RID()) == RID(): return true
+ return false
+
 func run() -> void:
  calibrate()
+ fallback_row()
  var fonts := ORACLE.fonts()
  var printable := ""
  for code in range(33, 127): printable += char(code)
