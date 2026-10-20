@@ -595,7 +595,7 @@ func _fps_attack() -> void:
 		# Campaign bow scripts manufacture their own top-down missile.  First
 		# person uses the same damage/event bridge below instead.
 		if weapon not in ["item-b1","item-b2","item-b3"]:
-			vm.run(weapon, "use", 1)
+			_run_equipment(weapon, "use")
 			if weapon == "item-pig": fps_feed_use = 1.0
 	if weapon in ["item-b1", "item-b2", "item-b3"]:
 		_fps_launch_projectile(false)
