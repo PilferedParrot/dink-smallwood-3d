@@ -92,8 +92,11 @@ func _texture(path: String, fit: Dictionary = {}) -> ImageTexture:
 	if fit.has("mask"):
 		var bits := Marshalls.base64_to_raw(str(fit.mask))
 		var data := img.get_data()
+		# fit.void_fill: the palette's pure black inside the part is a drawn gap (the outline, the shadow between stones, a post's
+		# shaded face), not a colour a solid can have on every side; it takes the nearest lit pixel of the same part.
+		var voids := bool(fit.get("void_fill", false))
 		for p in img.get_width()*img.get_height():
-			if not (bits[p >> 3] >> (7 - (p & 7))) & 1: data[p*4 + 3] = 0
+			if not (bits[p >> 3] >> (7 - (p & 7))) & 1 or (voids and data[p*4] == 0 and data[p*4 + 1] == 0 and data[p*4 + 2] == 0): data[p*4 + 3] = 0
 		img.set_data(img.get_width(), img.get_height(), false, Image.FORMAT_RGBA8, data)
 	return buildings._texture(buildings.filled(img))
 
@@ -313,6 +316,7 @@ func _gable(path: String, fit: Dictionary) -> Array:
 	var top := func(u: float) -> float: return ridge - rise*absf(u)/hw
 	var lat := func(u: float, v: float) -> Vector2: return centre + u*across + v*along
 	var quads: Array = [] # each: four (u across, v along, height) corners, counter-clockwise seen from outside
+	var ends: Array = [] # the indices of the gable ends
 	for sgn in [-1.0, 1.0]:
 		var ue: float = sgn*hw
 		var ye: float = top.call(ue)
@@ -320,11 +324,13 @@ func _gable(path: String, fit: Dictionary) -> Array:
 		quads.append([[0.0, -hd, ridge - thick], [ue, -hd, ye - thick], [ue, hd, ye - thick], [0.0, hd, ridge - thick]]) # its underside
 		quads.append([[ue, -hd, ye], [ue, hd, ye], [ue, hd, ye - thick], [ue, -hd, ye - thick]]) # the eave's edge
 		for v in [-hd, hd]: # the end: the shell's cross-section
+			ends.append(quads.size())
 			quads.append([[0.0, v, ridge], [ue, v, ye], [ue, v, ye - thick], [0.0, v, ridge - thick]])
 	var verts := PackedVector3Array()
 	var tex_uv := PackedVector2Array()
 	var index := PackedInt32Array()
-	for quad in quads:
+	for qi in quads.size():
+		var quad: Array = quads[qi]
 		var base := verts.size()
 		for c in quad:
 			var q: Vector2 = lat.call(c[0], c[1])
@@ -333,7 +339,11 @@ func _gable(path: String, fit: Dictionary) -> Array:
 			# thickness below the top (the underside, the eave's edge, the ends) takes the point that far up the slope, so the thickness
 			# shows thatch, not a sliver of one row stretched down.
 			var us := absf(absf(float(c[0])) - (float(top.call(float(c[0]))) - float(c[2]))*cos(atan(rise/hw)))
-			var qs: Vector2 = lat.call(seen*us, c[1])
+			# An end is a plane of its own that the camera saw edge-on: its one row of thatch would stretch down it. Its straw is the
+			# slope's, read in the end's own plane: across by u, and down the end by the height below the ridge, from the drawn
+			# end (the ridge's left end, +v, where the slope lies whole in the picture).
+			var lateral: float = hd - (ridge - float(c[2])) if ends.has(qi) else float(c[1])
+			var qs: Vector2 = lat.call(seen*us, lateral)
 			tex_uv.append(Vector2(cx + qs.x, cz + k*qs.y - float(top.call(us)))/size)
 		index.append_array(PackedInt32Array([base, base + 1, base + 2, base, base + 2, base + 3]))
 	return [[_arrays(verts, tex_uv, index), _texture(path, fit)]]

@@ -3109,3 +3109,40 @@ the unchanged original aftermath regression cover it, alongside event re-entry
 controls. See [Script instances](SCRIPT_INSTANCES.md). The interrupted old gate
 and its failure remain separate evidence; only a new frozen gate can certify
 this corrected candidate.
+
+## P4d: the well stands solid, its roof's pitch measured (2026-10-20; Sonnet 5.5 unit)
+
+**Whether.** On the packed build of 4d66f27 (screen 408, eight directions, 70 and 150 px) the well was still the sprite: `prop_fitted`
+excluded `/landmark/` (lead's call 10-08, "worse than the sprite"), so it was a camera-facing card, the same picture from every side. The
+fitted solid, forced on, failed at eye level: a steep tent roof (smeared chevrons on the ends), a flat black plate for a base. The save
+machine is solid and reads from the front and the sides; its near half the sprite never draws stays a mirror (inherent, unchanged).
+**The roof's pitch is a measurement.** The roof shows one slope, so its silhouette is a parallelogram and its IoU cannot tell a pitch from a
+flat slab (gable 0.88 against flat 0.83; depth and height are degenerate). The clean edges can (`landmark_fit.roof_edges`): ridge slope
+-0.536, eave -0.575, right rake dy/dx 1.44 (edge sd under 0.7 px). Under the sprite's camera (screen = (X, k Z - Y)) a flat slab's rake
+has slope k tan(psi), about 0.56; the picture's is 1.44, and the difference is the rise. The roof is aligned with the scene's axes (psi 45
+degrees, the ridge's slope is k), the rake gives the half-run (29.3 px) and the rise (18.3 px): rise/run 0.62 apparent, 0.75 true (37
+degrees). The far rake's corner D - BC lands 1.8 px from the ridge line (a prism). The old fit borrowed the cottages' 1.1 apparent: a
+roof 40-70% too steep, and 20 px too narrow (half-run 20, not 29). Sensitivity: k 0.4878 (the project's) gives 0.76 apparent, 0.87 true; k
+0.529 (Q7's orthographic camera at 31.96 degrees, sin) gives about 0.68 and 0.80 true; psi 40-50 degrees spans 0.52-0.76 apparent. The
+cottages' own rise/run (0.8-1.1) was "read from the art by eye" (`facade_fit.py`: the score is flat in pitch), so it was never evidence.
+**k.** The ridge and the eave are horizontal edges of an axis-aligned roof, so their slope is k: 0.536 and 0.575, mean 0.556 (the
+project's castle k is 0.4878; Q7's camera gives sin 31.96 = 0.529; tan 31.96 = 0.625 is the ratio of depth to TRUE height, and the project's
+heights are apparent, Y = y cos(e): the two readings agree). The well alone takes its own k; the project's is untouched (`--well-k 0.4878`
+refits under it, for comparison). A repo-wide note, not changed here: every fitted solid's heights are apparent pixels, so all are
+vertically short by cos(e) (about 0.85) against their ground; consistent among themselves, so the well matches the cottages beside it.
+**Surfaces and donors.** The slope the camera saw is the sprite projected back; the far slope, undersides and eave edges are that slope's
+thatch (a pitched roof is symmetric about its ridge); a gable end is a plane the camera saw edge-on, so its straw is the slope's thatch
+read in the end's own plane (across by u, down by the height below the ridge, from the drawn left end), where the old mapping stretched one
+row into chevrons. The palette's pure black inside the base and the posts (31% of the base's pixels: the drawn gaps between stones, a
+post's shaded face) takes the nearest lit pixel of the same part (`void_fill`, `prop_solids.gd _texture`). Named inference, not original.
+**Gates.** G1 (`tests/fps_well_g1.gd`, `tools/well_g1.py`): the built solid rendered alone through the sprite's camera and read by the same
+instrument as the sprite. Pre-registered: T1 rake slope within 0.15 of 1.44, T2 prism gap at most 3 px, T3 apparent pitch within 0.10 of
+0.62. Built: 1.35, 2.7 px, 0.60: pass. The flat slab (the RC3 fit, commit 53bf89f, same instrument): 0.66, 1.0 px, 0.10: T1 and T3 FAIL, T2
+passes, so T2 is no discriminator. IoU of the built roof with the sprite's roof mask 0.75 (flat 0.68), reported, not gated: the mask lacks the
+ridge's overhang sliver and includes a post's knob, and the built mesh shows 5.7 px of thatch thickness below the eave (the thickness is a
+post's width, a named choice). The instrument reads the built mesh's k as 0.50 (ridge 0.476, eave 0.531) against the design's 0.556: its own
+resolution, about 9%. Evidence: `tmp/p4d-evidence/` (not committed).
+**Still wrong or open.** The base is the sprite's own dark stone (median luminance 30 of 255) wrapped round a cylinder, topped by a flat plate
+of the same picture: it reads as dark stone, no longer black blocks, but the mouth is not a hole. The posts are two, as drawn. The roof's
+depth against height is resolved only by the posts' feet (silhouette degenerate). Tests: `test_fps_landmarks.py` (the well is a compound
+solid; its pitch re-measured from the sprite, the flat control fails), `test_fps_cards.py` (the well is no card).
