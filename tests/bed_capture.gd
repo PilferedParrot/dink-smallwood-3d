@@ -3,7 +3,11 @@ extends "building_capture.gd"
 # Gallery views hide surrounding geometry so all four physical sides can be seen.
 var gallery_prop: Node3D=null
 var gallery_path: String=""
+func _cutaway(node: Node, world) -> void:
+	if node is MeshInstance3D and node.material_override!=null and node.material_override in [world.materials.get("ceiling"),world.materials.get("beam")]: node.visible=false
+	for child in node.get_children():_cutaway(child,world)
 func _capture_setup(game, view: Dictionary) -> void:
+	if bool(view.get("original",false)) and not bool(view.get("retain_ceiling",false)):_cutaway(game.scene_root,game.fp_world)
 	var wanted: Node=null
 	if view.has("prop_path"):
 		if gallery_path!=str(view.prop_path):
@@ -54,6 +58,7 @@ func _mask(game, view: Dictionary, folder: String) -> void:
 		var e: Dictionary=game.entities[id]
 		var visual: Node3D=game.visuals.get(id)
 		if visual==null or str(visual.get_meta("model_key",""))!="bed": continue
+		if view.has("target_x") and (absf(float(e.x)-float(view.target_x))>0.1 or absf(float(e.y)-float(view.target_y))>0.1):continue
 		var corners:=_mesh_corners(visual)
 		# Candidate envelope is derived from the source measurements, before any
 		# after-render: x=0..121, y=0..32, z=31..93 source pixels. Include the
@@ -74,7 +79,84 @@ func _mask(game, view: Dictionary, folder: String) -> void:
 	mask.save_png(folder.path_join(str(view.name)+"-mask-native.png"))
 	var file:=FileAccess.open(folder.path_join(str(view.name)+"-bounds.json"),FileAccess.WRITE)
 	file.store_string(JSON.stringify(boxes,"  "))
+func _meshes(node: Node) -> Array:
+	var out: Array=[]
+	if node is MeshInstance3D:out.append(node)
+	for child in node.get_children():out.append_array(_meshes(child))
+	return out
+func _white_alpha(old: Material) -> Material:
+	var mat:=StandardMaterial3D.new()
+	mat.shading_mode=BaseMaterial3D.SHADING_MODE_UNSHADED
+	mat.cull_mode=BaseMaterial3D.CULL_DISABLED
+	mat.albedo_color=Color.WHITE
+	if old is StandardMaterial3D and old.albedo_texture!=null:
+		var img: Image=old.albedo_texture.get_image()
+		if img.is_compressed():img.decompress()
+		img.clear_mipmaps();img.convert(Image.FORMAT_RGBA8)
+		for y in img.get_height():
+			for x in img.get_width():img.set_pixel(x,y,Color(1,1,1,img.get_pixel(x,y).a))
+		mat.albedo_texture=ImageTexture.create_from_image(img)
+		mat.transparency=BaseMaterial3D.TRANSPARENCY_ALPHA_SCISSOR
+		mat.alpha_scissor_threshold=0.5
+	return mat
+func _visibility(game, view: Dictionary, folder: String) -> void:
+	_blacken_for_source_mask(game)
+	game.fp_world.environment.background_mode=Environment.BG_COLOR
+	game.fp_world.environment.background_color=Color.BLACK
+	game.fp_world.environment.fog_enabled=false
+	var records: Array=[]
+	for id in game.entities:
+		var e: Dictionary=game.entities[id]
+		var visual: Node3D=game.visuals.get(id)
+		if visual==null or str(visual.get_meta("model_key",""))!="bed":continue
+		if view.has("target_x") and (absf(float(e.x)-float(view.target_x))>0.1 or absf(float(e.y)-float(view.target_y))>0.1):continue
+		var meshes:=_meshes(visual);var saved: Array=[]
+		for mesh in meshes:
+			var mats: Array=[]
+			for i in mesh.mesh.get_surface_count():mats.append(mesh.get_active_material(i))
+			saved.append([mesh.material_override,mats])
+			if mesh.material_override!=null:mesh.material_override=_white_alpha(mesh.material_override)
+			else:
+				for i in mesh.mesh.get_surface_count():mesh.set_surface_override_material(i,_white_alpha(mats[i]))
+		await RenderingServer.frame_post_draw;await RenderingServer.frame_post_draw
+		var img:=root.get_texture().get_image();var count:=0
+		var rows:=int(round(float(img.get_width())*(400.0/sqrt(2.0))/600.0))
+		img=img.get_region(Rect2i(0,(img.get_height()-rows)/2,img.get_width(),rows))
+		for y in img.get_height():
+			for x in img.get_width():
+				var c:=img.get_pixel(x,y)
+				if c.r>0.8 and c.g>0.8 and c.b>0.8:count+=1
+		img.save_png(folder.path_join(str(view.name)+"-visible-"+str(id)+".png"))
+		var record: Dictionary={"entity":id,"x":e.x,"y":e.y,"pixels":count}
+		if count==0 and bool(view.get("retain_ceiling",false)):record.occlusion="retained ceiling control"
+		if count==0 and not view.has("target_x") and not bool(view.get("retain_ceiling",false)):
+			var corners:=_mesh_corners(visual);var centre:=Vector3.ZERO
+			for point in corners:centre+=point/float(corners.size())
+			await physics_frame
+			var hit: Dictionary=game.get_world_3d().direct_space_state.intersect_ray(PhysicsRayQueryParameters3D.create(game.camera.global_position,centre,3))
+			if not hit.is_empty():
+				var owner: int=int(hit.collider.get_meta("entity_id",-1))
+				var first: Node3D=game.visuals.get(owner)
+				record.first_hit_entity=owner;record.first_hit_key=first.get_meta("model_key","") if first!=null else str(hit.collider.name)
+		records.append(record)
+		for j in meshes.size():
+			if meshes[j].material_override!=saved[j][0]:meshes[j].material_override=saved[j][0]
+			for i in saved[j][1].size():meshes[j].set_surface_override_material(i,saved[j][1][i])
+	var file:=FileAccess.open(folder.path_join(str(view.name)+"-visibility.json"),FileAccess.WRITE)
+	file.store_string(JSON.stringify(records,"  "))
+	print("BED VISIBILITY ",view.name," ",records)
 func _shoot(game, view: Dictionary, out_dir: String) -> void:
+	# A rendered material mutation belongs to one fresh scenario. Rebuild before
+	# every such view rather than restoring default/null material overrides.
+	if "--bed-visibility" in OS.get_cmdline_user_args():
+		game.vm.globals["vision"]=int(view.get("vision",0))
+		game.load_map(int(view.screen),false);game.vm.cancel_all()
+		game.set_process(false);game.set_physics_process(false);game.playing=false;game.ui.visible=false
+		game.entities[1].x=505.0;game.entities[1].y=340.0
+		game.fps_yaw=0.55;game.fps_pitch=-0.03;game._sync_fps_camera()
+		for id in game.entities:game.entities[id]["frozen"]=true
+		await process_frame
 	if game.fp_world.light!=null: game.fp_world.light.shadow_enabled=false
 	await super._shoot(game,view,out_dir)
 	if bool(view.get("original",false)) and "--bed-bounds-mask" in OS.get_cmdline_user_args():_mask(game,view,out_dir)
+	if bool(view.get("original",false)) and "--bed-visibility" in OS.get_cmdline_user_args():await _visibility(game,view,out_dir)

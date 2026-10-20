@@ -62,11 +62,27 @@ height/ray geometry. A separate control fails on the legacy head/foot
 reflection and passes the bed mapping. These checks measure the named material
 and mapping mechanisms, not general fidelity of arbitrary composite props.
 
-G2's fourteen committed source-camera masks are generated before examining any
-after-render. They contain the baseline mesh bounds and the measured candidate
-envelope, projected at each source hotspot and size, plus conservative raster
-and Lanczos3 kernel support. They include the old 70% stand-in's bounds.
-Frozen editor-layer fixtures skip scripts and campaign progression and disable
-shadows in both pictures. Zero changes are permitted outside these masks; an
-unrelated pixel mutation must fail each same mask. This is a controlled source
-projection regression, not a certificate of shadow appearance or campaign play.
+G2 compares fourteen room cutaways and sixteen isolated bed pictures. The
+room fixtures hide only inferred ceiling and beam material instances; source
+walls remain. Screens 6 and 36 naturally hide their beds behind fitted foreground
+walls (the white-bed mutation is invisible, and the first physics ray hit is a
+wall). Their whole pictures remain compared. Separate isolated fixtures expose
+each of all sixteen actual source beds from the same original camera.
+
+The masks are generated before examining any after-render. They contain the
+baseline mesh bounds and the measured candidate envelope, projected at the
+source hotspot and size, plus conservative raster and Lanczos3 kernel support.
+They include the old 70% stand-in's bounds. Frozen editor-layer fixtures skip
+scripts and campaign progression and disable shadows in both pictures. Zero
+changes are permitted outside these masks; an unrelated pixel mutation must
+fail the same mask. A rendered white-with-original-alpha bed mutation proves
+visibility inside the actual camera crop. An intact-ceiling control must fail
+this visibility condition. Each mutation starts from a fresh map scenario.
+
+The first exterior-style camera fixture saw only an indoor ceiling and gave a
+misleading zero-change result. Its frames were inspected and that result was
+rejected. The technical cause was camera occlusion; the process cause was
+reusing an outdoor harness without validating its indoor view first. These
+controls cover the camera's ability to see the changed object as well as pixel
+immutability. The gate remains a controlled source-projection regression, not
+a certificate of shadow appearance or campaign play.

@@ -1,0 +1,16 @@
+[
+  {
+    "entity": 51,
+    "occlusion": "retained ceiling control",
+    "pixels": 0,
+    "x": 235.0,
+    "y": 298.0
+  },
+  {
+    "entity": 52,
+    "occlusion": "retained ceiling control",
+    "pixels": 0,
+    "x": 448.0,
+    "y": 297.0
+  }
+]
