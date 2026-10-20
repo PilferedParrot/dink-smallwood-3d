@@ -78,6 +78,12 @@ var title_panel_style: StyleBoxEmpty
 var panel_underlay: ColorRect
 var hint_backing: PanelContainer
 var heading_row: VBoxContainer
+# Coalesce focus and adaptive-layout requests before reading native geometry.
+const FOCUS_SCROLL_OWNER = preload("res://scripts/focus_scroll_owner.gd")
+var focus_visibility_request := 0
+class FocusSortWait extends RefCounted:
+	signal finished(sorted: bool)
+	func complete(sorted: bool) -> void: finished.emit(sorted)
 var gameplay_hint_used := false
 var gameplay_hint_deadline_msec := 0
 const GAMEPLAY_HINT_SECONDS := 8.0
@@ -304,7 +310,7 @@ func _ready() -> void:
 	menu_scroll = scroll
 	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
-	scroll.follow_focus = true
+	_focus_scroll_owner(scroll)
 	contents.add_child(scroll)
 	column = VBoxContainer.new()
 	column.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -496,18 +502,48 @@ func _fit_dialogue_panel() -> void:
 		_keep_focus_visible.call_deferred(answer, page_serial)
 
 func _focus_changed(control: Control) -> void:
+	if control == null and is_instance_valid(root):
+		for scroll in root.find_children("*", "ScrollContainer", true, false):
+			if scroll.has_meta("focus_scroll_owner"): scroll.get_meta("focus_scroll_owner").note_focus_lost()
 	if control != null and is_instance_valid(root) and root.is_ancestor_of(control):
 		_keep_focus_visible(control, page_serial)
 
+func _focus_request_current(control: Control, serial: int, request: int) -> bool:
+	return request == focus_visibility_request and serial == page_serial and is_inside_tree() and is_instance_valid(control) and control.is_inside_tree() and control.is_visible_in_tree() and get_viewport().gui_get_focus_owner() == control
+
+func _sort_for_focus(container: Container) -> bool:
+	if not is_instance_valid(container) or not container.is_inside_tree(): return false
+	var completion := FocusSortWait.new()
+	var sorted := completion.complete.bind(true)
+	var exited := completion.complete.bind(false)
+	# queue_sort is deferred, including an already-pending sort. Attach both
+	# outcomes first; removing/freeing the container must also release the wait.
+	# Resume after _sort_children resets its pending flag; tree exit stays
+	# synchronous so teardown cancels the coroutine before its owner is freed.
+	container.sort_children.connect(sorted, CONNECT_ONE_SHOT | CONNECT_DEFERRED)
+	container.tree_exiting.connect(exited, CONNECT_ONE_SHOT)
+	container.queue_sort()
+	var completed: bool = await completion.finished
+	if is_instance_valid(container):
+		if container.sort_children.is_connected(sorted): container.sort_children.disconnect(sorted)
+		if container.tree_exiting.is_connected(exited): container.tree_exiting.disconnect(exited)
+	return completed
+
+func _focus_scroll_owner(scroll: ScrollContainer):
+	if not scroll.has_meta("focus_scroll_owner"):
+		scroll.set_meta("focus_scroll_owner", FOCUS_SCROLL_OWNER.new(scroll, self))
+	return scroll.get_meta("focus_scroll_owner")
+
 func _keep_focus_visible(control: Control, serial: int) -> void:
-	# Native focus-follow can run before an adaptive card, equipment description
-	# or menu body finishes resizing. Recheck after the nested layout settles.
-	await get_tree().process_frame
-	await get_tree().process_frame
-	if serial != page_serial or not is_instance_valid(control) or not control.is_inside_tree() or get_viewport().gui_get_focus_owner() != control: return
+	focus_visibility_request += 1
+	var request := focus_visibility_request
+	if not _focus_request_current(control, serial, request): return
 	var parent := control.get_parent()
 	while parent != null:
-		if parent is ScrollContainer: parent.ensure_control_visible(control)
+		if parent is ScrollContainer:
+			var owner = _focus_scroll_owner(parent)
+			if owner.request_focus(control, serial): await owner.settled
+			if not _focus_request_current(control, serial, request): return
 		parent = parent.get_parent()
 
 func _bindings_changed() -> void:
@@ -570,12 +606,12 @@ func _input(event: InputEvent) -> void:
 		var reading_scroll: ScrollContainer = controls_menu.scroll if page == "controls" else menu_scroll
 		var direction := int(event.is_action_pressed("ui_page_down")) - int(event.is_action_pressed("ui_page_up"))
 		if event.is_action_pressed("ui_home") or event.is_action_pressed("ui_end") or direction != 0:
-			if event.is_action_pressed("ui_home"): reading_scroll.scroll_vertical = 0
+			if event.is_action_pressed("ui_home"): _focus_scroll_owner(reading_scroll).set_position(0)
 			elif event.is_action_pressed("ui_end"):
-				reading_scroll.scroll_vertical = ceili(reading_scroll.get_v_scroll_bar().max_value)
+				_focus_scroll_owner(reading_scroll).set_position(ceili(reading_scroll.get_v_scroll_bar().max_value))
 			else:
 				var line := root.get_theme_font("font").get_height(menu_theme.default_font_size)
-				reading_scroll.scroll_vertical += roundi(direction * maxf(1,reading_scroll.size.y-line))
+				_focus_scroll_owner(reading_scroll).set_position(reading_scroll.scroll_vertical + roundi(direction * maxf(1,reading_scroll.size.y-line)))
 			controller_active = event is InputEventJoypadButton or event is InputEventJoypadMotion
 			_update_hint()
 			get_viewport().set_input_as_handled()
@@ -681,7 +717,7 @@ func _clear(title: String, next_page: String) -> void:
 	choice_prompt_scroll.hide()
 	choice_prompt_scroll.custom_minimum_size.y = 0
 	choice_prompt_scroll.scroll_vertical = 0
-	menu_scroll.scroll_vertical = 0
+	_focus_scroll_owner(menu_scroll).request_reset(page_serial, true)
 	for child in column.get_children():
 		column.remove_child(child)
 		child.queue_free()
@@ -703,11 +739,8 @@ func _clear(title: String, next_page: String) -> void:
 	_reset_scroll_after_layout.call_deferred(page_serial)
 
 func _reset_scroll_after_layout(serial: int) -> void:
-	# Replacing content changes the old scroll range after the container lays out.
-	# Reset after deferred focus as well, so each page opens with its heading.
-	await get_tree().process_frame
-	await get_tree().process_frame
-	if serial == page_serial and panel.visible: menu_scroll.scroll_vertical = 0
+	if serial == page_serial and panel.visible:
+		_focus_scroll_owner(menu_scroll).request_reset(serial)
 
 func _label(text: String, size: int = 22, color: Color = CREAM) -> Label:
 	var label := Label.new()
@@ -930,7 +963,7 @@ func _advance_timed_speech(delta: float) -> void:
 		timed_scroll_offset = 0
 		timed_phase_elapsed = 0
 		timed_phase = 0
-		menu_scroll.scroll_vertical = 0
+		_focus_scroll_owner(menu_scroll).set_position(0, false)
 		return
 	if timed_phase == 0:
 		timed_phase_elapsed += delta
@@ -943,7 +976,7 @@ func _advance_timed_speech(delta: float) -> void:
 		# Each line must be fully visible in some frame before normal expiry.
 		var step := minf(timed_scroll_speed * delta, maxf(1, menu_scroll.size.y - line_step))
 		timed_scroll_offset = minf(extent, timed_scroll_offset + step)
-		menu_scroll.scroll_vertical = ceili(timed_scroll_offset)
+		_focus_scroll_owner(menu_scroll).set_position(ceili(timed_scroll_offset), false)
 		if timed_scroll_offset >= extent:
 			timed_phase = 2
 			timed_phase_elapsed = 0

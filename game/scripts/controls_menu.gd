@@ -62,7 +62,7 @@ func _ready() -> void:
 	scroll = ScrollContainer.new()
 	scroll.size_flags_vertical = Control.SIZE_FILL
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
-	scroll.follow_focus = true
+	ui._focus_scroll_owner(scroll)
 	add_child(scroll)
 	scroll.get_v_scroll_bar().value_changed.connect(_snap_scroll)
 	body = VBoxContainer.new()
@@ -123,7 +123,7 @@ func _clear_body() -> void:
 	intro.visible = state == "list"
 	spacer.visible = state == "list"
 	scroll.custom_minimum_size.y = 0
-	scroll.scroll_vertical = 0
+	ui._focus_scroll_owner(scroll).request_reset(ui.page_serial, true)
 	previous_scroll = 0
 	if state == "list": ui._layout_for("controls")
 
@@ -194,7 +194,7 @@ func _focus_later(token: String, serial: int) -> void:
 	if serial != layout_serial or not is_inside_tree(): return
 	if buttons.has(token) and is_instance_valid(buttons[token]):
 		buttons[token].grab_focus()
-		if scroll.is_ancestor_of(buttons[token]): scroll.ensure_control_visible(buttons[token])
+		# The UI focus signal owns post-sort visibility for every scroller.
 
 func _capture(id: String, index: int) -> void:
 	action = id
@@ -236,7 +236,7 @@ func _process(_delta: float) -> void:
 	if seconds == 0: _build_list()
 
 func _snap_scroll(value: float) -> void:
-	if state != "list" or snapping_scroll or rows.is_empty(): return
+	if state != "list" or snapping_scroll or rows.is_empty() or ui._focus_scroll_owner(scroll).automatic_active(): return
 	var index := 0
 	for i in rows.size():
 		if rows[i].position.y <= value: index = i
@@ -247,7 +247,7 @@ func _snap_scroll(value: float) -> void:
 	elif value > previous_scroll and value > target and index+1 < rows.size():
 		target = rows[index+1].position.y
 	snapping_scroll = true
-	scroll.get_v_scroll_bar().set_value_no_signal(target)
+	ui._focus_scroll_owner(scroll).set_position(target, true, false)
 	previous_scroll = scroll.scroll_vertical
 	snapping_scroll = false
 

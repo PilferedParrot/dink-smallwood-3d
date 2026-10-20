@@ -287,6 +287,7 @@ func matrix() -> void:
  ui.show_choices("",["Let her know exactly how fruitless your search has been thus far","Leave"])
  await scan("choices-without-prompt")
  await focus_actions("choices-without-prompt")
+ if not capture: await real_focus_regressions()
  ui.cancel_speech()
  ui.close_menu()
  ui.show_speech("The last line remains readable.","Dink",1,0,true)
@@ -331,3 +332,22 @@ func run() -> void:
  await process_frame
  print("TEXT ACCESSIBILITY PASS" if failures.is_empty() else "TEXT ACCESSIBILITY FAIL " + str(failures.size()))
  quit(0 if failures.is_empty() else 1)
+
+func real_focus_regressions() -> void:
+ # These real groups contain every one of the nine5101cae source-census clips.
+ # Keep them in the same fixture as the twelve menu-focus regressions.
+ var groups=[
+  {"prompt":'( ) ; "A girl is about to die in a cult ritual.  What do you do?"',"answers":["Say something to the effect that you are going to save her","Agree that Mary should be sacrificed","Use brains and stay hidden"]},
+  {"prompt":"","answers":["Ask Nadine why her house is such a mess","Offer to find Nadine's girl","Be rude to Nadine","Let her know exactly how fruitless your search has been thus far","Ask Nadine how she and Mary are doing","Leave"]},
+  {"prompt":"","answers":["Ask for a date","Belittle her in front of the others to appear macho","Leave"]}]
+ var before:int=failures.size()
+ for group in groups:
+  ui.cancel_speech()
+  ui.show_choices(group.prompt,group.answers)
+  await settle()
+  for answer in ui.column.get_children():
+   answer.grab_focus()
+   for _i in 4: await process_frame
+   check(ui.menu_scroll.get_global_rect().grow(1).encloses(answer.get_global_rect()),"source-focus-regression "+answer.text)
+   check(READING_LAYOUT.defects(ui).is_empty(),"source-focus native reading minima")
+ print("SOURCE FOCUS REGRESSIONS scale=",ui.text_scale," plain=",ui.plain_font," new_failures=",failures.size()-before)
