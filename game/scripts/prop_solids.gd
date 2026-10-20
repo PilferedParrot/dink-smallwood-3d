@@ -93,12 +93,54 @@ func _texture(path: String, fit: Dictionary = {}) -> ImageTexture:
 		var bits := Marshalls.base64_to_raw(str(fit.mask))
 		var data := img.get_data()
 		# fit.void_fill: the palette's pure black inside the part is a drawn gap (the outline, the shadow between stones), not a colour
-		# a solid can have on every side; it takes the nearest lit pixel of the same part. (Not the posts: their shaded faces ARE black.)
+		# a solid can have on every side; it takes the nearest lit pixel of the same part. (Not the posts: see _flatten.)
 		var voids := bool(fit.get("void_fill", false))
 		for p in img.get_width()*img.get_height():
 			if not (bits[p >> 3] >> (7 - (p & 7))) & 1 or (voids and data[p*4] == 0 and data[p*4 + 1] == 0 and data[p*4 + 2] == 0): data[p*4 + 3] = 0
 		img.set_data(img.get_width(), img.get_height(), false, Image.FORMAT_RGBA8, data)
+		if fit.has("flat"): _flatten(img, fit.flat)
 	return buildings._texture(buildings.filled(img))
+
+# A post's wood, one material along its whole height (fit.flat: per post, the columns of its shaded wood and of its lit wood, and the
+# rows it is drawn on). The black outline the sprite draws round the post (a pixel convention, not wood) is left out of every donor
+# (OUTLINE_LUM: the drawn posts' luminance has its outline below 20 and its wood above 40; the roof's shadow on the post's foot is
+# outline-black too), so a lit column is the mean of its wood pixels down the post, one colour per column; the shaded face is the mean of
+# the darkest quarter of the wood pixels (the picture's own darkest wood, no tuned shade).
+const OUTLINE_LUM := 24.0
+func _flatten(img: Image, posts: Array) -> void:
+	var w := img.get_width()
+	var data := img.get_data()
+	var lum := func(o: int) -> float: return 0.299*data[o] + 0.587*data[o + 1] + 0.114*data[o + 2]
+	var cols: Dictionary = {} # x -> its wood pixels' mean colour
+	var wood: Array = [] # [luminance, colour] of every wood pixel of every post
+	for post in posts:
+		for x in range(int(post.dark[0]), int(post.lit[1])):
+			var sum := Vector3.ZERO
+			var n := 0
+			for y in range(int(post.rows[0]), int(post.rows[1])):
+				var o: int = (y*w + x)*4
+				if data[o + 3] < 128 or float(lum.call(o)) <= OUTLINE_LUM: continue
+				var c := Vector3(data[o], data[o + 1], data[o + 2])
+				sum += c
+				n += 1
+				wood.append([float(lum.call(o)), c])
+			if n > 0: cols[x] = sum/float(n)
+	if wood.is_empty(): return
+	wood.sort_custom(func(a, b): return a[0] < b[0])
+	var quarter := maxi(1, wood.size()/4)
+	var shade := Vector3.ZERO
+	for i in quarter: shade += wood[i][1]
+	shade /= float(quarter)
+	for post in posts:
+		for x in range(int(post.dark[0]), int(post.lit[1])):
+			var c: Vector3 = shade if x < int(post.dark[1]) else cols.get(x, shade)
+			for y in img.get_height():
+				var o: int = (y*w + x)*4
+				data[o] = int(roundf(c.x))
+				data[o + 1] = int(roundf(c.y))
+				data[o + 2] = int(roundf(c.z))
+				data[o + 3] = 255
+	img.set_data(w, img.get_height(), false, Image.FORMAT_RGBA8, data)
 
 func _arrays(verts: PackedVector3Array, uvs: PackedVector2Array, index: PackedInt32Array) -> ArrayMesh:
 	var arrays := []

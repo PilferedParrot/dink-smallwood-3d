@@ -5,11 +5,13 @@ mesh and texture (tests/fps_well_dump.gd) against the sprite, not from the fit's
     python tools/well_materials.py <dump dir> [--label NAME] [--json out.json]
 
 W1 posts. Every side face of the posts is sampled uniformly by its true area; each sample is the texel the face's UV lands on (the
-engine samples nearest). The reference is the sprite's own post pixels (the drawn posts' columns, between the roof and the stone, the
-roof's and the stone's pixels excluded). Both are summarised by the mean luminance and the mean luminance of the darkest quartile.
-Pre-registered before the first measurement (2026-10-20): the faces are made of the same pixels at their drawn width, so the mean
-luminance must agree within 15 % of the sprite's, and the darkest quartile may sit at most 10 levels (of 255) above the sprite's (the
-sprite's dark face is near black: a face filled with the lit edge is 60-100 levels above it).
+engine samples nearest). The reference is the sprite's own WOOD pixels: the drawn posts' columns between the roof and the stone, the
+roof's and the stone's pixels excluded, and the black outline excluded (OUTLINE_LUM: a drawing convention, not material; the first
+version of this measure kept it, its darkest quartile was 0, and a build with flat pure-black faces passed for the wrong reason). Both are
+summarised by the mean luminance and the mean luminance of the darkest quartile.
+Pre-registered (2026-10-20, restated after the lead's view of 58866c4, before measuring): the mean luminance within 15 % of the sprite's
+wood, the darkest quartile within 10 levels (of 255) of the sprite's either way, and NO face texel at or below the outline's luminance (no
+void); and each post column the faces read is one colour down the post (one material along its full height).
 W2 roof. Each face of the roof (a slope's top, its underside, its eave's edge, its two ends) is a plane that takes the sprite's picture
 by UV. Its Jacobian (texels per true px, along the face's two in-plane axes) is the density of the straw drawn on it: sigma_down is
 along the slope (the sprite's rows along it), sigma_ridge along the ridge. A UV error shows as a face whose densities differ from the
@@ -37,17 +39,21 @@ def lum(rgb: np.ndarray) -> np.ndarray:
 def stats(rgb: np.ndarray) -> dict:
     y = np.sort(lum(rgb))
     q = y[:max(1, len(y) // 4)]
-    return {'n': int(len(y)), 'mean_lum': float(y.mean()), 'dark_quartile_lum': float(q.mean()), 'mean_rgb': [float(v) for v in np.mean(rgb, axis=0)]}
+    return {'min_lum': float(y.min()), 'n': int(len(y)), 'mean_lum': float(y.mean()), 'dark_quartile_lum': float(q.mean()), 'mean_rgb': [float(v) for v in np.mean(rgb, axis=0)]}
 
 
-def sprite_posts() -> np.ndarray:
+OUTLINE_LUM = 24.0  # the drawn posts' luminance: the outline is below 20, the wood above 40 (prop_solids.gd OUTLINE_LUM)
+
+
+def sprite_posts(wood_only: bool = True) -> np.ndarray:
     rgba = P.load('assets/graphics/struct/Landmark/landm-01.png')
     body, roof, base, posts, warm = L.segment(rgba)
     region = np.zeros_like(body)
     for p in posts:
         region[p['top']:p['foot'], p['x0']:p['x1']] = True
     region &= body & ~roof & ~base
-    return rgba[region][:, :3].astype(float)
+    px = rgba[region][:, :3].astype(float)
+    return px[lum(px) > OUTLINE_LUM] if wood_only else px
 
 
 def triangles(part: dict, size):
@@ -126,7 +132,9 @@ def main():
                        'mean_rel_err': built['mean_lum'] / ref['mean_lum'] - 1,
                        'T_mean': abs(built['mean_lum'] / ref['mean_lum'] - 1) <= 0.15,
                        'dark_quartile_excess': built['dark_quartile_lum'] - ref['dark_quartile_lum'],
-                       'T_dark': built['dark_quartile_lum'] - ref['dark_quartile_lum'] <= 10.0}
+                       'T_dark': abs(built['dark_quartile_lum'] - ref['dark_quartile_lum']) <= 10.0,
+                       'min_face_lum': built['min_lum'], 'T_no_void': built['min_lum'] > OUTLINE_LUM,
+                       'sprite_with_outline': stats(sprite_posts(False))}
     # W2
     tsize = Image.open(d / parts[2]['texture']).size
     jac = face_jacobians(parts[2], tsize)

@@ -136,23 +136,38 @@ def _materials(out):
     return built, ref, jac
 
 
-def test_the_wells_posts_show_the_sprites_colours_and_a_filled_dark_face_fails_it(tmp_path):
-    # P4d fix round W1: every side face of the posts, sampled by area, has the sprite's own post pixels' mean luminance (within 15 %) and
-    # dark quartile (at most 10 levels above): the shaded face is the sprite's black, the lit one its lit run, each at its drawn width.
-    # Control (the old build: the posts' pure black replaced by the nearest lit pixel, void_fill) is +48 % brighter and 45 levels
-    # above in its dark quartile: the instrument can fail.
+def test_the_wells_posts_are_wood_not_outline_and_a_black_face_fails_it(tmp_path):
+    # P4d fix round W1 (restated after the lead's view of 58866c4: the sprite's black is its OUTLINE, a drawing convention, so a measure
+    # that kept it passed flat black faces for the wrong reason). Every side face of the posts, sampled by area, against the sprite's WOOD
+    # pixels (outline excluded): mean luminance within 15 %, darkest quartile within 10 levels either way, no texel at or below the
+    # outline's luminance; and each post column the faces read is one colour down the whole post. Controls, run by the same test: the
+    # build before this fix (black shaded face, no flat) fails all of the first three.
     import json
+    import sys
+
+    import numpy as np
+    from PIL import Image
+
+    sys.path.insert(0, str(ROOT / "tools"))
+    import well_materials as M
 
     built, ref, _ = _materials(_dump_well(tmp_path, "now"))
+    ref = M.stats(M.sprite_posts())
     assert abs(built["mean_lum"] / ref["mean_lum"] - 1) <= 0.15, (built, ref)
-    assert built["dark_quartile_lum"] - ref["dark_quartile_lum"] <= 10.0, (built, ref)
+    assert abs(built["dark_quartile_lum"] - ref["dark_quartile_lum"]) <= 10.0, (built, ref)
+    assert built["min_lum"] > M.OUTLINE_LUM, built
     path = "assets/graphics/struct/Landmark/landm-01.png"
     fits = json.loads((ROOT / "game/prototype/landmarks.json").read_text())
-    fits[path]["parts"][0]["void_fill"] = True
-    fits[path]["parts"][0].pop("faces")
+    posts = fits[path]["parts"][0]
+    tex = np.array(Image.open(tmp_path / "now" / "part1.png").convert("RGB")).astype(int)
+    for post in posts["flat"]:
+        for x in range(post["dark"][0], post["lit"][1]):
+            assert (tex[:, x] == tex[0, x]).all(), (x, "a post column is one material down its height")
+    posts.pop("flat")
+    posts["faces"] = {"dark": [-4.0, -2.0], "lit": [-2.0, 2.0]}  # 58866c4: the outline columns were the shaded face
     (tmp_path / "old.json").write_text(json.dumps({path: fits[path]}))
     old, _, _ = _materials(_dump_well(tmp_path, "old", str(tmp_path / "old.json")))
-    assert old["mean_lum"] / ref["mean_lum"] - 1 > 0.15 and old["dark_quartile_lum"] - ref["dark_quartile_lum"] > 10.0, (old, ref)
+    assert abs(old["mean_lum"] / ref["mean_lum"] - 1) > 0.15 and abs(old["dark_quartile_lum"] - ref["dark_quartile_lum"]) > 10.0 and old["min_lum"] <= M.OUTLINE_LUM, (old, ref)
 
 
 def test_every_face_of_the_wells_roof_keeps_the_straws_density(tmp_path):

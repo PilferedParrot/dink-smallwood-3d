@@ -3175,3 +3175,14 @@ top slope's density on both axes (pre-registered 35%). Geometry, G1 and the coll
 **Still open.** The posts' drawn width is six columns (two dark, four lit), not the eight the fit assumed (the lit run plus DARK = 2 each side):
 the right pad is background, so the post's side may be a third too thick (it sets the roof's 5.7 px thickness); not changed (geometry, G1).
 The posts' lit run is also unequal to the dark one (4:2), which a 45 degree post would not give. Both are questions for the geometry, not the material.
+**W1, second attempt (the lead's view of 58866c4).** The measure matched but the posts read as black voids. **What broke:** the sprite's black
+columns are the OUTLINE (a drawing convention), not a shaded face; the measure's reference kept them (its darkest quartile was 0), so flat
+black faces passed it for the wrong reason, and the gap sat in my reading of the picture ("dark face") as much as in the code. **Why we made it:**
+reasoning that stopped short: I named the black "a face" because it was a drawn region two columns wide beside the lit run, without asking
+what else draws black beside an edge. The wood's own columns (luminance 75-106 down the whole post, outline below 20) say the post is lit wood
+with an outline. **Fix:** the measure excludes the outline (`OUTLINE_LUM` 24) and is red on 58866c4 (wood mean 92.0 against the build's 63.5,
+dark quartile 61.8 against 0.0, darkest face texel 0): the three registered tests fail. Build: `fit.flat` and `prop_solids.gd _flatten`: faces read the
+wood's four columns (two a face), each lit column one colour (the mean of its wood pixels down the post), the shaded face the mean of the darkest
+quarter of the wood pixels, no outline in any donor. After: mean 80.1 (-13%, bound 15%), dark quartile 63.7 (+1.9, bound 10), darkest texel 63.7,
+every post column one colour down its height. The lead's reading is right and stricter than what I registered: the shaded face is only about
+25% darker than the lit one in the sprite's own wood, so the posts read as brown wood, not dark wood with a lit edge.
