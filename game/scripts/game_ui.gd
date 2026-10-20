@@ -531,7 +531,7 @@ func _button_interacted(control: Control) -> void:
 	_reveal_interacted(control)
 
 func _reveal_interacted(control: Control) -> void:
-	if is_instance_valid(control) and get_viewport() != null and get_viewport().gui_get_focus_owner() == control: _keep_focus_visible(control, page_serial, true)
+	if is_instance_valid(control) and get_viewport() != null and get_viewport().gui_get_focus_owner() == control: _keep_visible(control, page_serial, true)
 
 func _focus_request_current(control: Control, serial: int, request: int) -> bool:
 	return request == focus_visibility_request and serial == page_serial and is_inside_tree() and is_instance_valid(control) and control.is_inside_tree() and control.is_visible_in_tree() and get_viewport().gui_get_focus_owner() == control
@@ -559,7 +559,10 @@ func _focus_scroll_owner(scroll: ScrollContainer):
 		scroll.set_meta("focus_scroll_owner", FOCUS_SCROLL_OWNER.new(scroll, self))
 	return scroll.get_meta("focus_scroll_owner")
 
-func _keep_focus_visible(control: Control, serial: int, interaction: bool = false) -> void:
+func _keep_focus_visible(control: Control, serial: int) -> void:
+	await _keep_visible(control, serial, false)
+
+func _keep_visible(control: Control, serial: int, interaction: bool) -> void:
 	focus_visibility_request += 1
 	var request := focus_visibility_request
 	if not _focus_request_current(control, serial, request): return
