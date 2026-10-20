@@ -213,10 +213,24 @@ func _model_key(e: Dictionary) -> String:
 	if "/effects/arrow/" in p: return "arrow"
 	if "/effects/seed/" in p: return "feed_grains"
 	if "/effects/" in p: return "effect"
-	if "/lands/details/" in p: return "rock" if frame < 7 else "grass"
+	if "/lands/details/" in p:
+		if ground_detail(p): return "ground_detail"
+		return "rock" if frame < 7 else "grass"
 	if "/teleport/" in p: return "save"
 	if "/damage/" in p: return ""
 	return "crate" if not str(e.get("script","")).is_empty() else "rock"
+
+# Source-art classes, not the sequence's frame threshold: cracks are openings,
+# beach art is ground scatter, and bones/sticks/loose thorns lie on the floor.
+# Skull faces, log trunks and the four raised thorn bushes keep their existing
+# upright representation. See docs/ground-details.md for every frame's evidence.
+func ground_detail(path: String) -> bool:
+	if not "/lands/details/" in path: return false
+	var file := path.get_file()
+	if file.begins_with("crack-") or file.begins_with("beach-"): return true
+	return file in ["grave-01.png","grave-02.png","grave-03.png","grave-04.png",
+		"grave-11.png","grave-12.png","grave-13.png","grave-14.png","grave-15.png",
+		"fores-01.png","fores-05.png"]
 
 # The two kinds of bridge art (struct/Bridge), by the art's own file: brdge-04, 07, 09 and 11 are rope railings
 # drawn standing (the near railing of an east-west bridge is a sprite of its own, drawn after the deck, in front
@@ -644,6 +658,7 @@ func paint_background(sprites: Array, img: Image) -> void:
 # Whether a sprite is a background sprite painted into its screen's ground (paint_background).
 func paints_ground(e: Dictionary, screen: int) -> bool:
 	if source_firs != null and source_firs.handles(e): return false
+	if model_key(e) == "ground_detail": return true # active portals/hazards can still be ground art
 	if model_key(e) == "bridge_deck": return true # whatever its type: the map draws a deck as an upright sprite
 	if (effective_type(e) != 0 and not static_death_art(e)) or source_path(e).contains("/struct/"): return false
 	if kit_member(e,screen): return false
@@ -984,8 +999,8 @@ func make_entity(e: Dictionary, id: int, parent: Node3D, collision: bool = true,
 		return node
 	if paints_ground(e,screen):
 		node.set_meta("ground_painted",true) # painted into the ground (paint_background)
-		if static_death_art(e):
-			# The prone editor picture already belongs to the floor texture. Keep
+		if static_death_art(e) or key == "ground_detail":
+			# The picture already belongs to the floor texture. Keep
 			# its source rectangle for framing, without another upright actor.
 			var display: Vector2i = display_frame(e)
 			var frame: Dictionary = host._frame(display.x,display.y)
