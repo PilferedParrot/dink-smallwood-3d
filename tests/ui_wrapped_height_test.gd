@@ -111,7 +111,7 @@ func check_oversized_synthetic(limits: Dictionary) -> void:
 	var reachable=first_visible and last_visible and ui.choice_prompt_scroll.size.y+1>=ui.choice_prompt.get_line_height()
 	var row=limits.duplicate()
 	row.merge({"first_visible_by_wheel":first_visible,"last_visible_by_wheel":last_visible,"reachable":reachable})
-	print("SYNTHETIC_OVERFLOW ",JSON.stringify(row))
+	print("FIXED SYNTHETIC_CHOICE_PROMPT_200 " if reachable else "KNOWN DEFECT SYNTHETIC_CHOICE_PROMPT_200 ",JSON.stringify(row))
 	if not reachable:
 		check(not READING_LAYOUT.defects(ui).is_empty(), "Oracle detects the retained synthetic overflow follow-up")
 
