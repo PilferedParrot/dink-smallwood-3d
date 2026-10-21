@@ -54,24 +54,49 @@ func check_toast(label: String) -> void:
 
 func reading_limits(tag: String) -> Dictionary:
 	var ui=game.ui
-	var fixed:float=ui.panel.size.y-ui.menu_scroll.size.y
+	var fixed:float=ui.panel.size.y-ui.menu_box.size.y
 	var ideal:float=0
 	if ui.choice_prompt_scroll.visible:
-		fixed-=ui.choice_prompt_scroll.size.y
+		fixed-=ui.choice_prompt_box.size.y
 		var focus:Control=ui.get_viewport().gui_get_focus_owner()
 		ideal=ui.choice_prompt.get_line_height()+focus.get_combined_minimum_size().y
 	else:
 		var label:Label=ui.column.get_child(0)
 		ideal=minf(label.get_combined_minimum_size().y,label.get_line_height()*2+label.get_theme_constant("line_spacing"))
-	var row={"tag":tag,"window":[root.size.x,root.size.y],"scale":ui.text_scale,"height":ui.panel.size.y,"cap35":ui.root.size.y*0.35,"fixed":fixed,"ideal":ideal,"fixed_plus_ideal":fixed+ideal,"oracle":READING_LAYOUT.defects(ui)}
+	var row={"tag":tag,"window":[root.size.x,root.size.y],"scale":ui.text_scale,"height":ui.panel.size.y,"cap35":ui.root.size.y*0.35,"allowance":READING_LAYOUT.allowance(ui),"fixed":fixed,"ideal":ideal,"fixed_plus_ideal":fixed+ideal,"oracle":READING_LAYOUT.defects(ui)}
 	print("LIMIT ",JSON.stringify(row))
 	return row
+
+# A long prompt with one answer: only the prompt rounds (the answer is exactly its reading floor), so the card may pass
+# the cap by at most half a prompt line. One whole extra prompt line lies inside the old summed allowance and must fail.
+func check_single_answer_prompt() -> void:
+	var ui=game.ui
+	ui.show_choices("A long prompt with many lines. ".repeat(60), ["Yes."])
+	await settle()
+	check(READING_LAYOUT.defects(ui).is_empty(), "Long prompt with one answer keeps the cap rule: %s" % str(READING_LAYOUT.defects(ui)))
+	var strip: float=ui.menu_box.get_global_rect().end.y-ui.menu_scroll.get_global_rect().end.y
+	check(strip<1.0, "Long prompt with one answer leaves no empty strip under the answer (%d px)" % roundi(strip))
+	ui.set_process(false)
+	ui.choice_prompt_fit.active=false
+	ui.menu_fit.active=false
+	var pitch: float=ui.choice_prompt.get_line_height()+ui.choice_prompt.get_theme_constant("line_spacing")
+	ui.choice_prompt_box.custom_minimum_size.y+=pitch
+	ui.choice_prompt_scroll.offset_bottom+=pitch
+	ui.panel.offset_bottom+=pitch
+	await settle()
+	var errors=READING_LAYOUT.defects(ui)
+	check("Card exceeds35% without a native reading minimum requiring it" in errors, "One extra whole prompt line is rejected although inside the old summed allowance (card %d, errors %s)" % [roundi(ui.panel.size.y), str(errors)])
+	ui.set_process(true)
+	ui.choice_prompt_fit.active=true
+	ui.menu_fit.active=true
+	ui.cancel_speech()
+	await settle()
 
 func check_padding_controls(limits: Dictionary) -> void:
 	var ui=game.ui
 	ui.set_process(false)
 	var saved: Vector2=ui.panel.size
-	ui.panel.size.y=maxf(limits.cap35,limits.fixed_plus_ideal)+40
+	ui.panel.size.y=maxf(limits.cap35+limits.allowance,limits.fixed_plus_ideal)+40
 	await settle()
 	var errors=READING_LAYOUT.defects(ui)
 	check("Card exceeds35% without a native reading minimum requiring it" in errors, "Exact wrapped-choice oracle rejects padding above native floor")
@@ -206,6 +231,7 @@ func _run() -> void:
 				await settle()
 				reading_limits("longest-source-choice")
 				check(READING_LAYOUT.defects(ui).is_empty(), "Longest source choice is readable whole at200%")
+			await check_single_answer_prompt()
 			ui.cancel_speech()
 			ui.show_pause()
 			await settle()

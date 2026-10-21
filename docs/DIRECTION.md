@@ -3381,3 +3381,29 @@ The sprite draws the far inner wall lit, from the far lip (row 72.5 at the axis)
 picture is the camera's own. The wall's vertices now take UV = (cx + X, cz - k |Z| - Y) in the base's texture (far half exactly as drawn, near half
 the far half's picture turned back, the huts' rule); only the floor is a plain dark part (the darkest quarter of the mouth's stone). Test: the wall
 vertices' UVs equal that projection to 0.01 px and the floor is one dark colour on the ground.
+## Speech card and choice areas show whole lines — October 20
+
+A long speech at 100% showed three lines and 17 px of a fourth; a wheel step moved half a line; the choice prompt showed 3.7 lines
+and the answers scrolled by arbitrary pixels. The card was sized by pixel caps (35% of the window, the reading floor) and the
+scroll areas were left out of the whole-line fit because the timed scroll moves continuously.
+
+**Rule** (resting frames; the same atoms as the menu fit: each line of a Label by its glyph box, each button whole):
+at rest every top and bottom edge of the speech viewport, the prompt viewport and the answers viewport is an atom edge.
+The card takes the NEAREST whole-atom height to the share its cap allows (down below half a line, up from half a line, and
+up only while it fits the screen), so it may pass the 35% cap by at most half a line; never below the reading floor (two prose
+lines, a prompt line, the focused answer), which wins over the cap. Wheel, page and key steps land on atom tops. The timed
+scroll stays continuous at the reading pace (body height over reading seconds, about 17 characters per second) and passes
+through partial lines while it moves; it opens on a whole line and ends on one, and the fit stands down only while the timer
+drives it. A line's spacing is blank, not part of the line, so a viewport of k lines is k pitches less one spacing, and the
+scroll's last position is a line top.
+
+**Cost** (`tmp`-free table: lines-table.md in the unit's evidence): nearest rounding replaces the first round-down, which cost readers
+too much (100% Dink font speech 3.59 → 3.00 lines; choice prompt at 150% 1.63 → 1.00). Final: 100% Dink speech 3.59 → 4.00 lines,
+prompt 3.71 → 4.00 (card 14 px taller than the pixel cap); 150% prompt 1.63/1.93 → 2.00; 100% plain 4.06 → 4.00; 150%/200% speech
+unchanged (already at the floor). The empty strip the old height left under the text is gone. The A1a cap oracle allows the cap
+plus half an atom per scroll area (`allowance` in `tests/text_layout_oracle.gd`).
+
+**Why it was wrong (two roots)**: the card height and the scroll rests were never tied to the line pitch (an oversight when the
+35% cap was written in pixels), and A1a-2 recorded the class as "not fitted here" because a continuous timed scroll seemed to
+exclude a whole-line rule (a heuristic applied to the wrong unit: the rule is about rest, not about motion).
+Tests: `tests/scroll_edges_test.gd` (speech, timed speech, prompt, answers; look-alike control one pixel short; reachability).

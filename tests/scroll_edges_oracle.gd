@@ -12,7 +12,7 @@ static func atoms(node: Node, found: Array[Dictionary]) -> void:
   var rect: Rect2 = node.get_global_rect()
   var lines: int = maxi(1, node.get_line_count())
   for line in lines:
-   found.append({"rect": Rect2(rect.position.x, rect.position.y + line * pitch, rect.size.x, minf(pitch, rect.size.y - line * pitch)), "what": "line %d of \"%s\"" % [line + 1, node.text.left(40)]})
+   found.append({"rect": Rect2(rect.position.x, rect.position.y + line * pitch, rect.size.x, minf(float(node.get_line_height()), rect.size.y - line * pitch)), "what": "line %d of \"%s\"" % [line + 1, node.text.left(40)]})
  elif (children.is_empty() or node is BaseButton) and node is Control and node.get_global_rect().size.y > 0:
   found.append({"rect": node.get_global_rect(), "what": "%s %s" % [node.get_class(), str(node.get("text")) if node is Button else str(node.name)]})
  if node is BaseButton: return
@@ -26,7 +26,7 @@ static func cuts(scroll: ScrollContainer) -> Array[String]:
  for atom in found:
   var rect: Rect2 = atom.rect
   if rect.size.y > area.size.y + 1 or rect.intersection(area).size.y <= 1: continue
-  if not area.grow(1).encloses(rect): report.append(atom.what)
+  if not area.grow(0.5).encloses(rect): report.append(atom.what)
  return report
 
 # Empty space left under the viewport that the next whole atom would have fitted in.
@@ -47,5 +47,5 @@ static func shown(scroll: ScrollContainer) -> int:
  atoms(scroll.get_child(0), found)
  var count := 0
  for atom in found:
-  if scroll.get_global_rect().grow(1).encloses(atom.rect): count += 1
+  if scroll.get_global_rect().grow(0.5).encloses(atom.rect): count += 1
  return count

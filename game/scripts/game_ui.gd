@@ -59,6 +59,8 @@ var menu_scroll: ScrollContainer
 var menu_box: Control
 var menu_fit
 var choice_prompt_scroll: ScrollContainer
+var choice_prompt_box: Control
+var choice_prompt_fit
 var choice_prompt: Label
 var choice_prompt_axis := 0.0
 var timed_text := ""
@@ -296,16 +298,22 @@ func _ready() -> void:
 	modal_feedback_text.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	modal_feedback.add_child(modal_feedback_text)
 	modal_feedback.hide()
+	# The box owns the prompt's slot (its height is the card's decision); the scroll is fitted to whole lines inside it.
+	choice_prompt_box = Control.new()
+	choice_prompt_box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	choice_prompt_box.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	contents.add_child(choice_prompt_box)
 	choice_prompt_scroll = ScrollContainer.new()
 	choice_prompt_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
-	choice_prompt_scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	contents.add_child(choice_prompt_scroll)
+	choice_prompt_box.add_child(choice_prompt_scroll)
+	choice_prompt_scroll.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	choice_prompt_fit = TEXT_SCROLL_FIT.new(choice_prompt_scroll, choice_prompt_box, self)
 	choice_prompt = Label.new()
 	choice_prompt.name = "ChoicePrompt"
 	choice_prompt.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	choice_prompt.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	choice_prompt_scroll.add_child(choice_prompt)
-	choice_prompt_scroll.hide()
+	_show_prompt(false)
 	equipment_name = Label.new()
 	equipment_name.add_theme_color_override("font_color", CREAM)
 	equipment_name.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
@@ -376,7 +384,12 @@ func _process(_delta: float) -> void:
 			expired = id != active_speech_id or page != "dialogue" or dialogue_mode or not bool(line.get("overflow", false)) or timed_reading_done
 		if expired: cancel_speech_id(id)
 	if page == "dialogue": _fit_dialogue_panel()
-	if page == "dialogue" and not dialogue_mode: _advance_timed_speech(_delta)
+	if page == "dialogue" and not dialogue_mode:
+		_advance_timed_speech(_delta)
+		# The timed scroll moves continuously (at the reading pace) between whole-line rests; the fit waits.
+		menu_fit.driven = timed_phase == 1
+	else:
+		menu_fit.driven = false
 	if page == "dialogue" and choice_prompt_scroll.visible:
 		choice_prompt_axis = Input.get_action_strength("ui_page_down") - Input.get_action_strength("ui_page_up")
 		if not is_zero_approx(choice_prompt_axis):
@@ -491,17 +504,25 @@ func _fit_dialogue_panel() -> void:
 		answer_height = answer.get_combined_minimum_size().y if answer != null else 0.0
 		readable_body = answer_height
 	if choice_prompt_scroll.visible:
-		chrome -= choice_prompt_scroll.get_combined_minimum_size().y
+		chrome -= choice_prompt_box.get_combined_minimum_size().y
 		body += choice_prompt.get_combined_minimum_size().y
 		readable_body = answer_height + minf(choice_prompt.get_combined_minimum_size().y, choice_prompt.get_line_height())
 	var height := minf(available_height, minf(chrome+body,maxf(chrome+readable_body,root.size.y*0.35)))
+	var prompt_height := 0.0
 	if choice_prompt_scroll.visible:
 		var available := maxf(0, height - chrome)
 		# Give the focused answer its full height first. The prompt has its own
 		# viewport and cannot push the selected action below the fold.
-		var prompt_height := minf(choice_prompt.get_combined_minimum_size().y, maxf(0, available - answer_height))
-		if choice_prompt_scroll.custom_minimum_size.y != prompt_height:
-			choice_prompt_scroll.custom_minimum_size.y = prompt_height
+		prompt_height = minf(choice_prompt.get_combined_minimum_size().y, maxf(0, available - answer_height))
+		# Whole lines: the nearest line edge to the share, never below the first line.
+		prompt_height = choice_prompt_fit.whole_height(prompt_height, minf(prompt_height, float(choice_prompt.get_line_height())), maxf(0, available_height - chrome - answer_height))
+		if choice_prompt_box.custom_minimum_size.y != prompt_height:
+			choice_prompt_box.custom_minimum_size.y = prompt_height
+	# The text area gets whole lines (or whole answers): the nearest line edge to the share the caps allow (up when the
+	# next line is at least half in and the screen has room), never below the reading floor.
+	var floor_height := answer_height if answer != null else readable_body
+	var shown: float = menu_fit.whole_height(maxf(0, height - chrome - prompt_height), floor_height, maxf(0, available_height - chrome - prompt_height))
+	height = chrome + prompt_height + shown
 	# All speech and choices share one footprint, even when blocking speech
 	# hides the HUD. Include the vines, which can outgrow a short timed card.
 	var top := bottom - maxf(height, SPEECH_VINE_SIZE.y)
@@ -716,11 +737,18 @@ func _uses_gameplay_control(event: InputEvent) -> bool:
 		if event.is_action_pressed(action): return true
 	return false
 
+# The prompt is a scroll inside a box that owns its slot; both show and hide together.
+func _show_prompt(on: bool) -> void:
+	choice_prompt_box.visible = on
+	choice_prompt_scroll.visible = on
+	choice_prompt_fit.begin_page(on)
+
 func _choice_prompt_step() -> float:
 	# A single-line viewport must page to the next baseline, not through
 	# fractional lines that never expose a complete row at large text sizes.
 	var pitch := float(choice_prompt.get_line_height() + choice_prompt.get_theme_constant("line_spacing"))
-	return pitch * maxf(1, floorf(choice_prompt_scroll.size.y / maxf(1,pitch)))
+	# A viewport of k whole lines ends a line spacing short of k pitches: it pages k lines.
+	return pitch * maxf(1, floorf((choice_prompt_scroll.size.y + choice_prompt.get_theme_constant("line_spacing")) / maxf(1,pitch)))
 
 func _update_hint() -> void:
 	if is_instance_valid(speech_dismiss_hint):
@@ -780,8 +808,8 @@ func _clear(title: String, next_page: String) -> void:
 	timed_text = ""
 	timed_layout_key = Vector4.INF
 	choice_prompt_axis = 0.0
-	choice_prompt_scroll.hide()
-	choice_prompt_scroll.custom_minimum_size.y = 0
+	_show_prompt(false)
+	choice_prompt_box.custom_minimum_size.y = 0
 	choice_prompt_scroll.scroll_vertical = 0
 	_focus_scroll_owner(menu_scroll).request_reset(page_serial, true)
 	for child in column.get_children():
@@ -794,8 +822,8 @@ func _clear(title: String, next_page: String) -> void:
 	modal = true
 	dialogue_mode = false
 	page = next_page
-	# Speech and choices size their own card to whole lines; every other page's scroll area is fitted.
-	menu_fit.begin_page(next_page not in ["dialogue", "loading"])
+	# Every scroll area is fitted to whole lines; the speech card is also sized to them (_fit_dialogue_panel).
+	menu_fit.begin_page(next_page != "loading")
 	root.mouse_filter = Control.MOUSE_FILTER_STOP
 	_layout_for(next_page)
 	_set_playing_visuals(false)
@@ -1110,7 +1138,7 @@ func show_choices(title: String, options: Array) -> void:
 	# while the entire card retains the speech height cap.
 	if not title.is_empty():
 		choice_prompt.text = title
-		choice_prompt_scroll.show()
+		_show_prompt(true)
 	_update_hint()
 	for i in range(options.size()):
 		var button := Button.new()

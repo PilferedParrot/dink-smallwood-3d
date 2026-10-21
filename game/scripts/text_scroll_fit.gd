@@ -15,10 +15,16 @@ var _ui_ref: WeakRef
 var _queued := false
 var _running := false
 var _again := false
+# A fit waits a frame for the scroll bar to take its viewport; a newer layout does not wait behind it.
+var _waiting := false
+var _generation := 0
 var _direction := 0
 var _stable_top := 0.0
 var _applying := false
 var _key := ""
+# The timed speech scroll drives the position itself, continuously, at the reading pace;
+# while it does, the fit leaves the position alone (partial lines pass through in motion).
+var driven := false
 
 func _init(scroll: ScrollContainer, box: Control, ui: Node) -> void:
 	_scroll_ref = weakref(scroll)
@@ -35,6 +41,7 @@ func begin_page(on: bool) -> void:
 	var scroll: ScrollContainer = _scroll_ref.get_ref()
 	if not is_instance_valid(scroll): return
 	active = on
+	driven = false
 	_key = ""
 	_direction = 0
 	_stable_top = 0.0
@@ -48,7 +55,7 @@ func _changed() -> void:
 	_refit.call_deferred()
 
 func _value_changed(value: float) -> void:
-	if _applying or not active: return
+	if _applying or not active or driven: return
 	_direction = signi(roundi(value - _stable_top))
 	_changed()
 
@@ -61,8 +68,9 @@ func _atoms(node: Node, origin: float, found: Array[Vector2]) -> void:
 		var pitch := float(node.get_line_height()) + float(node.get_theme_constant("line_spacing"))
 		var top: float = node.get_global_rect().position.y - origin
 		var height: float = node.get_global_rect().size.y
+		# A line is its glyph box; the spacing below it is blank, not part of the line.
 		for line in maxi(1, node.get_line_count()):
-			found.append(Vector2(top + line * pitch, top + minf((line + 1) * pitch, height)))
+			found.append(Vector2(top + line * pitch, top + minf(line * pitch + float(node.get_line_height()), height)))
 	elif (children.is_empty() or node is BaseButton) and node is Control and node.get_global_rect().size.y > 0:
 		var rect: Rect2 = node.get_global_rect()
 		found.append(Vector2(rect.position.y - origin, rect.end.y - origin))
@@ -72,7 +80,7 @@ func _atoms(node: Node, origin: float, found: Array[Vector2]) -> void:
 
 func _refit() -> void:
 	_queued = false
-	if _running:
+	if _running and not _waiting:
 		_again = true
 		return
 	_running = true
@@ -83,10 +91,12 @@ func _refit() -> void:
 		_changed()
 
 func _fit() -> void:
+	_generation += 1
+	var mine := _generation
 	var scroll: ScrollContainer = _scroll_ref.get_ref()
 	var box: Control = _box_ref.get_ref()
 	var ui = _ui_ref.get_ref()
-	if not active or not is_instance_valid(scroll) or not is_instance_valid(box) or not is_instance_valid(ui) or not scroll.is_visible_in_tree() or scroll.get_child_count() == 0: return
+	if not active or driven or not is_instance_valid(scroll) or not is_instance_valid(box) or not is_instance_valid(ui) or not scroll.is_visible_in_tree() or scroll.get_child_count() == 0: return
 	var content: Control = scroll.get_child(0)
 	var slot: float = box.size.y
 	if slot < 1 or content.size.y < 1: return
@@ -149,8 +159,11 @@ func _fit() -> void:
 	_apply_top(scroll, chosen)
 	if absf(scroll.get_v_scroll_bar().value - chosen) > 1.0:
 		# The scroll bar had not yet taken the new viewport; once more after it has.
+		_waiting = true
 		await scroll.get_tree().process_frame
-		if not is_instance_valid(scroll) or not active: return
+		_waiting = false
+		# A layout that arrived meanwhile has fitted the page already, from a fresher slot.
+		if mine != _generation or not is_instance_valid(scroll) or not active: return
 		_apply_top(scroll, chosen)
 	_stable_top = chosen
 	_direction = 0
@@ -175,3 +188,34 @@ func _straddled(found: Array[Vector2], y: float) -> bool:
 	for atom in found:
 		if atom.x < y - 0.5 and atom.y > y + 0.5: return true
 	return false
+
+# The height a card should give this area so that it ends on a whole atom: the atom bottom
+# nearest to `slot` (the share the caps allow): the lower one when `slot` is nearer to it, the
+# upper one when that is nearer or it is half way, so a card never gains or loses more than
+# half an atom against the cap. The upper bottom is allowed only while it fits `limit` (the
+# screen). Never below `floor_height` (the reading floor: a whole atom or whole lines by
+# construction, the focused control or two lines), which wins over the cap. An area whose
+# content fits `slot` is as tall as that content, no taller. Measured on the live layout.
+func whole_height(slot: float, floor_height := 0.0, limit := INF) -> float:
+	var scroll: ScrollContainer = _scroll_ref.get_ref()
+	if not is_instance_valid(scroll) or scroll.get_child_count() == 0: return slot
+	var content: Control = scroll.get_child(0)
+	var found: Array[Vector2] = []
+	_atoms(content, content.get_global_rect().position.y, found)
+	if found.is_empty(): return slot
+	if content.size.y <= slot + 0.5:
+		# All of it fits: the area is the content (a share the neighbouring area left over is not this area's to keep).
+		var bottom := 0.0
+		for atom in found: bottom = maxf(bottom, atom.y)
+		# (A content size not yet reflowed to its atoms is not a fit: keep the slot until it is.)
+		return maxf(bottom, floor_height) if bottom > 0.5 and bottom <= slot + 0.5 else slot
+	var down := 0.0
+	var up := INF
+	for atom in found:
+		if _straddled(found, atom.y): continue
+		if atom.y <= slot + 0.5: down = maxf(down, atom.y)
+		else: up = minf(up, atom.y)
+	var pick := down
+	if up <= limit + 0.5 and (down < 0.5 or up - slot <= slot - down): pick = up
+	if pick >= floor_height - 0.5 and pick > 0.5: return pick
+	return floor_height if floor_height > 0.0 else slot
