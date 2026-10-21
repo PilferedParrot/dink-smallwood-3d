@@ -11,6 +11,7 @@ const BUILDINGS := preload("res://scripts/sprite_buildings.gd")
 const RAILS := preload("res://scripts/bridge_rails.gd")
 const CASTLE_DOORS := preload("res://scripts/castle_doors.gd")
 const INTERIOR_SOLIDS := preload("res://scripts/interior_solids.gd")
+const INTERIOR_CEILING := preload("res://scripts/interior_ceiling.gd")
 const FENCE_SOLID := preload("res://scripts/fence_solid.gd")
 const PROPS := preload("res://scripts/prop_solids.gd")
 const SOURCE_FIR := preload("res://scripts/source_fir.gd")
@@ -40,6 +41,7 @@ var facades: Dictionary = {}
 var buildings # sprite_buildings.gd
 var rails # bridge_rails.gd: the bridges' railings and decks' ray plates
 var solids # interior_solids.gd: the house interior's walls, door, table, beds and hearth built from their sprites
+var ceilings # interior_ceiling.gd: inferred room-owned overhead materials
 var castle_doors # castle_doors.gd: the wall panel and lowered drawbridge built on fitted castle faces
 var fences # fence_solid.gd: the rail fences' posts and rails, solid
 var props # prop_solids.gd: the small props (barrels, sacks, pies, crates ...) as solids from their own sprites
@@ -90,6 +92,7 @@ func setup(game) -> void:
 	rails.setup(self)
 	castle_doors = CASTLE_DOORS.new(self)
 	solids = INTERIOR_SOLIDS.new(self)
+	ceilings = INTERIOR_CEILING.new(self)
 	fences = FENCE_SOLID.new()
 	fences.setup(self)
 	props = PROPS.new(buildings,SCALE)
@@ -763,10 +766,23 @@ func add_ceiling(screen: Dictionary) -> void:
 			found = true
 	var center := point(limits.get_center().x,limits.get_center().y)
 	var ceiling: float = solids.room_height(host.current_screen)*SCALE # the walls' own height: their sprites' faces are that many rows
-	box_mesh(host.scene_root,Vector3(limits.size.x*SCALE,0.18,limits.size.y*SCALE),center+Vector3(0,ceiling+0.09,0),mat("ceiling",Color("665036")))
-	var beam_mat := mat("beam",Color("37291c"))
-	for x in range(int(limits.position.x),int(limits.end.x)+1,75):
-		box_mesh(host.scene_root,Vector3(0.18,0.26,limits.size.y*SCALE),point(x,limits.get_center().y)+Vector3(0,ceiling-0.13,0),beam_mat)
+	var info: Dictionary = ceilings.room(host.current_screen)
+	var ceiling_mat: Material = ceilings.material(host.current_screen,"ceiling")
+	if ceiling_mat == null: ceiling_mat = mat("ceiling",Color("665036"))
+	var overhead := box_mesh(host.scene_root,Vector3(limits.size.x*SCALE,0.18,limits.size.y*SCALE),center+Vector3(0,ceiling+0.09,0),ceiling_mat)
+	overhead.name = "InteriorCeiling"
+	overhead.add_to_group("interior_overhead")
+	overhead.set_meta("overhead_role","ceiling")
+	# A cave or masonry room has no authored timber support. Its existing slab
+	# keeps its height and bounds; inferred wooden joists are omitted.
+	if not info.get("room",false) or info.get("beam") != null:
+		var beam_mat: Material = ceilings.material(host.current_screen,"beam")
+		if beam_mat == null: beam_mat = mat("beam",Color("37291c"))
+		for x in range(int(limits.position.x),int(limits.end.x)+1,75):
+			var beam := box_mesh(host.scene_root,Vector3(0.18,0.26,limits.size.y*SCALE),point(x,limits.get_center().y)+Vector3(0,ceiling-0.13,0),beam_mat)
+			beam.name = "InteriorBeam_%d" % x
+			beam.add_to_group("interior_overhead")
+			beam.set_meta("overhead_role","beam")
 	var glow := OmniLight3D.new()
 	glow.position = center+Vector3(0,ceiling*0.77,0)
 	glow.light_color = Color("ffd395")

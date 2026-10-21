@@ -3175,3 +3175,70 @@ floor, not the table top; the chair `ed21` fallback body's depth; the top-down
 is different (`freedink.cpp:571`: hardbox -5/+5/-5/+10 with a 28/36 or range-based
 extension, no ray, every match in slot order) while `_fps_melee_hit_rect` already
 ports that box but still ANDs a 0.60 cone and the ray.
+
+## Inferred interior ceilings and beams
+
+The source game draws rooms from above and supplies no authored ceiling. `data/ceilings.json`, derived by
+`tools/ceiling_donors.py`, names each overhead surface as an inference and cites its donor file and half-open pixel
+rectangle. The indoor flag is not sufficient evidence of an enclosing room: the source pictures contain 32 plaster
+houses, 16 rock caves, 21 masonry rooms and five special screens without a room. The fire fields (85, 86), blank dark
+screens (133, 197) and forest (134) retain their previous overheads; each has the explicit follow-up “house ceiling over
+a screen with no room.” This pass does not reinterpret the indoor flag or change movement, walls, doors or props.
+
+A fitted house borrows its ceiling plaster from its own dominant wall span (`interior_solids.room_stone`'s frequency
+and lexical tie rule): the central half of the plaster field between cap and baseboard. The central crop excludes the
+end trim drawn on some spans. The original wall's complete plaster filter, including its smoothed row trend, runs
+before the crop. This is the wall's actual filtered texture, not a sharper reconstruction. House beams borrow rows
+90–99 of the same span's wooden baseboard, with the original pixels and the baseboard's nearest/mipmap sampling.
+The overhead application of either material is inferred; neither source depicts a ceiling or a beam viewed from below.
+
+Cave and masonry ceilings use the screen's own complete 12×8 authored tile arrangement, without painted sprites.
+Every output texel cites its tile index, sheet, 50×50 cell and local pixel through the committed 96-element tile map.
+The 600×400 texture lies directly above the original floor coordinates, at 40 source pixels per metre, and repeats
+plainly as a complete authored arrangement. A reflected small natural tile created conspicuous kaleidoscope motifs;
+that first construction was rejected by visual review even though it passed a zero-jump seam check. The reasoning
+mistake was treating a colour-continuous reflection as evidence of natural material continuity. Authored tile joins,
+including their original irregularities, are retained rather than “fixed” by manufacturing symmetry.
+
+Only the plaster-house bands retain reflected crop repetition. Original samples are neither resized nor colour-painted.
+Reflection repeats its end sample at the turn; its symmetry remains an acknowledged limitation for those bands. The
+world-coordinate shader selects one orthogonal plane per axis-aligned face. Coordinates are divided by 0.025 metres
+per source pixel and the actual texture's dimensions: 40 logical source pixels per metre on every face, with no
+face-size multiplier. The authored arrangement's origin is the floor's source position (20,0), at world (-7.5,0,-5).
+Beam grain runs along its depth. Absolute coordinates preserve phase between segments. The existing wall filter and
+normal renderer mipmaps remain part of the plaster's weighted source support.
+
+Cave and masonry rooms have no authored timber support, so the formerly generic wooden beams are omitted. The existing
+slab retains its bounds and underside height, and the light stays where it was. In particular, 164's existing bounds
+still follow a wall-classified statue rather than the cave enclosure; this material pass does not enlarge them.
+A second pre-existing follow-up is “fallback rooms draw generic plaster walls where the source has stone or inn walls”:
+screens 73,74,105,106,137,138,169,170,202,260,514,515,546,547,577,578,579,609,610. Source sheets and sprite paths support
+that list; tile-only masonry rooms 70 and 102 have no such wall-sprite substitution.
+
+The technical cause of the old flat overheads was `add_ceiling`'s unconditional constant-colour materials and timber
+loops. The reasoning oversight was retaining those placeholders when the interior pass derived the walls and props:
+the same representation change should have re-derived every visible room surface and checked the whole indoor class.
+The special-screen follow-ups also record the separate mistake of treating an indoor gameplay flag as visual proof
+of a house. Source-derived enclosure evidence, rather than that flag alone, now governs the material census.
+
+The source-camera regression instrument is explicitly a diagnostic cutaway, following the furniture pass.
+The strict gate disables directional shadows and fixes both wall and prop material priorities identically on both
+versions. Fixed player coordinates prevent his shadow footprint from contaminating the diagnostic. A separate
+shadows-on report compares each screen with the baseline’s own repeated render, including changed-pixel counts and
+largest connected regions; shadows-on rendering is not byte-repeatable on this software renderer. The low-level
+source of that shadow-path nondeterminism is not established. P4b’s `bed_capture.gd` `_shoot` override already disables shadows. The first fixture here omitted that override
+because the prior instrument was read incompletely; restoring it fixes the harness oversight without loosening
+the byte-equality criterion. The separate shadows-on report is an instrument-limit diagnostic. It hides
+only the ceiling and beam nodes, selected independently of their materials. The frozen baseline verifies geometric
+identity against the old material set; the candidate assigns a stable `interior_overhead` group. Counts account for
+removed unsupported beams. Every RGB byte of all 74 resulting images must equal the committed baseline digests;
+there is no permitted change mask. A real wall-material mutation must fail this gate. This asserts unchanged cutaway
+pictures, not an unchanged raw view looking down onto the roof, and does not change production camera visibility.
+
+`tools/audit_ceilings.py` checks emitted material texture bytes, room-local donor domains, scale uniforms, orthogonal
+projections and repeat edges. Its controls include the untextured baseline, a stretched native donor, an exterior donor
+and the same native plaster crop repeated without reflection. A separate natural-material control tiles a mirrored
+50×50 rock cell; its measured reflected-pair symmetry must exceed the authored arrangement and fail. Authored floor
+seams and authored symmetry are allowed. The audit is blind to the aesthetic prominence of reflected patterns;
+packed level/up views and provenance-tint sheets supply the visual evidence. All overhead material application is
+inferred, so its diagnostic tint is magenta. These scene fixtures skip normal progression and map scripts.
