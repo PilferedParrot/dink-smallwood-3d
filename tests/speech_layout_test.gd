@@ -108,6 +108,9 @@ func _run() -> void:
 	game.test_mode = true
 	root.add_child(game)
 	await process_frame
+	# The named geometry is the geometry run: the window took its size, and the canvas is the project's stretch of it.
+	check(Vector2i(root.size) == window_size, "Window %s took effect (root is %s)" % [window_size, root.size])
+	check(absf(game.ui.root.size.y - 800.0) <= 1.0 and absf(game.ui.root.size.x - 800.0 * window_size.x / window_size.y) <= 1.0, "Canvas is the 800 px stretch of window %s (is %s)" % [window_size, game.ui.root.size])
 	await game._new_game()
 	game.vm.cancel_all()
 	game.load_map(439, false)
