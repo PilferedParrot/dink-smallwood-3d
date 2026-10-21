@@ -16,6 +16,7 @@ var only_large := false
 var large_window := false
 var only_tags: PackedStringArray = []
 var scales: Array = [1.0,1.5,2.0]
+var covered_hint_controls := 0
 
 func _initialize() -> void:
  for arg in OS.get_cmdline_user_args():
@@ -398,6 +399,25 @@ func matrix() -> void:
  for sprint in [["hold",false],["toggle",false],["toggle",true]]:
   ui.set_sprint_state(sprint[0],sprint[1])
   await scan("hud-sprint-%s-%s" % [sprint[0],"on" if sprint[1] else "off"])
+  var covered: bool = ui.hint_backing.visible and ui.hint_backing.get_global_rect().grow(3).intersects(ui.crosshair.get_global_rect())
+  check(ui.crosshair.visible == not covered,"reticle yields only to a covering help plaque")
+  print("HINT RETICLE ",JSON.stringify({"window":root.size.x,"plain":ui.plain_font,"scale":ui.text_scale,"mode":sprint[0],"active":sprint[1],"covered":covered}))
+  if covered:
+   covered_hint_controls += 1
+   var requested_scale: float = ui.text_scale
+   ui.set_text_scale(1.0)
+   await settle()
+   check(not ui.hint_backing.get_global_rect().grow(3).intersects(ui.crosshair.get_global_rect()) and ui.crosshair.visible,"100% shrink clears aim and restores reticle")
+   ui.set_text_scale(requested_scale)
+   await settle()
+   # process_frame is emitted before node processing. Expire at one frame's
+   # start, then observe at the next: exactly one UI processing opportunity.
+   await process_frame
+   ui.gameplay_hint_used = true
+   ui.gameplay_hint_deadline_msec = Time.get_ticks_msec()-1
+   await process_frame
+   check(not ui.hint_backing.visible and ui.crosshair.visible,"reticle returns within one frame of help timeout")
+   ui.gameplay_hint_deadline_msec = Time.get_ticks_msec()+60000
  ui.set_sprint_state("hold",false)
  await scan("hud-help")
  check(ui.compass_label.get_theme_font_size("font_size") == roundi(18*ui.text_scale),"location respects text size")
@@ -432,6 +452,8 @@ func run() -> void:
  if not output_dir.is_empty():
   var file := FileAccess.open(output_dir.path_join("geometry.json"),FileAccess.WRITE)
   file.store_string(JSON.stringify({"records":records,"failures":failures,"packed":not FileAccess.file_exists("res://project.godot") and not FileAccess.file_exists("res://scripts/game_ui.gd"),"editor_runtime":OS.has_feature("editor"),"resource_root":ProjectSettings.globalize_path("res://"),"executable":OS.get_executable_path(),"bundled_font":ResourceLoader.exists("res://assets/fonts/AtkinsonHyperlegible-Regular.ttf"),"bundled_licence":FileAccess.file_exists("res://assets/fonts/AtkinsonHyperlegible-OFL.txt"),"setup":"UI-only fixture bypasses progression and world scripts; native layout and focus; not campaign proof."},"\t"))
+ if not only_large and scales.has(2.0):
+  check(covered_hint_controls > 0,"long toggle help is a positive control that covers the reticle")
  ui.cancel_speech()
  ui.queue_free()
  await process_frame

@@ -377,10 +377,6 @@ func _process(_delta: float) -> void:
 		if expired: cancel_speech_id(id)
 	if page == "dialogue": _fit_dialogue_panel()
 	if page == "dialogue" and not dialogue_mode: _advance_timed_speech(_delta)
-	if page == "dialogue" and not modal:
-		# Large speech can reach the aiming point. Keep the reticle from being
-		# drawn through the speaker or text; ordinary gameplay restores it.
-		crosshair.visible = not panel.get_global_rect().grow(3).intersects(crosshair.get_global_rect())
 	if page == "dialogue" and choice_prompt_scroll.visible:
 		choice_prompt_axis = Input.get_action_strength("ui_page_down") - Input.get_action_strength("ui_page_up")
 		if not is_zero_approx(choice_prompt_axis):
@@ -418,6 +414,13 @@ func _process(_delta: float) -> void:
 	if status_dock.has_method("readout_top"): dock_top = status_dock.readout_top()
 	hint_backing.offset_bottom = -6 if modal else dock_top - root.size.y - 8
 	hint_backing.offset_top = hint_backing.offset_bottom - height
+	if not modal:
+		# Speech and transient help can reach the aiming point at large text
+		# sizes. Their actual visible bounds own it only while they cover it.
+		var reticle := crosshair.get_global_rect()
+		var speech_covers := page == "dialogue" and panel.visible and panel.get_global_rect().grow(3).intersects(reticle)
+		var hint_covers := hint_backing.visible and hint_backing.get_global_rect().grow(3).intersects(reticle)
+		crosshair.visible = not speech_covers and not hint_covers
 	if panel.visible and page != "dialogue":
 		# Reserve the actual wrapped hint, including long remapped key names.
 		panel.offset_bottom = 0
