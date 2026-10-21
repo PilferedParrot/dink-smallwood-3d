@@ -71,6 +71,17 @@ func _stable_wall_ties(game) -> void:
 
 # Source entity order resolves the existing equal-depth overlap between props.
 # Keep this fixture-only, identically on base and candidate, as for wall ties.
+# Preserve source-material sharing within each prop. Cloning each face alone
+# gave identical, equal-priority bed faces different material RIDs, so GLES3's
+# opaque sort could reorder them when cross-screen resource indices were reused.
+func _priority_material(source: Material, rank: int, copies: Dictionary) -> Material:
+ var key := source.get_instance_id()
+ if not copies.has(key):
+  var copy: Material=source.duplicate()
+  copy.render_priority=rank-128
+  copies[key]=copy
+ return copies[key]
+
 func _stable_prop_ties(game) -> void:
  var ids: Array=game.visuals.keys();ids.sort()
  var rank:=0
@@ -78,16 +89,13 @@ func _stable_prop_ties(game) -> void:
   var node: Node3D=game.visuals[id]
   if str(node.get_meta("model_key",""))=="wall":continue
   assert(rank<128,"Prop fixture exceeds renderer priority range")
+  var copies: Dictionary={}
   for mesh in node.find_children("*","MeshInstance3D",true,false):
    if mesh.material_override!=null:
-    var copy: Material=mesh.material_override.duplicate()
-    copy.render_priority=rank-128
-    mesh.material_override=copy
+    mesh.material_override=_priority_material(mesh.material_override,rank,copies)
    elif mesh.mesh!=null:
     for surface in mesh.mesh.get_surface_count():
-     var copy: Material=mesh.get_active_material(surface).duplicate()
-     copy.render_priority=rank-128
-     mesh.set_surface_override_material(surface,copy)
+     mesh.set_surface_override_material(surface,_priority_material(mesh.get_active_material(surface),rank,copies))
   rank+=1
 
 func _original_setup(game, overhead: Array, shadows: bool) -> void:
