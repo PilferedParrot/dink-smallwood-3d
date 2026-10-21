@@ -76,21 +76,20 @@ func walls(n: int) -> Array:
 		out.append({"rect":rect,"editor_index":int(source.index),"kind":kind})
 	if bool(game.world.screens[str(n)].indoor):
 		# Production add_terrain_walls draws these cells from the native tile
-		# collision and composited ground colors. Only boundary cells can
+		# collision and original tile colors. Only boundary cells can
 		# overlap a screen-edge source point or the original arrival point.
 		var saved_sprites: Dictionary = game.footprint_sprites
 		var saved_polys: Array = game.screen_footprints
 		var saved_tiles: Dictionary = game.footprint_tiles
 		game.footprint_sprites = {}; game.screen_footprints = []; game.footprint_tiles = {}
 		game._load_footprints(n)
-		var terrain: Image = presentation.ground_texture(n).get_image()
 		for row in 40:
 			for col in 60:
 				if row not in [0,39] and col not in [0,59]: continue
 				var x := 25+col*10
 				var y := 5+row*10
 				if not game._tile_blocked(Vector2(x,y)): continue
-				var color := terrain.get_pixel(x-20,y)
+				var color: Color = presentation.terrain_tile_color(game.world.screens[str(n)],x,y)
 				if color.b > color.r*1.1 and color.b > color.g*0.85: continue
 				if color.g > color.r*1.12: continue
 				out.append({"rect":Rect2(x-5,y-5,10,10),"editor_index":-1-row*60-col,"kind":"terrain boundary cell"})

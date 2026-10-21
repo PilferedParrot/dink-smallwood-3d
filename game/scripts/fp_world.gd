@@ -26,6 +26,7 @@ var host
 var models: Dictionary = {}
 var materials: Dictionary = {}
 var terrain_cache: Dictionary = {}
+var terrain_atlases: Dictionary = {} # original tile images, never composited sprite art
 var interior_cache: Dictionary = {}
 var bounds_cache: Dictionary = {}
 var interior := false
@@ -1299,11 +1300,28 @@ func animate_limbs(model: Node3D, time: float, id: int, moving: bool) -> void:
 			var rest: Vector3 = child.get_meta("rest_rotation")
 			child.rotation.x = rest.x + (sin(time*7+id+(PI if "right" in n or "_r" in n or "-1" in n else 0.0))*0.2 if moving else 0.0)
 
-# Solid dungeon/cliff silhouettes follow the imported collision mask. Water
-# retains its original surface; it is not mistaken for stone walls.
+# The original tile layer, before ground_tile replacements or painted sprites.
+# FreeDink109.6 editor_screen.cpp:42-48, live_screen.cpp:132-163: tile
+# hardness and sprite hardboxes are separate; painted RGB never owns hardness.
+func terrain_tile_color(screen: Dictionary, x: int, y: int) -> Color:
+	var index := int(screen.tiles[int(y/50)*12+int((x-20)/50)].get("tile",0))
+	var sheet := int(index/128)+1
+	if not terrain_atlases.has(sheet):
+		var texture: Texture2D = host._texture("res://assets/tiles/ts%02d.png" % sheet)
+		if texture == null: texture = host._texture("res://assets/tiles/ts%d.png" % sheet)
+		assert(texture != null,"Missing terrain source atlas %d" % sheet)
+		var image := texture.get_image()
+		assert(image != null,"Unreadable terrain source atlas %d" % sheet)
+		if image.is_compressed(): image.decompress()
+		terrain_atlases[sheet] = image
+	var atlas: Image = terrain_atlases[sheet]
+	var cell := index%128
+	return atlas.get_pixel((cell%12)*50+(x-20)%50,int(cell/12)*50+y%50)
+
+# Solid dungeon/cliff silhouettes follow tile hardness. The inherited blue/green
+# visual heuristic excludes water/grass; it reads only the original tile atlas.
 func add_terrain_walls(_screen: Dictionary) -> void:
 	if not interior: return # Outdoor masks also stamp grass, shores and invisible campaign gates.
-	var terrain: Image = ground_texture(host.current_screen).get_image()
 	var mesh := BoxMesh.new()
 	var cell := 10.0*SCALE # one 10 px cell of the mask
 	mesh.size = Vector3(cell,(solids.room_height(host.current_screen)*SCALE+(0.0 if solids.walls_fitted(host.current_screen) else 0.14)) if interior else 2.8,cell)
@@ -1318,7 +1336,7 @@ func add_terrain_walls(_screen: Dictionary) -> void:
 			if not host._tile_blocked(Vector2(x,y)): continue
 			var tile_index := int(_screen.tiles[int(y/50)*12+int((x-20)/50)].get("tile",0))
 			if not interior and tile_index < 128: continue # Stamped grass hardness belongs to modeled scenery.
-			var color := terrain.get_pixel(x-20,y)
+			var color := terrain_tile_color(_screen,x,y)
 			if color.b > color.r*1.1 and color.b > color.g*0.85: continue
 			# Wood flooring and grass are not walls, even on scripted barriers.
 			if color.g > color.r*1.12: continue
