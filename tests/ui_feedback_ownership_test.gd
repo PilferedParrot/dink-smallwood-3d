@@ -3,6 +3,14 @@ extends SceneTree
 const Game = preload("res://scripts/game.gd")
 const UI = preload("res://scripts/game_ui.gd")
 
+# Synthetic rectangles isolate the production visibility arbitration. Existing
+# text/speech censuses separately verify real card and help layout.
+class ReticleUI extends UI:
+	var probe_position := Vector2.ZERO
+	func _fit_dialogue_panel() -> void:
+		panel.position = probe_position
+		panel.size = Vector2(80, 80)
+
 class FakeUI extends RefCounted:
 	var closes := 0
 	var notices: Array[String] = []
@@ -33,10 +41,41 @@ func _on_action(action: String, value: Variant) -> void:
 	selected_action = action
 	selected_index = int(value)
 
+func check_reticle_owners() -> void:
+	var probe := ReticleUI.new()
+	root.add_child(probe)
+	await process_frame
+	probe.set_process(false)
+	probe.close_menu()
+	probe.page = "dialogue"
+	probe.modal = false
+	probe.dialogue_mode = true
+	probe.hint.text = "Help covers this aiming point."
+	probe.gameplay_hint_used = true
+	probe.gameplay_hint_deadline_msec = Time.get_ticks_msec() + 60000
+	probe._process(0)
+	# Place the aim inside the actual native help bounds, then vary ownership
+	# independently. This is a UI arbitration fixture, not a gameplay pose.
+	probe.crosshair.global_position = probe.hint_backing.get_global_rect().get_center()
+	var aim := probe.crosshair.get_global_rect()
+	for owners in [[true, false], [false, true], [true, true], [false, false]]:
+		probe.gameplay_hint_deadline_msec = Time.get_ticks_msec() + 60000 if owners[0] else 0
+		probe.probe_position = aim.position - Vector2(20, 20) if owners[1] else Vector2(-10000, -10000)
+		probe.panel.show()
+		probe._process(0)
+		var help_covers := probe.hint_backing.visible and probe.hint_backing.get_global_rect().grow(3).intersects(aim)
+		var speech_covers := probe.panel.visible and probe.panel.get_global_rect().grow(3).intersects(aim)
+		check(help_covers == owners[0] and speech_covers == owners[1], "Reticle fixture independently realizes both measured owners: " + str(owners))
+		check(probe.crosshair.visible == (not owners[0] and not owners[1]), "Reticle visible only when neither owner covers: " + str(owners))
+		print("RETICLE OWNERS ", JSON.stringify({"help":help_covers,"speech":speech_covers,"visible":probe.crosshair.visible}))
+	probe.queue_free()
+	await process_frame
+
 func _init() -> void:
 	await process_frame
 	root.size = Vector2i(1280, 800)
 	await process_frame
+	await check_reticle_owners()
 	var ui := UI.new()
 	root.add_child(ui)
 	ui.action_requested.connect(_on_action)
