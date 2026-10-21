@@ -11,6 +11,16 @@ from tools.ceiling_donors import ROOT
 
 FIXTURES = ROOT / 'tests/fixtures/ceilings'
 ATTRIBUTION_FILES = ['terrain-columns-attribution.json', 'terrain-columns-attribution-102.json']
+# The tile-class unit (baseline 638cec6) re-pinned the frames it changed; it supersedes the 'after' pin of those screens above.
+CLASS_FILE = 'terrain-class-attribution.json'
+
+
+def _class_records():
+    data = json.loads((FIXTURES / CLASS_FILE).read_text())
+    assert data['different_frames'] == len(data['frames'])
+    assert data['changed_pixels'] == sum(r['changed_pixels'] for r in data['frames'])
+    assert data['outside_column_bounds'] == sum(r['outside_column_bounds'] for r in data['frames']) == 0
+    return {r['screen']: r for r in data['frames']}
 
 
 def _records():
@@ -32,7 +42,9 @@ def test_every_attributed_frame_is_pinned_at_its_attributed_hash():
     for name, record in records:
         assert record['outside_column_bounds'] == 0, (name, record['screen'])
         assert record['before_rgb_sha256'] != record['after_rgb_sha256']
-        assert manifest['%d.png' % record['screen']]['rgb_sha256'] == record['after_rgb_sha256'], (name, record['screen'])
+        later = _class_records().get(record['screen'])
+        expected = later['after_rgb_sha256'] if later else record['after_rgb_sha256']
+        assert manifest['%d.png' % record['screen']]['rgb_sha256'] == expected, (name, record['screen'])
 
 
 def test_attributed_frames_changed_from_the_integrated_baseline_and_no_others_changed():
@@ -40,7 +52,20 @@ def test_attributed_frames_changed_from_the_integrated_baseline_and_no_others_ch
     manifest = json.loads((FIXTURES / 'manifest.json').read_text())['frames']
     attributed = {r['screen'] for _, r in _records()}
     changed = {int(n.split('.')[0]) for n in manifest if manifest[n]['rgb_sha256'] != baseline[n]['rgb_sha256']}
-    # 260 keeps its history-variant pair; its primary pin must stay at the baseline hash.
-    assert changed == attributed, sorted(changed ^ attributed)
+    assert changed == attributed | set(_class_records()), sorted(changed ^ (attributed | set(_class_records())))
     for _, record in _records():
         assert baseline['%d.png' % record['screen']]['rgb_sha256'] == record['before_rgb_sha256'], record['screen']
+
+
+def test_tile_class_frames_changed_from_the_0_3_3_pins_and_no_others():
+    base = json.loads(subprocess.check_output(['git', 'show', '638cec6:tests/fixtures/ceilings/manifest.json'], cwd=ROOT))['frames']
+    manifest = json.loads((FIXTURES / 'manifest.json').read_text())['frames']
+    records = _class_records()
+    changed = {int(n.split('.')[0]) for n in manifest if manifest[n]['rgb_sha256'] != base[n]['rgb_sha256']}
+    assert changed == set(records), sorted(changed ^ set(records))
+    for screen, record in records.items():
+        key = '%d.png' % screen
+        assert record['before_rgb_sha256'] == base[key]['rgb_sha256'], screen
+        assert record['after_rgb_sha256'] == manifest[key]['rgb_sha256'], screen
+        assert record['before_rgb_sha256'] != record['after_rgb_sha256']
+        assert record['outside_column_bounds'] == 0 and record['negative_control_outside'] == 1, screen
