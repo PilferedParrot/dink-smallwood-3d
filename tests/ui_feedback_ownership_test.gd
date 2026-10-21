@@ -68,6 +68,20 @@ func check_reticle_owners() -> void:
 		check(help_covers == owners[0] and speech_covers == owners[1], "Reticle fixture independently realizes both measured owners: " + str(owners))
 		check(probe.crosshair.visible == (not owners[0] and not owners[1]), "Reticle visible only when neither owner covers: " + str(owners))
 		print("RETICLE OWNERS ", JSON.stringify({"help":help_covers,"speech":speech_covers,"visible":probe.crosshair.visible}))
+	# A HIDDEN panel or help plaque whose rectangle still covers the aim owns nothing.
+	probe.gameplay_hint_deadline_msec = 0
+	probe.probe_position = aim.position - Vector2(20, 20)
+	probe.panel.hide()
+	probe._process(0)
+	check(not probe.panel.visible and probe.panel.get_global_rect().grow(3).intersects(aim), "Hidden speech panel fixture still has a rectangle over the aim")
+	check(probe.crosshair.visible, "A hidden speech panel over the aim does not hide the reticle")
+	# The help plaque expires (hidden) with its rectangle still where the aim is.
+	probe.panel.show()
+	probe.probe_position = Vector2(-10000, -10000)
+	probe.gameplay_hint_deadline_msec = 0
+	probe._process(0)
+	check(not probe.hint_backing.visible and probe.hint_backing.get_global_rect().grow(3).intersects(aim), "Hidden help plaque fixture still has a rectangle over the aim")
+	check(probe.crosshair.visible, "A hidden help plaque over the aim does not hide the reticle")
 	probe.queue_free()
 	await process_frame
 
