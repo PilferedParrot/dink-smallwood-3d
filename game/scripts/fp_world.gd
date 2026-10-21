@@ -1500,7 +1500,7 @@ func wrapped_copy(donor: ShaderMaterial) -> ShaderMaterial:
 	# (z,y) and (x,y) cut each step's picture from a different slice of the rock, which showed as comb stripes.
 	var code: String = donor.shader.code.replace("render_mode diffuse_burley;","render_mode diffuse_lambert_wrap;")
 	var axes := "else if (n.x > 0.5) { metres = p.zy; }\n else { metres = p.xy; }"
-	assert axes in code,"ceiling shader's face projection changed"
+	assert(axes in code,"ceiling shader's face projection changed")
 	shader.code = code.replace(axes,"else { metres = vec2(p.x + p.z, p.y); }")
 	var copy := ShaderMaterial.new()
 	copy.shader = shader
