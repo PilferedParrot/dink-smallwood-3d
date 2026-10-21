@@ -1,0 +1,168 @@
+{
+ "source_head": "94a4965 (terrain A commit, an ancestor of 8a82fd7)",
+ "source_evidence": "A-attribution-final.json",
+ "source_evidence_sha256": "3c9de83603ded824c3cc531809e68508f185bea8e4d4a879877f57272342ca52",
+ "baseline": "a21af9d",
+ "filter": "Godot4.6.1 Lanczos3 support, actual native dimensions; projected changed column bounds only",
+ "different_frames": 1,
+ "changed_pixels": 7241,
+ "frames": [
+  {
+   "screen": 102,
+   "changed_pixels": 7241,
+   "outside_column_bounds": 0,
+   "allowed_pixels": 16409,
+   "negative_control_outside": 1,
+   "changed_rects_before": [
+    [
+     170,
+     360,
+     10,
+     10
+    ],
+    [
+     170,
+     370,
+     10,
+     10
+    ],
+    [
+     170,
+     380,
+     10,
+     10
+    ],
+    [
+     180,
+     370,
+     10,
+     10
+    ],
+    [
+     180,
+     380,
+     10,
+     10
+    ],
+    [
+     180,
+     390,
+     10,
+     10
+    ],
+    [
+     190,
+     390,
+     10,
+     10
+    ],
+    [
+     200,
+     390,
+     10,
+     10
+    ],
+    [
+     430,
+     370,
+     10,
+     10
+    ],
+    [
+     430,
+     380,
+     10,
+     10
+    ],
+    [
+     430,
+     390,
+     10,
+     10
+    ],
+    [
+     440,
+     360,
+     10,
+     10
+    ],
+    [
+     440,
+     370,
+     10,
+     10
+    ],
+    [
+     440,
+     380,
+     10,
+     10
+    ],
+    [
+     440,
+     390,
+     10,
+     10
+    ],
+    [
+     450,
+     360,
+     10,
+     10
+    ],
+    [
+     450,
+     370,
+     10,
+     10
+    ],
+    [
+     450,
+     380,
+     10,
+     10
+    ],
+    [
+     450,
+     390,
+     10,
+     10
+    ],
+    [
+     460,
+     350,
+     10,
+     10
+    ],
+    [
+     460,
+     360,
+     10,
+     10
+    ],
+    [
+     460,
+     380,
+     10,
+     10
+    ],
+    [
+     460,
+     390,
+     10,
+     10
+    ]
+   ],
+   "changed_rects_after": [
+    [
+     460,
+     370,
+     10,
+     10
+    ]
+   ],
+   "before_rgb_sha256": "ee71c60e7f88dae65d56f9e72a098f5f629d4a7a807fac6ff554e79fbbdc562c",
+   "after_rgb_sha256": "897f22f190147575a3b1fde628a1f703439cba88356d926bc3489c880e9350ee"
+  }
+ ]
+}
