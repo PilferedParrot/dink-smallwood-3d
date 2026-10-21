@@ -8,18 +8,20 @@ var report_path := ""
 var presentation_path := "res://scripts/fp_world.gd"
 var selected_screens := []
 var failures: Array = []
+var control := true # --control=0: run an older presentation whose fixed geometry differs (the G1 red run)
 
 func _initialize() -> void:
 	for arg in OS.get_cmdline_user_args():
 		if arg.begins_with("--report="): report_path = arg.trim_prefix("--report=")
 		if arg.begins_with("--presentation="): presentation_path = arg.trim_prefix("--presentation=")
+		if arg == "--control=0": control = false
 		if arg.begins_with("--screens="):
 			for n in arg.trim_prefix("--screens=").split(","): selected_screens.append(int(n))
 	_run.call_deferred()
 
-func rects(game) -> Array:
+func rects(game, name := "SolidTerrain") -> Array:
 	var result := []
-	var node: MultiMeshInstance3D = game.scene_root.get_node_or_null("SolidTerrain")
+	var node: MultiMeshInstance3D = game.scene_root.get_node_or_null(name)
 	if node == null: return result
 	var multi := node.multimesh
 	var box := multi.mesh.get_aabb()
@@ -65,8 +67,9 @@ func _run() -> void:
 		clear_scene(game)
 		presentation.add_terrain_walls(game.world.screens[key])
 		var actual := rects(game)
-		if n == 3 and [70,100,10,10] not in actual:
-			push_error("Terrain census instrument failed fixed screen3 geometry control")
+		# Fixed control: 99's rock-band rim is the 3px hard line at rows 132-134 (a centre sample never sees it).
+		if control and n == 99 and ([20,132,10,3] not in actual or [610,132,10,3] not in actual):
+			push_error("Terrain census instrument failed fixed screen99 geometry control")
 			quit(2)
 			return
 		var covered := {}
@@ -121,7 +124,7 @@ func _run() -> void:
 				if game._footprint_blocked(p): owners.append({"kind":"fitted_footprint_or_clearance"})
 				if game._additional_structure_blocked(p,Vector2.INF): owners.append({"kind":"additional_fitted_structure"})
 				without.append({"cell":[x,y],"owners":owners})
-		rows.append({"screen":n,"indoor":presentation.interior,"rects":actual,"cells":selected,"sprite_perturbation_equal":perturb_equal,"native_coverage_violations":violations,"blocked_cells_without_terrain":without})
+		rows.append({"screen":n,"indoor":presentation.interior,"rects":actual,"fill_rects":rects(game,"SolidTerrainFill"),"cells":selected,"sprite_perturbation_equal":perturb_equal,"native_coverage_violations":violations,"blocked_cells_without_terrain":without})
 		print("TERRAIN SCREEN ",n," rects=",actual.size()," native_free_pixels=",violations.size())
 	var output := {"schema":"terrain-columns-1","presentation":presentation_path,"setup":"Static editor vision0; scripts/progression skipped. Full emitted pixel footprints queried natively; uncovered movement samples at 10px centres are conservatively listed, not certified invisible.","screens":rows,"failures":failures}
 	var file := FileAccess.open(report_path,FileAccess.WRITE)

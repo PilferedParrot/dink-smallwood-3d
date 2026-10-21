@@ -27,6 +27,11 @@ var models: Dictionary = {}
 var materials: Dictionary = {}
 var terrain_cache: Dictionary = {}
 var terrain_atlases: Dictionary = {} # original tile images, never composited sprite art
+var terrain_classes: Dictionary = {} # tile index -> true where the art depicts a raised surface
+var terrain_mask_cache: Dictionary = {} # hard.dat mask number -> its 25 cells holding hard pixels
+var terrain_face_cache: Dictionary = {} # screen -> the original tile picture, for column faces
+var terrain_face_shader: Shader
+var terrain_fill: Dictionary = {} # screen -> enclosed body rects (data/terrain_fill.json)
 var interior_cache: Dictionary = {}
 var bounds_cache: Dictionary = {}
 var interior := false
@@ -554,7 +559,7 @@ func configure_environment() -> void:
 		# a flat background colour set: the "empty sky and plain" seen from Dink's corridor in 0.3.0).
 		environment.sky = null if interior else sky
 		environment.background_mode = Environment.BG_COLOR if interior else Environment.BG_SKY
-		environment.background_color = Color("181916")
+		environment.background_color = Color.BLACK if interior else Color("181916") # an interior's open edge is darkness: the original draws nothing past its 600x400 screen
 		environment.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
 		environment.ambient_light_color = Color("ffe3af") if interior else Color("c6dfef")
 		environment.ambient_light_energy = 0.30 if interior else 0.32
@@ -1303,9 +1308,7 @@ func animate_limbs(model: Node3D, time: float, id: int, moving: bool) -> void:
 # The original tile layer, before ground_tile replacements or painted sprites.
 # FreeDink109.6 editor_screen.cpp:42-48, live_screen.cpp:132-163: tile
 # hardness and sprite hardboxes are separate; painted RGB never owns hardness.
-func terrain_tile_color(screen: Dictionary, x: int, y: int) -> Color:
-	var index := int(screen.tiles[int(y/50)*12+int((x-20)/50)].get("tile",0))
-	var sheet := int(index/128)+1
+func terrain_atlas(sheet: int) -> Image:
 	if not terrain_atlases.has(sheet):
 		var texture: Texture2D = host._texture("res://assets/tiles/ts%02d.png" % sheet)
 		if texture == null: texture = host._texture("res://assets/tiles/ts%d.png" % sheet)
@@ -1314,23 +1317,89 @@ func terrain_tile_color(screen: Dictionary, x: int, y: int) -> Color:
 		assert(image != null,"Unreadable terrain source atlas %d" % sheet)
 		if image.is_compressed(): image.decompress()
 		terrain_atlases[sheet] = image
-	var atlas: Image = terrain_atlases[sheet]
-	var cell := index%128
-	return atlas.get_pixel((cell%12)*50+(x-20)%50,int(cell/12)*50+y%50)
+	return terrain_atlases[sheet]
 
-# Candidate centres retain the inherited tile-art heuristic. It is a visual
-# classifier, not FreeDink semantics: hardness is supplied separately by the map.
+# What a tile's art depicts, from data/terrain_tile_classes.json (tools/terrain_tile_classes.py; sheets in
+# docs/terrain-tile-classes). Only a raised surface (rock, cliff face, solid dark) stands as a column: floor,
+# water (FreeDink109.6 gfx_tiles.cpp:87-93) and fire (:98-110) stay as flat as the original draws them.
+func terrain_tile_raised(index: int) -> bool:
+	if terrain_classes.is_empty():
+		var parsed: Variant = JSON.parse_string(FileAccess.get_file_as_string("res://data/terrain_tile_classes.json"))
+		assert(parsed is Dictionary,"Missing terrain tile class table")
+		for cls in ["raised","dark"]:
+			for t in parsed.classes[cls]: terrain_classes[int(t)] = true
+	return terrain_classes.has(index)
+
+# Which of a hard.dat mask's 25 ten-pixel cells hold any hard pixel (cached by mask number).
+func terrain_mask_cells(mask: int) -> PackedByteArray:
+	if terrain_mask_cache.has(mask): return terrain_mask_cache[mask]
+	var cells := PackedByteArray()
+	cells.resize(25)
+	var pixels: PackedByteArray = host._tile_mask_pixels(mask)
+	for x in 50:
+		for y in 50:
+			if x*51+y < pixels.size() and pixels[x*51+y] != 0: cells[int(y/10)*5+int(x/10)] = 1
+	terrain_mask_cache[mask] = cells
+	return cells
+
+# Candidate centres: every 10px cell of a raised-class tile that holds any hard pixel. Hard.dat is 1px and its
+# rims are 1-3px thick, so a centre sample misses them; the exact clip below keeps only the hard pixels.
 func terrain_wall_cells(screen: Dictionary) -> Array[Vector2i]:
 	var cells: Array[Vector2i] = []
 	if not interior: return cells
-	for y in range(5,400,10):
-		for x in range(25,620,10):
-			if not host._tile_blocked(Vector2(x,y)): continue
-			var color := terrain_tile_color(screen,x,y)
-			if color.b > color.r*1.1 and color.b > color.g*0.85: continue
-			if color.g > color.r*1.12: continue
-			cells.append(Vector2i(x,y))
+	var masks := {}
+	for ty in 8:
+		for tx in 12:
+			if not terrain_tile_raised(int(screen.tiles[ty*12+tx].get("tile",0))): continue
+			var mask: int = host._tile_mask_id(tx,ty)
+			if mask > 0: masks[ty*12+tx] = terrain_mask_cells(mask)
+	for cy in 40:
+		for cx in 60:
+			var tile := int(cy/5)*12+int(cx/5)
+			if masks.has(tile) and masks[tile][(cy%5)*5+cx%5] != 0: cells.append(Vector2i(25+cx*10,5+cy*10))
 	return cells
+
+# The original's own picture of a screen's tiles, for the faces of its columns.
+func terrain_face_texture(screen: Dictionary) -> Texture2D:
+	var key: int = host.current_screen
+	if terrain_face_cache.has(key): return terrain_face_cache[key]
+	var img := Image.create(600,400,false,Image.FORMAT_RGBA8)
+	for i in range(mini(96,screen.tiles.size())):
+		var index := int(screen.tiles[i].get("tile",0))
+		var atlas := terrain_atlas(int(index/128)+1)
+		var cell := index%128
+		img.blit_rect(atlas,Rect2i((cell%12)*50,int(cell/12)*50,50,50),Vector2i((i%12)*50,int(i/12)*50))
+	img.generate_mipmaps()
+	var texture := ImageTexture.create_from_image(img)
+	terrain_face_cache[key] = texture
+	return texture
+
+# A column face shows the original's picture of what stands behind it. The original draws from one raised camera,
+# screen = (X, Z - Y) (tools/facade_fit.py): a point Y up a wall whose foot is at row Z is the art at row Z - Y,
+# i.e. the art lies IN the solid, a height-worth behind the face. A face is textured by that rule on every side
+# (the art `height` px behind it, away from the open side), mirrored at the screen's edge.
+const TERRAIN_FACE_SHADER := """shader_type spatial;
+render_mode diffuse_burley;
+uniform sampler2D art : source_color, filter_linear_mipmap_anisotropic, repeat_disable;
+uniform float metres_per_pixel = 0.025;
+varying vec3 world_position;
+varying vec3 world_normal;
+void vertex() {
+ world_position = (MODEL_MATRIX * vec4(VERTEX, 1.0)).xyz;
+ world_normal = normalize(MODEL_NORMAL_MATRIX * NORMAL);
+}
+float mirrored(float a, float l) {
+ float t = mod(a, 2.0 * l);
+ return t < l ? t : 2.0 * l - t;
+}
+void fragment() {
+ vec2 p = vec2(world_position.x, world_position.z) / metres_per_pixel + vec2(300.0, 200.0);
+ float height = max(world_position.y, 0.0) / metres_per_pixel;
+ vec2 behind = world_normal.y > 0.5 ? p : p - world_normal.xz * height;
+ ALBEDO = texture(art, vec2(mirrored(behind.x, 600.0) / 600.0, mirrored(behind.y, 400.0) / 400.0)).rgb;
+ ROUGHNESS = 0.9;
+}
+"""
 
 # A blocked centre cannot license a whole 10px square: hard.dat has 1px
 # resolution. Clip each selected cell to that exact native tile mask, then
@@ -1369,39 +1438,86 @@ func add_terrain_walls(screen: Dictionary) -> void:
 	var mesh := BoxMesh.new()
 	var cell := 10.0*SCALE
 	mesh.size = Vector3(cell,solids.room_height(host.current_screen)*SCALE+(0.0 if solids.walls_fitted(host.current_screen) else 0.14),cell)
-	var material: Material = mat("dungeon_rock",Color("5c5a4d"))
-	var rock: Material = solids.terrain_material(host.current_screen) if solids.walls_fitted(host.current_screen) else null
-	if rock != null: material = rock
-	mesh.material = material
 	# Retain mesh/material initialization for empty rooms as before.
 	if rectangles.is_empty(): return
-	var multi := MultiMesh.new()
-	multi.transform_format = MultiMesh.TRANSFORM_3D
-	multi.mesh = mesh
-	multi.instance_count = rectangles.size()
+	# A fitted room's corners are its own stone; everything else shows its own tile art.
+	var rock: Material = solids.terrain_material(host.current_screen) if solids.walls_fitted(host.current_screen) else null
+	# A cave's faces are its own rock (the room's authored rim tiles, the ceiling's donor: P4c), projected on the world axes
+	# so a ragged rim's steps share one surface; the rest show their own tile picture, extruded by the original's camera.
+	if rock == null and str(ceilings.room(host.current_screen).get("ceiling",{}).get("mode","")) == "authored-tiles":
+		rock = wrapped_copy(ceilings.material(host.current_screen,"ceiling"))
+	if rock == null:
+		if terrain_face_shader == null:
+			terrain_face_shader = Shader.new()
+			terrain_face_shader.code = TERRAIN_FACE_SHADER
+		var faces := ShaderMaterial.new()
+		faces.shader = terrain_face_shader
+		faces.set_shader_parameter("art",terrain_face_texture(screen))
+		rock = faces
+	mesh.material = rock
+	var multi := terrain_multimesh(mesh,rectangles)
 	var body := StaticBody3D.new()
 	body.name = "TerrainCollision"
 	body.collision_layer = 1
 	body.collision_mask = 0
 	for i in rectangles.size():
-		var rect := rectangles[i]
-		var trans := Transform3D.IDENTITY
-		trans.basis = Basis.from_scale(Vector3(float(rect.size.x)/10.0,1.0,float(rect.size.y)/10.0))
-		var centre := Vector2(rect.position)+Vector2(rect.size)*0.5
-		trans.origin = point(centre.x,centre.y)+Vector3(0,mesh.size.y*0.5-0.05,0)
-		multi.set_instance_transform(i,trans)
 		# Physics and visible geometry use exactly the same rectangles.
 		var shape := CollisionShape3D.new()
 		var box := BoxShape3D.new()
-		box.size = Vector3(rect.size.x*SCALE,mesh.size.y,rect.size.y*SCALE)
+		box.size = Vector3(rectangles[i].size.x*SCALE,mesh.size.y,rectangles[i].size.y*SCALE)
 		shape.shape = box
-		shape.position = trans.origin
+		shape.position = multi.get_instance_transform(i).origin
 		body.add_child(shape)
 	var instance := MultiMeshInstance3D.new()
 	instance.name = "SolidTerrain"
 	instance.multimesh = multi
 	host.scene_root.add_child(instance)
 	host.scene_root.add_child(body)
+	# The bodies the rims enclose (tools/terrain_fill.py): drawn so a ragged 1-3px rim reads as a wall, never collided.
+	var fill := terrain_fill_rects(host.current_screen)
+	if not fill.is_empty():
+		var fill_instance := MultiMeshInstance3D.new()
+		fill_instance.name = "SolidTerrainFill"
+		fill_instance.multimesh = terrain_multimesh(mesh,fill)
+		host.scene_root.add_child(fill_instance)
+
+# The same donor with wrapped diffuse: a ragged 1-3px rim has steps facing every way, and burley striped them (light x faces, dark z faces).
+func wrapped_copy(donor: ShaderMaterial) -> ShaderMaterial:
+	if donor == null: return null
+	var key := "wrapped:"+str(donor.get_instance_id())
+	if materials.has(key): return materials[key]
+	var shader := Shader.new()
+	shader.code = donor.shader.code.replace("render_mode diffuse_burley;","render_mode diffuse_lambert_wrap;")
+	var copy := ShaderMaterial.new()
+	copy.shader = shader
+	for uniform in donor.shader.get_shader_uniform_list():
+		copy.set_shader_parameter(uniform.name,donor.get_shader_parameter(uniform.name))
+	materials[key] = copy
+	return copy
+
+func terrain_multimesh(mesh: BoxMesh, rectangles: Array) -> MultiMesh:
+	var multi := MultiMesh.new()
+	multi.transform_format = MultiMesh.TRANSFORM_3D
+	multi.mesh = mesh
+	multi.instance_count = rectangles.size()
+	for i in rectangles.size():
+		var rect: Rect2i = rectangles[i]
+		var trans := Transform3D.IDENTITY
+		trans.basis = Basis.from_scale(Vector3(float(rect.size.x)/10.0,1.0,float(rect.size.y)/10.0))
+		var centre := Vector2(rect.position)+Vector2(rect.size)*0.5
+		trans.origin = point(centre.x,centre.y)+Vector3(0,mesh.size.y*0.5-0.05,0)
+		multi.set_instance_transform(i,trans)
+	return multi
+
+# data/terrain_fill.json: the enclosed raised-class bodies of a screen, source px rects (tools/terrain_fill.py).
+func terrain_fill_rects(screen_number: int) -> Array[Rect2i]:
+	if terrain_fill.is_empty():
+		var parsed: Variant = JSON.parse_string(FileAccess.get_file_as_string("res://data/terrain_fill.json"))
+		assert(parsed is Dictionary,"Missing terrain fill table")
+		terrain_fill = parsed.screens
+	var out: Array[Rect2i] = []
+	for r in terrain_fill.get(str(screen_number),[]): out.append(Rect2i(int(r[0]),int(r[1]),int(r[2]),int(r[3])))
+	return out
 
 
 func hard_rect(e: Dictionary) -> Rect2:

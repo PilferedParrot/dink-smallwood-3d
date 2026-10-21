@@ -836,32 +836,37 @@ func _tile_blocked(pos: Vector2) -> bool:
 func _tile_hardness(pos: Vector2) -> int:
 	if pos.x < 20 or pos.x >= 620 or pos.y < 0 or pos.y >= 400: return 0
 	if _tile_pixel_replaced(pos): return 0
-	var tx := int((pos.x-20)/50)
-	var ty := int(pos.y/50)
+	var pixels := _tile_mask_pixels(_tile_mask_id(int((pos.x-20)/50),int(pos.y/50)))
+	# Hard.dat is a 51 x 51, x-major mask; the final row/column are padding.
+	var x := int(pos.x-20)%50
+	var y := int(pos.y)%50
+	return int(pixels[x*51+y]) if x*51+y < pixels.size() else 0
+
+# The hard.dat mask number of tile (tx, ty) of the current screen; 0 = none.
+func _tile_mask_id(tx: int, ty: int) -> int:
 	var tile: Dictionary = world.screens[str(current_screen)].tiles[ty*12+tx]
 	# A building's own tiles, and the custom masks drawn round its picture, give way to its
 	# footprint (a reverted tile keeps its art's default mask: a river bank, a cliff edge).
 	var override := int(footprint_tiles.get(ty*12+tx,-1))
 	if override == 0: return 0
 	var mask := int(tile.get("hard",0)) if override != 1 else 0
-	var hardness: Dictionary = world.get("hardness",{})
 	if mask == 0:
-		var defaults: Array = hardness.get("tile_defaults",[])
+		var defaults: Array = world.get("hardness",{}).get("tile_defaults",[])
 		var tile_id := int(tile.get("tile",0))
 		if tile_id >= 0 and tile_id < defaults.size(): mask = int(defaults[tile_id])
-	if mask <= 0: return 0
+	return maxi(mask,0)
+
+# The decoded 51 x 51 x-major pixels of hard.dat mask `mask` (empty when it has none).
+func _tile_mask_pixels(mask: int) -> PackedByteArray:
+	if mask <= 0: return PackedByteArray()
 	if not hardness_cache.has(mask):
-		var masks: Array = hardness.get("masks_rle",[])
-		if mask >= masks.size(): return 0
+		var masks: Array = world.get("hardness",{}).get("masks_rle",[])
+		if mask >= masks.size(): return PackedByteArray()
 		var decoded := PackedByteArray()
 		for run in masks[mask]:
 			for i in int(run[1]): decoded.append(int(run[0]))
 		hardness_cache[mask] = decoded
-	# Hard.dat is a 51 x 51, x-major mask; the final row/column are padding.
-	var x := int(pos.x-20)%50
-	var y := int(pos.y)%50
-	var pixels: PackedByteArray = hardness_cache[mask]
-	return int(pixels[x*51+y]) if x*51+y < pixels.size() else 0
+	return hardness_cache[mask]
 
 func _move_entity(id: int, displacement: Vector2, ignore_hardness: bool = false) -> void:
 	if not entities.has(id): return
