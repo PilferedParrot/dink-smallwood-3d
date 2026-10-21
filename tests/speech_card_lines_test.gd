@@ -6,7 +6,8 @@ const UI = preload("res://scripts/game_ui.gd")
 # than six lines shows all of them where its 35% share has the room. The project
 # stretches the 1280x800 base with aspect "expand", so a 16:9 window keeps the
 # 800 px canvas height (1422x800 at 1920x1080) and only a taller window gives a
-# taller canvas: 1280x1600 is the geometry in which seven and eight lines fit.
+# taller canvas: 1280x1600 is the geometry in which seven and eight lines fit, and in
+# which a twenty-line card scrolls while still showing more than six.
 var failures: Array[String] = []
 
 func check(condition: bool, message: String) -> void:
@@ -29,6 +30,7 @@ func _initialize() -> void:
 func _run() -> void:
 	await process_frame
 	var shown_most := 0
+	var overflow_most := 0
 	for geometry in [{"window": Vector2i(1920, 1080), "canvas": Vector2(1422, 800)}, {"window": Vector2i(1280, 1600), "canvas": Vector2(1280, 1600)}]:
 		root.size = geometry.window
 		await settle()
@@ -44,7 +46,7 @@ func _run() -> void:
 				var canvas: Vector2 = ui.root.size
 				var tag := "%s %s%s" % [geometry.window, "plain " if plain else "", "%d%%" % roundi(scale * 100)]
 				check(absf(canvas.x - geometry.canvas.x) <= 1.0 and absf(canvas.y - geometry.canvas.y) <= 1.0, "%s: canvas is the stretched named geometry %s (is %s)" % [tag, geometry.canvas, canvas])
-				for count in [7, 8]:
+				for count in [7, 8, 20]:
 					for timed in [true, false]:
 						ui.cancel_speech()
 						# A blocking card first moves the interface off its title page, as in play.
@@ -69,13 +71,19 @@ func _run() -> void:
 						# Where the 35% share holds all of them (whole lines), all of them are in view, none behind a scroll.
 						if chrome + count * pitch <= canvas.y * 0.35 - pitch:
 							check(in_view >= count and bar.max_value <= bar.page + 1.0, "%s: the card shows all %d lines (%d in view, scroll %s/%s)" % [kind, count, in_view, bar.max_value, bar.page])
-						# Otherwise the rest stay reachable.
+						# Otherwise the rest stay reachable, and the card still shows every whole line its share holds.
 						else:
 							check(bar.max_value >= float(count) * pitch - spacing - 1.0, "%s: every line is reachable (scroll range %s for %d lines)" % [kind, bar.max_value, count])
+							var share_lines := int(floor((canvas.y * 0.35 - chrome) / pitch))
+							check(in_view >= share_lines, "%s: an overflowing card shows the %d whole lines its share holds (%d in view)" % [kind, share_lines, in_view])
+							overflow_most = maxi(overflow_most, in_view)
 				ui.cancel_speech()
 				ui.queue_free()
 				await process_frame
 	check(shown_most > 6, "At least one named geometry shows more than six lines at once (most seen: %d)" % shown_most)
+	# Precondition for the no-cap claim on the scrolling path: some overflowing card had room for more than six.
+	check(overflow_most > 6, "At least one overflowing card shows more than six lines at once (most seen: %d)" % overflow_most)
+	print("CARD LINES MOST in_view=", shown_most, " overflowing=", overflow_most)
 	if failures.is_empty():
 		print("SPEECH CARD LINES PASS")
 	quit(1 if not failures.is_empty() else 0)
