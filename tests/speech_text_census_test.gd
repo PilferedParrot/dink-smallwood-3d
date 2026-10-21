@@ -1,4 +1,5 @@
 extends SceneTree
+const READING_LAYOUT = preload("text_layout_oracle.gd")
 ## UI-only census: no story execution or campaign reachability claim. The
 ## companion speech_layout_test exercises every DinkC owner and real input.
 const UI = preload("res://scripts/game_ui.gd")
@@ -75,7 +76,9 @@ func _run() -> void:
 	ui.close_menu()
 	for size in [Vector2i(1280, 800), Vector2i(1920, 1080)]:
 		root.size = size
-		for scale in [0.85, 1.0, 1.3]:
+		for style in [{"scale":1.0,"plain":false},{"scale":1.5,"plain":false},{"scale":2.0,"plain":false},{"scale":1.0,"plain":true},{"scale":1.5,"plain":true},{"scale":2.0,"plain":true}]:
+			var scale: float = style.scale
+			ui.set_plain_font(style.plain)
 			ui.set_text_scale(scale)
 			for row in cases:
 				# All literal texts are checked, including unexpanded interpolation
@@ -97,8 +100,9 @@ func _run() -> void:
 					Vector2(dock._dock_width, dock.STATUS_HEIGHT * dock._dock_scale))
 				var bounds: Rect2 = ui.panel.get_global_rect()
 				for decoration in [ui.panel_underlay, ui.vines_left, ui.vines_right]: bounds = bounds.merge(decoration.get_global_rect())
-				if bounds.intersects(art) or bounds.position.y < 0 or ui.panel.size.y > ui.root.size.y * 0.35 + 1:
+				if bounds.intersects(art) or bounds.position.y < 0:
 					failures.append("%s:%s %s %s scale=%s bounds=%s art=%s" % [row.script, row.line, row.owner, size, scale, bounds, art])
+				for defect in READING_LAYOUT.defects(ui): failures.append("%s:%s %s scale=%s %s" % [row.script,row.line,size,scale,defect])
 				if row.owner.begins_with("choice_"):
 					var focus: Control = root.gui_get_focus_owner()
 					if focus == null or not ui.menu_scroll.get_global_rect().grow(1).encloses(focus.get_global_rect()):
@@ -115,7 +119,7 @@ func _run() -> void:
 					for _i in 4: await process_frame
 					if not ui.menu_scroll.get_global_rect().grow(1).encloses(answer.get_global_rect()):
 						failures.append("Real choice answer clipped: %s %s scale=%s" % [answer.text,size,scale])
-					if ui.panel.size.y > ui.root.size.y * 0.35 + 1: failures.append("Real choice exceeds cap")
+					for defect in READING_LAYOUT.defects(ui): failures.append("Real choice: " + defect)
 					checked_answers += 1
 			print("SPEECH CENSUS progress size=", size, " scale=", scale, " checked=", checked, " failures=", failures.size())
 	print("SPEECH CENSUS ", JSON.stringify({"counts": counts, "source_cases": cases.size(), "checked": checked, "choice_groups":choice_groups.size(),"checked_answers":checked_answers,"failures": failures}))

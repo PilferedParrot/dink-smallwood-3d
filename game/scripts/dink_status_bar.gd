@@ -35,6 +35,9 @@ var _dock_width := MIN_DOCK_WIDTH
 var _dock_scale := 1.0
 var _dock_y := 0.0
 var _icon_cache: Dictionary = {}
+var readout: PanelContainer
+var readout_flow: HFlowContainer
+var readout_labels: Dictionary = {}
 
 func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -44,7 +47,27 @@ func _ready() -> void:
 	offset_top = -CONTROL_HEIGHT
 	offset_bottom = 0.0
 	_load_sequences()
+	readout = PanelContainer.new()
+	readout.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var backing := StyleBoxFlat.new()
+	backing.bg_color = Color("21180f")
+	backing.border_color = Color("806339")
+	backing.set_border_width_all(1)
+	backing.content_margin_left = 6; backing.content_margin_right = 6
+	backing.content_margin_top = 4; backing.content_margin_bottom = 4
+	readout.add_theme_stylebox_override("panel", backing)
+	add_child(readout)
+	readout_flow = HFlowContainer.new()
+	readout_flow.add_theme_constant_override("h_separation", 16)
+	readout_flow.add_theme_constant_override("v_separation", 2)
+	readout.add_child(readout_flow)
+	for key in ["life", "strength", "defense", "magic", "gold", "exp", "level"]:
+		var label := Label.new()
+		label.add_theme_color_override("font_color", COLOR_TEXT)
+		readout_flow.add_child(label)
+		readout_labels[key] = label
 	_layout_dock()
+	_update_readout()
 	queue_redraw()
 
 func _notification(what: int) -> void:
@@ -73,14 +96,46 @@ func art_rect() -> Rect2:
 	# Other UI owners must reserve the drawn artwork, not that padding.
 	return Rect2((size.x - _dock_width) * 0.5, _dock_y, _dock_width, STATUS_HEIGHT * _dock_scale)
 
+func readout_top() -> float:
+	# All other UI reserves both the original artwork and this optional copy.
+	return global_position.y + (readout.position.y if _text_scale > 1.3 and is_instance_valid(readout) else _dock_y)
+
+func _process(_delta: float) -> void:
+	if not is_instance_valid(readout): return
+	readout.visible = _text_scale > 1.3
+	if not readout.visible: return
+	var fs := roundi(15.0 * _dock_scale * _text_scale)
+	for label in readout_labels.values(): label.add_theme_font_size_override("font_size", fs)
+	readout.position.x = 12
+	readout.size.x = maxf(1, size.x - 24)
+	readout.size.y = readout.get_combined_minimum_size().y
+	readout.position.y = _dock_y - readout.size.y - 6
+
+func _display_stats() -> Dictionary:
+	var values := _stats.duplicate()
+	values.lifemax = maxi(1, int(_stats.get("lifemax", 10)))
+	values.life = clampi(int(_stats.get("life", 10)), 0, values.lifemax)
+	values.level = maxi(1, int(_stats.get("level", 1)))
+	values.exp = maxi(0, int(_stats.get("exp", 0)))
+	return values
+
+func _update_readout() -> void:
+	if not is_instance_valid(readout): return
+	var values := _display_stats()
+	readout_labels.life.text = "Life %d / %d" % [values.life, values.lifemax]
+	for field in [["strength", "Attack"], ["defense", "Defense"], ["magic", "Magic"], ["gold", "Coins"], ["level", "Lv"]]:
+		readout_labels[field[0]].text = "%s %d" % [field[1], int(values.get(field[0], 0))]
+	readout_labels.exp.text = "EXP %d / %d" % [values.exp, mini(99999, 100 * values.level * values.level)]
+
 func update_stats(stats: Dictionary) -> void:
 	_stats = stats.duplicate(true)
 	_weapon_texture = _texture_for_item(_stats.get("weapon_item", {}), false)
 	_spell_texture = _texture_for_item(_stats.get("spell_item", {}), true)
+	_update_readout()
 	queue_redraw()
 
 func set_text_scale(value: float) -> void:
-	_text_scale = clampf(value, 0.75, 1.8)
+	_text_scale = clampf(value, 0.85, 2.0)
 	queue_redraw()
 
 func set_context_hints_visible(_value: bool) -> void:
@@ -146,7 +201,7 @@ func _draw() -> void:
 	var x := (size.x - _dock_width) * 0.5
 	var scale_factor := _dock_scale
 	draw_texture_rect(STATUS_ART, art_rect(), false)
-	var font := ThemeDB.fallback_font
+	var font := get_theme_font("font")
 	if font == null:
 		return
 	var font_scale := scale_factor * _text_scale
@@ -155,27 +210,31 @@ func _draw() -> void:
 
 	# Keep the artwork's engraved labels visible. Fit the live digits to their
 	# original regions, including at enlarged text settings.
-	_draw_value(font, str(int(_stats.get("strength", 0))), ART_STRENGTH_RECT, number_fs)
-	_draw_value(font, str(int(_stats.get("defense", 0))), ART_DEFENSE_RECT, number_fs)
-	_draw_value(font, str(int(_stats.get("magic", 0))), ART_MAGIC_RECT, number_fs)
+	if _text_scale <= 1.3:
+		_draw_value(font, str(int(_stats.get("strength", 0))), ART_STRENGTH_RECT, number_fs)
+		_draw_value(font, str(int(_stats.get("defense", 0))), ART_DEFENSE_RECT, number_fs)
+		_draw_value(font, str(int(_stats.get("magic", 0))), ART_MAGIC_RECT, number_fs)
 
-	var life_max := maxi(1, int(_stats.get("lifemax", 10)))
-	var life := clampi(int(_stats.get("life", 10)), 0, life_max)
+	var values := _display_stats()
+	var life_max: int = values.lifemax
+	var life: int = values.life
 	var health_rect := Rect2(Vector2(x, _dock_y) + ART_HEALTH_RECT.position * scale_factor, ART_HEALTH_RECT.size * scale_factor)
 	draw_rect(health_rect, COLOR_HEALTH_BG)
 	var health_fill := Rect2(health_rect.position, Vector2(health_rect.size.x * float(life) / float(life_max), health_rect.size.y))
 	if health_fill.size.x > 0:
 		draw_rect(health_fill, COLOR_HEALTH)
-	_draw_value(font, "%d / %d" % [life, life_max], ART_HEALTH_VALUE_RECT, fs, HORIZONTAL_ALIGNMENT_CENTER)
-	_draw_value(font, str(int(_stats.get("gold", 0))), ART_COINS_RECT, number_fs)
+	if _text_scale <= 1.3:
+		_draw_value(font, "%d / %d" % [life, life_max], ART_HEALTH_VALUE_RECT, fs, HORIZONTAL_ALIGNMENT_CENTER)
+		_draw_value(font, str(int(_stats.get("gold", 0))), ART_COINS_RECT, number_fs)
 
-	var level := maxi(1, int(_stats.get("level", 1)))
-	var exp_value := maxi(0, int(_stats.get("exp", 0)))
+	var level: int = values.level
+	var exp_value: int = values.exp
 	var exp_target := mini(99999, 100 * level * level)
-	_draw_value(font, "EXP", Rect2(404, 38, 110, 22), fs, HORIZONTAL_ALIGNMENT_CENTER)
-	_draw_value(font, "%d/%d" % [exp_value, exp_target], ART_EXP_RECT, fs, HORIZONTAL_ALIGNMENT_CENTER)
-	_draw_value(font, "Lv", Rect2(517, 38, 30, 22), fs, HORIZONTAL_ALIGNMENT_CENTER)
-	_draw_value(font, str(level), ART_LEVEL_RECT, number_fs, HORIZONTAL_ALIGNMENT_CENTER)
+	if _text_scale <= 1.3:
+		_draw_value(font, "EXP", Rect2(404, 38, 110, 22), fs, HORIZONTAL_ALIGNMENT_CENTER)
+		_draw_value(font, "%d/%d" % [exp_value, exp_target], ART_EXP_RECT, fs, HORIZONTAL_ALIGNMENT_CENTER)
+		_draw_value(font, "Lv", Rect2(517, 38, 30, 22), fs, HORIZONTAL_ALIGNMENT_CENTER)
+		_draw_value(font, str(level), ART_LEVEL_RECT, number_fs, HORIZONTAL_ALIGNMENT_CENTER)
 
 	_draw_item_icon(_weapon_texture, x, ICON_WEAPON_RECT, scale_factor)
 	_draw_item_icon(_spell_texture, x, ICON_SPELL_RECT, scale_factor)

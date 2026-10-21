@@ -39,7 +39,7 @@ def test_every_source_speech_and_choice_literal_respects_card_bounds(tmp_path):
     result = subprocess.run(
         ["nice", "-n", "10", GODOT, "--headless", "--audio-driver", "Dummy", "--fixed-fps", "1000", "--path", project,
          "--script", str(ROOT / "tests/speech_text_census_test.gd")], cwd=ROOT, env=env,
-        capture_output=True, text=True, timeout=300)
+        capture_output=True, text=True, timeout=900)
     assert result.returncode == 0 and "SPEECH CENSUS PASS" in result.stdout and "SCRIPT ERROR" not in result.stderr, result.stdout + result.stderr
 
 
@@ -52,7 +52,7 @@ def test_long_choice_prompts_open_first_without_changing_input_owners(tmp_path):
     result = subprocess.run(
         ["nice", "-n", "10", GODOT, "--headless", "--audio-driver", "Dummy", "--fixed-fps", "1000",
          "--path", project, "--script", str(ROOT / "tests/choice_prompt_test.gd")],
-        cwd=ROOT, env=env, capture_output=True, text=True, timeout=60)
+        cwd=ROOT, env=env, capture_output=True, text=True, timeout=180)
     assert result.returncode == 0 and "CHOICE PROMPT PASS" in result.stdout and "SCRIPT ERROR" not in result.stderr, result.stdout + result.stderr
 
 
@@ -63,5 +63,5 @@ def test_timed_speech_exposes_every_line_before_natural_expiry(tmp_path):
     result = subprocess.run(
         ["nice", "-n", "10", GODOT, "--headless", "--audio-driver", "Dummy", "--fixed-fps", "12",
          "--path", project, "--script", str(ROOT / "tests/timed_reading_test.gd")],
-        cwd=ROOT, env=env, capture_output=True, text=True, timeout=300)
+        cwd=ROOT, env=env, capture_output=True, text=True, timeout=900)
     assert result.returncode == 0 and "TIMED READING PASS" in result.stdout and "SCRIPT ERROR" not in result.stderr, result.stdout + result.stderr

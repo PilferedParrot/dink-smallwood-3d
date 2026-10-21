@@ -24,6 +24,7 @@ var _spell_page := 0
 var _slot_buttons: Array[Button] = []
 var _page_prev: Button
 var _page_next: Button
+var _pager: HBoxContainer
 
 func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_STOP
@@ -35,7 +36,7 @@ func configure(items: Array, spells: Array, stats: Dictionary, texture_lookup: C
 	_spells = spells.duplicate(true)
 	_stats = stats.duplicate(true)
 	_texture_lookup = texture_lookup
-	_text_scale = clampf(text_scale, 0.75, 1.8)
+	_text_scale = clampf(text_scale, 0.85, 2.0)
 	_spell_page = mini(_spell_page, maxi(0, (_spells.size() - 1) / 8))
 	if is_node_ready():
 		_rebuild()
@@ -70,8 +71,19 @@ func _rebuild() -> void:
 		if _has_item(value):
 			_add_slot(value, "equip", index, index % 4 + 2, int(index / 4), false)
 	if has_extra_spells:
+		_pager = HBoxContainer.new()
+		_pager.position = Vector2(25, 405)
+		_pager.size.x = 550
+		add_child(_pager)
 		_page_prev = _make_page_button("◀ Prev", Vector2(25, 405), _spell_page > 0, -1)
 		_page_next = _make_page_button("Next ▶", Vector2(108, 405), (_spell_page + 1) * 8 < _spells.size(), 1)
+		var page_label := Label.new()
+		page_label.text = "Magic %d / %d" % [_spell_page + 1, ceili(float(_spells.size()) / 8.0)]
+		page_label.add_theme_font_size_override("font_size", roundi(13.0 * _text_scale))
+		page_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		page_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+		_pager.add_child(page_label)
+		custom_minimum_size.y = maxf(PAGE_HEIGHT, 405 + _pager.get_combined_minimum_size().y)
 	_set_focus_neighbors()
 	queue_redraw()
 
@@ -120,16 +132,19 @@ func _add_slot(item: Dictionary, action: String, index: int, col: int, row: int,
 	if equipped:
 		var marker := Label.new()
 		marker.text = "E"
-		marker.position = Vector2(48, 0)
-		marker.size = Vector2(18, 20)
+		marker.add_theme_font_size_override("font_size", roundi(18.0 * _text_scale))
+		marker.size = marker.get_combined_minimum_size()
+		marker.position = Vector2(SLOT_SIZE.x - marker.size.x, 0)
 		marker.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		marker.add_theme_font_size_override("font_size", 18)
 		marker.add_theme_color_override("font_color", GOLD)
 		marker.add_theme_color_override("font_shadow_color", Color.BLACK)
 		marker.add_theme_constant_override("shadow_offset_x", 1)
 		marker.add_theme_constant_override("shadow_offset_y", 1)
 		marker.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		button.add_child(marker)
+		# Font metrics depend on the inherited plain/default Theme after parenting.
+		marker.size = marker.get_combined_minimum_size()
+		marker.position.x = SLOT_SIZE.x - marker.size.x
 
 func _draw_slot_border(button: Button, equipped: bool) -> void:
 	var border := Rect2(Vector2(1, 1), button.size - Vector2(2, 2))
@@ -139,11 +154,10 @@ func _draw_slot_border(button: Button, equipped: bool) -> void:
 	elif equipped:
 		button.draw_rect(border.grow(-1), Color("b89244"), false, 2.0)
 
-func _make_page_button(label: String, at: Vector2, enabled: bool, delta: int) -> Button:
+func _make_page_button(label: String, _at: Vector2, enabled: bool, delta: int) -> Button:
 	var button := Button.new()
 	button.text = label
-	button.position = at
-	button.size = Vector2(68, 30)
+	button.custom_minimum_size = Vector2(68, 30)
 	button.focus_mode = Control.FOCUS_ALL
 	button.disabled = not enabled
 	button.tooltip_text = "Show %s magic slots" % ("previous" if delta < 0 else "next")
@@ -158,7 +172,7 @@ func _make_page_button(label: String, at: Vector2, enabled: bool, delta: int) ->
 		style.set_border_width_all(3 if state == "focus" else 1)
 		button.add_theme_stylebox_override(state, style)
 	button.pressed.connect(_turn_page.bind(delta))
-	add_child(button)
+	_pager.add_child(button)
 	return button
 
 func _turn_page(delta: int) -> void:
@@ -235,7 +249,4 @@ func _item_description(item: Dictionary, name: String, spell: bool, equipped: bo
 func _draw() -> void:
 	draw_texture_rect(ART, Rect2(Vector2.ZERO, ART_SIZE), false)
 	if _spells.size() > 8:
-		draw_rect(Rect2(0, 400, 600, 40), Color("261b13"))
-		var font := ThemeDB.fallback_font
-		if font != null:
-			draw_string(font, Vector2(191, 425), "Magic %d / %d" % [_spell_page + 1, ceili(float(_spells.size()) / 8.0)], HORIZONTAL_ALIGNMENT_LEFT, -1, roundi(13.0 * _text_scale), CREAM)
+		draw_rect(Rect2(0, 400, 600, custom_minimum_size.y - 400), Color("261b13"))

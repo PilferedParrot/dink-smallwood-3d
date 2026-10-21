@@ -2,6 +2,7 @@
 extends CanvasLayer
 const INPUT_BINDINGS = preload("res://scripts/input_bindings.gd")
 const CONTROLS_MENU = preload("res://scripts/controls_menu.gd")
+const PLAIN_FONT = preload("res://assets/fonts/AtkinsonHyperlegible-Regular.ttf")
 var controls_menu: VBoxContainer
 var bindings
 var control_primer_label: Label
@@ -43,6 +44,7 @@ var timed_reading_done := false
 var speech_dismiss_hint: Label
 var page := "title"
 var text_scale := 1.0
+var plain_font := false
 var menu_theme: Theme
 var controller_active := false
 var title_art: TextureRect
@@ -75,6 +77,13 @@ var panel_style: StyleBoxTexture
 var title_panel_style: StyleBoxEmpty
 var panel_underlay: ColorRect
 var hint_backing: PanelContainer
+var heading_row: VBoxContainer
+# Coalesce focus and adaptive-layout requests before reading native geometry.
+const FOCUS_SCROLL_OWNER = preload("res://scripts/focus_scroll_owner.gd")
+var focus_visibility_request := 0
+class FocusSortWait extends RefCounted:
+	signal finished(sorted: bool)
+	func complete(sorted: bool) -> void: finished.emit(sorted)
 var gameplay_hint_used := false
 var gameplay_hint_deadline_msec := 0
 const GAMEPLAY_HINT_SECONDS := 8.0
@@ -90,6 +99,7 @@ const CHOICE_BACKDROP = preload("res://assets/graphics/inter/Text-box/main-03.pn
 const LOGO = preload("res://assets/graphics/Startme/options/dinkl-01.png")
 
 func _ready() -> void:
+	get_viewport().gui_focus_changed.connect(_focus_changed)
 	layer = 10
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	if bindings == null:
@@ -264,7 +274,7 @@ func _ready() -> void:
 	var contents := VBoxContainer.new()
 	contents.add_theme_constant_override("separation", 8)
 	panel.add_child(contents)
-	var heading_row := HBoxContainer.new()
+	heading_row = VBoxContainer.new()
 	heading_row.add_theme_constant_override("separation", 12)
 	contents.add_child(heading_row)
 	heading = Label.new()
@@ -278,7 +288,7 @@ func _ready() -> void:
 	modal_feedback_text = Label.new()
 	modal_feedback_text.add_theme_color_override("font_color", GOLD)
 	modal_feedback_text.add_theme_font_size_override("font_size", 20)
-	modal_feedback_text.clip_text = true
+	modal_feedback_text.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	modal_feedback.add_child(modal_feedback_text)
 	modal_feedback.hide()
 	choice_prompt_scroll = ScrollContainer.new()
@@ -300,7 +310,7 @@ func _ready() -> void:
 	menu_scroll = scroll
 	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
-	scroll.follow_focus = true
+	_focus_scroll_owner(scroll)
 	contents.add_child(scroll)
 	column = VBoxContainer.new()
 	column.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -313,10 +323,12 @@ func _ready() -> void:
 	dialogue_continue.hide()
 	contents.add_child(dialogue_continue)
 	speech_dismiss_hint = Label.new()
+	speech_dismiss_hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	speech_dismiss_hint.add_theme_font_size_override("font_size", 18)
 	speech_dismiss_hint.hide()
 	contents.add_child(speech_dismiss_hint)
 	menu_footer = Button.new()
+	menu_footer.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	menu_footer.custom_minimum_size.y = 48
 	menu_footer.focus_mode = Control.FOCUS_ALL
 	menu_footer.pressed.connect(_button_pressed.bind("back", null))
@@ -326,6 +338,7 @@ func _ready() -> void:
 	root.move_child(hint_backing, -1)
 	root.move_child(toast_backing, -1)
 	_set_playing_visuals(false)
+	set_text_scale(text_scale)
 
 func _vine(path: String) -> TextureRect:
 	var vine := TextureRect.new()
@@ -353,10 +366,14 @@ func _process(_delta: float) -> void:
 		if expired: cancel_speech_id(id)
 	if page == "dialogue": _fit_dialogue_panel()
 	if page == "dialogue" and not dialogue_mode: _advance_timed_speech(_delta)
+	if page == "dialogue" and not modal:
+		# Large speech can reach the aiming point. Keep the reticle from being
+		# drawn through the speaker or text; ordinary gameplay restores it.
+		crosshair.visible = not panel.get_global_rect().grow(3).intersects(crosshair.get_global_rect())
 	if page == "dialogue" and choice_prompt_scroll.visible:
 		choice_prompt_axis = Input.get_action_strength("ui_page_down") - Input.get_action_strength("ui_page_up")
 		if not is_zero_approx(choice_prompt_axis):
-			choice_prompt_scroll.scroll_vertical += roundi(choice_prompt_axis * choice_prompt_scroll.size.y * _delta)
+			choice_prompt_scroll.scroll_vertical += roundi(choice_prompt_axis * _choice_prompt_step() * _delta)
 		_update_hint()
 	# A top-level Container grows to a wrapped Label's minimum but does not
 	# shrink when that minimum falls. Startup can wrap before width settles;
@@ -386,8 +403,15 @@ func _process(_delta: float) -> void:
 	var width := minf(available, text_width + 24)
 	hint_backing.offset_left = -width / 2; hint_backing.offset_right = width / 2
 	var height := maxf(38, hint.get_minimum_size().y + 12)
-	hint_backing.offset_bottom = -6 if modal else -150
+	var dock_top: float = status_dock.global_position.y + status_dock.art_rect().position.y
+	if status_dock.has_method("readout_top"): dock_top = status_dock.readout_top()
+	hint_backing.offset_bottom = -6 if modal else dock_top - root.size.y - 8
 	hint_backing.offset_top = hint_backing.offset_bottom - height
+	if panel.visible and page != "dialogue":
+		# Reserve the actual wrapped hint, including long remapped key names.
+		panel.offset_bottom = 0
+		var bottom := hint_backing.position.y - 8 if hint_backing.visible else root.size.y * 0.90
+		panel.offset_bottom = minf(0, bottom - panel.anchor_bottom * root.size.y)
 
 func _make_bar(fill: Color) -> ProgressBar:
 	var bar := ProgressBar.new()
@@ -414,8 +438,10 @@ func _layout_for(next_page: String) -> void:
 	panel.offset_top = 0
 	panel.offset_bottom = 0
 	if next_page == "title":
-		panel.anchor_left = 0.56; panel.anchor_right = 0.94
+		panel.anchor_left = 0.38 if text_scale > 1.3 else 0.56
+		panel.anchor_right = 0.96 if text_scale > 1.3 else 0.94
 		panel.anchor_top = 0.10; panel.anchor_bottom = 0.92
+		title_art.anchor_right = 0.34 if text_scale > 1.3 else 0.52
 		overlay.color = Color.BLACK
 	elif next_page == "dialogue":
 		panel.anchor_left = 0.12; panel.anchor_right = 0.88
@@ -431,29 +457,39 @@ func _layout_for(next_page: String) -> void:
 
 # Short speech uses only the height its heading, text and action need. The
 # former fixed 35% menu card left most of a one-line conversation empty.
-# Long dialogue retains that same height cap and its independent Continue.
+# The usual35% cap yields only to native full-line/focused-action minima at
+# large text sizes. Never trade the requested font size for a smaller card.
 func _fit_dialogue_panel() -> void:
 	var chrome := panel.get_combined_minimum_size().y-menu_scroll.get_combined_minimum_size().y
 	var body := column.get_combined_minimum_size().y
+	var bottom: float = status_dock.readout_top() - column.get_theme_constant("separation")
+	var available_height := maxf(1, bottom - column.get_theme_constant("separation"))
+	var readable_body := 0.0
+	if column.get_child_count() > 0 and column.get_child(0) is Label:
+		var label: Label = column.get_child(0)
+		readable_body = minf(body, label.get_line_height() * 2 + label.get_theme_constant("line_spacing"))
+	var answer: Control
+	var answer_height := 0.0
+	if dialogue_mode and not dialogue_continue.visible and column.get_child_count() > 0:
+		answer = get_viewport().gui_get_focus_owner()
+		if answer == null or not column.is_ancestor_of(answer):
+			answer = column.get_child(0) if column.get_child_count() > 0 else null
+		answer_height = answer.get_combined_minimum_size().y if answer != null else 0.0
+		readable_body = answer_height
 	if choice_prompt_scroll.visible:
 		chrome -= choice_prompt_scroll.get_combined_minimum_size().y
 		body += choice_prompt.get_combined_minimum_size().y
-	var height := minf(chrome+body,maxf(chrome,root.size.y*0.35))
+		readable_body = answer_height + minf(choice_prompt.get_combined_minimum_size().y, choice_prompt.get_line_height())
+	var height := minf(available_height, minf(chrome+body,maxf(chrome+readable_body,root.size.y*0.35)))
 	if choice_prompt_scroll.visible:
-		var answer: Control = get_viewport().gui_get_focus_owner()
-		if answer == null or not column.is_ancestor_of(answer):
-			answer = column.get_child(0) if column.get_child_count() > 0 else null
-		var answer_height := answer.get_combined_minimum_size().y if answer != null else 0.0
 		var available := maxf(0, height - chrome)
 		# Give the focused answer its full height first. The prompt has its own
 		# viewport and cannot push the selected action below the fold.
 		var prompt_height := minf(choice_prompt.get_combined_minimum_size().y, maxf(0, available - answer_height))
 		if choice_prompt_scroll.custom_minimum_size.y != prompt_height:
 			choice_prompt_scroll.custom_minimum_size.y = prompt_height
-			_keep_choice_visible.call_deferred(answer, page_serial)
 	# All speech and choices share one footprint, even when blocking speech
 	# hides the HUD. Include the vines, which can outgrow a short timed card.
-	var bottom: float = status_dock.position.y + status_dock.art_rect().position.y - column.get_theme_constant("separation")
 	var top := bottom - maxf(height, SPEECH_VINE_SIZE.y)
 	var key := Vector4(chrome,body,height,top)
 	if key == dialogue_layout_key: return
@@ -462,10 +498,53 @@ func _fit_dialogue_panel() -> void:
 	panel.anchor_bottom = 0
 	panel.offset_top = top
 	panel.offset_bottom = top + height
+	if answer != null:
+		_keep_focus_visible.call_deferred(answer, page_serial)
 
-func _keep_choice_visible(answer: Control, serial: int) -> void:
-	if serial == page_serial and is_instance_valid(answer) and answer.is_inside_tree():
-		menu_scroll.ensure_control_visible(answer)
+func _focus_changed(control: Control) -> void:
+	if control == null and is_instance_valid(root):
+		for scroll in root.find_children("*", "ScrollContainer", true, false):
+			if scroll.has_meta("focus_scroll_owner"): scroll.get_meta("focus_scroll_owner").note_focus_lost()
+	if control != null and is_instance_valid(root) and root.is_ancestor_of(control):
+		_keep_focus_visible(control, page_serial)
+
+func _focus_request_current(control: Control, serial: int, request: int) -> bool:
+	return request == focus_visibility_request and serial == page_serial and is_inside_tree() and is_instance_valid(control) and control.is_inside_tree() and control.is_visible_in_tree() and get_viewport().gui_get_focus_owner() == control
+
+func _sort_for_focus(container: Container) -> bool:
+	if not is_instance_valid(container) or not container.is_inside_tree(): return false
+	var completion := FocusSortWait.new()
+	var sorted := completion.complete.bind(true)
+	var exited := completion.complete.bind(false)
+	# queue_sort is deferred, including an already-pending sort. Attach both
+	# outcomes first; removing/freeing the container must also release the wait.
+	# Resume after _sort_children resets its pending flag; tree exit stays
+	# synchronous so teardown cancels the coroutine before its owner is freed.
+	container.sort_children.connect(sorted, CONNECT_ONE_SHOT | CONNECT_DEFERRED)
+	container.tree_exiting.connect(exited, CONNECT_ONE_SHOT)
+	container.queue_sort()
+	var completed: bool = await completion.finished
+	if is_instance_valid(container):
+		if container.sort_children.is_connected(sorted): container.sort_children.disconnect(sorted)
+		if container.tree_exiting.is_connected(exited): container.tree_exiting.disconnect(exited)
+	return completed
+
+func _focus_scroll_owner(scroll: ScrollContainer):
+	if not scroll.has_meta("focus_scroll_owner"):
+		scroll.set_meta("focus_scroll_owner", FOCUS_SCROLL_OWNER.new(scroll, self))
+	return scroll.get_meta("focus_scroll_owner")
+
+func _keep_focus_visible(control: Control, serial: int) -> void:
+	focus_visibility_request += 1
+	var request := focus_visibility_request
+	if not _focus_request_current(control, serial, request): return
+	var parent := control.get_parent()
+	while parent != null:
+		if parent is ScrollContainer:
+			var owner = _focus_scroll_owner(parent)
+			if owner.request_focus(control, serial): await owner.settled
+			if not _focus_request_current(control, serial, request): return
+		parent = parent.get_parent()
 
 func _bindings_changed() -> void:
 	_update_hint()
@@ -520,6 +599,23 @@ func _controls_text() -> String:
 	return "\n".join(lines)
 
 func _input(event: InputEvent) -> void:
+	if modal and page != "dialogue" and not (page == "controls" and controls_menu.state == "capture"):
+		# Reading must also reach labels after the final focusable action (the
+		# title primer, journal, credits). Native ScrollContainer has wheel and
+		# drag input; these are our already-configurable menu reading actions.
+		var reading_scroll: ScrollContainer = controls_menu.scroll if page == "controls" else menu_scroll
+		var direction := int(event.is_action_pressed("ui_page_down")) - int(event.is_action_pressed("ui_page_up"))
+		if event.is_action_pressed("ui_home") or event.is_action_pressed("ui_end") or direction != 0:
+			if event.is_action_pressed("ui_home"): _focus_scroll_owner(reading_scroll).set_position(0)
+			elif event.is_action_pressed("ui_end"):
+				_focus_scroll_owner(reading_scroll).set_position(ceili(reading_scroll.get_v_scroll_bar().max_value))
+			else:
+				var line := root.get_theme_font("font").get_height(menu_theme.default_font_size)
+				_focus_scroll_owner(reading_scroll).set_position(reading_scroll.scroll_vertical + roundi(direction * maxf(1,reading_scroll.size.y-line)))
+			controller_active = event is InputEventJoypadButton or event is InputEventJoypadMotion
+			_update_hint()
+			get_viewport().set_input_as_handled()
+			return
 	if page == "dialogue" and not dialogue_mode and speech_lines.has(active_speech_id):
 		if bool(speech_lines[active_speech_id].waits) and event.is_action_pressed("talk") and not event.is_echo():
 			controller_active = event is InputEventJoypadButton or event is InputEventJoypadMotion
@@ -530,7 +626,7 @@ func _input(event: InputEvent) -> void:
 		var direction := int(event.is_action_pressed("ui_page_down")) - int(event.is_action_pressed("ui_page_up"))
 		if direction != 0 and not event is InputEventJoypadMotion:
 			controller_active = event is InputEventJoypadButton
-			choice_prompt_scroll.scroll_vertical += roundi(direction * choice_prompt_scroll.size.y)
+			choice_prompt_scroll.scroll_vertical += roundi(direction * _choice_prompt_step())
 			get_viewport().set_input_as_handled()
 			_update_hint()
 			return
@@ -554,6 +650,12 @@ func _uses_gameplay_control(event: InputEvent) -> bool:
 	for action in bindings.gameplay_actions():
 		if event.is_action_pressed(action): return true
 	return false
+
+func _choice_prompt_step() -> float:
+	# A single-line viewport must page to the next baseline, not through
+	# fractional lines that never expose a complete row at large text sizes.
+	var pitch := float(choice_prompt.get_line_height() + choice_prompt.get_theme_constant("line_spacing"))
+	return pitch * maxf(1, floorf(choice_prompt_scroll.size.y / maxf(1,pitch)))
 
 func _update_hint() -> void:
 	if is_instance_valid(speech_dismiss_hint):
@@ -615,7 +717,7 @@ func _clear(title: String, next_page: String) -> void:
 	choice_prompt_scroll.hide()
 	choice_prompt_scroll.custom_minimum_size.y = 0
 	choice_prompt_scroll.scroll_vertical = 0
-	menu_scroll.scroll_vertical = 0
+	_focus_scroll_owner(menu_scroll).request_reset(page_serial, true)
 	for child in column.get_children():
 		column.remove_child(child)
 		child.queue_free()
@@ -637,11 +739,8 @@ func _clear(title: String, next_page: String) -> void:
 	_reset_scroll_after_layout.call_deferred(page_serial)
 
 func _reset_scroll_after_layout(serial: int) -> void:
-	# Replacing content changes the old scroll range after the container lays out.
-	# Reset after deferred focus as well, so each page opens with its heading.
-	await get_tree().process_frame
-	await get_tree().process_frame
-	if serial == page_serial and panel.visible: menu_scroll.scroll_vertical = 0
+	if serial == page_serial and panel.visible:
+		_focus_scroll_owner(menu_scroll).request_reset(serial)
 
 func _label(text: String, size: int = 22, color: Color = CREAM) -> Label:
 	var label := Label.new()
@@ -665,6 +764,7 @@ func _button(text: String, action: String, value: Variant = null) -> Button:
 	return button
 
 func _button_pressed(action: String, value: Variant) -> void:
+	if action == "plain_font": return # Its toggle emits the persisted setting.
 	if action == "controls":
 		show_controls()
 		return
@@ -694,9 +794,12 @@ func _focusable_children(node: Node) -> Array[Control]:
 	return found
 
 func set_text_scale(value: float) -> void:
-	text_scale = clampf(value, 0.85, 1.3)
+	text_scale = clampf(value, 0.85, 2.0)
 	if not is_instance_valid(root): return
 	menu_theme.default_font_size = roundi(22.0 * text_scale)
+	menu_theme.set_font_size("font_size", "TooltipLabel", roundi(18.0 * text_scale))
+	compass_label.add_theme_font_size_override("font_size", roundi(18.0 * text_scale))
+	compass_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	hint.add_theme_font_size_override("font_size", roundi(20.0 * text_scale))
 	toast.add_theme_font_size_override("font_size", roundi(22.0 * text_scale))
 	status_dock.set_text_scale(text_scale)
@@ -705,11 +808,25 @@ func set_text_scale(value: float) -> void:
 	equipment_name.add_theme_font_size_override("font_size", roundi(22.0 * text_scale))
 	modal_feedback_text.add_theme_font_size_override("font_size", roundi(20.0 * text_scale))
 	menu_footer.custom_minimum_size.y = roundi(48.0 * text_scale)
+	dialogue_continue.custom_minimum_size.y = roundi(52.0 * text_scale)
 	for node in column.get_children():
 		if node.has_meta("base_font_size"):
 			node.add_theme_font_size_override("font_size", roundi(float(node.get_meta("base_font_size")) * text_scale))
 		if node.has_meta("base_minimum_height"):
 			node.custom_minimum_size.y = roundi(float(node.get_meta("base_minimum_height")) * text_scale)
+	dialogue_layout_key = Vector4.INF
+	timed_layout_key = Vector4.INF
+	_layout_for(page)
+	_focus_changed(get_viewport().gui_get_focus_owner())
+
+func set_plain_font(value: bool) -> void:
+	plain_font = value
+	if not is_instance_valid(root): return
+	menu_theme.default_font = PLAIN_FONT if plain_font else null
+	status_dock.queue_redraw()
+	dialogue_layout_key = Vector4.INF
+	timed_layout_key = Vector4.INF
+	_focus_changed(get_viewport().gui_get_focus_owner())
 
 func show_title(has_save: bool) -> void:
 	cancel_speech()
@@ -846,7 +963,7 @@ func _advance_timed_speech(delta: float) -> void:
 		timed_scroll_offset = 0
 		timed_phase_elapsed = 0
 		timed_phase = 0
-		menu_scroll.scroll_vertical = 0
+		_focus_scroll_owner(menu_scroll).set_position(0, false)
 		return
 	if timed_phase == 0:
 		timed_phase_elapsed += delta
@@ -859,7 +976,7 @@ func _advance_timed_speech(delta: float) -> void:
 		# Each line must be fully visible in some frame before normal expiry.
 		var step := minf(timed_scroll_speed * delta, maxf(1, menu_scroll.size.y - line_step))
 		timed_scroll_offset = minf(extent, timed_scroll_offset + step)
-		menu_scroll.scroll_vertical = ceili(timed_scroll_offset)
+		_focus_scroll_owner(menu_scroll).set_position(ceili(timed_scroll_offset), false)
 		if timed_scroll_offset >= extent:
 			timed_phase = 2
 			timed_phase_elapsed = 0
@@ -1026,9 +1143,7 @@ func _sync_feedback() -> void:
 	if active and modal:
 		modal_feedback_text.text = toast.text
 		modal_feedback_text.tooltip_text = toast.text
-		var font_size := roundi(20.0 * text_scale)
-		var width := modal_feedback_text.get_theme_font("font").get_string_size(toast.text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size).x
-		modal_feedback.custom_minimum_size.x = minf(width + 32, 280)
+		modal_feedback.custom_minimum_size.x = 0
 
 func show_inventory(items: Array, magic_items: Array) -> void:
 	_clear("Your equipment", "inventory")
@@ -1066,13 +1181,14 @@ func _describe_equipment(text: String, label: Label) -> void:
 func show_journal(text: String) -> void:
 	_clear("Adventure journal", "journal")
 	_label(text, 22)
-	_button("Back to paused adventure", "back")
+	menu_footer.text = "Back to paused adventure"
+	menu_footer.show()
 	_focus()
 
 func show_settings(settings: Dictionary) -> void:
 	_clear("Settings & controls", "settings")
 	_button("Controls", "controls")
-	for setting in [["master", "Master volume", 0.0, 1.0, 0.1, 0.8], ["music", "Music volume", 0.0, 1.0, 0.05, 0.55], ["sfx", "Sound effects", 0.0, 1.0, 0.1, 0.8], ["text_scale", "Text size", 0.85, 1.3, 0.05, 1.0], ["mouse_sensitivity", "Mouse sensitivity", 0.0005, 0.006, 0.0005, 0.002], ["fov", "Field of view", 60.0, 105.0, 1.0, 80.0], ["controller_sensitivity", "Controller look sensitivity", 0.5, 4.0, 0.1, 2.0], ["controller_deadzone", "Controller stick dead zone", 0.05, 0.4, 0.05, 0.2]]:
+	for setting in [["master", "Master volume", 0.0, 1.0, 0.1, 0.8], ["music", "Music volume", 0.0, 1.0, 0.05, 0.55], ["sfx", "Sound effects", 0.0, 1.0, 0.1, 0.8], ["text_scale", "Text size", 0.85, 2.0, 0.05, 1.0], ["mouse_sensitivity", "Mouse sensitivity", 0.0005, 0.006, 0.0005, 0.002], ["fov", "Field of view", 60.0, 105.0, 1.0, 80.0], ["controller_sensitivity", "Controller look sensitivity", 0.5, 4.0, 0.1, 2.0], ["controller_deadzone", "Controller stick dead zone", 0.05, 0.4, 0.05, 0.2]]:
 		var key: String = setting[0]
 		var value_label := _label(setting[1], 18)
 		var slider := HSlider.new()
@@ -1090,7 +1206,15 @@ func show_settings(settings: Dictionary) -> void:
 		slider.value_changed.connect(_setting_readout.bind(value_label, str(setting[1]), key))
 		column.add_child(slider)
 		_setting_readout(slider.value, value_label, str(setting[1]), key)
+		if key == "text_scale":
+			var font_button := _button("", "plain_font")
+			font_button.set_meta("setting_key", "plain_font")
+			font_button.toggle_mode = true
+			font_button.set_pressed_no_signal(bool(settings.get("plain_font", false)))
+			font_button.toggled.connect(_plain_font_changed.bind(font_button))
+			font_button.text = "Font: Plain (Atkinson Hyperlegible)" if font_button.button_pressed else "Font: Default"
 	var invert := Button.new()
+	invert.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	invert.toggle_mode = true
 	invert.set_meta("setting_key", "controller_invert_y")
 	invert.text = "Invert controller vertical look"
@@ -1101,6 +1225,7 @@ func show_settings(settings: Dictionary) -> void:
 	_toggle_readout(invert.button_pressed, invert, "Invert controller vertical look")
 	column.add_child(invert)
 	var reduced := Button.new()
+	reduced.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	reduced.toggle_mode = true
 	reduced.set_meta("setting_key", "reduced_motion")
 	reduced.text = "Reduce camera movement"
@@ -1111,6 +1236,7 @@ func show_settings(settings: Dictionary) -> void:
 	_toggle_readout(reduced.button_pressed, reduced, "Reduce camera movement")
 	column.add_child(reduced)
 	var speech_wait := Button.new()
+	speech_wait.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	speech_wait.toggle_mode = true
 	speech_wait.set_meta("setting_key", "speech_waits_for_me")
 	speech_wait.focus_mode = Control.FOCUS_ALL
@@ -1133,6 +1259,10 @@ func show_controls() -> void:
 
 func _setting_changed(value: float, key: String) -> void:
 	action_requested.emit("setting", {"key": key, "value": value})
+
+func _plain_font_changed(value: bool, button: Button) -> void:
+	button.text = "Font: Plain (Atkinson Hyperlegible)" if value else "Font: Default"
+	action_requested.emit("setting", {"key":"plain_font", "value":value})
 
 func _draw_slider_focus(slider: HSlider) -> void:
 	if not slider.has_focus(): return
@@ -1169,7 +1299,7 @@ func _controller_invert_changed(value: bool) -> void:
 func show_credits() -> void:
 	_clear("Credits & support", "credits")
 	_label("Development release %s" % str(ProjectSettings.get_setting("application/config/version", "")), 18)
-	_label("3D adaptation · PilferedParrot\nOriginal Dink Smallwood · Seth A. Robinson\nArtwork · Justin Martin\nStory & world · Seth A. Robinson, Greg Smith, Justin Martin\nAdditional levels · Chris Bakker\nv1.08 fixes · Talmadge Bradley III\nFree audio · GNU FreeDink contributors\nEngine · Godot contributors", 20)
+	_label("3D adaptation · PilferedParrot\nOriginal Dink Smallwood · Seth A. Robinson\nArtwork · Justin Martin\nStory & world · Seth A. Robinson, Greg Smith, Justin Martin\nAdditional levels · Chris Bakker\nv1.08 fixes · Talmadge Bradley III\nFree audio · GNU FreeDink contributors\nEngine · Godot contributors\nOptional plain font · Atkinson Hyperlegible, Braille Institute (SIL OFL 1.1)", 20)
 	_label("New code: Apache 2.0. Original art, story and audio retain their own licenses. Detailed attributions are bundled in licenses/. This is an unofficial, modified adaptation.", 18)
 	_button("Support PilferedParrot on Patreon ↗", "patreon")
 	_button("Source code & full credits ↗", "source")
