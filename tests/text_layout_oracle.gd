@@ -2,21 +2,28 @@
 extends RefCounted
 ## Independent geometry oracle: actual viewport/chrome, native full-line metrics.
 ## 35% remains the normal maximum; large text may require more pinned chrome. The card is sized to whole
-## lines, to the NEAREST line edge (RULE.md, round 2), so it may pass the cap by up to half an atom per
-## scroll area (`allowance`): half a prompt line, half a prose line or half the focused answer.
+## lines, to the NEAREST line edge (RULE.md, round 2), so it may pass the cap by up to half an atom IN TOTAL
+## (`allowance`), charged to the one area that rounds: the answers when they hold more than the focused answer,
+## otherwise the prompt when it holds more than its viewport. (The prompt's rounding is absorbed by the answers'
+## slot, so with answers rounding only they move the card; when the answers sit on their reading floor, only the
+## prompt does.) A speech without a prompt rounds its prose by half a line.
 static func allowance(ui) -> float:
- var slack := 0.0
- if ui.choice_prompt_scroll.visible:
-  slack += (float(ui.choice_prompt.get_line_height()) + ui.choice_prompt.get_theme_constant("line_spacing")) / 2.0
+ var prompt := 0.0
+ if ui.choice_prompt_scroll.visible and ui.choice_prompt.get_combined_minimum_size().y > ui.choice_prompt_scroll.size.y + 1.0:
+  prompt = (float(ui.choice_prompt.get_line_height()) + ui.choice_prompt.get_theme_constant("line_spacing")) / 2.0
+ var answers := 0.0
  if ui.column.get_child_count() > 0:
   if ui.dialogue_mode and not ui.dialogue_continue.visible:
    var focus: Control = ui.get_viewport().gui_get_focus_owner()
    if focus == null or not ui.column.is_ancestor_of(focus): focus = ui.column.get_child(0)
-   slack += focus.get_combined_minimum_size().y / 2.0
+   if ui.column.get_combined_minimum_size().y > focus.get_combined_minimum_size().y + 1.0:
+    var tallest := 0.0
+    for child in ui.column.get_children(): tallest = maxf(tallest, child.get_combined_minimum_size().y)
+    answers = tallest / 2.0
   elif ui.column.get_child(0) is Label:
    var label: Label = ui.column.get_child(0)
-   slack += (float(label.get_line_height()) + label.get_theme_constant("line_spacing")) / 2.0
- return slack
+   answers = (float(label.get_line_height()) + label.get_theme_constant("line_spacing")) / 2.0
+ return maxf(prompt, answers)
 static func defects(ui) -> Array[String]:
  var errors: Array[String] = []
  # Chrome is what the card holds besides the SLOTS of its scroll areas: an empty strip under a fitted viewport

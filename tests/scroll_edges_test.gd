@@ -200,6 +200,13 @@ func run() -> void:
 				await reach(tag + " choice prompt", ui.choice_prompt_scroll)
 				await sweep(tag + " choice answers", ui.menu_scroll, ui.menu_box)
 				await reach(tag + " choice answers", ui.menu_scroll)
+				# A long prompt with fewer answers: the answer area's content fits its slot, and the prompt's rounding
+				# must not leave the difference as an empty strip.
+				var answers := ["Yes, I will help the village.", "Tell me more before I choose.", "I need some time to think about it."]
+				for count in [1, 2]:
+					ui.show_choices("Will you help the village? " + "The prompt has its own reading viewport. ".repeat(14), answers.slice(0, count))
+					await sweep(tag + " choice prompt %d answers" % count, ui.choice_prompt_scroll, ui.get("choice_prompt_box"))
+					await sweep(tag + " choice answers (%d)" % count, ui.menu_scroll, ui.menu_box)
 				ui.cancel_speech()
 				ui.queue_free()
 				await process_frame

@@ -194,15 +194,20 @@ func _straddled(found: Array[Vector2], y: float) -> bool:
 # upper one when that is nearer or it is half way, so a card never gains or loses more than
 # half an atom against the cap. The upper bottom is allowed only while it fits `limit` (the
 # screen). Never below `floor_height` (the reading floor: a whole atom or whole lines by
-# construction, the focused control or two lines), which wins over the cap. A card larger than
-# its content keeps `slot`. Measured on the live layout.
+# construction, the focused control or two lines), which wins over the cap. An area whose
+# content fits `slot` is as tall as that content, no taller. Measured on the live layout.
 func whole_height(slot: float, floor_height := 0.0, limit := INF) -> float:
 	var scroll: ScrollContainer = _scroll_ref.get_ref()
 	if not is_instance_valid(scroll) or scroll.get_child_count() == 0: return slot
 	var content: Control = scroll.get_child(0)
 	var found: Array[Vector2] = []
 	_atoms(content, content.get_global_rect().position.y, found)
-	if found.is_empty() or content.size.y <= slot + 0.5: return slot
+	if found.is_empty(): return slot
+	if content.size.y <= slot + 0.5:
+		# All of it fits: the area is the content (a share the neighbouring area left over is not this area's to keep).
+		var bottom := 0.0
+		for atom in found: bottom = maxf(bottom, atom.y)
+		return maxf(bottom, floor_height) if bottom > 0.5 else slot
 	var down := 0.0
 	var up := INF
 	for atom in found:

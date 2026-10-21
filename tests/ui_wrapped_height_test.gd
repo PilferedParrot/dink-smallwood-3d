@@ -67,6 +67,31 @@ func reading_limits(tag: String) -> Dictionary:
 	print("LIMIT ",JSON.stringify(row))
 	return row
 
+# A long prompt with one answer: only the prompt rounds (the answer is exactly its reading floor), so the card may pass
+# the cap by at most half a prompt line. One whole extra prompt line lies inside the old summed allowance and must fail.
+func check_single_answer_prompt() -> void:
+	var ui=game.ui
+	ui.show_choices("A long prompt with many lines. ".repeat(60), ["Yes."])
+	await settle()
+	check(READING_LAYOUT.defects(ui).is_empty(), "Long prompt with one answer keeps the cap rule: %s" % str(READING_LAYOUT.defects(ui)))
+	var strip: float=ui.menu_box.get_global_rect().end.y-ui.menu_scroll.get_global_rect().end.y
+	check(strip<1.0, "Long prompt with one answer leaves no empty strip under the answer (%d px)" % roundi(strip))
+	ui.set_process(false)
+	ui.choice_prompt_fit.active=false
+	ui.menu_fit.active=false
+	var pitch: float=ui.choice_prompt.get_line_height()+ui.choice_prompt.get_theme_constant("line_spacing")
+	ui.choice_prompt_box.custom_minimum_size.y+=pitch
+	ui.choice_prompt_scroll.offset_bottom+=pitch
+	ui.panel.offset_bottom+=pitch
+	await settle()
+	var errors=READING_LAYOUT.defects(ui)
+	check("Card exceeds35% without a native reading minimum requiring it" in errors, "One extra whole prompt line is rejected although inside the old summed allowance (card %d, errors %s)" % [roundi(ui.panel.size.y), str(errors)])
+	ui.set_process(true)
+	ui.choice_prompt_fit.active=true
+	ui.menu_fit.active=true
+	ui.cancel_speech()
+	await settle()
+
 func check_padding_controls(limits: Dictionary) -> void:
 	var ui=game.ui
 	ui.set_process(false)
@@ -206,6 +231,7 @@ func _run() -> void:
 				await settle()
 				reading_limits("longest-source-choice")
 				check(READING_LAYOUT.defects(ui).is_empty(), "Longest source choice is readable whole at200%")
+			await check_single_answer_prompt()
 			ui.cancel_speech()
 			ui.show_pause()
 			await settle()
