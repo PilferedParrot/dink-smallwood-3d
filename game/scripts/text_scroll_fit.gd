@@ -207,7 +207,8 @@ func whole_height(slot: float, floor_height := 0.0, limit := INF) -> float:
 		# All of it fits: the area is the content (a share the neighbouring area left over is not this area's to keep).
 		var bottom := 0.0
 		for atom in found: bottom = maxf(bottom, atom.y)
-		return maxf(bottom, floor_height) if bottom > 0.5 else slot
+		# (A content size not yet reflowed to its atoms is not a fit: keep the slot until it is.)
+		return maxf(bottom, floor_height) if bottom > 0.5 and bottom <= slot + 0.5 else slot
 	var down := 0.0
 	var up := INF
 	for atom in found:
