@@ -1407,17 +1407,21 @@ void fragment() {
 # FreeDink109.6 live_screen.cpp:132-143 copies all 50x50 pixels, not centres.
 func terrain_wall_rects(screen: Dictionary) -> Array[Rect2i]:
 	var rectangles: Array[Rect2i] = []
+	var masks := {} # tile -> its hard.dat pixels: read straight from the mask, replacement asked only of hard pixels
 	for centre in terrain_wall_cells(screen):
+		var tile := int(centre.y/50)*12+int((centre.x-20)/50)
+		if not masks.has(tile): masks[tile] = host._tile_mask_pixels(host._tile_mask_id(tile%12,int(tile/12)))
+		var pixels: PackedByteArray = masks[tile]
 		var previous := {}
 		for y in range(centre.y-5,centre.y+5):
 			var current := {}
 			var x := centre.x-5
 			while x < centre.x+5:
-				if not host._tile_blocked(Vector2(x,y)):
+				if not terrain_pixel_hard(pixels,x,y):
 					x += 1
 					continue
 				var start := x
-				while x < centre.x+5 and host._tile_blocked(Vector2(x,y)): x += 1
+				while x < centre.x+5 and terrain_pixel_hard(pixels,x,y): x += 1
 				var span := Vector2i(start,x-start)
 				var index: int
 				if previous.has(span):
@@ -1431,6 +1435,11 @@ func terrain_wall_rects(screen: Dictionary) -> Array[Rect2i]:
 				current[span] = index
 			previous = current
 	return rectangles
+
+# host._tile_blocked for a pixel of a tile whose mask is already in hand.
+func terrain_pixel_hard(pixels: PackedByteArray, x: int, y: int) -> bool:
+	var i := ((x-20)%50)*51+y%50
+	return i < pixels.size() and pixels[i] != 0 and not host._tile_pixel_replaced(Vector2(x,y))
 
 func add_terrain_walls(screen: Dictionary) -> void:
 	if not interior: return # Outdoor source art has separate terrain representations.
