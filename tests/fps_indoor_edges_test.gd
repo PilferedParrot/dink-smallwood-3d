@@ -83,16 +83,11 @@ func walls(n: int) -> Array:
 		var saved_tiles: Dictionary = game.footprint_tiles
 		game.footprint_sprites = {}; game.screen_footprints = []; game.footprint_tiles = {}
 		game._load_footprints(n)
-		for row in 40:
-			for col in 60:
-				if row not in [0,39] and col not in [0,59]: continue
-				var x := 25+col*10
-				var y := 5+row*10
-				if not game._tile_blocked(Vector2(x,y)): continue
-				var color: Color = presentation.terrain_tile_color(game.world.screens[str(n)],x,y)
-				if color.b > color.r*1.1 and color.b > color.g*0.85: continue
-				if color.g > color.r*1.12: continue
-				out.append({"rect":Rect2(x-5,y-5,10,10),"editor_index":-1-row*60-col,"kind":"terrain boundary cell"})
+		for r in presentation.terrain_wall_rects(game.world.screens[str(n)]):
+			var col := int((r.position.x-20)/10)
+			var row := int(r.position.y/10)
+			if row not in [0,39] and col not in [0,59]: continue
+			out.append({"rect":Rect2(r),"editor_index":-1-int(r.position.y/10)*60-int((r.position.x-20)/10),"kind":"native-hard clipped terrain boundary"})
 		game.footprint_sprites = saved_sprites; game.screen_footprints = saved_polys; game.footprint_tiles = saved_tiles
 	game.current_screen = previous
 	presentation.interior = was_interior

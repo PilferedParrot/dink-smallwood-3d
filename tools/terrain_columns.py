@@ -207,7 +207,7 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("report", type=Path, help="native terrain-columns-1 JSON")
     parser.add_argument("--phase", choices=("A", "B"),
-                        default=os.environ.get("DINK_TERRAIN_PHASE", "A"))
+                        default=os.environ.get("DINK_TERRAIN_PHASE", "B"))
     parser.add_argument("--world", type=Path, default=ROOT / "game/data/world.json")
     parser.add_argument("--footprints", type=Path, default=ROOT / "game/data/footprints.json")
     parser.add_argument("--output", type=Path, help="write oracle JSON here instead of stdout")

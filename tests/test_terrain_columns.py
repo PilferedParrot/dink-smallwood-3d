@@ -173,7 +173,7 @@ def test_native_emitted_columns_match_source_oracle(source, tmp_path):
     control_geometry = rasterize_rects(control["rects"])
     assert control_geometry[105, 75 - 20] and control_geometry[115, 85 - 20], (
         "native MultiMesh transform readback collapsed to identity")
-    phase = os.environ.get("DINK_TERRAIN_PHASE", "A")
+    phase = os.environ.get("DINK_TERRAIN_PHASE", "B")
     comparison = check_report(report, world, footprints, phase)
     assert comparison["ok"], json.dumps({
         "failures": comparison["failures"],
