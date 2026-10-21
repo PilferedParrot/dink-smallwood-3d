@@ -35,7 +35,7 @@ def main():
         for name in ['licenses', 'third_party', 'docs']:
             if (ROOT / name).is_dir():
                 # Development evidence and census data stay in the repository, not in player archives.
-                ignored = shutil.ignore_patterns('NEXT_SESSION.md', 'evidence', '*.json.gz') if name == 'docs' else None
+                ignored = shutil.ignore_patterns('NEXT_SESSION.md', 'evidence', 'playtest', '*.json.gz') if name == 'docs' else None
                 shutil.copytree(ROOT / name, folder / name, dirs_exist_ok=True, ignore=ignored)
         # A prior package may have copied this internal handoff note. Keep it
         # out of regenerated archives even when packaging into an existing folder.
