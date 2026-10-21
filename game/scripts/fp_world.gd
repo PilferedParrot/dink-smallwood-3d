@@ -26,6 +26,7 @@ var host
 var models: Dictionary = {}
 var materials: Dictionary = {}
 var terrain_cache: Dictionary = {}
+var terrain_atlases: Dictionary = {} # original tile images, never composited sprite art
 var interior_cache: Dictionary = {}
 var bounds_cache: Dictionary = {}
 var interior := false
@@ -1299,64 +1300,107 @@ func animate_limbs(model: Node3D, time: float, id: int, moving: bool) -> void:
 			var rest: Vector3 = child.get_meta("rest_rotation")
 			child.rotation.x = rest.x + (sin(time*7+id+(PI if "right" in n or "_r" in n or "-1" in n else 0.0))*0.2 if moving else 0.0)
 
-# Solid dungeon/cliff silhouettes follow the imported collision mask. Water
-# retains its original surface; it is not mistaken for stone walls.
-func add_terrain_walls(_screen: Dictionary) -> void:
-	if not interior: return # Outdoor masks also stamp grass, shores and invisible campaign gates.
-	var terrain: Image = ground_texture(host.current_screen).get_image()
-	var mesh := BoxMesh.new()
-	var cell := 10.0*SCALE # one 10 px cell of the mask
-	mesh.size = Vector3(cell,(solids.room_height(host.current_screen)*SCALE+(0.0 if solids.walls_fitted(host.current_screen) else 0.14)) if interior else 2.8,cell)
-	var material: Material = mat("dungeon_rock" if interior else "cliff_rock",Color("5c5a4d") if interior else Color("82775c"))
-	if interior:
-		var rock: Material = solids.terrain_material(host.current_screen) if solids.walls_fitted(host.current_screen) else null # the room's own stone, as the walls are
-		if rock != null: material = rock
-	mesh.material = material
-	var transforms: Array[Transform3D] = []
+# The original tile layer, before ground_tile replacements or painted sprites.
+# FreeDink109.6 editor_screen.cpp:42-48, live_screen.cpp:132-163: tile
+# hardness and sprite hardboxes are separate; painted RGB never owns hardness.
+func terrain_tile_color(screen: Dictionary, x: int, y: int) -> Color:
+	var index := int(screen.tiles[int(y/50)*12+int((x-20)/50)].get("tile",0))
+	var sheet := int(index/128)+1
+	if not terrain_atlases.has(sheet):
+		var texture: Texture2D = host._texture("res://assets/tiles/ts%02d.png" % sheet)
+		if texture == null: texture = host._texture("res://assets/tiles/ts%d.png" % sheet)
+		assert(texture != null,"Missing terrain source atlas %d" % sheet)
+		var image := texture.get_image()
+		assert(image != null,"Unreadable terrain source atlas %d" % sheet)
+		if image.is_compressed(): image.decompress()
+		terrain_atlases[sheet] = image
+	var atlas: Image = terrain_atlases[sheet]
+	var cell := index%128
+	return atlas.get_pixel((cell%12)*50+(x-20)%50,int(cell/12)*50+y%50)
+
+# Candidate centres retain the inherited tile-art heuristic. It is a visual
+# classifier, not FreeDink semantics: hardness is supplied separately by the map.
+func terrain_wall_cells(screen: Dictionary) -> Array[Vector2i]:
+	var cells: Array[Vector2i] = []
+	if not interior: return cells
 	for y in range(5,400,10):
 		for x in range(25,620,10):
 			if not host._tile_blocked(Vector2(x,y)): continue
-			var tile_index := int(_screen.tiles[int(y/50)*12+int((x-20)/50)].get("tile",0))
-			if not interior and tile_index < 128: continue # Stamped grass hardness belongs to modeled scenery.
-			var color := terrain.get_pixel(x-20,y)
+			var color := terrain_tile_color(screen,x,y)
 			if color.b > color.r*1.1 and color.b > color.g*0.85: continue
-			# Wood flooring and grass are not walls, even on scripted barriers.
 			if color.g > color.r*1.12: continue
-			if not interior and color.r > color.g*1.4: continue
-			var trans := Transform3D.IDENTITY
-			trans.origin = point(x,y)+Vector3(0,mesh.size.y*0.5-0.05,0)
-			transforms.append(trans)
-	if transforms.is_empty(): return
+			cells.append(Vector2i(x,y))
+	return cells
+
+# A blocked centre cannot license a whole 10px square: hard.dat has 1px
+# resolution. Clip each selected cell to that exact native tile mask, then
+# coalesce equal row spans vertically. Rectangles never cross their source cell.
+# FreeDink109.6 live_screen.cpp:132-143 copies all 50x50 pixels, not centres.
+func terrain_wall_rects(screen: Dictionary) -> Array[Rect2i]:
+	var rectangles: Array[Rect2i] = []
+	for centre in terrain_wall_cells(screen):
+		var previous := {}
+		for y in range(centre.y-5,centre.y+5):
+			var current := {}
+			var x := centre.x-5
+			while x < centre.x+5:
+				if not host._tile_blocked(Vector2(x,y)):
+					x += 1
+					continue
+				var start := x
+				while x < centre.x+5 and host._tile_blocked(Vector2(x,y)): x += 1
+				var span := Vector2i(start,x-start)
+				var index: int
+				if previous.has(span):
+					index = int(previous[span])
+					var rect := rectangles[index]
+					rect.size.y += 1
+					rectangles[index] = rect
+				else:
+					index = rectangles.size()
+					rectangles.append(Rect2i(start,y,x-start,1))
+				current[span] = index
+			previous = current
+	return rectangles
+
+func add_terrain_walls(screen: Dictionary) -> void:
+	if not interior: return # Outdoor source art has separate terrain representations.
+	var rectangles := terrain_wall_rects(screen)
+	var mesh := BoxMesh.new()
+	var cell := 10.0*SCALE
+	mesh.size = Vector3(cell,solids.room_height(host.current_screen)*SCALE+(0.0 if solids.walls_fitted(host.current_screen) else 0.14),cell)
+	var material: Material = mat("dungeon_rock",Color("5c5a4d"))
+	var rock: Material = solids.terrain_material(host.current_screen) if solids.walls_fitted(host.current_screen) else null
+	if rock != null: material = rock
+	mesh.material = material
+	# Retain mesh/material initialization for empty rooms as before.
+	if rectangles.is_empty(): return
 	var multi := MultiMesh.new()
 	multi.transform_format = MultiMesh.TRANSFORM_3D
 	multi.mesh = mesh
-	multi.instance_count = transforms.size()
-	for i in transforms.size(): multi.set_instance_transform(i,transforms[i])
-	var instance := MultiMeshInstance3D.new()
-	instance.name = "SolidTerrain"
-	instance.multimesh = multi
-	host.scene_root.add_child(instance)
-	var cells: Dictionary = {} # (x - 25, y - 5) / 10 of each blocked 10 px cell
-	for trans in transforms:
-		cells[Vector2i(roundi(trans.origin.x/SCALE+320.0-25.0)/10,roundi(trans.origin.z/SCALE+200.0-5.0)/10)] = true
+	multi.instance_count = rectangles.size()
 	var body := StaticBody3D.new()
 	body.name = "TerrainCollision"
 	body.collision_layer = 1
 	body.collision_mask = 0
-	for row in 40:
-		var column := 0
-		while column < 60:
-			if not cells.has(Vector2i(column,row)):
-				column += 1
-				continue
-			var start := column
-			while column < 60 and cells.has(Vector2i(column,row)): column += 1
-			var shape := CollisionShape3D.new()
-			var box := BoxShape3D.new()
-			box.size = Vector3((column-start)*cell,mesh.size.y,cell)
-			shape.shape = box
-			shape.position = point(20.0+(start+column)*5.0,5.0+row*10.0)+Vector3(0,mesh.size.y*0.5-0.05,0)
-			body.add_child(shape)
+	for i in rectangles.size():
+		var rect := rectangles[i]
+		var trans := Transform3D.IDENTITY
+		trans.basis = Basis.from_scale(Vector3(float(rect.size.x)/10.0,1.0,float(rect.size.y)/10.0))
+		var centre := Vector2(rect.position)+Vector2(rect.size)*0.5
+		trans.origin = point(centre.x,centre.y)+Vector3(0,mesh.size.y*0.5-0.05,0)
+		multi.set_instance_transform(i,trans)
+		# Physics and visible geometry use exactly the same rectangles.
+		var shape := CollisionShape3D.new()
+		var box := BoxShape3D.new()
+		box.size = Vector3(rect.size.x*SCALE,mesh.size.y,rect.size.y*SCALE)
+		shape.shape = box
+		shape.position = trans.origin
+		body.add_child(shape)
+	var instance := MultiMeshInstance3D.new()
+	instance.name = "SolidTerrain"
+	instance.multimesh = multi
+	host.scene_root.add_child(instance)
 	host.scene_root.add_child(body)
 
 

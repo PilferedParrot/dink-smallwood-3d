@@ -1,0 +1,495 @@
+{
+  "cases": 30,
+  "source_patch_files": [
+    "66-before.png"
+  ],
+  "screens": [
+    {
+      "name": "1",
+      "changed_pixels_base_to_B": 0,
+      "outside_column_bounds": 0,
+      "outside_columns_and_existing_bed_mask": 0,
+      "frozen_base_outside_old_bed_mask": 0,
+      "patched_source_pixels": 0,
+      "unrelated_pixel_control_outside": 1
+    },
+    {
+      "name": "2",
+      "changed_pixels_base_to_B": 0,
+      "outside_column_bounds": 0,
+      "outside_columns_and_existing_bed_mask": 0,
+      "frozen_base_outside_old_bed_mask": 0,
+      "patched_source_pixels": 0,
+      "unrelated_pixel_control_outside": 1
+    },
+    {
+      "name": "3",
+      "changed_pixels_base_to_B": 0,
+      "outside_column_bounds": 0,
+      "outside_columns_and_existing_bed_mask": 0,
+      "frozen_base_outside_old_bed_mask": 0,
+      "patched_source_pixels": 0,
+      "unrelated_pixel_control_outside": 1
+    },
+    {
+      "name": "4",
+      "changed_pixels_base_to_B": 0,
+      "outside_column_bounds": 0,
+      "outside_columns_and_existing_bed_mask": 0,
+      "frozen_base_outside_old_bed_mask": 0,
+      "patched_source_pixels": 0,
+      "unrelated_pixel_control_outside": 1
+    },
+    {
+      "name": "5",
+      "changed_pixels_base_to_B": 0,
+      "outside_column_bounds": 0,
+      "outside_columns_and_existing_bed_mask": 0,
+      "frozen_base_outside_old_bed_mask": 0,
+      "patched_source_pixels": 0,
+      "unrelated_pixel_control_outside": 1
+    },
+    {
+      "name": "6",
+      "changed_pixels_base_to_B": 0,
+      "outside_column_bounds": 0,
+      "outside_columns_and_existing_bed_mask": 0,
+      "frozen_base_outside_old_bed_mask": 0,
+      "patched_source_pixels": 0,
+      "unrelated_pixel_control_outside": 1
+    },
+    {
+      "name": "36",
+      "changed_pixels_base_to_B": 0,
+      "outside_column_bounds": 0,
+      "outside_columns_and_existing_bed_mask": 0,
+      "frozen_base_outside_old_bed_mask": 0,
+      "patched_source_pixels": 0,
+      "unrelated_pixel_control_outside": 1
+    },
+    {
+      "name": "37",
+      "changed_pixels_base_to_B": 0,
+      "outside_column_bounds": 0,
+      "outside_columns_and_existing_bed_mask": 0,
+      "frozen_base_outside_old_bed_mask": 0,
+      "patched_source_pixels": 0,
+      "unrelated_pixel_control_outside": 1
+    },
+    {
+      "name": "66",
+      "changed_pixels_base_to_B": 654,
+      "outside_column_bounds": 0,
+      "outside_columns_and_existing_bed_mask": 0,
+      "frozen_base_outside_old_bed_mask": 0,
+      "patched_source_pixels": 435,
+      "unrelated_pixel_control_outside": 1
+    },
+    {
+      "name": "129",
+      "changed_pixels_base_to_B": 0,
+      "outside_column_bounds": 0,
+      "outside_columns_and_existing_bed_mask": 0,
+      "frozen_base_outside_old_bed_mask": 0,
+      "patched_source_pixels": 0,
+      "unrelated_pixel_control_outside": 1
+    },
+    {
+      "name": "161",
+      "changed_pixels_base_to_B": 0,
+      "outside_column_bounds": 0,
+      "outside_columns_and_existing_bed_mask": 0,
+      "frozen_base_outside_old_bed_mask": 0,
+      "patched_source_pixels": 0,
+      "unrelated_pixel_control_outside": 1
+    },
+    {
+      "name": "163",
+      "changed_pixels_base_to_B": 0,
+      "outside_column_bounds": 0,
+      "outside_columns_and_existing_bed_mask": 0,
+      "frozen_base_outside_old_bed_mask": 0,
+      "patched_source_pixels": 0,
+      "unrelated_pixel_control_outside": 1
+    },
+    {
+      "name": "193",
+      "changed_pixels_base_to_B": 0,
+      "outside_column_bounds": 0,
+      "outside_columns_and_existing_bed_mask": 0,
+      "frozen_base_outside_old_bed_mask": 0,
+      "patched_source_pixels": 0,
+      "unrelated_pixel_control_outside": 1
+    },
+    {
+      "name": "290",
+      "changed_pixels_base_to_B": 0,
+      "outside_column_bounds": 0,
+      "outside_columns_and_existing_bed_mask": 0,
+      "frozen_base_outside_old_bed_mask": 0,
+      "patched_source_pixels": 0,
+      "unrelated_pixel_control_outside": 1
+    },
+    {
+      "name": "isolated-1-22",
+      "changed_pixels_base_to_B": 0,
+      "outside_column_bounds": 0,
+      "outside_columns_and_existing_bed_mask": 0,
+      "frozen_base_outside_old_bed_mask": 0,
+      "patched_source_pixels": 0,
+      "unrelated_pixel_control_outside": 1
+    },
+    {
+      "name": "isolated-1-23",
+      "changed_pixels_base_to_B": 0,
+      "outside_column_bounds": 0,
+      "outside_columns_and_existing_bed_mask": 0,
+      "frozen_base_outside_old_bed_mask": 0,
+      "patched_source_pixels": 0,
+      "unrelated_pixel_control_outside": 1
+    },
+    {
+      "name": "isolated-2-20",
+      "changed_pixels_base_to_B": 0,
+      "outside_column_bounds": 0,
+      "outside_columns_and_existing_bed_mask": 0,
+      "frozen_base_outside_old_bed_mask": 0,
+      "patched_source_pixels": 0,
+      "unrelated_pixel_control_outside": 1
+    },
+    {
+      "name": "isolated-3-11",
+      "changed_pixels_base_to_B": 0,
+      "outside_column_bounds": 0,
+      "outside_columns_and_existing_bed_mask": 0,
+      "frozen_base_outside_old_bed_mask": 0,
+      "patched_source_pixels": 0,
+      "unrelated_pixel_control_outside": 1
+    },
+    {
+      "name": "isolated-4-17",
+      "changed_pixels_base_to_B": 0,
+      "outside_column_bounds": 0,
+      "outside_columns_and_existing_bed_mask": 0,
+      "frozen_base_outside_old_bed_mask": 0,
+      "patched_source_pixels": 0,
+      "unrelated_pixel_control_outside": 1
+    },
+    {
+      "name": "isolated-5-17",
+      "changed_pixels_base_to_B": 0,
+      "outside_column_bounds": 0,
+      "outside_columns_and_existing_bed_mask": 0,
+      "frozen_base_outside_old_bed_mask": 0,
+      "patched_source_pixels": 0,
+      "unrelated_pixel_control_outside": 1
+    },
+    {
+      "name": "isolated-6-18",
+      "changed_pixels_base_to_B": 0,
+      "outside_column_bounds": 0,
+      "outside_columns_and_existing_bed_mask": 0,
+      "frozen_base_outside_old_bed_mask": 0,
+      "patched_source_pixels": 0,
+      "unrelated_pixel_control_outside": 1
+    },
+    {
+      "name": "isolated-36-21",
+      "changed_pixels_base_to_B": 0,
+      "outside_column_bounds": 0,
+      "outside_columns_and_existing_bed_mask": 0,
+      "frozen_base_outside_old_bed_mask": 0,
+      "patched_source_pixels": 0,
+      "unrelated_pixel_control_outside": 1
+    },
+    {
+      "name": "isolated-37-15",
+      "changed_pixels_base_to_B": 0,
+      "outside_column_bounds": 0,
+      "outside_columns_and_existing_bed_mask": 0,
+      "frozen_base_outside_old_bed_mask": 0,
+      "patched_source_pixels": 0,
+      "unrelated_pixel_control_outside": 1
+    },
+    {
+      "name": "isolated-66-17",
+      "changed_pixels_base_to_B": 0,
+      "outside_column_bounds": 0,
+      "outside_columns_and_existing_bed_mask": 0,
+      "frozen_base_outside_old_bed_mask": 0,
+      "patched_source_pixels": 0,
+      "unrelated_pixel_control_outside": 1
+    },
+    {
+      "name": "isolated-66-20",
+      "changed_pixels_base_to_B": 0,
+      "outside_column_bounds": 0,
+      "outside_columns_and_existing_bed_mask": 0,
+      "frozen_base_outside_old_bed_mask": 0,
+      "patched_source_pixels": 0,
+      "unrelated_pixel_control_outside": 1
+    },
+    {
+      "name": "isolated-129-21",
+      "changed_pixels_base_to_B": 0,
+      "outside_column_bounds": 0,
+      "outside_columns_and_existing_bed_mask": 0,
+      "frozen_base_outside_old_bed_mask": 0,
+      "patched_source_pixels": 0,
+      "unrelated_pixel_control_outside": 1
+    },
+    {
+      "name": "isolated-161-24",
+      "changed_pixels_base_to_B": 0,
+      "outside_column_bounds": 0,
+      "outside_columns_and_existing_bed_mask": 0,
+      "frozen_base_outside_old_bed_mask": 0,
+      "patched_source_pixels": 0,
+      "unrelated_pixel_control_outside": 1
+    },
+    {
+      "name": "isolated-163-20",
+      "changed_pixels_base_to_B": 0,
+      "outside_column_bounds": 0,
+      "outside_columns_and_existing_bed_mask": 0,
+      "frozen_base_outside_old_bed_mask": 0,
+      "patched_source_pixels": 0,
+      "unrelated_pixel_control_outside": 1
+    },
+    {
+      "name": "isolated-193-17",
+      "changed_pixels_base_to_B": 0,
+      "outside_column_bounds": 0,
+      "outside_columns_and_existing_bed_mask": 0,
+      "frozen_base_outside_old_bed_mask": 0,
+      "patched_source_pixels": 0,
+      "unrelated_pixel_control_outside": 1
+    },
+    {
+      "name": "isolated-290-22",
+      "changed_pixels_base_to_B": 0,
+      "outside_column_bounds": 0,
+      "outside_columns_and_existing_bed_mask": 0,
+      "frozen_base_outside_old_bed_mask": 0,
+      "patched_source_pixels": 0,
+      "unrelated_pixel_control_outside": 1
+    }
+  ],
+  "policy": "Old bed envelope and old before-bed pixels inside it retained byte for byte. Only terrain-attributed pixels outside that unchanged mask are refreshed. Exact projected symmetric-difference columns with Godot4.6.1 Lanczos support; unrelated-pixel failure retained.",
+  "engine": "Godot4.6.1-stable GLES3 llvmpipe; 1280x800 source-camera fixture; shadows disabled identically",
+  "fixture": "tests/bed_capture.gd with original test bundle and --bed-visibility; same startup and per-view rebuild on base and candidate",
+  "scene_base_commit": "1ce174d1cf6dc9f9c7da6416ba5b5158ccdd911e",
+  "scene_candidate_commit": "542fef44347bb8440dab5bc4174165fa6da02969",
+  "old_source_png_sha256": "bd2624aa19b028b6ea84c072e2cfd8c21e264d068f60a904df4c7913b6c9f19b",
+  "refreshed_source_png_sha256": "838a85dc807183107f59b8bcc7033672ba2a62361544985146914031cfb035fe",
+  "unchanged_source_mask_sha256": "322884d37582efff47f96ea363ed8b97aae32856621dfb52d787654eb9052453",
+  "rgba_preservation": "All alpha values and every original RGBA pixel inside the existing bed envelope unchanged. Exactly435 RGB pixels outside that envelope refreshed.",
+  "66_projection": {
+    "native": [
+      1280,
+      800
+    ],
+    "crop_rows": 603,
+    "before_changed_rectangles": [
+      {
+        "rect": [
+          220,
+          220,
+          10,
+          10
+        ],
+        "rect600": [
+          199.999995231628,
+          128.284136770574,
+          210.0,
+          232.352782798248
+        ]
+      },
+      {
+        "rect": [
+          230,
+          220,
+          10,
+          10
+        ],
+        "rect600": [
+          210.0,
+          128.284136770574,
+          219.999990463257,
+          232.352782798248
+        ]
+      },
+      {
+        "rect": [
+          240,
+          220,
+          10,
+          10
+        ],
+        "rect600": [
+          219.999990463257,
+          128.284136770574,
+          229.999995231628,
+          232.352782798248
+        ]
+      },
+      {
+        "rect": [
+          250,
+          220,
+          10,
+          10
+        ],
+        "rect600": [
+          229.999995231628,
+          128.284136770574,
+          240.0,
+          232.352782798248
+        ]
+      },
+      {
+        "rect": [
+          260,
+          220,
+          10,
+          10
+        ],
+        "rect600": [
+          240.0,
+          128.284136770574,
+          249.999990463257,
+          232.352782798248
+        ]
+      },
+      {
+        "rect": [
+          270,
+          220,
+          10,
+          10
+        ],
+        "rect600": [
+          249.999990463257,
+          128.284136770574,
+          260.000009536743,
+          232.352782798248
+        ]
+      },
+      {
+        "rect": [
+          280,
+          220,
+          10,
+          10
+        ],
+        "rect600": [
+          260.000009536743,
+          128.284136770574,
+          270.0,
+          232.352782798248
+        ]
+      }
+    ],
+    "after_changed_rectangles": [
+      {
+        "rect": [
+          220,
+          225,
+          10,
+          5
+        ],
+        "rect600": [
+          199.999995231628,
+          133.287440564107,
+          210.0,
+          232.352782798248
+        ]
+      },
+      {
+        "rect": [
+          230,
+          225,
+          10,
+          5
+        ],
+        "rect600": [
+          210.0,
+          133.287440564107,
+          219.999990463257,
+          232.352782798248
+        ]
+      },
+      {
+        "rect": [
+          240,
+          225,
+          10,
+          5
+        ],
+        "rect600": [
+          219.999990463257,
+          133.287440564107,
+          229.999995231628,
+          232.352782798248
+        ]
+      },
+      {
+        "rect": [
+          250,
+          225,
+          10,
+          5
+        ],
+        "rect600": [
+          229.999995231628,
+          133.287440564107,
+          240.0,
+          232.352782798248
+        ]
+      },
+      {
+        "rect": [
+          260,
+          225,
+          10,
+          5
+        ],
+        "rect600": [
+          240.0,
+          133.287440564107,
+          249.999990463257,
+          232.352782798248
+        ]
+      },
+      {
+        "rect": [
+          270,
+          225,
+          10,
+          5
+        ],
+        "rect600": [
+          249.999990463257,
+          133.287440564107,
+          260.000009536743,
+          232.352782798248
+        ]
+      },
+      {
+        "rect": [
+          280,
+          225,
+          10,
+          5
+        ],
+        "rect600": [
+          260.000009536743,
+          133.287440564107,
+          270.0,
+          232.352782798248
+        ]
+      }
+    ]
+  },
+  "resize_support": "Godot4.6.1 Lanczos3 actual source/destination support; project symmetric-difference terrain boxes only; no fitted padding"
+}

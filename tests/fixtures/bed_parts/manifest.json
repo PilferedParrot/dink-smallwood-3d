@@ -431,7 +431,7 @@
     "36-mask.png": "7fee3ce54d9b96af2d9e4b7e5cdf0a05eefb1d7cc613dd974716d55a10569a3c",
     "37-before.png": "5f9cf316b3cacf3c1b95191f6543fc1ea9e83817358f7472bc6d632af68c375d",
     "37-mask.png": "08fe8a6a963d78c0bc68ec6babd04f7a97e921af545c1f68cfcd5d1c150f434c",
-    "66-before.png": "bd2624aa19b028b6ea84c072e2cfd8c21e264d068f60a904df4c7913b6c9f19b",
+    "66-before.png": "838a85dc807183107f59b8bcc7033672ba2a62361544985146914031cfb035fe",
     "66-mask.png": "322884d37582efff47f96ea363ed8b97aae32856621dfb52d787654eb9052453",
     "129-before.png": "f1999af16ed759572bde560581eddc7733048903bc5754c868e5bd6691df00d9",
     "129-mask.png": "4927cdd2aa9aa0e1b914d702768ab2cd1d26605ca9b08c2bca7b68c6515196de",
@@ -480,7 +480,8 @@
     "occluded-control-visibility.json": "66d512ea204497f4903f35b6932ea7a55105cbf4683e323db34cadb74ee125bf",
     "reviewed-meshes.json": "a33560e9a06517f487e0592ba50baddb030a397b88e6388248abf36124b687ae",
     "reviewed-bedding-donors.npy": "bcc270fe8f47caed1e9c0657ee5b6325d64bff69a8cc774ac62970e4470c1d67",
-    "cloth-contaminated-post-donors.npy": "4476a23976c13cc02da929587c266e056fdd8dec533a8e91382a1bc75bbae787"
+    "cloth-contaminated-post-donors.npy": "4476a23976c13cc02da929587c266e056fdd8dec533a8e91382a1bc75bbae787",
+    "terrain66-attribution.json": "fbe87340d637b87e29fbc12647db999f534eac1cd4a78641fd695fc3fd8bcc8f"
   },
   "wall_tie_normalization": {
     "scope": "Test fixture only; production wall emitter remains unchanged.",
@@ -529,5 +530,11 @@
     "authorization": "lead claude:087be5f3 ACCEPT A, room message 20261020T084359.518834Z-a7d3db284537490f8f5c302ddb51fbbf",
     "instrument_control": "c18f72e render reproduces all 30 committed 4d66f27 before-images bit for bit",
     "attribution": "tests/fixtures/bed_parts/rebaseline-attribution.json: every differing pixel lies inside projected footprints of changed HITBODY or DETAILS entities; 0 outside both"
+  },
+  "terrain66_refresh": {
+    "source_geometry_commit": "542fef44347bb8440dab5bc4174165fa6da02969",
+    "attribution": "tests/fixtures/bed_parts/terrain66-attribution.json",
+    "pixels": 435,
+    "scope": "Only RGB pixels outside the unchanged bed envelope; all original RGBA pixels within it and every alpha value retained. All 29 other cases unchanged; all 654 base-to-candidate changed pixels on screen 66 inside projected changed-column bounds."
   }
 }
