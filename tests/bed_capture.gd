@@ -4,7 +4,7 @@ extends "building_capture.gd"
 var gallery_prop: Node3D=null
 var gallery_path: String=""
 func _cutaway(node: Node, world) -> void:
-	if node is MeshInstance3D and node.material_override!=null and node.material_override in [world.materials.get("ceiling"),world.materials.get("beam")]: node.visible=false
+	if node.is_in_group("interior_overhead") or (node is MeshInstance3D and node.material_override!=null and node.material_override in [world.materials.get("ceiling"),world.materials.get("beam")]): node.visible=false
 	for child in node.get_children():_cutaway(child,world)
 # Fixture-only: source wall faces have pre-existing equal-depth overlaps whose
 # opaque winner otherwise follows recycled renderer resource slots. Keep that
