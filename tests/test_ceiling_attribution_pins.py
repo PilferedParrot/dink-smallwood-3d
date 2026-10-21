@@ -17,7 +17,9 @@ def _records():
     for name in ATTRIBUTION_FILES:
         data = json.loads((FIXTURES / name).read_text())
         assert data['different_frames'] == len(data['frames']), name
-        assert data['outside_column_bounds'] == 0 if 'outside_column_bounds' in data else True
+        # The file's totals must be the sum of its records (outside_column_bounds is only in the first file).
+        assert data['changed_pixels'] == sum(r['changed_pixels'] for r in data['frames']), name
+        assert data.get('outside_column_bounds', 0) == sum(r['outside_column_bounds'] for r in data['frames']), name
         for record in data['frames']:
             yield name, record
 
