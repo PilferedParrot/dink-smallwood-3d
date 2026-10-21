@@ -1496,12 +1496,16 @@ func wrapped_copy(donor: ShaderMaterial) -> ShaderMaterial:
 	var key := "wrapped:"+str(donor.get_instance_id())
 	if materials.has(key): return materials[key]
 	var shader := Shader.new()
-	# One mapping for every vertical face, (x + z, y): a rim's steps face x and z in turn, and the donor's per-axis projections
-	# (z,y) and (x,y) cut each step's picture from a different slice of the rock, which showed as comb stripes.
+	# A rim's steps face x and z in turn, and the donor's per-axis projections cut each step's picture from a different slice
+	# of the rock (comb stripes). Every vertical face of a box takes its box's RUN axis (its longer side, instance custom data):
+	# u follows the run, so the picture is continuous from step to step.
 	var code: String = donor.shader.code.replace("render_mode diffuse_burley;","render_mode diffuse_lambert_wrap;")
 	var axes := "else if (n.x > 0.5) { metres = p.zy; }\n else { metres = p.xy; }"
 	assert(axes in code,"ceiling shader's face projection changed")
-	shader.code = code.replace(axes,"else { metres = vec2(p.x + p.z, p.y); }")
+	code = code.replace(axes,"else { metres = run_along_x > 0.5 ? p.xy : p.zy; }")
+	code = code.replace("varying vec3 world_normal;","varying vec3 world_normal;\nvarying float run_along_x;")
+	code = code.replace("world_normal = normalize(MODEL_NORMAL_MATRIX * NORMAL);","world_normal = normalize(MODEL_NORMAL_MATRIX * NORMAL);\n run_along_x = INSTANCE_CUSTOM.x;")
+	shader.code = code
 	var copy := ShaderMaterial.new()
 	copy.shader = shader
 	for uniform in donor.shader.get_shader_uniform_list():
@@ -1513,9 +1517,11 @@ func terrain_multimesh(mesh: BoxMesh, rectangles: Array) -> MultiMesh:
 	var multi := MultiMesh.new()
 	multi.transform_format = MultiMesh.TRANSFORM_3D
 	multi.mesh = mesh
+	multi.use_custom_data = true
 	multi.instance_count = rectangles.size()
 	for i in rectangles.size():
 		var rect: Rect2i = rectangles[i]
+		multi.set_instance_custom_data(i,Color(1.0 if rect.size.x >= rect.size.y else 0.0,0,0,0)) # the run axis, for the cave faces
 		var trans := Transform3D.IDENTITY
 		trans.basis = Basis.from_scale(Vector3(float(rect.size.x)/10.0,1.0,float(rect.size.y)/10.0))
 		var centre := Vector2(rect.position)+Vector2(rect.size)*0.5
