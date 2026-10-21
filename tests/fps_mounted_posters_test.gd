@@ -4,6 +4,7 @@ extends SceneTree
 
 const GAME := preload("res://scripts/fps_game.gd")
 const MOUNTED := preload("res://scripts/mounted_posters.gd")
+const TALK := preload("res://scripts/talk_acquire.gd")
 var failures: Array[String] = []
 var game
 
@@ -184,7 +185,12 @@ func _poster_class() -> void:
 				"source wall movement hardness remains through original 107px hardbox")
 		var winner := Vector2.INF
 		var target := Vector2(float(e.get("x",0)),front)
-		for distance in [25.0,35.0,45.0,55.0,65.0,75.0]:
+		# Talk reaches only the poster's own hardbox grown 10 and 35 toward Dink (freedink.cpp:240-305),
+		# which for a poster hung low on a wall can end nearer than 25 px of its fitted front: the
+		# witness pose must satisfy that box as well as the ray.
+		var pic: Dictionary = game._frame(int(e.get("pseq",0)),int(e.get("pframe",1)))
+		var reach: Array = TALK.reach_box(pic.get("hardbox",[0,0,0,0]),Vector2(float(e.get("x",0)),float(e.get("y",0))),8)
+		for distance in [25.0,35.0,45.0,55.0,65.0,75.0,20.0,15.0,10.0]:
 			if winner != Vector2.INF: break
 			for offset in [0.0,-10.0,10.0,-20.0,20.0]:
 				var p := Vector2(target.x+offset,target.y+distance)
@@ -194,7 +200,7 @@ func _poster_class() -> void:
 				game.fps_yaw = atan2(-(target.x-p.x),-(target.y-p.y))
 				game.fps_pitch = 0.0
 				game._sync_fps_camera()
-				if game._fps_ray_reaches(id):
+				if game._fps_ray_reaches(id) and TALK.contains(reach,p):
 					winner = p
 					break
 		check(winner != Vector2.INF,"%d source-clear south-side own-body ray witness" % n)

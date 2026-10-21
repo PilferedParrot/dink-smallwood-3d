@@ -12,6 +12,7 @@ var entity_hit_targets = ENTITY_HIT_TARGETS.new()
 const SCALE: float = preload("res://scripts/fp_world.gd").SCALE # metres per source pixel
 const EYE_HEIGHT := 1.65
 const PROJECTILE := preload("res://scripts/fps_projectile.gd")
+const TALK_ACQUIRE := preload("res://scripts/talk_acquire.gd")
 const BUG_RECORDER := preload("res://scripts/bug_report_recorder.gd")
 const GRIEF_CAMERA_EXPERIMENT := false # Bounded scene-camera trial failed its rendered gate.
 
@@ -561,22 +562,37 @@ func _fps_aim_target(max_distance: float, cone_dot: float = 0.93) -> int:
 			best_distance = distance
 	return best
 
-func _talk() -> void:
-	if not entities.has(1) or entities[1].get("frozen", false): return
-	var candidate := 0
-	var best := 90.0
+# FreeDink freedink.cpp:240-305 run_through_tag_list_talk, with the camera's
+# heading standing in for Dink's dir. No ray and no visibility test: the original
+# has neither, so a body fitted wrong can no longer make a talkable unreachable.
+# Slot order decides (the same live-slot order PUSH visits), and a sprite whose
+# box holds Dink but whose script has no TALK does not end the search.
+func _talk_target(forward: Vector2) -> int:
+	if not entities.has(1): return 0
 	var origin := _position2(1)
-	var forward3 := -camera.global_transform.basis.z
-	var forward := Vector2(forward3.x, forward3.z).normalized()
-	for id in entities.keys():
+	var dir: int = TALK_ACQUIRE.facing(forward)
+	for id in _push_dispatch_ids():
 		if int(id) == 1 or not entities.has(id): continue
 		var e: Dictionary = entities[id]
-		if int(e.get("active", 1)) == 0 or int(e.get("type", 1)) != 1 or str(e.get("script", "")).is_empty(): continue
-		if vm._procedure_code(str(e.script).to_lower(), "talk").is_empty(): continue
-		var offset := _position2(int(id)) - origin
-		if offset.length() < best and (offset.length() < 20.0 or offset.normalized().dot(forward) > 0.55) and _fps_ray_reaches(int(id)):
-			candidate = int(id)
-			best = offset.length()
+		# Background sprites (type 0, 2) never keep a live slot (game_engine.cpp:483-506);
+		# brain 8 is the original's exclusion (freedink.cpp:254).
+		if int(e.get("active", 1)) == 0 or int(e.get("type", 1)) != 1 or int(e.get("brain", 0)) == 8: continue
+		var pic_seq := int(e.get("seq", 0))
+		var pic_frame := int(e.get("frame", 1))
+		if pic_seq == 0:
+			pic_seq = int(e.get("pseq", 0))
+			pic_frame = int(e.get("pframe", 1))
+		var hardbox: Array = _frame(pic_seq, pic_frame).get("hardbox", [])
+		if hardbox.size() != 4: hardbox = [0, 0, 0, 0]
+		if not TALK_ACQUIRE.contains(TALK_ACQUIRE.reach_box(hardbox, _position2(int(id)), dir), origin): continue
+		if str(e.get("script", "")).is_empty() or vm._procedure_code(str(e.script).to_lower(), "talk").is_empty(): continue
+		return int(id)
+	return 0
+
+func _talk() -> void:
+	if not entities.has(1) or entities[1].get("frozen", false): return
+	var forward3 := -camera.global_transform.basis.z
+	var candidate := _talk_target(Vector2(forward3.x, forward3.z))
 	if candidate: _run_event(candidate, "talk")
 	else: ui.notify("Move closer and face someone or something to talk.")
 
