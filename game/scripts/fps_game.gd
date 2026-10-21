@@ -25,6 +25,14 @@ var fps_pitch := -0.08
 var fps_vertical_velocity := 0.0
 var fps_jump_height := 0.0
 var fps_fire_held := false
+# Repeat-while-held (accessibility option, default off): set by a press that
+# actually fired in play, cleared by release, a menu, a freeze or a screen change.
+var fps_repeat_armed := false
+# Toggled sprint latch and the moment movement input last stopped.
+var sprint_latched := false
+var sprint_idle := 0.0
+var sprint_moved := false # the latch only drops on a stop after the player has moved on it
+const SPRINT_STOP_GRACE := 0.15 # a direction change releases one key a frame before the next
 var fps_magic_held := false
 var fps_recoil := 0.0
 var fps_viewmodel: Node3D
@@ -167,6 +175,9 @@ func _after_script_position_set(id: int, key: String) -> void:
 	entities[1]["y"] = live.y
 
 func load_map(number: int, run_scripts: bool = true) -> void:
+	# A screen change ends a toggled sprint and a held attack repeat. `changing` is set and
+	# cleared inside one load_map call, so a physics tick never sees it: release here.
+	if world.screens.has(str(number)): _fps_release_sprint_and_repeat()
 	entity_hit_targets.reset()
 	_fps_restore_dialogue_camera()
 	if fp_world != null and entities.has(1) and world.screens.has(str(number)):
@@ -181,6 +192,7 @@ func load_map(number: int, run_scripts: bool = true) -> void:
 
 func _physics_process(delta: float) -> void:
 	if not playing or changing:
+		_fps_release_sprint_and_repeat()
 		_reset_push()
 		_fps_restore_dialogue_camera()
 		_fps_update_mouse_mode()
@@ -206,12 +218,24 @@ func _physics_process(delta: float) -> void:
 	if ui.modal:
 		fps_fire_held = fps_fire_held or Input.is_action_pressed("attack")
 		fps_magic_held = fps_magic_held or Input.is_action_pressed("magic")
+		_fps_release_sprint_and_repeat()
 	_fps_update_mouse_mode()
-	if not ui.modal and Input.is_action_pressed("attack") and not fps_fire_held:
+	var attack_down := Input.is_action_pressed("attack")
+	if not ui.modal and attack_down and not fps_fire_held:
 		fps_fire_held = true
+		fps_repeat_armed = _fps_can_act()
 		_fps_attack()
-	elif not Input.is_action_pressed("attack"):
+	elif not ui.modal and attack_down and fps_repeat_armed and _attack_repeat_on() \
+			and _fps_can_act() and attack_cooldown <= 0.0:
+		# FreeDink 109.6 fires on the press edge only (brain_keyboard.cpp:294,
+		# update_frame.cpp:126-133); this option adds nothing the press lacks:
+		# the same cooldown gates it, so it is never faster than pressing.
+		_fps_attack()
+	elif not attack_down:
 		fps_fire_held = false
+		fps_repeat_armed = false
+	elif _fps_repeat_interrupted():
+		fps_repeat_armed = false
 	if not ui.modal and Input.is_action_pressed("magic") and not fps_magic_held:
 		fps_magic_held = true
 		_fps_set_facing_from_camera()
@@ -227,6 +251,55 @@ func _physics_process(delta: float) -> void:
 		_add_equipment_stats(stats)
 		ui.show_hud(stats)
 
+func _fps_can_act() -> bool:
+	if not entities.has(1): return false
+	var player: Dictionary = entities[1]
+	return not bool(player.get("frozen", false)) and int(player.get("nocontrol", 0)) == 0
+
+# The weapon script sets nocontrol for the swing's animation (seq
+# base_attack+dir, cleared at animation end, game.gd:720); that wait is the swing's timing and keeps a held repeat armed.
+# A freeze or any other nocontrol (push, script) ends the hold: a fresh press is
+# needed afterwards.
+func _fps_repeat_interrupted() -> bool:
+	if not entities.has(1): return true
+	var player: Dictionary = entities[1]
+	if bool(player.get("frozen", false)): return true
+	if int(player.get("nocontrol", 0)) == 0: return false
+	var base := int(player.get("base_attack", 100))
+	var seq := int(player.get("seq", 0))
+	return seq <= base or seq > base + 9
+
+# Sprint is a 3D addition: FreeDink has one fixed walking speed
+# (brain_keyboard.cpp:484-531). Toggle mode latches on the key press
+# (_input) and drops with the cases below.
+func _fps_sprinting(input: Vector2, delta: float) -> bool:
+	if str(settings.get("sprint_mode", "hold")) != "toggle":
+		_fps_set_sprint_latch(false)
+		return Input.is_action_pressed("sprint")
+	if not _fps_can_act():
+		_fps_set_sprint_latch(false)
+	elif input.length() > 0.0:
+		sprint_idle = 0.0
+		sprint_moved = true
+	elif sprint_moved:
+		sprint_idle += delta
+		if sprint_idle >= SPRINT_STOP_GRACE: _fps_set_sprint_latch(false)
+	return sprint_latched
+
+func _attack_repeat_on() -> bool:
+	return settings.get("attack_repeat", false) == true
+
+func _fps_set_sprint_latch(value: bool) -> void:
+	sprint_idle = 0.0
+	sprint_moved = false
+	if sprint_latched == value: return
+	sprint_latched = value
+	if is_instance_valid(ui): ui.set_sprint_state(str(settings.get("sprint_mode", "hold")), value)
+
+func _fps_release_sprint_and_repeat() -> void:
+	fps_repeat_armed = false
+	_fps_set_sprint_latch(false)
+
 func _fps_move_player(delta: float) -> void:
 	var deadzone := _fps_controller_deadzone()
 	var input := Input.get_vector("left", "right", "up", "down", deadzone)
@@ -234,7 +307,7 @@ func _fps_move_player(delta: float) -> void:
 	var right3 := Vector3(camera.global_transform.basis.x.x, 0.0, camera.global_transform.basis.x.z).normalized()
 	var source_direction := Vector2(forward3.x * -input.y + right3.x * input.x, forward3.z * -input.y + right3.z * input.x).normalized()
 	var from := _position2(1)
-	if _move_player_input(source_direction * input.length(), delta, 1.55 if Input.is_action_pressed("sprint") else 1.0, true):
+	if _move_player_input(source_direction * input.length(), delta, 1.55 if _fps_sprinting(input, delta) else 1.0, true):
 		_transitions(false,from)
 
 func _edge_destination(pos: Vector2) -> Dictionary:
@@ -405,6 +478,8 @@ func _apply_settings() -> void:
 		ui.set_text_scale(float(settings.text_scale))
 		ui.set_plain_font(bool(settings.get("plain_font", false)))
 		ui.speech_waits_for_me = bool(settings.get("speech_waits_for_me", false))
+		if str(settings.get("sprint_mode", "hold")) != "toggle": sprint_latched = false
+		ui.set_sprint_state(str(settings.get("sprint_mode", "hold")), sprint_latched)
 		if is_instance_valid(fps_viewmodel):
 			# Every held label, at any depth, like the clearance walk below.
 			var held: Array[Node] = [fps_viewmodel]
@@ -1268,6 +1343,9 @@ func _input(event: InputEvent) -> void:
 		return
 	if playing and is_instance_valid(ui) and not ui.modal:
 		bug_recorder.record_input(event)
+		if event.is_action_pressed("sprint") and not event.is_echo() and not changing \
+				and str(settings.get("sprint_mode", "hold")) == "toggle" and _fps_can_act():
+			_fps_set_sprint_latch(not sprint_latched)
 	super._input(event)
 	if not is_instance_valid(ui): return
 	# Remember presses before the GUI consumes a menu button and closes it.

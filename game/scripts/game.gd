@@ -22,7 +22,7 @@ var editor_state: Dictionary = {}
 var items: Array = []
 var magic_items: Array = []
 var sound_slots: Dictionary = {}
-var settings := {"master":0.8,"music":0.55,"sfx":0.8,"text_scale":1.0,"plain_font":false,"camera_angle":50.0,"reduced_motion":false,"speech_waits_for_me":false}
+var settings := {"master":0.8,"music":0.55,"sfx":0.8,"text_scale":1.0,"plain_font":false,"camera_angle":50.0,"reduced_motion":false,"speech_waits_for_me":false,"sprint_mode":"hold","attack_repeat":false}
 var scene_root: Node3D
 var camera: Camera3D
 var music: AudioStreamPlayer

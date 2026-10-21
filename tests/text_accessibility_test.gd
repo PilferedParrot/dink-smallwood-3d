@@ -393,6 +393,12 @@ func matrix() -> void:
  ui.cancel_speech()
  ui.close_menu()
  ui.gameplay_hint_deadline_msec = Time.get_ticks_msec()+60000
+ # Integration: A2's key/action sprint phrase must obey A1a-2's wrapping
+ # oracle in hold, toggle-off and toggle-on, at every size/font/window.
+ for sprint in [["hold",false],["toggle",false],["toggle",true]]:
+  ui.set_sprint_state(sprint[0],sprint[1])
+  await scan("hud-sprint-%s-%s" % [sprint[0],"on" if sprint[1] else "off"])
+ ui.set_sprint_state("hold",false)
  await scan("hud-help")
  check(ui.compass_label.get_theme_font_size("font_size") == roundi(18*ui.text_scale),"location respects text size")
  ui.show_hud({"life":12,"lifemax":20,"strength":12,"defense":8,"magic":4,"gold":165,"exp":45,"level":2,"location":"Stonebrook"})
