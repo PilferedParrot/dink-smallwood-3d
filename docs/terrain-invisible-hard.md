@@ -2,8 +2,8 @@
 
 Generated from the native terrain census (tests/terrain_columns_test.gd, `blocked_cells_without_terrain`, tile-owned cells only) on the
 terrain-tile-class build. A natively hard 10 px centre whose tile art is floor-class (paving, boards, grass, gravel, a bank lip), or fire
-(FreeDink109.6 gfx_tiles.cpp:98-110), gets no terrain column: the original draws floor there too (lead rulings 10-21: sheets 37/39 are cobble
-paving; 102 bridge-edge trade). Where a sprite hardbox also covers the cell, the sprite is the visible cause (second column). Sprite-only blocked
+(FreeDink109.6 gfx_tiles.cpp:98-110), gets no terrain column: the original draws floor there too (tilesets 37 and 39 are cobble paving; screen 102's hard
+bridge-edge cells stay wall-free, as in the original). Where a sprite hardbox also covers the cell, the sprite is the visible cause (second column). Sprite-only blocked
 cells (no tile hardness) belong to the sprites, not to this list. No interior hard cell sits on tileset 8 (water).
 
 Totals: floor-class, no sprite 5347 cells; floor-class with a sprite over it 1308; fire 2.
