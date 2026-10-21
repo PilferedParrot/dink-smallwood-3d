@@ -42,6 +42,7 @@ var last_talk_speech := 0
 var unknown: Dictionary = {}
 var last_music := ""
 var generation := 0
+const SCRIPT_OWNER_GLOBAL := 1000 # DinkC pseudo-sprite 1000: survives screen rebuilds
 var visited: Array = []
 var dialogue_log: Array = []
 var journal_log: Array = []
@@ -170,7 +171,7 @@ func _new_game() -> void:
 	playing = true
 	ui.close_menu()
 	load_map(1)
-	vm.run("item-fst", "arm", 1)
+	_run_equipment("item-fst", "arm")
 
 func load_map(number: int, run_scripts: bool = true) -> void:
 	if not world.get("screens",{}).has(str(number)):
@@ -963,7 +964,7 @@ func _attack() -> void:
 	_play_sound(8)
 	var equipped := int(vm.globals.get("cur_weapon",1))-1
 	if equipped >= 0 and equipped < items.size():
-		vm.run(items[equipped].script,"use",1)
+		_run_equipment(str(items[equipped].script),"use")
 		if str(items[equipped].script) not in ["item-fst","item-sw1","item-sw2","item-sw3"]: return
 	var player: Dictionary = entities[1]
 	var forward := _dir_vector(int(player.get("dir",2)))
@@ -1059,7 +1060,7 @@ func _cast() -> void:
 	if cost <= 0 or int(vm.globals.get("magic_level",0)) < cost:
 		ui.notify("Your magic is still recharging.")
 		return
-	vm.run(magic_items[idx].script,"use",1)
+	_run_equipment(str(magic_items[idx].script),"use")
 
 func _update_ai(delta: float) -> void:
 	for id in entities.keys():
@@ -1335,17 +1336,25 @@ func dink_call(command: String, args: Array, context: Dictionary) -> Variant:
 		"spawn", "load":
 			var id := next_entity
 			next_entity += 1
-			entities[id] = {"x":0,"y":0,"active":0,"script":str(a),"editor_num":0}
-			vm.run(str(a),"main",id)
+			# FreeDink109.6 dinkc_bindings.cpp:1236-1247 dc_spawn: load_script(dcscript, 1000), so
+			# kill_all_scripts (dinkc.cpp:872-880) keeps the spawned script across a rebuild.
+			entities[id] = {"x":0,"y":0,"active":0,"script":str(a),"editor_num":0,"owner":SCRIPT_OWNER_GLOBAL}
+			vm.run(str(a),"main",id,false,SCRIPT_OWNER_GLOBAL)
 			return id
 		"run_script_by_number":
-			if entities.has(int(a)): return await vm.run(str(entities[int(a)].get("script","")),str(b),int(a))
+			# FreeDink runs the script it already loaded (dinkc_bindings.cpp:1249-1254); a spawn
+			# handle keeps its sprite-1000 owner.
+			if entities.has(int(a)): return await vm.run(str(entities[int(a)].get("script","")),str(b),int(a),false,int(entities[int(a)].get("owner",-1)))
 		"script_attach": pass # Cooperative tasks already retain their context across awaits.
 		"screenlock": locked = bool(a)
 		"load_screen":
 			vm.cancel_screen_tasks(int(context.get("task_id",0)))
 			load_map(int(vm.globals.get("player_map",current_screen)))
 		"force_vision":
+			# FreeDink109.6 dinkc_bindings.cpp:1321-1326 -> game_engine.cpp:706 kill_all_scripts()
+			# (dinkc.cpp:872-892): every script off sprite 1000 dies; the caller was attached to
+			# 1000 by the VM before this call, so it survives by ownership, not by exception.
+			vm.cancel_screen_tasks()
 			vm.globals["vision"] = int(a)
 			load_map(current_screen)
 		"editor_type", "editor_seq", "editor_frame":
@@ -1452,11 +1461,31 @@ func dink_call(command: String, args: Array, context: Dictionary) -> Variant:
 				push_warning("Unimplemented Dink command: %s (%s)" % [cmd,context.get("script","")])
 	return 0
 
+# Seam so a fixture can release callbacks deterministically instead of by wall clock.
+func _callback_timer(seconds: float) -> void:
+	await get_tree().create_timer(seconds).timeout
+
+# FreeDink109.6 loads the weapon and magic scripts onto pseudo-sprite 1000 (inventory.cpp:355,422;
+# dinkc_bindings.cpp:885,895; savegame.cpp:309-331), so they and their callbacks outlive a rebuild.
+func _run_equipment(script: String, procedure: String) -> Variant:
+	return await vm.run(script,procedure,1,false,SCRIPT_OWNER_GLOBAL)
+
+# FreeDink109.6 add_callback records the owning script (dinkc.cpp:793-804, dinkc_bindings.cpp:562-564);
+# kill_script ends its callbacks (dinkc.cpp:817-843) and kill_all_scripts keeps sprite-1000 owners
+# (dinkc.cpp:872-894). A callback therefore outlives a screen rebuild only while its owner is attached
+# to 1000; a full reset (vm.cancel_all, FreeDink kill_all_scripts_for_real) ends every callback.
 func _callback(procedure: String, minimum: int, maximum: int, context: Dictionary) -> void:
 	var expected := generation
-	await get_tree().create_timer(maxf(0.01,float(randi_range(minimum,maxi(minimum,maximum)))/1000)).timeout
-	if expected == generation:
-		vm.run(str(context.script),procedure,int(context.sprite_id))
+	var epoch: int = vm.epoch()
+	var owner_task := int(context.get("task_id",0))
+	var owner_sprite := int(context.sprite_id)
+	var instance_sprite := int(context.get("instance_sprite",owner_sprite))
+	await _callback_timer(maxf(0.01,float(randi_range(minimum,maxi(minimum,maximum)))/1000))
+	if epoch != vm.epoch(): return
+	var owner_now: int = vm.task_sprite(owner_task,owner_sprite)
+	if expected == generation or owner_now == SCRIPT_OWNER_GLOBAL:
+		# Same script slot as the owner: its locals stay keyed by the instance, its ownership by the sprite.
+		vm.run(str(context.script),procedure,instance_sprite,false,owner_now)
 
 func _kill_after(id: int, milliseconds: float) -> void:
 	var expected := generation
@@ -1499,10 +1528,10 @@ func _equip(index: int, magic: bool) -> void:
 	var previous := int(vm.globals.get(variable,0))-1
 	if previous>=0 and previous<list.size():
 		var old := str(list[previous].script)
-		if not vm._procedure_code(old,"disarm").is_empty(): await vm.run(old,"disarm",1)
+		if not vm._procedure_code(old,"disarm").is_empty(): await _run_equipment(old,"disarm")
 	vm.globals[variable] = index+1
 	var script := str(list[index].script)
-	if not vm._procedure_code(script,"arm").is_empty(): await vm.run(script,"arm",1)
+	if not vm._procedure_code(script,"arm").is_empty(): await _run_equipment(script,"arm")
 	ui.close_menu()
 
 func _load_sound_slots() -> void:
@@ -1668,7 +1697,7 @@ func _load_game(path: String = "user://adventure.json") -> bool:
 		# Arm remaps animation and adds equipment stats. Restore saved stats after
 		# remapping so loading cannot repeatedly grant the sword's strength bonus.
 		var saved_globals: Dictionary = vm.globals.duplicate(true)
-		if not vm._procedure_code(str(items[idx].script),"arm").is_empty(): vm.run(str(items[idx].script),"arm",1)
+		if not vm._procedure_code(str(items[idx].script),"arm").is_empty(): _run_equipment(str(items[idx].script),"arm")
 		vm.globals = saved_globals
 	return true
 

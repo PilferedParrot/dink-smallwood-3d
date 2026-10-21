@@ -62,6 +62,16 @@ func cancel_except(task_id: int) -> void:
 			_live_tasks.erase(key)
 
 
+## Incremented by cancel_all(); hosts compare it to drop work scheduled before a full reset.
+func epoch() -> int:
+	return _generation
+
+
+## The sprite a task is currently attached to, or `fallback` once the task has ended.
+func task_sprite(task_id: int, fallback: int = 0) -> int:
+	return _task_sprite(task_id, fallback)
+
+
 ## Cancels tasks owned by the outgoing screen. DinkC's pseudo-sprite 1000 is
 ## retained across screen changes; cancel_all() remains the full reset operation.
 func cancel_screen_tasks(except_task: int = 0) -> void:
@@ -92,7 +102,10 @@ func clear_sprite_locals(sprite_id: int) -> void:
 ## Runs one procedure asynchronously. Each sprite gets persistent local storage for
 ## a script, so event procedures such as talk/hit can share its declared variables.
 ## Newly loaded screen/external scripts request independent instances and locals.
-func run(script: String, procedure: String, sprite_id: int = 0, new_instance: bool = false) -> Variant:
+## `owner_sprite` >= 0 attaches the task to that sprite (FreeDink load_script's second
+## argument) while `sprite_id` keeps naming the instance, so a script loaded onto
+## pseudo-sprite 1000 (spawn, item/magic scripts) keeps its own locals and relocation.
+func run(script: String, procedure: String, sprite_id: int = 0, new_instance: bool = false, owner_sprite: int = -1) -> Variant:
 	var canonical: String = _script_name(script)
 	# FreeDink109.6 dinkc.cpp:402-470 relocates the existing script cursor.
 	# External/spawn load a separate instance, even when the owner is shared.
@@ -103,7 +116,7 @@ func run(script: String, procedure: String, sprite_id: int = 0, new_instance: bo
 				_live_tasks.erase(old_id)
 	var task_id: int = _next_task_id
 	_next_task_id += 1
-	_live_tasks[task_id] = {"sprite_id": sprite_id, "instance_sprite": sprite_id, "script": canonical, "new_instance": new_instance, "locals": {}}
+	_live_tasks[task_id] = {"sprite_id": sprite_id if owner_sprite < 0 else owner_sprite, "instance_sprite": sprite_id, "script": canonical, "new_instance": new_instance, "locals": {}}
 	var output: Variant = await _execute(canonical, procedure.to_lower(), sprite_id, task_id, _generation, [])
 	_live_tasks.erase(task_id)
 	return output
@@ -299,7 +312,10 @@ func _set_task_sprite(task_id: int, sprite_id: int) -> void:
 func _host_call(command: String, args: Array, script: String, procedure: String, sprite_id: int, task_id: int, generation: int, locals: Dictionary) -> Variant:
 	if generation != _generation or not _live_tasks.has(task_id) or host == null or not host.has_method("dink_call"):
 		return null
-	var context := {"script": script, "procedure": procedure, "sprite_id": sprite_id, "task_id": task_id, "cancelled": false, "globals": globals, "locals": locals}
+	# `sprite_id` is the sprite the task is attached to now (script_attach may have moved it);
+	# `instance_sprite` names the instance whose locals the script keeps (a FreeDink script slot).
+	var instance_sprite: int = int(_live_tasks.get(task_id, {}).get("instance_sprite", sprite_id))
+	var context := {"script": script, "procedure": procedure, "sprite_id": sprite_id, "instance_sprite": instance_sprite, "task_id": task_id, "cancelled": false, "globals": globals, "locals": locals}
 	var value: Variant = await host.dink_call(command, args, context)
 	return null if generation != _generation or not _live_tasks.has(task_id) else value
 

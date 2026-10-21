@@ -16,7 +16,7 @@ class FakeVM extends RefCounted:
 	var calls: Array = []
 	func _procedure_code(_script: String, _procedure: String) -> Array:
 		return [{"op": "return"}]
-	func run(script: String, procedure: String, sprite_id: int = 0, _new_instance: bool = false) -> Variant:
+	func run(script: String, procedure: String, sprite_id: int = 0, _new_instance: bool = false, _owner_sprite: int = -1) -> Variant:
 		calls.append([script, procedure, sprite_id])
 		return 0
 
