@@ -26,6 +26,7 @@ func _run() -> void:
 	var batch := "" # --batch=file.json --out-dir=DIR: many views of this screen in one run (see _shoot)
 	var out_dir := ""
 	var shadows := true # --shadows=0: the light's shadows off (the sprites' own pixels only: for before/after views)
+	var provenance := false # --provenance=1: the props' textures painted by where each texel came from (prop_solids.gd PROV_*), the same meshes
 	var move := PackedStringArray() # --move=x,y,toX,toY: scenario setup, the map's actor at (x, y) stands at (toX, toY)
 	for arg in OS.get_cmdline_user_args():
 		if arg.begins_with("--screen="): screen = int(arg.trim_prefix("--screen="))
@@ -46,6 +47,7 @@ func _run() -> void:
 		if arg.begins_with("--out-dir="): out_dir = arg.trim_prefix("--out-dir=")
 		if arg.begins_with("--shadows="): shadows = arg.trim_prefix("--shadows=") != "0"
 		if arg.begins_with("--move="): move = arg.trim_prefix("--move=").split(",")
+		if arg.begins_with("--provenance="): provenance = arg.trim_prefix("--provenance=") != "0"
 	game.vm.cancel_all()
 	if story >= 0: game.vm.globals["story"] = story
 	if duck >= 0: game.vm.globals["old_womans_duck"] = duck
@@ -54,6 +56,9 @@ func _run() -> void:
 	# A walk measures collision: load the screen's editor layer without its scripts
 	# (scenario setup that skips progression, as tests/fps_wall_test.gd does).
 	game.vm.globals["vision"] = vision
+	if provenance and game.fp_world != null:
+		game.fp_world.props.provenance = true
+		game.fp_world.props.cache.clear()
 	game.load_map(screen, walk == 0 and scripts)
 	if batch != "":
 		# Frozen from the load: the same scene before and after a change, whatever the timing of the run

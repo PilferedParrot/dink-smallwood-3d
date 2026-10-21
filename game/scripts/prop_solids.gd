@@ -24,6 +24,15 @@ var buildings # sprite_buildings.gd
 var S := 0.025 # metres per source pixel
 var fits: Dictionary = {}
 var cache: Dictionary = {} # sprite path -> [[mesh, texture or material], ...]
+# Provenance render (tests/fps_capture.gd --provenance=1, tools/well_provenance.py): every texture of the SAME build, as the engine hands it to
+# the material, painted by where each texel came from instead of by its colour. PROJECTED: the sprite's own pixel, mapped by the camera's
+# projection or a kept part of it; FILLED: a pixel the sprite does not hold (masked out, void, or not drawn by the camera), taken from its
+# neighbours or from a donor patch of the same cloth; DERIVED: a colour computed from drawn pixels (a post's wood columns' mean, the shaft's
+# darkest stone), not a pixel of them.
+var provenance := false
+const PROV_PROJECTED := Color8(40, 200, 60)
+const PROV_FILLED := Color8(255, 150, 0)
+const PROV_DERIVED := Color8(60, 120, 255)
 const WELL_SEEN := 0.342 # cos 70 degrees: a face (or ring point) the camera sees within 70 degrees of head-on is seen well (HUT_GRAZE)
 
 func _init(b, scale: float) -> void:
@@ -103,10 +112,75 @@ func _texture(path: String, fit: Dictionary = {}) -> ImageTexture:
 	if fit.has("mask"):
 		var bits := Marshalls.base64_to_raw(str(fit.mask))
 		var data := img.get_data()
+		# fit.void_fill: the palette's pure black inside the part is a drawn gap (the outline, the shadow between stones), not a colour
+		# a solid can have on every side; it takes the nearest lit pixel of the same part. (Not the posts: see _flatten.)
+		var voids := bool(fit.get("void_fill", false))
 		for p in img.get_width()*img.get_height():
-			if not (bits[p >> 3] >> (7 - (p & 7))) & 1: data[p*4 + 3] = 0
+			if not (bits[p >> 3] >> (7 - (p & 7))) & 1 or (voids and data[p*4] == 0 and data[p*4 + 1] == 0 and data[p*4 + 2] == 0): data[p*4 + 3] = 0
 		img.set_data(img.get_width(), img.get_height(), false, Image.FORMAT_RGBA8, data)
+		if fit.has("flat"): _flatten(img, fit.flat)
+	if provenance:
+		var pdata := img.get_data()
+		var w := img.get_width()
+		for p in w*img.get_height():
+			var c := PROV_PROJECTED if pdata[p*4 + 3] >= 128 else PROV_FILLED
+			pdata[p*4] = c.r8
+			pdata[p*4 + 1] = c.g8
+			pdata[p*4 + 2] = c.b8
+			pdata[p*4 + 3] = 255
+		if fit.has("flat"):
+			for post in fit.flat:
+				for x in range(int(post.dark[0]), int(post.lit[1])):
+					for y in img.get_height():
+						var o := (y*w + x)*4
+						pdata[o] = PROV_DERIVED.r8
+						pdata[o + 1] = PROV_DERIVED.g8
+						pdata[o + 2] = PROV_DERIVED.b8
+		img.set_data(w, img.get_height(), false, Image.FORMAT_RGBA8, pdata)
+		return buildings._texture(img)
 	return buildings._texture(buildings.filled(img))
+
+# A post's wood, one material along its whole height (fit.flat: per post, the columns of its shaded wood and of its lit wood, and the
+# rows it is drawn on). The black outline the sprite draws round the post (a pixel convention, not wood) is left out of every donor
+# (OUTLINE_LUM: the drawn posts' luminance has its outline below 20 and its wood above 40; the roof's shadow on the post's foot is
+# outline-black too), so every column of wood, shaded or lit, is the mean of its own wood pixels down the post: one colour per column,
+# each from its own drawn pixels (which columns are the shaded face is the fit's: tools/landmark_fit.py, the largest step between columns).
+# `shade` (the darkest quarter of all the wood) only stands in for a column with no wood pixel.
+const OUTLINE_LUM := 24.0
+func _flatten(img: Image, posts: Array) -> void:
+	var w := img.get_width()
+	var data := img.get_data()
+	var lum := func(o: int) -> float: return 0.299*data[o] + 0.587*data[o + 1] + 0.114*data[o + 2]
+	var cols: Dictionary = {} # x -> its wood pixels' mean colour
+	var wood: Array = [] # [luminance, colour] of every wood pixel of every post
+	for post in posts:
+		for x in range(int(post.dark[0]), int(post.lit[1])):
+			var sum := Vector3.ZERO
+			var n := 0
+			for y in range(int(post.rows[0]), int(post.rows[1])):
+				var o: int = (y*w + x)*4
+				if data[o + 3] < 128 or float(lum.call(o)) <= OUTLINE_LUM: continue
+				var c := Vector3(data[o], data[o + 1], data[o + 2])
+				sum += c
+				n += 1
+				wood.append([float(lum.call(o)), c])
+			if n > 0: cols[x] = sum/float(n)
+	if wood.is_empty(): return
+	wood.sort_custom(func(a, b): return a[0] < b[0])
+	var quarter := maxi(1, wood.size()/4)
+	var shade := Vector3.ZERO
+	for i in quarter: shade += wood[i][1]
+	shade /= float(quarter)
+	for post in posts:
+		for x in range(int(post.dark[0]), int(post.lit[1])):
+			var c: Vector3 = shade if x < int(post.dark[1]) else cols.get(x, shade)
+			for y in img.get_height():
+				var o: int = (y*w + x)*4
+				data[o] = int(roundf(c.x))
+				data[o + 1] = int(roundf(c.y))
+				data[o + 2] = int(roundf(c.z))
+				data[o + 3] = 255
+	img.set_data(w, img.get_height(), false, Image.FORMAT_RGBA8, data)
 
 func _arrays(verts: PackedVector3Array, uvs: PackedVector2Array, index: PackedInt32Array) -> ArrayMesh:
 	var arrays := []
@@ -156,7 +230,9 @@ func _round(path: String, fit: Dictionary) -> Array:
 			var a := i*cols + c
 			var d := (i + 1)*cols + c
 			index.append_array(PackedInt32Array([a, a + 1, d + 1, a, d + 1, d]))
-	# The top: its own ring, every point projected as drawn (the whole top is in the picture), and a fan to the axis.
+	# The top: its own ring, every point projected as drawn (the whole top is in the picture). A solid with a mouth (fit.mouth.r: the well's,
+	# tools/landmark_fit.py) has a rim: an annulus from the drawn rim to the mouth's edge, and no face inside it (_mouth is the shaft below);
+	# anything else closes its top with a fan to the axis.
 	var top := nodes.size() - 1
 	var th := float(nodes[top][0])
 	var tr := float(nodes[top][1])
@@ -165,11 +241,81 @@ func _round(path: String, fit: Dictionary) -> Array:
 		var t: float = buildings._hut_theta(c, n)
 		verts.append(Vector3(cx + tr*cos(t), th, zc + tr*sin(t))*S)
 		tex_uv.append(Vector2(cx + tr*cos(t), cz + k*tr*sin(t) - th)/size)
-	verts.append(Vector3(cx, th, zc)*S)
-	tex_uv.append(Vector2(cx, cz - th)/size)
-	for c in n:
-		index.append_array(PackedInt32Array([base + n, base + c, base + (c + 1) % n]))
+	if fit.has("mouth"):
+		var mr := float(fit.mouth.r)
+		for c in n:
+			var t: float = buildings._hut_theta(c, n)
+			verts.append(Vector3(cx + mr*cos(t), th, zc + mr*sin(t))*S)
+			tex_uv.append(Vector2(cx + mr*cos(t), cz + k*mr*sin(t) - th)/size)
+		for c in n:
+			var d := (c + 1) % n
+			index.append_array(PackedInt32Array([base + c, base + d, base + n + d, base + c, base + n + d, base + n + c]))
+		# The mouth's wall, rim down to the ground, seen from inside (the winding turned): the camera saw the far half of it exactly (UV = the
+		# projection (cx + X, cz + k Z - Y) with Z < 0), and never the near half, which takes the far half's picture turned back (|Z|: the huts' rule).
+		var wall := verts.size()
+		for yy in [th, 0.0]:
+			for c in n + 1:
+				var t: float = buildings._hut_theta(c % n, n)
+				verts.append(Vector3(cx + mr*cos(t), yy, zc + mr*sin(t))*S)
+				tex_uv.append(Vector2(cx + mr*cos(t), cz - k*mr*absf(sin(t)) - yy)/size)
+		for c in n:
+			index.append_array(PackedInt32Array([wall + c, wall + c + 1, wall + n + 1 + c + 1, wall + c, wall + n + 1 + c + 1, wall + n + 1 + c]))
+	else:
+		verts.append(Vector3(cx, th, zc)*S)
+		tex_uv.append(Vector2(cx, cz - th)/size)
+		for c in n:
+			index.append_array(PackedInt32Array([base + n, base + c, base + (c + 1) % n]))
 	return [[_arrays(verts, tex_uv, index), _texture(path, fit)]]
+
+# The well's shaft floor (fit.mouth; the wall is in _round, textured from the sprite's own far inner wall): a disc on the ground in one plain
+# dark colour. The sprite draws no depth: the shaft ends at the ground plane (named inference), and the floor's colour is the mean of the
+# DARKEST QUARTER of the mouth's own stone pixels (the picture's darkest stone, no tuned shade; the outline's black and the posts excluded as
+# in _flatten), so each frame (the glow differs) darkens from its own picture.
+func _mouth(path: String, base: Dictionary) -> Array:
+	var cx := float(base.cx)
+	var cz := float(base.cz)
+	var k := float(base.k)
+	var mr := float(base.mouth.r)
+	var rim := float(base.nodes[base.nodes.size() - 1][0])
+	var zc := cz - (1.0 - k)*float(base.nodes[0][1])
+	var img: Image = buildings.image(path)
+	var w := img.get_width()
+	var data := img.get_data()
+	var bits := Marshalls.base64_to_raw(str(base.mask))
+	var lums: Array = []
+	for y in img.get_height():
+		for x in w:
+			var p := y*w + x
+			var ex := (float(x) + 0.5 - cx)/mr
+			var ey := (float(y) + 0.5 - (cz - rim))/(k*mr)
+			if ex*ex + ey*ey > 1.0 or not (bits[p >> 3] >> (7 - (p & 7))) & 1 or data[p*4 + 3] < 128: continue
+			var l := 0.299*data[p*4] + 0.587*data[p*4 + 1] + 0.114*data[p*4 + 2]
+			if l > OUTLINE_LUM: lums.append([l, Vector3(data[p*4], data[p*4 + 1], data[p*4 + 2])])
+	var colour := Color(0.04, 0.04, 0.04)
+	if not lums.is_empty():
+		lums.sort_custom(func(a, b): return a[0] < b[0])
+		var quarter := maxi(1, lums.size()/4)
+		var sum := Vector3.ZERO
+		for i in quarter: sum += lums[i][1]
+		sum /= float(quarter)*255.0
+		colour = Color(sum.x, sum.y, sum.z)
+	else:
+		push_warning("well mouth: no stone pixel to take the shaft's colour from")
+	var n := 32
+	var verts := PackedVector3Array()
+	var index := PackedInt32Array()
+	verts.append(Vector3(cx, 0.0, zc)*S)
+	for c in n + 1:
+		var t := TAU*float(c)/n
+		verts.append(Vector3(cx + mr*cos(t), 0.0, zc + mr*sin(t))*S)
+	for c in n: index.append_array(PackedInt32Array([0, 1 + c, 2 + c]))
+	var m := StandardMaterial3D.new()
+	m.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	m.albedo_color = PROV_DERIVED if provenance else colour
+	m.cull_mode = BaseMaterial3D.CULL_DISABLED
+	var none := PackedVector2Array()
+	none.resize(verts.size())
+	return [[_arrays(verts, none, index), m]]
 
 # --- box ------------------------------------------------------------------------------------------------------------
 # A box, or a stack of them on one lattice (fit.boxes: each box's offset X, Z of its footprint's middle from the lattice
@@ -231,12 +377,26 @@ func _box(path: String, fit: Dictionary) -> Array:
 			if p0.dot(right) > p1.dot(right):
 				bl = p1
 				br = p0
-			faces.append({"nz": normal.y, "pts": [[bl, y0], [br, y0], [br, y0 + hb], [bl, y0 + hb]]})
+			faces.append({"nz": normal.y, "nx": normal.x, "pts": [[bl, y0], [br, y0], [br, y0 + hb], [bl, y0 + hb]]})
 		var best := 0
 		for i in 4:
 			if float(faces[i].nz) > float(faces[best].nz): best = i
 		for i in 4:
 			var src: int = i
+			if fit.has("faces"):
+				# fit.faces: the drawn post's columns (px from the box's middle) of its shaded face (dark) and its lit face (lit). A face the
+				# camera saw takes its own columns (the one turned to the right, where the sprite's light is, is the lit one), at their drawn
+				# width, down the post as it is drawn (a post is a vertical in the picture: the rows of the box's middle); a face it never
+				# saw takes the opposite one's (a box's back is its front turned half a round), so every side shows one dark face, one lit.
+				var seen_face: int = i if float(faces[i].nz) >= WELL_SEEN else (i + 2) % 4
+				var span: Array = fit.faces.lit if float(faces[seen_face].nx) > 0.0 else fit.faces.dark
+				var fb := verts.size()
+				for j in 4:
+					var pt: Array = faces[i].pts[j]
+					verts.append(at.call(pt[0], pt[1]))
+					tex_uv.append(Vector2(cx + float(b[0]) + float(span[0 if j == 0 or j == 3 else 1]), cz + k*float(b[1]) - float(pt[1]))/size)
+				index.append_array(PackedInt32Array([fb, fb + 1, fb + 2, fb, fb + 2, fb + 3]))
+				continue
 			if slab:
 				var eb := edge_v.size()
 				for j in 4:
@@ -268,7 +428,7 @@ func _box(path: String, fit: Dictionary) -> Array:
 		# as more than a smear of the planks' grain, are the planks' mean colour.
 		var m := StandardMaterial3D.new()
 		m.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-		m.albedo_color = _mean_colour(path, fit)
+		m.albedo_color = PROV_DERIVED if provenance else _mean_colour(path, fit)
 		m.cull_mode = BaseMaterial3D.CULL_DISABLED
 		var none := PackedVector2Array()
 		none.resize(edge_v.size())
@@ -299,18 +459,16 @@ func _compound(path: String, fit: Dictionary) -> Array:
 		var p: Dictionary = (part as Dictionary).duplicate()
 		p["zc"] = zc
 		out.append_array(_gable(path, p) if str(p.get("class", "")) == "gable" else _box(path, p))
+	if base.has("mouth"): out.append_array(_mouth(path, base)) # last: the posts and the roof keep their places in the list
 	return out
 
 # A gable roof (the well's; tools/landmark_fit.py): two planes from the ridge down to the eaves, a thatch thickness each, on the
 # fitted rectangle w x d (yawed; the ridge along its long axis d), the ends closed by the shell's cross-section. The pitch is
-# the thatched cottages' (fit.pitch); the open underside is the underside of the thatch. Every vertex takes the picture of the
-# top slope the original camera saw (UV = its projection), at the same distance from the ridge and along it: the camera saw
-# one slope, so the far slope, the undersides and the ends take that one's thatch (a pitched roof is symmetric about its ridge).
+# measured from the sprite's own edges (fit.pitch, fit.rise); the open underside is the underside of the thatch. Every face takes the
+# straw of the one slope the original camera saw (_thatch: a patch rectified into the slope's own axes): the far slope, the undersides
+# and the ends are cut from it (a pitched roof is symmetric about its ridge).
 func _gable(path: String, fit: Dictionary) -> Array:
-	var size := Vector2(float(fit.size[0]), float(fit.size[1]))
 	var cx := float(fit.cx)
-	var cz := float(fit.cz)
-	var k := float(fit.k)
 	var zc := float(fit.zc)
 	var hw := float(fit.w)/2.0
 	var hd := float(fit.d)/2.0
@@ -324,6 +482,7 @@ func _gable(path: String, fit: Dictionary) -> Array:
 	var top := func(u: float) -> float: return ridge - rise*absf(u)/hw
 	var lat := func(u: float, v: float) -> Vector2: return centre + u*across + v*along
 	var quads: Array = [] # each: four (u across, v along, height) corners, counter-clockwise seen from outside
+	var ends: Array = [] # the indices of the gable ends
 	for sgn in [-1.0, 1.0]:
 		var ue: float = sgn*hw
 		var ye: float = top.call(ue)
@@ -331,23 +490,125 @@ func _gable(path: String, fit: Dictionary) -> Array:
 		quads.append([[0.0, -hd, ridge - thick], [ue, -hd, ye - thick], [ue, hd, ye - thick], [0.0, hd, ridge - thick]]) # its underside
 		quads.append([[ue, -hd, ye], [ue, hd, ye], [ue, hd, ye - thick], [ue, -hd, ye - thick]]) # the eave's edge
 		for v in [-hd, hd]: # the end: the shell's cross-section
+			ends.append(quads.size())
 			quads.append([[0.0, v, ridge], [ue, v, ye], [ue, v, ye - thick], [0.0, v, ridge - thick]])
+	# The straw is a rectified patch (_thatch): across it the ridge's direction, down it the slope's, one texel a source pixel, so the
+	# faces of the roof cut it by their own two axes (the sprite's pixel grid, seen along a roof yawed 45 degrees, would be diamonds).
+	# A vertex's place on it: s down the slope from the ridge, d the depth below the slope's top (the thickness faces), n across the
+	# thickness, the plane's normal to the slope. A thickness face takes the straw that far down the slope and into it.
+	var slope := sqrt(hw*hw + rise*rise)
+	var sa := rise/slope
+	var ca := hw/slope
+	var patch := Vector2(ceilf(2.0*hd), ceilf(slope + thick*sa))
+	var straw := _thatch(path, fit, patch, slope, seen)
 	var verts := PackedVector3Array()
 	var tex_uv := PackedVector2Array()
 	var index := PackedInt32Array()
-	for quad in quads:
+	for qi in quads.size():
+		var quad: Array = quads[qi]
 		var base := verts.size()
 		for c in quad:
 			var q: Vector2 = lat.call(c[0], c[1])
 			verts.append(Vector3(cx + q.x, c[2], zc + q.y)*S)
-			# The picture of the top slope the camera saw: the vertex's own point on it, mirrored to the seen side; a vertex a thatch
-			# thickness below the top (the underside, the eave's edge, the ends) takes the point that far up the slope, so the thickness
-			# shows thatch, not a sliver of one row stretched down.
-			var us := absf(absf(float(c[0])) - (float(top.call(float(c[0]))) - float(c[2]))*cos(atan(rise/hw)))
-			var qs: Vector2 = lat.call(seen*us, c[1])
-			tex_uv.append(Vector2(cx + qs.x, cz + k*qs.y - float(top.call(us)))/size)
+			var d: float = float(top.call(float(c[0]))) - float(c[2])
+			var eave: bool = qi % 5 == 2 # the eave's edge: a vertical cut across the straw, a band of it from the slope's middle
+			var s_down := slope/2.0 + d if eave else absf(float(c[0]))/ca + d*sa
+			# An end is a plane the camera saw edge-on, and there is no picture of a cross-section of the straw: it takes a band of the
+			# patch down its middle, as wide as the thickness, cut as the slope cuts it.
+			var across_patch: float = (patch.x - thick)/2.0 + d*ca if ends.has(qi) else (float(c[1]) + hd)*patch.x/(2.0*hd)
+			tex_uv.append(Vector2(across_patch, s_down*patch.y/(slope + thick*sa))/patch)
 		index.append_array(PackedInt32Array([base, base + 1, base + 2, base, base + 2, base + 3]))
-	return [[_arrays(verts, tex_uv, index), _texture(path, fit)]]
+	return [[_arrays(verts, tex_uv, index), buildings._texture(straw)]]
+
+# The seen slope of the roof as a patch of straw (patch px: across by the ridge's length, down by the slope's, one texel a source
+# pixel): each texel reads the sprite where the original camera drew that point of the slope (bilinear), from the pixels that are
+# straw: the roof's lit planks (fit.mask) one pixel in from their edge, so the outline and the shaded rim are not straw. Every texel the
+# camera drew keeps its own pixels. Only a texel it never drew (the overhang, a post's knob, the rim) is filled from the straw itself: the
+# largest all-drawn rectangle of the patch, repeated mirrored at each edge (straw is the same cloth everywhere; a mirror leaves no seam).
+func _thatch(path: String, fit: Dictionary, patch: Vector2, slope: float, seen: float) -> Image:
+	var img: Image = buildings.image(path)
+	var w := img.get_width()
+	var h := img.get_height()
+	var data := img.get_data()
+	var bits := Marshalls.base64_to_raw(str(fit.mask))
+	var inside := func(x: int, y: int) -> bool: return x >= 0 and y >= 0 and x < w and y < h and (bits[(y*w + x) >> 3] >> (7 - ((y*w + x) & 7))) & 1 != 0
+	var straw := PackedByteArray()
+	straw.resize(w*h)
+	for y in h:
+		for x in w:
+			straw[y*w + x] = 1 if inside.call(x, y) and inside.call(x - 1, y) and inside.call(x + 1, y) and inside.call(x, y - 1) and inside.call(x, y + 1) else 0
+	var cx := float(fit.cx)
+	var cz := float(fit.cz)
+	var k := float(fit.k)
+	var hw := float(fit.w)/2.0
+	var hd := float(fit.d)/2.0
+	var ridge := float(fit.ridge)
+	var rise := float(fit.rise)
+	var centre := Vector2(float(fit.boxes[0][0]), float(fit.boxes[0][1]))
+	var across := Vector2(cos(float(fit.yaw)), sin(float(fit.yaw)))
+	var along := Vector2(-across.y, across.x)
+	var ca := hw/slope
+	var sa := rise/slope
+	var tw := int(patch.x)
+	var th := int(patch.y)
+	var colour: Array = []
+	var drawn := PackedByteArray()
+	colour.resize(tw*th)
+	drawn.resize(tw*th)
+	for j in th:
+		var s := (float(j) + 0.5)*(slope + float(fit.h)*sa)/float(th)
+		for i in tw:
+			if s > slope: continue
+			var v := -hd + (float(i) + 0.5)*2.0*hd/float(tw)
+			var q := centre + seen*s*ca*across + v*along
+			var fx := cx + q.x - 0.5
+			var fy := cz + k*q.y - (ridge - s*sa) - 0.5
+			var x0 := int(floorf(fx))
+			var y0 := int(floorf(fy))
+			var ok := true
+			for dy in 2:
+				for dx in 2:
+					var xx := x0 + dx
+					var yy := y0 + dy
+					if xx < 0 or yy < 0 or xx >= w or yy >= h or straw[yy*w + xx] == 0: ok = false
+			if not ok: continue
+			var tx := fx - float(x0)
+			var ty := fy - float(y0)
+			var rgb := Vector3.ZERO
+			for dy in 2:
+				for dx in 2:
+					var o := ((y0 + dy)*w + x0 + dx)*4
+					rgb += Vector3(data[o], data[o + 1], data[o + 2])*((tx if dx == 1 else 1.0 - tx)*(ty if dy == 1 else 1.0 - ty))
+			colour[j*tw + i] = rgb
+			drawn[j*tw + i] = 1
+	# the largest all-drawn rectangle (rows of run heights, every left edge)
+	var best := Rect2i(0, 0, 0, 0)
+	var run := PackedInt32Array()
+	run.resize(tw)
+	for j in th:
+		for i in tw: run[i] = run[i] + 1 if drawn[j*tw + i] == 1 else 0
+		for i0 in tw:
+			var hmin := 1 << 20
+			for i1 in range(i0, tw):
+				hmin = mini(hmin, run[i1])
+				if hmin == 0: break
+				if (i1 - i0 + 1)*hmin > best.size.x*best.size.y: best = Rect2i(i0, j - hmin + 1, i1 - i0 + 1, hmin)
+	var out := Image.create(tw, th, false, Image.FORMAT_RGBA8)
+	if best.size.x < 4 or best.size.y < 4:
+		push_warning("well roof: no drawn patch of straw to repeat")
+		return out
+	var mirror := func(m: int, n: int) -> int:
+		var r := posmod(m, 2*n)
+		return r if r < n else 2*n - 1 - r
+	for j in th:
+		for i in tw:
+			if drawn[j*tw + i] == 1: # a texel the camera drew is the sprite's own: kept, never replaced by the donor's
+				var own: Vector3 = colour[j*tw + i]
+				out.set_pixel(i, j, PROV_PROJECTED if provenance else Color8(int(roundf(own.x)), int(roundf(own.y)), int(roundf(own.z)), 255))
+				continue
+			var rgb: Vector3 = colour[(best.position.y + mirror.call(j - best.position.y, best.size.y))*tw + best.position.x + mirror.call(i - best.position.x, best.size.x)]
+			out.set_pixel(i, j, PROV_FILLED if provenance else Color8(int(roundf(rgb.x)), int(roundf(rgb.y)), int(roundf(rgb.z)), 255))
+	return out
 
 # --- ring -----------------------------------------------------------------------------------------------------------
 # A ring open to the camera (the save machine; tools/landmark_fit.py ring_fit): a grating floor on the ground and a wall on the far
