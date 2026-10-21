@@ -119,7 +119,7 @@ func _run() -> void:
 					for _i in 4: await process_frame
 					if not ui.menu_scroll.get_global_rect().grow(1).encloses(answer.get_global_rect()):
 						failures.append("Real choice answer clipped: %s %s scale=%s" % [answer.text,size,scale])
-					for defect in READING_LAYOUT.defects(ui): failures.append("Real choice: " + defect)
+					for defect in READING_LAYOUT.defects(ui): failures.append("Real choice: %s (%s scale=%s card=%d cap=%d allowance=%.1f prompt=%d/%d answers=%d/%d focus=%s options=%d)" % [defect, size, scale, ui.panel.size.y, ui.root.size.y * 0.35, READING_LAYOUT.allowance(ui), ui.choice_prompt_scroll.size.y, ui.choice_prompt.get_combined_minimum_size().y, ui.menu_scroll.size.y, ui.column.get_combined_minimum_size().y, answer.text.left(30), group.options.size()])
 					checked_answers += 1
 			print("SPEECH CENSUS progress size=", size, " scale=", scale, " checked=", checked, " failures=", failures.size())
 	print("SPEECH CENSUS ", JSON.stringify({"counts": counts, "source_cases": cases.size(), "checked": checked, "choice_groups":choice_groups.size(),"checked_answers":checked_answers,"failures": failures}))
