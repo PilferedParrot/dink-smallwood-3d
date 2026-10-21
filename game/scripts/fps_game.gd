@@ -406,10 +406,14 @@ func _apply_settings() -> void:
 		ui.set_plain_font(bool(settings.get("plain_font", false)))
 		ui.speech_waits_for_me = bool(settings.get("speech_waits_for_me", false))
 		if is_instance_valid(fps_viewmodel):
-			for child in fps_viewmodel.get_children():
-				if child is Label3D:
-					child.font_size = roundi(32 * ui.text_scale)
-					child.font = ui.PLAIN_FONT if ui.plain_font else ThemeDB.fallback_font
+			# Every held label, at any depth, like the clearance walk below.
+			var held: Array[Node] = [fps_viewmodel]
+			while not held.is_empty():
+				var node: Node = held.pop_back()
+				for child in node.get_children(): held.append(child)
+				if node is Label3D:
+					node.font_size = roundi(32 * ui.text_scale)
+					node.font = ui.PLAIN_FONT if ui.plain_font else ThemeDB.fallback_font
 	_sync_fps_camera()
 
 func _speech_name(speaker: int, context: Dictionary) -> String:

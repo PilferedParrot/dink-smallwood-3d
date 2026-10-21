@@ -75,8 +75,8 @@ func _rebuild() -> void:
 		_pager.position = Vector2(25, 405)
 		_pager.size.x = 550
 		add_child(_pager)
-		_page_prev = _make_page_button("◀ Prev", Vector2(25, 405), _spell_page > 0, -1)
-		_page_next = _make_page_button("Next ▶", Vector2(108, 405), (_spell_page + 1) * 8 < _spells.size(), 1)
+		_page_prev = _make_page_button("< Prev", Vector2(25, 405), _spell_page > 0, -1)
+		_page_next = _make_page_button("Next >", Vector2(108, 405), (_spell_page + 1) * 8 < _spells.size(), 1)
 		var page_label := Label.new()
 		page_label.text = "Magic %d / %d" % [_spell_page + 1, ceili(float(_spells.size()) / 8.0)]
 		page_label.add_theme_font_size_override("font_size", roundi(13.0 * _text_scale))
@@ -99,7 +99,11 @@ func _add_slot(item: Dictionary, action: String, index: int, col: int, row: int,
 	button.size = rect.size
 	button.focus_mode = Control.FOCUS_ALL
 	button.mouse_filter = Control.MOUSE_FILTER_STOP
-	button.tooltip_text = description
+	# No tooltip: the Selected line above the chest already shows this text, larger,
+	# on hover and on focus. A pointer popup repeated it and covered the icons.
+	# The same text stays on the control as its accessible name and description.
+	button.accessibility_name = name
+	button.accessibility_description = description
 	button.set_meta("grid", Vector2i(col, row))
 	button.set_meta("spell", spell)
 	for state in ["normal", "hover", "pressed", "focus", "disabled"]:
@@ -160,7 +164,6 @@ func _make_page_button(label: String, _at: Vector2, enabled: bool, delta: int) -
 	button.custom_minimum_size = Vector2(68, 30)
 	button.focus_mode = Control.FOCUS_ALL
 	button.disabled = not enabled
-	button.tooltip_text = "Show %s magic slots" % ("previous" if delta < 0 else "next")
 	button.add_theme_font_size_override("font_size", roundi(12.0 * _text_scale))
 	button.add_theme_color_override("font_color", CREAM)
 	button.add_theme_color_override("font_focus_color", GOLD)

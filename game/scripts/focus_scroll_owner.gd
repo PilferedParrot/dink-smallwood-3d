@@ -31,6 +31,10 @@ func _init(scroll: ScrollContainer, ui: Node) -> void:
 func automatic_active() -> bool:
 	return not _manual and (_queued or _running or applying)
 
+# True while the player's own scrolling holds the view away from the focused control.
+func manual_holds() -> bool:
+	return _manual
+
 func _current(target: Control) -> bool:
 	var ui = _ui_ref.get_ref()
 	return is_instance_valid(ui) and ui.is_inside_tree() and ui.page_serial == _serial and is_instance_valid(target) and target.is_inside_tree() and target.is_visible_in_tree() and ui.get_viewport().gui_get_focus_owner() == target
@@ -39,11 +43,13 @@ func _focused() -> Control:
 	var target: Control = _target.get_ref() if _target != null else null
 	return target if _current(target) else null
 
-func request_focus(target: Control, serial: int) -> bool:
+# `interaction` is the player changing the focused control itself (a slider step, a
+# toggle, a key press): it is on screen to them, so manual scrolling no longer holds it away.
+func request_focus(target: Control, serial: int, interaction: bool = false) -> bool:
 	var scroll: ScrollContainer = _scroll_ref.get_ref()
 	if not is_instance_valid(scroll) or not scroll.is_inside_tree() or not scroll.is_ancestor_of(target): return false
 	if target == scroll.get_v_scroll_bar() or target == scroll.get_h_scroll_bar(): return false
-	if _manual and _serial == serial and _last_focus != null and _last_focus.get_ref() == target: return false
+	if not interaction and _manual and _serial == serial and _last_focus != null and _last_focus.get_ref() == target: return false
 	_serial = serial
 	_last_focus = weakref(target)
 	_target = weakref(target)

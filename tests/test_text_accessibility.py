@@ -41,3 +41,33 @@ def test_competing_focus_reflow_and_canceled_layout_waits(tmp_path):
 def test_focused_actions_are_whole_from_first_drawn_frame(tmp_path):
     result = launch(tmp_path, 'focus_draw_test.gd', deadline=300, rendered=True)
     assert result.returncode == 0 and 'FOCUS DRAW PASS' in result.stdout and 'SCRIPT ERROR' not in result.stderr, result.stdout+result.stderr
+
+
+def test_every_authored_glyph_is_in_a_bundled_font(tmp_path):
+    result = launch(tmp_path, 'glyph_coverage_test.gd', deadline=90)
+    assert result.returncode == 0 and 'GLYPH COVERAGE PASS' in result.stdout and 'SCRIPT ERROR' not in result.stderr, result.stdout+result.stderr
+
+
+def test_status_numbers_follow_text_size_across_the_whole_range(tmp_path):
+    result = launch(tmp_path, 'status_numbers_test.gd', deadline=240, rendered=True)
+    assert result.returncode == 0 and 'STATUS NUMBERS PASS' in result.stdout and 'SCRIPT ERROR' not in result.stderr, result.stdout+result.stderr
+
+
+def test_controls_list_leaves_no_capacity_unused_at_any_scroll_stop(tmp_path):
+    result = launch(tmp_path, 'controls_capacity_test.gd', deadline=280)
+    assert result.returncode == 0 and 'CONTROLS CAPACITY PASS' in result.stdout and 'SCRIPT ERROR' not in result.stderr, result.stdout+result.stderr
+
+
+def test_focused_control_returns_to_view_when_the_player_changes_it_after_scrolling(tmp_path):
+    result = launch(tmp_path, 'manual_scroll_focus_test.gd', deadline=200)
+    assert result.returncode == 0 and 'MANUAL SCROLL FOCUS PASS' in result.stdout and 'SCRIPT ERROR' not in result.stderr, result.stdout+result.stderr
+
+
+def test_no_text_line_or_control_is_cut_at_either_edge_of_any_menu_scroll_area(tmp_path):
+    result = launch(tmp_path, 'scroll_edges_test.gd', deadline=290)
+    assert result.returncode == 0 and 'SCROLL EDGES PASS' in result.stdout and 'SCRIPT ERROR' not in result.stderr, result.stdout+result.stderr
+
+
+def test_every_menu_scroll_area_is_reachable_with_the_real_keys(tmp_path):
+    result = launch(tmp_path, 'scroll_reach_test.gd', deadline=290)
+    assert result.returncode == 0 and 'SCROLL REACH PASS' in result.stdout and 'SCRIPT ERROR' not in result.stderr, result.stdout+result.stderr

@@ -54,6 +54,8 @@ var status_dock: Control
 var equipment_stats: Dictionary = {}
 var dialogue_continue: Button
 var menu_scroll: ScrollContainer
+var menu_box: Control
+var menu_fit
 var choice_prompt_scroll: ScrollContainer
 var choice_prompt: Label
 var choice_prompt_axis := 0.0
@@ -80,6 +82,7 @@ var hint_backing: PanelContainer
 var heading_row: VBoxContainer
 # Coalesce focus and adaptive-layout requests before reading native geometry.
 const FOCUS_SCROLL_OWNER = preload("res://scripts/focus_scroll_owner.gd")
+const TEXT_SCROLL_FIT = preload("res://scripts/text_scroll_fit.gd")
 var focus_visibility_request := 0
 class FocusSortWait extends RefCounted:
 	signal finished(sorted: bool)
@@ -308,10 +311,16 @@ func _ready() -> void:
 	equipment_name.hide()
 	var scroll := ScrollContainer.new()
 	menu_scroll = scroll
-	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	_focus_scroll_owner(scroll)
-	contents.add_child(scroll)
+	# The box owns the page's slot; the scroll fills it, or is fitted inside it to whole lines.
+	menu_box = Control.new()
+	menu_box.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	menu_box.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	contents.add_child(menu_box)
+	menu_box.add_child(scroll)
+	scroll.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	menu_fit = TEXT_SCROLL_FIT.new(scroll, menu_box, self)
 	column = VBoxContainer.new()
 	column.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	column.add_theme_constant_override("separation", 8)
@@ -506,7 +515,32 @@ func _focus_changed(control: Control) -> void:
 		for scroll in root.find_children("*", "ScrollContainer", true, false):
 			if scroll.has_meta("focus_scroll_owner"): scroll.get_meta("focus_scroll_owner").note_focus_lost()
 	if control != null and is_instance_valid(root) and root.is_ancestor_of(control):
+		_watch_interaction(control)
 		_keep_focus_visible(control, page_serial)
+
+# Changing the focused control is an interaction with it: after a manual scroll it
+# must come back into view, or the player edits something they cannot see.
+func _watch_interaction(control: Control) -> void:
+	if control is Range:
+		var changed := _range_interacted.bind(control)
+		if not control.value_changed.is_connected(changed): control.value_changed.connect(changed)
+	elif control is BaseButton:
+		var toggled_call := _toggle_interacted.bind(control)
+		var pressed_call := _button_interacted.bind(control)
+		if not control.toggled.is_connected(toggled_call): control.toggled.connect(toggled_call)
+		if not control.pressed.is_connected(pressed_call): control.pressed.connect(pressed_call)
+
+func _range_interacted(_value: float, control: Control) -> void:
+	_reveal_interacted(control)
+
+func _toggle_interacted(_on: bool, control: Control) -> void:
+	_reveal_interacted(control)
+
+func _button_interacted(control: Control) -> void:
+	_reveal_interacted(control)
+
+func _reveal_interacted(control: Control) -> void:
+	if is_instance_valid(control) and get_viewport() != null and get_viewport().gui_get_focus_owner() == control: _keep_visible(control, page_serial, true)
 
 func _focus_request_current(control: Control, serial: int, request: int) -> bool:
 	return request == focus_visibility_request and serial == page_serial and is_inside_tree() and is_instance_valid(control) and control.is_inside_tree() and control.is_visible_in_tree() and get_viewport().gui_get_focus_owner() == control
@@ -535,6 +569,9 @@ func _focus_scroll_owner(scroll: ScrollContainer):
 	return scroll.get_meta("focus_scroll_owner")
 
 func _keep_focus_visible(control: Control, serial: int) -> void:
+	await _keep_visible(control, serial, false)
+
+func _keep_visible(control: Control, serial: int, interaction: bool) -> void:
 	focus_visibility_request += 1
 	var request := focus_visibility_request
 	if not _focus_request_current(control, serial, request): return
@@ -542,7 +579,7 @@ func _keep_focus_visible(control: Control, serial: int) -> void:
 	while parent != null:
 		if parent is ScrollContainer:
 			var owner = _focus_scroll_owner(parent)
-			if owner.request_focus(control, serial): await owner.settled
+			if owner.request_focus(control, serial, interaction): await owner.settled
 			if not _focus_request_current(control, serial, request): return
 		parent = parent.get_parent()
 
@@ -552,22 +589,32 @@ func _bindings_changed() -> void:
 	if page == "title": show_title(FileAccess.file_exists("user://adventure.json"))
 	elif page == "settings": show_settings(bindings.settings)
 
+# A key and its action are one phrase: no-break spaces keep wrapping from splitting
+# "Page Down" or leaving a key on one line and its verb on the next.
+const NO_BREAK_SPACE := "\u00A0"
+func _bound(text: String) -> String:
+	return text.replace(" ", NO_BREAK_SPACE)
+
+func _pair(keys: String, action: String) -> String:
+	return _bound(keys) + NO_BREAK_SPACE + NO_BREAK_SPACE + _bound(action)
+
 func _key(action: String) -> String:
 	return bindings.short_label(action,controller_active)
 
 func _navigation_hint() -> String:
-	return "%s / %s  Choose     %s or click  Confirm" % [_key("ui_up"),_key("ui_down"),_key("ui_accept")]
+	return _pair("%s / %s" % [_key("ui_up"),_key("ui_down")],"Choose") + "     " + _pair("%s or click" % _key("ui_accept"),"Confirm")
 
 func _gameplay_hint() -> String:
-	var text := "%s  Move" % bindings.movement_label(controller_active)
-	if bindings.context == "fps": text += "   %s  Look" % ("Mouse" if not controller_active else bindings.look_label())
-	text += "   %s  Attack   %s  Talk   %s  Equipment   %s  Pause" % [_key("attack"),_key("talk"),_key("inventory"),_key("pause")]
-	if not equipment_stats.get("spell_item",{}).is_empty(): text += "   %s  Magic" % _key("magic")
-	return text
+	var phrases: Array[String] = [_pair(bindings.movement_label(controller_active),"Move")]
+	if bindings.context == "fps": phrases.append(_pair("Mouse" if not controller_active else bindings.look_label(),"Look"))
+	for entry in [["attack","Attack"],["talk","Talk"],["inventory","Equipment"],["pause","Pause"]]: phrases.append(_pair(_key(entry[0]),entry[1]))
+	if not equipment_stats.get("spell_item",{}).is_empty(): phrases.append(_pair(_key("magic"),"Magic"))
+	return "   ".join(phrases)
 
 func _control_primer() -> String:
-	var look := " · Mouse look" if bindings.context == "fps" else ""
-	return "%s move%s\n%s talk · %s attack\n%s gear · %s pause · %s help" % [bindings.movement_label(),look,bindings.short_label("talk"),bindings.short_label("attack"),bindings.short_label("inventory"),bindings.short_label("pause"),bindings.short_label("help")]
+	var short := func(action: String, verb: String) -> String: return _bound("%s %s" % [bindings.short_label(action),verb])
+	var move := _bound(bindings.movement_label() + " move") + ((" · " + _bound("Mouse look")) if bindings.context == "fps" else "")
+	return "%s\n%s · %s\n%s · %s · %s" % [move,short.call("talk","talk"),short.call("attack","attack"),short.call("inventory","gear"),short.call("pause","pause"),short.call("help","help")]
 
 func _controls_group(ids: Array) -> String:
 	var parts: Array[String] = []
@@ -660,7 +707,7 @@ func _choice_prompt_step() -> float:
 func _update_hint() -> void:
 	if is_instance_valid(speech_dismiss_hint):
 		speech_dismiss_hint.visible = page == "dialogue" and not dialogue_mode and speech_lines.has(active_speech_id) and bool(speech_lines[active_speech_id].waits)
-		speech_dismiss_hint.text = "%s  Dismiss" % _key("talk")
+		speech_dismiss_hint.text = _pair(_key("talk"),"Dismiss")
 	if is_instance_valid(control_primer_label): control_primer_label.text = _control_primer()
 	if is_instance_valid(controls_label): controls_label.text = _controls_text()
 	if not is_instance_valid(hint): return
@@ -679,17 +726,17 @@ func _update_hint() -> void:
 			if dialogue_continue.visible:
 				# The focused action already gives its keyboard/controller cue.
 				hint.text = ""
-				dialogue_continue.text = "Continue   ·   " + _key("ui_accept")
+				dialogue_continue.text = _bound("Continue   ·   " + _key("ui_accept"))
 			else:
 				hint.text = _navigation_hint()
 				if choice_prompt_scroll.visible and choice_prompt_scroll.get_v_scroll_bar().max_value > choice_prompt_scroll.size.y:
-					hint.text += "     %s / %s  Read prompt" % [_key("ui_page_up"),_key("ui_page_down")]
+					hint.text += "     " + _pair("%s / %s" % [_key("ui_page_up"),_key("ui_page_down")],"Read prompt")
 		else:
 			var back := "Resume" if return_page == "game" else "Back"
 			hint.text = _navigation_hint()
 			if page == "settings":
-				hint.text += "     %s / %s  Adjust" % [_key("ui_left"),_key("ui_right")]
-			if page != "title": hint.text += "     " + _key("ui_cancel") + "  " + back
+				hint.text += "     " + _pair("%s / %s" % [_key("ui_left"),_key("ui_right")],"Adjust")
+			if page != "title": hint.text += "     " + _pair(_key("ui_cancel"),back)
 		return
 	hint.text = _gameplay_hint()
 
@@ -701,6 +748,7 @@ func _clear(title: String, next_page: String) -> void:
 		controls_menu.get_parent().remove_child(controls_menu)
 		controls_menu.queue_free()
 		controls_menu = null
+	menu_box.show()
 	menu_scroll.show()
 	control_primer_label = null
 	controls_label = null
@@ -728,6 +776,8 @@ func _clear(title: String, next_page: String) -> void:
 	modal = true
 	dialogue_mode = false
 	page = next_page
+	# Speech and choices size their own card to whole lines; every other page's scroll area is fitted.
+	menu_fit.begin_page(next_page not in ["dialogue", "loading"])
 	root.mouse_filter = Control.MOUSE_FILTER_STOP
 	_layout_for(next_page)
 	_set_playing_visuals(false)
@@ -1142,7 +1192,6 @@ func _sync_feedback() -> void:
 	modal_feedback.visible = active and modal
 	if active and modal:
 		modal_feedback_text.text = toast.text
-		modal_feedback_text.tooltip_text = toast.text
 		modal_feedback.custom_minimum_size.x = 0
 
 func show_inventory(items: Array, magic_items: Array) -> void:
@@ -1252,7 +1301,9 @@ func show_controls() -> void:
 	var parent_page := return_page
 	_clear("Controls", "controls")
 	return_page = parent_page
+	menu_box.hide()
 	menu_scroll.hide()
+	menu_fit.begin_page(false) # The Controls list fits its own scroll area.
 	controls_menu = CONTROLS_MENU.new()
 	controls_menu.ui = self
 	panel.get_child(0).add_child(controls_menu)
@@ -1301,7 +1352,7 @@ func show_credits() -> void:
 	_label("Development release %s" % str(ProjectSettings.get_setting("application/config/version", "")), 18)
 	_label("3D adaptation · PilferedParrot\nOriginal Dink Smallwood · Seth A. Robinson\nArtwork · Justin Martin\nStory & world · Seth A. Robinson, Greg Smith, Justin Martin\nAdditional levels · Chris Bakker\nv1.08 fixes · Talmadge Bradley III\nFree audio · GNU FreeDink contributors\nEngine · Godot contributors\nOptional plain font · Atkinson Hyperlegible, Braille Institute (SIL OFL 1.1)", 20)
 	_label("New code: Apache 2.0. Original art, story and audio retain their own licenses. Detailed attributions are bundled in licenses/. This is an unofficial, modified adaptation.", 18)
-	_button("Support PilferedParrot on Patreon ↗", "patreon")
-	_button("Source code & full credits ↗", "source")
+	_button("Support PilferedParrot on Patreon (opens your browser)", "patreon")
+	_button("Source code & full credits (opens your browser)", "source")
 	_button("Done", "back")
 	_focus()

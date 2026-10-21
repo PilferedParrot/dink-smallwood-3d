@@ -34,7 +34,7 @@ func _run() -> void:
 		input.pressed = false
 		Input.parse_input_event(input)
 		await process_frame
-		if not ui.control_primer_label.text.contains(labels[-1]+" talk"):
+		if not ui.control_primer_label.text.replace("\u00A0"," ").contains(labels[-1]+" talk"):
 			push_error("Existing title primer did not refresh its keyboard layout");quit(1);return
 	print("LAYOUT_LABELS="+str(labels))
 	if labels[0] != "Y" or labels[1] != "Z":

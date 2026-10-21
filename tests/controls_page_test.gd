@@ -264,7 +264,7 @@ func gameplay_frame() -> void:
 	game.fps_yaw = 0.55
 	game._sync_fps_camera()
 	await key(KEY_F1)
-	check(game.ui.hint.text.contains(game.bindings.short_label("attack")+"  Attack"),"Rendered gameplay hint follows remapped input")
+	check(game.ui.hint.text.replace("\u00A0"," ").contains(game.bindings.short_label("attack")+"  Attack"),"Rendered gameplay hint follows remapped input")
 	await frame("gameplay-hint")
 func navigation() -> void:
 	# Independent of the pending mutation API; this is not the complete G1 gate.

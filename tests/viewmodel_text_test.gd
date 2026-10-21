@@ -81,6 +81,11 @@ func run():
     var nested:=Node3D.new();game.fps_viewmodel.add_child(nested)
     var other:=Label3D.new();other.text="MARK";other.font_size=roundi(32*scale);other.pixel_size=0.0025;other.position=Vector3(0,0.1,0.2);nested.add_child(other)
     await settle();reading_clear(mark,"sword-mark");reading_clear(other,"nested-label")
+    # A held label below another node follows a live size/font change like a direct child.
+    var late:=Label3D.new();late.text="LATE";late.font_size=7;late.font=null;nested.add_child(late)
+    game._apply_settings()
+    check(late.font_size==roundi(32*scale),"nested held label follows the text size")
+    check(late.font==game.ui.PLAIN_FONT if plain else (late.font==null or late.font==ThemeDB.fallback_font),"nested held label follows the font")
     mark.queue_free();nested.queue_free()
  print("VIEWMODEL TEXT PASS" if failures.is_empty() else "VIEWMODEL TEXT FAIL "+str(failures.size()))
  if not output_dir.is_empty():

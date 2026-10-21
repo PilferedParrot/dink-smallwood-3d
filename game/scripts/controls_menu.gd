@@ -36,6 +36,7 @@ var spacer: Control
 var rows: Array[Control] = []
 var snapping_scroll := false
 var previous_scroll := 0.0
+var snap_target := -1.0
 
 func _ready() -> void:
 	bindings = ui.bindings
@@ -125,6 +126,7 @@ func _clear_body() -> void:
 	scroll.custom_minimum_size.y = 0
 	ui._focus_scroll_owner(scroll).request_reset(ui.page_serial, true)
 	previous_scroll = 0
+	snap_target = -1.0
 	if state == "list": ui._layout_for("controls")
 
 func _select_group(area: String) -> void:
@@ -236,7 +238,10 @@ func _process(_delta: float) -> void:
 	if seconds == 0: _build_list()
 
 func _snap_scroll(value: float) -> void:
-	if state != "list" or snapping_scroll or rows.is_empty() or ui._focus_scroll_owner(scroll).automatic_active(): return
+	if state != "list" or snapping_scroll or rows.is_empty(): return
+	if ui._focus_scroll_owner(scroll).automatic_active():
+		snap_target = -1.0 # Focus-driven scrolling moved the list; size from where it is.
+		return
 	var index := 0
 	for i in rows.size():
 		if rows[i].position.y <= value: index = i
@@ -245,26 +250,54 @@ func _snap_scroll(value: float) -> void:
 		# A large user-created action keeps native within-row scrolling.
 		target = value
 	elif value > previous_scroll and value > target and index+1 < rows.size():
-		target = rows[index+1].position.y
+		# A step never passes the row it asked for, so a page step cannot skip a row; it only
+		# moves on from the row the list was on (the wheel) or runs to the end (End).
+		var maximum: float = scroll.get_v_scroll_bar().max_value-scroll.get_v_scroll_bar().page
+		if value >= maximum-1 or target <= previous_scroll+0.5: target = rows[index+1].position.y
+	elif value < previous_scroll and value > 0.5:
+		# Backwards likewise: the first row boundary at or after the place asked for.
+		for row in rows:
+			if row.position.y >= value-0.5 and row.position.y < previous_scroll-0.5:
+				target = row.position.y
+				break
 	snapping_scroll = true
+	snap_target = target
 	ui._focus_scroll_owner(scroll).set_position(target, true, false)
 	previous_scroll = scroll.scroll_vertical
 	snapping_scroll = false
 
+# Whole controls only: the viewport ends where the last control that fits ends, so the
+# list uses the space below the rows without ever cutting a heading or a button through.
+# Rows are the scroll stops; a row too tall for the viewport keeps native scrolling.
 func _fit_rows() -> void:
 	if rows.is_empty() or size.y <= 0: return
 	var gap := get_theme_constant("separation")
-	var available := size.y-intro.get_combined_minimum_size().y-tabs.get_combined_minimum_size().y-footer.get_combined_minimum_size().y-gap*4
-	var start := 0
-	for i in rows.size():
-		if rows[i].position.y <= scroll.scroll_vertical+1: start=i
-	var extent := 0.0
-	for i in range(start,rows.size()):
-		var candidate := rows[i].position.y+rows[i].size.y-rows[start].position.y
-		if candidate > available: break
-		extent = candidate
-	# Oversize custom actions retain native scrolling so every slot stays reachable.
-	scroll.custom_minimum_size.y = maxf(1,minf(available,extent if extent>0 else available))
+	var available := size.y-tabs.get_combined_minimum_size().y-footer.get_combined_minimum_size().y-intro.get_combined_minimum_size().y-gap*4
+	# The viewport is sized from the row the player scrolled to. A scroll that was clamped
+	# while the viewport was still long is re-applied once the viewport has shrunk.
+	var top := snap_target if snap_target >= 0 else float(scroll.scroll_vertical)
+	var maximum: float = scroll.get_v_scroll_bar().max_value-scroll.get_v_scroll_bar().page
+	if snap_target >= 0 and scroll.scroll_vertical != roundi(snap_target) and snap_target <= maximum+1 and not ui._focus_scroll_owner(scroll).automatic_active(): ui._focus_scroll_owner(scroll).set_position(snap_target,true,false)
+	var end := top
+	for row in rows:
+		for control in _row_controls(row):
+			var bottom: float = control.get_global_rect().end.y-body.get_global_rect().position.y
+			if bottom > top+1 and bottom <= top+available+1: end = maxf(end, bottom)
+	# One control taller than the viewport keeps native scrolling.
+	scroll.custom_minimum_size.y = maxf(1,minf(available,end-top if end > top+1 else available))
+
+# Every leaf the player reads or presses.
+func _row_controls(row: Control) -> Array[Control]:
+	var found: Array[Control] = []
+	var pending: Array[Control] = [row]
+	while not pending.is_empty():
+		var node: Control = pending.pop_back()
+		var children: Array[Control] = []
+		for child in node.get_children():
+			if child is Control and child.visible: children.append(child)
+		if children.is_empty() and node != row: found.append(node)
+		pending.append_array(children)
+	return found
 
 func _fit_prompt() -> void:
 	var chrome: float = ui.panel.get_combined_minimum_size().y-scroll.get_combined_minimum_size().y

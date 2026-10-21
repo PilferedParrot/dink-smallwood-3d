@@ -98,7 +98,9 @@ func run() -> void:
 		viewport=ui.controls_menu.scroll.get_global_rect()
 		for row in row_nodes():
 			var rect := row.get_global_rect()
-			if rect.intersection(viewport).size.y>1:check(contained(rect,viewport),"F3 scrolling leaves no partial action row")
+			# The list fills its panel, so the next row may peek in at the bottom as the scroll cue;
+			# no row may be cut at the top, where the player reads.
+			if rect.intersection(viewport).size.y>1:check(rect.position.y>=viewport.position.y-1,"F3 scrolling leaves no action row cut at the top")
 		check(ui.controls_menu.scroll.scroll_vertical>0,"F3 wheel moves to the next row")
 	elif mode=="dialogs":
 		check(ui.controls_menu.buttons.attack_2.text.begins_with("Pad RT"),"F4 right trigger has pad prefix")
