@@ -127,8 +127,12 @@ func run():
  game.entities[scroll].active = 1
  clone.type = 1
  clone.brain = 8
+ # Keep brain 8 as the only eligible candidate: an earlier normal sprite
+ # would win even if the production brain-8 exclusion were removed.
+ game.entities[scroll].active = 0
  got2 = await press_talk(game)
- check(got2 == [scroll],"brain 8 is excluded (freedink.cpp:254), got %s" % [got2])
+ check(got2.is_empty(),"brain 8 alone is excluded (freedink.cpp:254), got %s" % [got2])
+ game.entities[scroll].active = 1
  game.entities.erase(clone_id)
  # Real data: sprites the editor marks type 0 yet whose script has a TALK procedure (97:35 is one of seven
  # fountain pieces, 446:1 a hut piece). The original gives a type 0 sprite no script and no live slot
