@@ -13,13 +13,12 @@ import pytest
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "tools"))
-from terrain_columns import (check_report, expected_cells, expected_coverage,
-                             rasterize_rects, runs)
+from terrain_columns import (_effective_hard, check_report, expected_cells, expected_coverage,
+                             rasterize_rects, raised_tiles, runs)
 
-SCREENS = (3, 74, 99, 169, 258, 260)
-CHANGING = (74, 99, 169, 258)
-SAMPLES = {3: (75, 105), 74: (95, 115), 99: (25, 215),
-           169: (295, 25), 258: (85, 305), 260: (55, 55)}
+SCREENS = (99, 100, 101, 258, 260)
+CHANGING = (99, 100, 101, 258, 260)
+SAMPLES = {99: (25, 215), 100: (305, 35), 101: (105, 85), 258: (25, 85), 260: (25, 355)}
 
 
 @pytest.fixture(scope="module")
@@ -50,11 +49,151 @@ def test_source_candidates_and_hardness_clipping(source):
         assert full.sum() == 100 * len(cells), number
         assert np.all(clipped <= full), number
         assert bool(np.any(full != clipped)) == (number in CHANGING), number
-    # This native-hard centre is purple in raw ts37 and meets the stated blue
-    # exclusion (RGB 74,41,90); do not silently add it based on its appearance.
+
+
+def test_every_interior_tile_is_classed():
+    from terrain_tile_classes import check
+    world = json.loads((ROOT / "game/data/world.json").read_text())
+    assert check(world) == []
+
+
+def test_every_raised_hard_pixel_has_a_column_and_nothing_else_does(source):
+    """G1's census: on all 74 interior screens the oracle's columns are exactly the hard pixels of raised art."""
+    world, footprints = source
+    raised = raised_tiles()
+    for key, screen in world["screens"].items():
+        if not screen.get("indoor"):
+            continue
+        number = int(key)
+        hard = _effective_hard(world, footprints, number)
+        cover = expected_coverage(world, footprints, number, "B")
+        tile_of = np.repeat(np.repeat(np.array([int(t["tile"]) for t in screen["tiles"][:96]]).reshape(8, 12),
+                                      50, axis=0), 50, axis=1)
+        is_raised = np.isin(tile_of, list(raised))
+        assert not (cover & ~hard).any(), number
+        assert not (cover & ~is_raised).any(), number
+        assert not (hard & is_raised & ~cover).any(), number
+
+
+def test_enclosed_fill_is_unreachable_raised_and_not_collided(source):
+    """C: the drawn bodies behind a rim. Independent flood fill (written here, not imported from the tool): every fill
+    pixel is non-hard, raised-class art, and unreachable from any floor-class pixel without crossing a hard pixel."""
+    from collections import deque
+    from terrain_fill import build
+    world, footprints = source
+    raised = raised_tiles()
+    data = build(world, footprints)
+    assert "99" in data and "100" in data
+    for key, rects_ in data.items():
+        number = int(key)
+        screen = world["screens"][key]
+        hard = _effective_hard(world, footprints, number)
+        tile_of = np.repeat(np.repeat(np.array([int(t["tile"]) for t in screen["tiles"][:96]]).reshape(8, 12),
+                                      50, axis=0), 50, axis=1)
+        is_raised = np.isin(tile_of, list(raised))
+        fill = rasterize_rects(rects_)
+        assert not (fill & hard).any(), number
+        assert (fill <= is_raised).all(), number
+        seen = ~hard & ~is_raised  # the floor-class seeds
+        queue = deque(map(tuple, np.argwhere(seen)))
+        while queue:
+            y, x = queue.popleft()
+            for dy, dx in ((1, 0), (-1, 0), (0, 1), (0, -1)):
+                ny, nx = y + dy, x + dx
+                if 0 <= ny < 400 and 0 <= nx < 600 and not hard[ny, nx] and not seen[ny, nx]:
+                    seen[ny, nx] = True
+                    queue.append((ny, nx))
+        assert not (fill & seen).any(), number  # nothing the walkable floor reaches is ever filled
+    # the plausible-but-wrong fill (no enclosure test: every non-hard raised pixel) must trip this check
+    wrong = np.zeros((400, 600), bool)
+    screen = world["screens"]["99"]
+    tile_of = np.repeat(np.repeat(np.array([int(t["tile"]) for t in screen["tiles"][:96]]).reshape(8, 12), 50, 0), 50, 1)
+    wrong = np.isin(tile_of, list(raised)) & ~_effective_hard(world, footprints, 99)
+    hard99 = _effective_hard(world, footprints, 99)
+    seen = ~hard99 & ~np.isin(tile_of, list(raised))
+    queue = deque(map(tuple, np.argwhere(seen)))
+    while queue:
+        y, x = queue.popleft()
+        for dy, dx in ((1, 0), (-1, 0), (0, 1), (0, -1)):
+            ny, nx = y + dy, x + dx
+            if 0 <= ny < 400 and 0 <= nx < 600 and not hard99[ny, nx] and not seen[ny, nx]:
+                seen[ny, nx] = True
+                queue.append((ny, nx))
+    assert (wrong & seen).any()
+
+
+def test_the_screen_102_control_stays_wall_free(source):
+    """102's hard bridge-edge cells sit on blue cobble paving, the very tiles of 74's corridors: floor-class art, no
+    column, as in the original (lead trade 10-21, 102-BRIDGE-EDGE-WITNESSES.md)."""
+    world, footprints = source
+    assert _effective_hard(world, footprints, 102).sum() > 0
+    assert expected_cells(world, 102, footprints) == []
+    assert not expected_coverage(world, footprints, 102, "B").any()
+    shared = {int(t["tile"]) for t in world["screens"]["102"]["tiles"]} & {int(t["tile"]) for t in world["screens"]["74"]["tiles"]}
+    assert 4632 in shared
+
+
+def test_screen_74_pin_follows_the_art_not_the_colour(source):
+    """(145,235) on 74 is tile 4632, blue cobble paving (RGB 74,41,90 is a crack in it): floor-class, so no column. The
+    pin first came from the colour rule's 'water' guess; the class table gives the same answer by what the tile depicts."""
+    world, footprints = source
+    assert int(world["screens"]["74"]["tiles"][50]["tile"]) == 4632
     assert (145, 235) not in expected_cells(world, 74, footprints)
-    assert expected_cells(world, 439, footprints) == []  # outdoors stay untouched
-    assert not expected_coverage(world, footprints, 439, "A").any()
+    assert expected_cells(world, 74, footprints) == []
+
+
+def test_look_alike_controls(source):
+    """S13: rock that wears the old colour rule's blue or green must still stand; paving the old rule kept as 'not
+    blue/green' must not."""
+    world, footprints = source
+    atlas = {}
+
+    def rgb(tile, x, y):
+        from PIL import Image
+        sheet, cell = divmod(tile, 128)
+        if sheet + 1 not in atlas:
+            atlas[sheet + 1] = np.asarray(Image.open(ROOT / f"game/assets/tiles/ts{sheet + 1:02d}.png").convert("RGB"))
+        r, g, b = (int(v) for v in atlas[sheet + 1][(cell // 12) * 50 + y % 50, (cell % 12) * 50 + (x - 20) % 50])
+        return r, g, b
+
+    def old_colour_rule_drops(r, g, b):
+        return (b > 1.1 * r and b > .85 * g) or g > 1.12 * r
+
+    raised = raised_tiles()
+    rock_dropped, paving_kept = [], []
+    for number in (99, 100, 101, 258, 260, 74, 169, 202):
+        cells = set(expected_cells(world, number, footprints))
+        hard = _effective_hard(world, footprints, number)
+        screen = world["screens"][str(number)]
+        for y in range(5, 400, 10):
+            for x in range(25, 620, 10):
+                if not hard[y, x - 20]:
+                    continue
+                tile = int(screen["tiles"][(y // 50) * 12 + (x - 20) // 50]["tile"])
+                dropped = old_colour_rule_drops(*rgb(tile, x, y))
+                if tile in raised and dropped:
+                    rock_dropped.append((number, x, y))
+                    assert (x, y) in cells
+                if tile not in raised and not dropped:
+                    paving_kept.append((number, x, y))
+                    assert (x, y) not in cells
+    assert rock_dropped, "no blue- or green-looking rock under a hard centre: the control is vacuous"
+    assert paving_kept, "no non-blue paving under a hard centre: the control is vacuous"
+
+
+def test_a_centre_sample_would_miss_the_rims_of_99(source):
+    """The mechanism of 99's invisible walls: hard.dat rims are 1-3 px, so a 10 px centre sample misses most of them."""
+    world, footprints = source
+    hard = _effective_hard(world, footprints, 99)
+    cells = expected_cells(world, 99, footprints)
+    centres = [(x, y) for x, y in cells if hard[y, x - 20]]
+    assert hard.sum() == 3844
+    assert len(centres) < len(cells) * 0.5
+    centre_cover = np.zeros_like(hard)
+    for x, y in centres:
+        centre_cover[y - 5:y + 5, x - 25:x - 15] = True
+    assert (hard & centre_cover).sum() < hard.sum() * 0.5
+    assert (hard & expected_coverage(world, footprints, 99, "B")).sum() == hard.sum()
 
 
 def test_footprint_clear_and_revert_change_effective_source_mask(source):
@@ -64,10 +203,9 @@ def test_footprint_clear_and_revert_change_effective_source_mask(source):
     cleared["99"] = {"clear": [48]}
     assert (25, 215) not in expected_cells(world, 99, cleared)
 
-    assert (295, 25) in expected_cells(world, 169, footprints)
     reverted = dict(footprints)
-    reverted["169"] = {"revert": [5]}
-    assert (295, 25) not in expected_cells(world, 169, reverted)
+    reverted["134"] = {"revert": [61]}  # tile 527 (cliff face): custom mask 799 against default 115
+    assert expected_cells(world, 134, reverted) != expected_cells(world, 134, footprints)
 
 
 def test_source_oracle_rejects_missing_geometry_and_injected_rectangle(source):
@@ -169,9 +307,9 @@ def test_native_emitted_columns_match_source_oracle(source, tmp_path):
     assert report_path.is_file(), result.stdout + result.stderr
     report = json.loads(report_path.read_text())
     assert {str(r["screen"]) for r in report["screens"]} == set(world["screens"])
-    control = next(r for r in report["screens"] if int(r["screen"]) == 3)
+    control = next(r for r in report["screens"] if int(r["screen"]) == 99)
     control_geometry = rasterize_rects(control["rects"])
-    assert control_geometry[105, 75 - 20] and control_geometry[115, 85 - 20], (
+    assert control_geometry[132, 0] and control_geometry[134, 599], (
         "native MultiMesh transform readback collapsed to identity")
     phase = os.environ.get("DINK_TERRAIN_PHASE", "B")
     comparison = check_report(report, world, footprints, phase)

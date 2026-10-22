@@ -1,0 +1,182 @@
+{
+ "baseline": "918551f",
+ "filter": "terrain boxes alone with their own materials, old tree against new, original camera, same Lanczos resize; claimed = where those two pictures differ, dilated 7x7 (the Lanczos3 support, three output pixels); the unclaimed negative control must still fail",
+ "different_frames": 17,
+ "changed_pixels": 1919263,
+ "outside_terrain_change": 0,
+ "frames": [
+  {
+   "screen": 69,
+   "changed_pixels": 121663,
+   "outside_terrain_change": 0,
+   "allowed_pixels": 128547,
+   "allowed_fraction": 0.5356,
+   "negative_control_outside": 1,
+   "before_rgb_sha256": "a6fa5c15039722911d4edff30f7c5d3f209904748c9476dd0c859a01b9ab2c7c",
+   "after_rgb_sha256": "8ec9a438667fa01c49ada6433f1e021b7ed22bd0bbbd3785d9a5d218dde5e142"
+  },
+  {
+   "screen": 98,
+   "changed_pixels": 133327,
+   "outside_terrain_change": 0,
+   "allowed_pixels": 138583,
+   "allowed_fraction": 0.5774,
+   "negative_control_outside": 1,
+   "before_rgb_sha256": "f27f787804e89ea6101fcd8756d0001369391b743f9470b0f3a13f723776ef17",
+   "after_rgb_sha256": "175fd62de9bbb8aa0e0dbb245f2f949230a7104c6d750b650e3b67e435ce381e"
+  },
+  {
+   "screen": 99,
+   "changed_pixels": 108496,
+   "outside_terrain_change": 0,
+   "allowed_pixels": 114058,
+   "allowed_fraction": 0.4752,
+   "negative_control_outside": 1,
+   "before_rgb_sha256": "2e23a06a0186c2df4ddef1080771699b5da1213519059f136452aba0465e2f6b",
+   "after_rgb_sha256": "393df0468f9c6e7ee3d42965b4b8087ccef324363bdd33c702cc855fcbdebc6b"
+  },
+  {
+   "screen": 100,
+   "changed_pixels": 137085,
+   "outside_terrain_change": 0,
+   "allowed_pixels": 143462,
+   "allowed_fraction": 0.5978,
+   "negative_control_outside": 1,
+   "before_rgb_sha256": "523e1c13cc4a4f954b859a2a27d67399079390767e58bd09f609c83db4c695ac",
+   "after_rgb_sha256": "64997f92db77768c58e6482d31aed3f6a206d4f3156d385af3799bfe74deec78"
+  },
+  {
+   "screen": 101,
+   "changed_pixels": 121663,
+   "outside_terrain_change": 0,
+   "allowed_pixels": 128547,
+   "allowed_fraction": 0.5356,
+   "negative_control_outside": 1,
+   "before_rgb_sha256": "ea38a819b59a6ed9dd854a4d32315c3da8d2007547ecb1f7002c49567074f090",
+   "after_rgb_sha256": "644e41fe1467ad0d035efa62eb3d3c540fa36622ecb9117b50b8f5c1fd0c3658"
+  },
+  {
+   "screen": 131,
+   "changed_pixels": 76536,
+   "outside_terrain_change": 0,
+   "allowed_pixels": 79530,
+   "allowed_fraction": 0.3314,
+   "negative_control_outside": 1,
+   "before_rgb_sha256": "d285db0cf2fe4697d3fea93590e075b9656b38f521ceb3e8f4a5627374117e4e",
+   "after_rgb_sha256": "8151cf81dc05cc478f9b636a72b2e200e63380afc71f48edd1c640d2c34036c1"
+  },
+  {
+   "screen": 132,
+   "changed_pixels": 94551,
+   "outside_terrain_change": 0,
+   "allowed_pixels": 104203,
+   "allowed_fraction": 0.4342,
+   "negative_control_outside": 1,
+   "before_rgb_sha256": "da79f97f401e88caaa84510be5323d88ebae76d10e6f03b56b2b26dd6702f702",
+   "after_rgb_sha256": "e67882db19198a95fdbda44d9e7c0aa3f77d5a16ee2eee5f2d42811f799d0d8d"
+  },
+  {
+   "screen": 164,
+   "changed_pixels": 116259,
+   "outside_terrain_change": 0,
+   "allowed_pixels": 128910,
+   "allowed_fraction": 0.5371,
+   "negative_control_outside": 1,
+   "before_rgb_sha256": "52c15887887e69be031d30ed25577eae18e2fb6261f7e10e238fe5e1d1b7d7b4",
+   "after_rgb_sha256": "280db485d1b1b4b4079d1daa571c6669f5361fc29c61e94402c2459772546b6f"
+  },
+  {
+   "screen": 165,
+   "changed_pixels": 122054,
+   "outside_terrain_change": 0,
+   "allowed_pixels": 128925,
+   "allowed_fraction": 0.5372,
+   "negative_control_outside": 1,
+   "before_rgb_sha256": "d70ceb69bba7eedbf2a064b7f955d6fa8f776fb1e9c0f3f575c0cec4a3a4aa84",
+   "after_rgb_sha256": "fbba15467b14987d63e53bb51b3a0fb83c775dd4515c36db89476e9704beeec8"
+  },
+  {
+   "screen": 166,
+   "changed_pixels": 122063,
+   "outside_terrain_change": 0,
+   "allowed_pixels": 128925,
+   "allowed_fraction": 0.5372,
+   "negative_control_outside": 1,
+   "before_rgb_sha256": "16ef446b8b7056ebc9b80f354f7bebdd32cd7e5a1cf6e0cd2ddf3780c9b46a96",
+   "after_rgb_sha256": "5baef02c8aa61305a89e2ab50e66370dc083acd9af574e9900cbd43ccbf8800e"
+  },
+  {
+   "screen": 198,
+   "changed_pixels": 122062,
+   "outside_terrain_change": 0,
+   "allowed_pixels": 128925,
+   "allowed_fraction": 0.5372,
+   "negative_control_outside": 1,
+   "before_rgb_sha256": "d0086f46d39caf191a340c8b8bd4f63145f52e81d20e1f88daf54936cc8e7cf4",
+   "after_rgb_sha256": "37187ac83a723e5e88279a7a9115d21660fc373224eed4fcd878c1e019e49a0d"
+  },
+  {
+   "screen": 227,
+   "changed_pixels": 121663,
+   "outside_terrain_change": 0,
+   "allowed_pixels": 128547,
+   "allowed_fraction": 0.5356,
+   "negative_control_outside": 1,
+   "before_rgb_sha256": "5082826befab48157c4bcd7230792b28e10aa1bb35086a468087481ab735531d",
+   "after_rgb_sha256": "ad834f4d1112d81931538815846e9de77fa14e3fb7dcf74f86ad065e5ae23798"
+  },
+  {
+   "screen": 229,
+   "changed_pixels": 121305,
+   "outside_terrain_change": 0,
+   "allowed_pixels": 132211,
+   "allowed_fraction": 0.5509,
+   "negative_control_outside": 1,
+   "before_rgb_sha256": "6c734e5d4c32fd2628d6dc891f212b3240281f1cbe63e21fd35794c70c41be62",
+   "after_rgb_sha256": "e34d5fb2e990b238d3e04e0717c94e5f07aa4126d7db53218404bbe5b5d91c4a"
+  },
+  {
+   "screen": 257,
+   "changed_pixels": 124745,
+   "outside_terrain_change": 0,
+   "allowed_pixels": 131748,
+   "allowed_fraction": 0.549,
+   "negative_control_outside": 1,
+   "before_rgb_sha256": "d79b5dda43ba5e3ac1c3353065d89082eb703bd1d6f6ec8a0ab3738c1945c3c0",
+   "after_rgb_sha256": "67d90d82e95b4d9a2af1d4518cfca0597d3e930b49be6340be8bcd4494abfc1e"
+  },
+  {
+   "screen": 258,
+   "changed_pixels": 140424,
+   "outside_terrain_change": 0,
+   "allowed_pixels": 146699,
+   "allowed_fraction": 0.6112,
+   "negative_control_outside": 1,
+   "before_rgb_sha256": "64d51662b006f7e455d1087fbc589a525f8d790094186eae139cdb829be20104",
+   "after_rgb_sha256": "c87f70bb6430e7c1c19066d9757d282361348b8623670c922855ea298068ccfa"
+  },
+  {
+   "screen": 259,
+   "changed_pixels": 130156,
+   "outside_terrain_change": 0,
+   "allowed_pixels": 137010,
+   "allowed_fraction": 0.5709,
+   "negative_control_outside": 1,
+   "before_rgb_sha256": "a53a2748d42661903922f6bc82266f3e78fd478474f52354191348f6ee5c8319",
+   "after_rgb_sha256": "9b3e0dfa76fd3ab165cbbfc840133710aa9e4dc476087b5f4f754ec3a844ed75"
+  },
+  {
+   "screen": 260,
+   "changed_pixels": 5211,
+   "outside_terrain_change": 0,
+   "allowed_pixels": 59563,
+   "allowed_fraction": 0.2482,
+   "negative_control_outside": 1,
+   "before_rgb_sha256": "bc5e534d1ef37b6c078265452e5980d8bdac1fabc6816bbedc53ccbdd144d9b9",
+   "after_rgb_sha256": "873019c5e2ffd001d0ea39c3ee86c3e86c61aac799cb26b98158013b55358a7b",
+   "after_reduced_rgb_sha256": "626a8a8eb27986c53c765e8c2ee6299068cbc423d40679e82afe3de8530a2458",
+   "note": "before and after are the FULL-batch renders (the history variant); the pinned frame is the reduced-batch render, whose hash is after_reduced_rgb_sha256"
+  }
+ ],
+ "source_head": "see git log: the commit carrying this file"
+}

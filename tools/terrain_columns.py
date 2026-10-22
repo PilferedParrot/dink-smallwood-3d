@@ -2,8 +2,8 @@
 # Copyright 2026 PilferedParrot contributors. SPDX-License-Identifier: Apache-2.0
 """Source-data oracle for indoor terrain columns.
 
-The source art chooses 10-pixel cells from the raw tile atlas. The centre must
-be hard in the effective native tile mask. Phase A covers each chosen square;
+The tile-class table (game/data/terrain_tile_classes.json, read from the tiles' art, never from
+colour) chooses 10-pixel cells: raised-class art holding any hard pixel in the effective native tile mask. Phase A covers each chosen square;
 phase B keeps only hard pixels in those squares. This module reads neither the
 production terrain builder nor its selection metadata.
 
@@ -20,7 +20,6 @@ from pathlib import Path
 import sys
 
 import numpy as np
-from PIL import Image
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(Path(__file__).resolve().parent))
@@ -37,42 +36,43 @@ def _effective_hard(world: dict, footprints: dict, screen: int) -> np.ndarray:
     return hard[:, X_ORIGIN:X_ORIGIN + WIDTH]
 
 
+def raised_tiles(path: Path | None = None) -> set[int]:
+    """Tile indices whose art depicts a raised surface (tools/terrain_tile_classes.py)."""
+    table = json.loads((path or ROOT / "game/data/terrain_tile_classes.json").read_text())
+    return {int(t) for cls in ("raised", "dark") for t in table["classes"][cls]}
+
+
 def expected_cells(world: dict, screen: int, footprints: dict | None = None,
-                   atlas_dir: Path | None = None) -> list[tuple[int, int]]:
-    """Select native source-pixel centres, without reading native report cells."""
+                   raised: set[int] | None = None) -> list[tuple[int, int]]:
+    """Select native source-pixel centres, without reading native report cells.
+
+    A 10 px cell is chosen when its tile's art depicts a raised surface and ANY of its
+    pixels is natively hard; the hard.dat mask is 1 px, so a centre sample misses its
+    1-3 px rims. Colour is never read: floor, water and fire art stay flat as the original.
+    """
     source = world["screens"][str(screen)]
     if not source.get("indoor", False):
         return []
     hard = _effective_hard(world, footprints or {}, screen)
-    atlas_dir = ROOT / "game/assets/tiles" if atlas_dir is None else Path(atlas_dir)
-    sheets: dict[int, np.ndarray] = {}
+    raised = raised_tiles() if raised is None else raised
     selected = []
     for y in range(CELL // 2, HEIGHT, CELL):
         for x in range(X_ORIGIN + CELL // 2, X_ORIGIN + WIDTH, CELL):
-            if not hard[y, x - X_ORIGIN]:
-                continue
             tile_index = (y // 50) * 12 + ((x - X_ORIGIN) // 50)
-            tile_id = int(source["tiles"][tile_index]["tile"])
-            sheet, atlas_cell = divmod(tile_id, 128)
-            sheet += 1
-            if sheet not in sheets:
-                sheets[sheet] = np.asarray(
-                    Image.open(atlas_dir / f"ts{sheet:02d}.png").convert("RGB"))
-            rgb = sheets[sheet][(atlas_cell // 12) * 50 + y % 50,
-                                (atlas_cell % 12) * 50 + (x - X_ORIGIN) % 50]
-            r, g, b = (int(value) for value in rgb)
-            if (b > 1.1 * r and b > .85 * g) or g > 1.12 * r:
+            if int(source["tiles"][tile_index]["tile"]) not in raised:
                 continue
-            selected.append((x, y))
+            if hard[y - CELL // 2:y + CELL // 2,
+                    x - X_ORIGIN - CELL // 2:x - X_ORIGIN + CELL // 2].any():
+                selected.append((x, y))
     return selected
 
 
 def expected_coverage(world: dict, footprints: dict, screen: int,
-                      phase: str, atlas_dir: Path | None = None) -> np.ndarray:
+                      phase: str, raised: set[int] | None = None) -> np.ndarray:
     """Return the full pixel mask for phase A or phase B."""
     if phase not in ("A", "B"):
         raise ValueError(f"phase must be A or B, got {phase!r}")
-    out = _cell_coverage(expected_cells(world, screen, footprints, atlas_dir))
+    out = _cell_coverage(expected_cells(world, screen, footprints, raised))
     if phase == "B":
         out &= _effective_hard(world, footprints, screen)
     return out
@@ -130,7 +130,7 @@ def runs(mask: np.ndarray) -> list[list[int]]:
 
 
 def check_report(report: dict, world: dict, footprints: dict,
-                 phase: str, atlas_dir: Path | None = None) -> dict:
+                 phase: str, raised: set[int] | None = None) -> dict:
     """Compare actual emitted geometry and native facts with the source oracle.
 
     Every discrepant pixel is represented by a lossless run. The visual-cause
@@ -146,7 +146,7 @@ def check_report(report: dict, world: dict, footprints: dict,
     for record in report["screens"]:
         number = int(record["screen"])
         source_indoor = bool(world["screens"][str(number)].get("indoor", False))
-        cells = expected_cells(world, number, footprints, atlas_dir)
+        cells = expected_cells(world, number, footprints, raised)
         a_coverage = _cell_coverage(cells)
         b_coverage = a_coverage & _effective_hard(world, footprints, number)
         expected = a_coverage if phase == "A" else b_coverage
@@ -192,6 +192,17 @@ def check_report(report: dict, world: dict, footprints: dict,
                 finding["blocked_without_visible_cause_runs"] = runs(unseen_blocked)
         elif "visual_runs" in record:
             finding["errors"].append("visual_runs supplied without blocked_runs")
+        if "fill_rects" in record:
+            from terrain_fill import fill_mask
+            fill_expected = fill_mask(world, footprints, number, raised) if source_indoor else np.zeros((HEIGHT, WIDTH), bool)
+            fill_actual = rasterize_rects(record["fill_rects"])
+            finding["fill_missing_pixels"] = int((fill_expected & ~fill_actual).sum())
+            finding["fill_extra_pixels"] = int((fill_actual & ~fill_expected).sum())
+            finding["fill_walkable_pixels"] = int((fill_actual & _effective_hard(world, footprints, number) ).sum())
+            if finding["fill_missing_pixels"] or finding["fill_extra_pixels"]:
+                finding["errors"].append("enclosed-body fill differs from source oracle")
+            if finding["fill_walkable_pixels"]:
+                finding["errors"].append("fill overlaps hard pixels")
         if finding["missing_cells"] or finding["extra_cells"]:
             finding["errors"].append("selected cells differ from source oracle")
         if finding["missing_pixels"] or finding["extra_pixels"]:

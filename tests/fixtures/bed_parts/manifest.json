@@ -481,7 +481,8 @@
     "reviewed-meshes.json": "a33560e9a06517f487e0592ba50baddb030a397b88e6388248abf36124b687ae",
     "reviewed-bedding-donors.npy": "bcc270fe8f47caed1e9c0657ee5b6325d64bff69a8cc774ac62970e4470c1d67",
     "cloth-contaminated-post-donors.npy": "4476a23976c13cc02da929587c266e056fdd8dec533a8e91382a1bc75bbae787",
-    "terrain66-attribution.json": "fbe87340d637b87e29fbc12647db999f534eac1cd4a78641fd695fc3fd8bcc8f"
+    "terrain66-attribution.json": "fbe87340d637b87e29fbc12647db999f534eac1cd4a78641fd695fc3fd8bcc8f",
+    "66-terrain-delta.png": "bf709e9a25a535d81ffdb70182af094c1a1cf9c9949cc279842d7950b8dae4b4"
   },
   "wall_tie_normalization": {
     "scope": "Test fixture only; production wall emitter remains unchanged.",
@@ -536,5 +537,18 @@
     "attribution": "tests/fixtures/bed_parts/terrain66-attribution.json",
     "pixels": 435,
     "scope": "Only RGB pixels outside the unchanged bed envelope; all original RGBA pixels within it and every alpha value retained. All 29 other cases unchanged; all 654 base-to-candidate changed pixels on screen 66 inside projected changed-column bounds."
+  },
+  "terrain66_geometry_delta": {
+    "file": "66-terrain-delta.png",
+    "what": "Pixels where the terrain boxes alone differ between 638cec6 (columns under floor-class tiles) and the tile-class/cave-terrain fix round, black-on-white original-camera renders through the bed fixtures harness (tests/terrain_delta_capture.gd, same bundle, same resize), differing pixels only. Geometry only: no scene content other than terrain can enter the mask.",
+    "old_terrain_commit": "638cec6",
+    "dark_pixels_old": 8025,
+    "dark_pixels_new": 0,
+    "allowed_in": [
+      "66"
+    ],
+    "pixels_differing": 8709,
+    "pixels_in_mask": 9292,
+    "dilation": "3x3 (one output pixel): the bed masks' one-pixel raster-quantization rule; without it 82 changed pixels (max channel step 9) sit 1-1.41 px beyond the diff"
   }
 }

@@ -189,7 +189,9 @@ func _shoot(game, view: Dictionary, out_dir: String) -> void:
 		cam.look_at(Vector3.ZERO, Vector3.UP)
 		if environment: environment.fog_enabled = false
 	else:
-		if environment: environment.fog_enabled = true
+		# The game's own fog: an interior has none (fp_world.configure_environment). Forcing it on painted every interior
+		# view's open edge fog-grey and misrepresented the deliverable.
+		if environment: environment.fog_enabled = not game.fp_world.interior
 		cam.keep_aspect = Camera3D.KEEP_HEIGHT # as the game keeps it (an original-camera view before this one set KEEP_WIDTH)
 		game.entities[1].x = float(view.x)
 		game.entities[1].y = float(view.y)
