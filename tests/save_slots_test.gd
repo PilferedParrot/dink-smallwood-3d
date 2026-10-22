@@ -95,6 +95,7 @@ func minutes_and_pause_menu() -> void:
 	game.ui.show_pause()
 	game._ui_action("save", null); await settle()
 	check(game.ui.page == "slots" and game.ui.return_page == "pause", "pause Save opens the slot list over the pause menu")
+	check(focused_text() == "Slot 1 - Empty", "pause Save preselects the first empty slot, focus '%s'" % focused_text())
 	var texts := choice_labels()
 	check(texts.size() == 10 and texts[3] == "Slot 4 - Empty", "pause Save lists all ten slots, empty ones saveable: %s" % [texts])
 	for child in game.ui.column.get_children():

@@ -1652,7 +1652,13 @@ func _ui_action(action: String, payload: Variant) -> void:
 		# Continue, Load and Save open the source's slot list (start-2 "load" and
 		# SAVEBOT choice lists show &savegameinfo); the newest slot is preselected.
 		"continue", "load": ui.show_slots("load",SAVE_SLOTS.labels(),SAVE_SLOTS.latest())
-		"save": ui.show_slots("save",SAVE_SLOTS.labels(),SAVE_SLOTS.latest())
+		"save":
+			# Preselect the first empty slot so a stray Enter cannot overwrite the newest save.
+			var names := SAVE_SLOTS.labels()
+			var target := SAVE_SLOTS.latest()
+			for i in names.size():
+				if names[i].ends_with("- Empty"): target = i+1; break
+			ui.show_slots("save",names,target)
 		"slot_load": _load_game(SAVE_SLOTS.path(int(payload)))
 		"slot_save":
 			var slot := int(payload)
