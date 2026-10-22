@@ -6,6 +6,7 @@ extends SceneTree
 const GAME = preload("res://scripts/fps_game.gd")
 var game
 var failures: Array[String] = []
+var finished: Array[String] = [] # a section that dies mid-way (a script error) never lands here
 func _initialize() -> void: _run.call_deferred()
 func check(ok: bool, message: String) -> void:
 	if not ok: failures.append(message); push_error(message)
@@ -62,6 +63,7 @@ func file_shapes() -> void:
 	var all: Array[String] = game.SAVE_SLOTS.labels()
 	check(all.size() == 10 and all[3] == "Slot 4 - 0:05 - Level 9" and all[9] == "Slot 10 - 1:01 - Ten" and all[0] == "Slot 1 - Empty", "labels() lists ten slots in order: %s" % [all])
 	clean_saves()
+	finished.append("file_shapes")
 
 # 2. "%d:%02d" of play.minutes (dinkc.cpp:775), and the legacy save with neither minutes nor info.
 func minute_formats() -> void:
@@ -77,6 +79,7 @@ func minute_formats() -> void:
 	put(2, filled(3, ""))
 	check(game.SAVE_SLOTS.label(2) == "Slot 2 - 0:03 - Level 1", "an empty info falls back to the level, got '%s'" % game.SAVE_SLOTS.label(2))
 	clean_saves()
+	finished.append("minute_formats")
 
 # 3. play minutes of a live game: fresh, after a load, across the minute boundary (dinkc_bindings.cpp:580,1756).
 func live_minutes() -> void:
@@ -101,6 +104,7 @@ func live_minutes() -> void:
 	check(game.play_minutes_base == 5 and game._play_minutes() == 5, "after a load the clock restarts at the saved 5 minutes, got base %d total %d" % [game.play_minutes_base, game._play_minutes()])
 	check(game._save_game(slot_path(3)) and game.SAVE_SLOTS.label(3).begins_with("Slot 3 - 0:05 - "), "a save right after the load keeps 0:05, got '%s'" % game.SAVE_SLOTS.label(3))
 	clean_saves()
+	finished.append("live_minutes")
 
 # 4. save_game_info: default, script-set, interpolated (ints, loaded floats, unknown names), cut at 77 (savegame.cpp:375-378).
 func info_text() -> void:
@@ -119,7 +123,7 @@ func info_text() -> void:
 	game.save_game_info = "`4Red &level"
 	check(game._save_game(slot_path(4)) and stored(4).info == "Red 4", "colour codes do not reach the label, got '%s'" % stored(4).info)
 	game.save_game_info = "100% &level&"
-	check(game._save_game(slot_path(4)) and game.SAVE_SLOTS.label(4) == "Slot 4 - 0:00 - 100% 4&", "a % or a lone & in the info prints as typed, got '%s'" % game.SAVE_SLOTS.label(4))
+	check(game._save_game(slot_path(4)) and game.SAVE_SLOTS.label(4) == "Slot 4 - 0:00 - 100% 4&", "a percent sign or a lone & in the info prints as typed, got '%s'" % game.SAVE_SLOTS.label(4))
 	# the cut: 77 are kept whole, a 78th is dropped, and it counts the text AFTER interpolation
 	var a77 := "A".repeat(77)
 	game.save_game_info = a77
@@ -129,8 +133,8 @@ func info_text() -> void:
 	game.save_game_info = "A".repeat(500)
 	check(game._save_game(slot_path(5)) and str(stored(5).info).length() == 77 and game.SAVE_SLOTS.label(5) == "Slot 5 - 0:00 - %s" % a77, "500 characters are cut to 77 in the label, got '%s'" % game.SAVE_SLOTS.label(5))
 	game.vm.globals["big"] = 1234567
-	game.save_game_info = "&big" + "x".repeat(71) # 76 typed, 78 once &big is a number
-	check(game._save_game(slot_path(5)) and stored(5).info == "1234567" + "x".repeat(70), "the cut counts the interpolated text (7+70), got %d '%s'" % [str(stored(5).info).length(), stored(5).info])
+	game.save_game_info = "&big " + "x".repeat(70) # 75 typed, 78 once &big is a number
+	check(game._save_game(slot_path(5)) and stored(5).info == "1234567 " + "x".repeat(69), "the cut counts the interpolated text (8+69), got %d '%s'" % [str(stored(5).info).length(), stored(5).info])
 	# multibyte text at the cut: whole characters only, nothing torn, the file still parses
 	game.save_game_info = "A".repeat(76) + "ééé"
 	check(game._save_game(slot_path(6)) and stored(6).info == "A".repeat(76) + "é", "an accented letter at the cut survives whole, got '%s'" % stored(6).info)
@@ -141,6 +145,7 @@ func info_text() -> void:
 	check(game.SAVE_SLOTS.label(6).begins_with("Slot 6 - 0:00 - 日本語"), "the multibyte label reads, got '%s'" % game.SAVE_SLOTS.label(6))
 	game.save_game_info = "Level &level"
 	clean_saves()
+	finished.append("info_text")
 
 # 5. A loaded save returns every global as a JSON float; a label made after the load prints integers (S9).
 func loaded_floats() -> void:
@@ -156,6 +161,7 @@ func loaded_floats() -> void:
 	check(game._interpolate("&frac", {}) == "2.5", "a real fraction still prints as 2.5, got '%s'" % game._interpolate("&frac", {}))
 	game.save_game_info = "Level &level"
 	clean_saves()
+	finished.append("loaded_floats")
 
 # 6. DinkC slot arguments (dinkc_bindings.cpp:1316-1348): the range, and a stray file that must not count.
 func slot_arguments() -> void:
@@ -167,8 +173,12 @@ func slot_arguments() -> void:
 		check(await call_dink("load_game", [slot]) == 0, "load_game(%d) fails" % slot)
 		check(await call_dink("game_exist", [slot]) == 0, "game_exist(%d) is 0" % slot)
 	# a file already sitting at the slot-0 / slot-minus-1 name must still not count as a save
-	raw(slot_path(0), JSON.stringify(filled(5, "stray")))
-	raw(slot_path(-1), JSON.stringify(filled(5, "stray")))
+	check(game._save_game(slot_path(5)), "stray-file fixture: a complete save")
+	var stray: Dictionary = stored(5)
+	stray["info"] = "stray"
+	DirAccess.remove_absolute(slot_path(5))
+	raw(slot_path(0), JSON.stringify(stray))
+	raw(slot_path(-1), JSON.stringify(stray))
 	check(await call_dink("game_exist", [0]) == 0 and await call_dink("game_exist", [-1]) == 0, "game_exist(0) and (-1) stay 0 beside a stray file")
 	check(await call_dink("load_game", [0]) == 0 and int(game.vm.globals.gold) == 11, "load_game(0) beside a stray file loads nothing")
 	check(not game.SAVE_SLOTS.exists(0) and not game.SAVE_SLOTS.exists(-1), "SAVE_SLOTS.exists rejects slots below 1")
@@ -201,6 +211,7 @@ func slot_arguments() -> void:
 	check(await call_dink("load_game", [2]) == 0 and int(game.vm.globals.gold) == 77, "a complete save marked version 2 is not loaded")
 	check(await call_dink("game_exist", [5]) == 1, "game_exist is file presence, like fopen in dinkc_bindings.cpp:1350: a garbage file exists")
 	clean_saves()
+	finished.append("slot_arguments")
 
 # 7. Which slot the menus preselect: Continue/Load take the latest, ties the lower number; Save takes the first empty.
 func preselection() -> void:
@@ -258,6 +269,7 @@ func preselection() -> void:
 	check(focused_text() == "Slot 10 - Empty", "only slot 10 empty: Save focuses slot 10, focus '%s'" % focused_text())
 	game.ui.close_menu()
 	clean_saves()
+	finished.append("preselection")
 
 # 8. The choice line: only a line that is exactly "&savegameinfo" becomes a slot label (dinkc.cpp:766).
 func choice_line() -> void:
@@ -268,6 +280,7 @@ func choice_line() -> void:
 	check(game._interpolate_choice("&savegameinfo", {}, 4) == "Slot 4 - Empty", "ordinal 4 reads Empty")
 	check(game._interpolate_choice("Slot &savegameinfo", {}, 3) != "Slot 3 - 1:15 - Mid game", "a longer line is not a slot label (it is plain text, got '%s')" % game._interpolate_choice("Slot &savegameinfo", {}, 3))
 	clean_saves()
+	finished.append("choice_line")
 
 # 9. A new game after a load starts from nothing: minutes, info text (game.gd _new_game).
 func new_game_after_load() -> void:
@@ -287,6 +300,7 @@ func new_game_after_load() -> void:
 	var level := int(game.vm.globals.get("level", 0))
 	check(game.SAVE_SLOTS.label(5) == "Slot 5 - 0:00 - Level %d" % level, "the new game's first save reads 0:00 and the stock text, got '%s'" % game.SAVE_SLOTS.label(5))
 	clean_saves()
+	finished.append("new_game_after_load")
 
 # 10. A slot the label calls Empty must not be what Continue or the title offers.
 func unreadable_slot_is_not_offered() -> void:
@@ -300,6 +314,7 @@ func unreadable_slot_is_not_offered() -> void:
 	put(7, {"version": 2, "minutes": 1, "info": "from a newer game"})
 	check(game.SAVE_SLOTS.latest() == 3, "a newer-version file in slot 7 does not outrank the readable slot 3 (latest %d)" % game.SAVE_SLOTS.latest())
 	clean_saves()
+	finished.append("unreadable_slot_is_not_offered")
 
 # 11. Save's automatic pick is the first slot with NO FILE, never the first that merely reads Empty: a file a newer
 # build wrote (version 2) reads Empty here but is someone's save, and a stray Enter must not overwrite it. The player
@@ -322,6 +337,7 @@ func save_never_picks_an_unreadable_file() -> void:
 	check(choice_buttons().size() == 10, "ten unreadable files: the Save list still opens with ten slots (%d)" % choice_buttons().size())
 	game.ui.close_menu()
 	clean_saves()
+	finished.append("save_never_picks_an_unreadable_file")
 
 func _run() -> void:
 	game = GAME.new(); game.test_mode = true
@@ -342,6 +358,8 @@ func _run() -> void:
 	await unreadable_slot_is_not_offered()
 	await save_never_picks_an_unreadable_file()
 	await new_game_after_load()
+	var expected := ["file_shapes", "minute_formats", "live_minutes", "info_text", "loaded_floats", "slot_arguments", "preselection", "choice_line", "unreadable_slot_is_not_offered", "save_never_picks_an_unreadable_file", "new_game_after_load"]
+	check(finished == expected, "every section ran to its end, finished %s" % [finished])
 	print("SAVE LABEL CLASS FAILURES ", JSON.stringify(failures))
 	print("SAVE LABEL CLASS PASS" if failures.is_empty() else "SAVE LABEL CLASS FAIL")
 	clean_saves()

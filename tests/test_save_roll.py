@@ -12,6 +12,10 @@ def test_save_slots_say_what_they_hold_and_load_their_own_state(tmp_path):
     _run(tmp_path, "save_slots_test.gd", "SAVE SLOTS PASS", 200)
 
 
+def test_every_input_to_a_slot_label_and_a_slot_choice(tmp_path):
+    _run(tmp_path, "save_label_class_test.gd", "SAVE LABEL CLASS PASS", 200)
+
+
 def test_a_startup_roll_lives_one_visit(tmp_path):
     _run(tmp_path, "arrival_visit_roll_test.gd", "ARRIVAL ROLL PASS", 400)
 
