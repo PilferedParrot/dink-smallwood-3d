@@ -3407,3 +3407,54 @@ plus half an atom per scroll area (`allowance` in `tests/text_layout_oracle.gd`)
 35% cap was written in pixels), and A1a-2 recorded the class as "not fitted here" because a continuous timed scroll seemed to
 exclude a whole-line rule (a heuristic applied to the wrong unit: the rule is about rest, not about motion).
 Tests: `tests/scroll_edges_test.gd` (speech, timed speech, prompt, answers; look-alike control one pixel short; reachability).
+
+## Save slots that say what they are; one startup roll per visit — October 22
+
+Chris on 0.3.3: "the save button is incomprehensible"; "the duck appeared, then disappeared as I approached". Two causes, both found by the
+triage (`dink-triage` TRIAGE.md, source-findings.md, arrival-rng-033.json).
+
+**Save slots.** *Broke:* `_interpolate` turned every `&name` into a variable (default 0), so the source's two special strings printed "0" on 50
+`&savegameinfo` lines (savebot, dinfo, escape, start-2) and 10 `&buttoninfo` lines (escape); `save_game`/`load_game`/`game_exist` took a slot and
+ignored it (one `adventure.json`), so the ten-slot menus wrote and read the same file. *Why (second root):* an oversight at the importer: the
+special strings are not variables (`dinkc.cpp:740-779` replaces them only while a choice line is deciphered, using the line's own number), and nobody
+read that function when `_interpolate` was written; the single-file save was then a convenience that hid the missing slot argument.
+*Fix, each rule cited:* while a choice line is built its 1-based number is the slot (`dinkc.cpp:1711`, `decipher_savegame = retnum`);
+a line that is exactly `&savegameinfo` becomes "Slot %d - %d:%02d - %s" (slot, minutes/60, minutes%60, the save's info) or "Slot %d - Empty"
+(`dinkc.cpp:766-777`); `&buttoninfo` inside the line becomes that button's action name (`dinkc.cpp:744-764`, table `input.cpp:244-258`) and, because
+our input is remappable, the player's own key in brackets (`input_bindings.gd` `short_label`): "Button 2 - Talk/Examine (F)". A save writes
+the play minutes (`savegame.cpp:381`; `dinkc_bindings.cpp:1756` is play.minutes plus minutes since the load), the info string
+(`game_engine.cpp:73` default "Level &level", capped at 77 bytes as `savegame.cpp:375-378`; `set_save_game_info`, `dinkc_bindings.cpp:1824`, replaces
+it) and a `saved_at` time. `save_game(n)`, `load_game(n)` and `game_exist(n)` use slot n (`dinkc_bindings.cpp:1316-1348`); the slots are the
+source menus' ten. *Storage:* **slot 1 is the existing `user://adventure.json`**, slots 2 to 10 are `user://adventure-slot-N.json`. A 0.3.3 player's
+save is therefore slot 1 with no rewrite: it loads unchanged, reads "Slot 1 - 0:00 - Level N" (no play time or info was stored; the level comes from
+its own variables), and a downgrade to 0.3.3 still finds it. Playtest tooling that copies or reads `adventure.json` keeps working for the same reason.
+*Player's side:* title Continue, pause Load and pause Save open the same slot list (`game_ui.show_slots`); Continue and Load preselect the slot with the
+newest `saved_at` (the file's own time for a legacy save); Save preselects the first empty slot so a stray Enter cannot overwrite the newest save; an
+empty slot cannot be loaded; Back returns to where the list was opened. Loading any save clears every neighbour preview (they belong to the replaced state).
+*Not reachable:* the story's `escape` script (all ten `&buttoninfo` lines) is never run by our game, because the pause menu replaced it, so
+`&buttoninfo` is tested through the VM (`vm.run("escape")`), not through a player path. Escape's functions against the pause menu: Load a previously
+saved game, Continue and Quit to system are offered (Load now as the slot list); View/change gamepad buttons is the Settings & controls page (every input,
+not ten pad buttons; `set_button` stays a no-op in this host); Restart has no single entry (Title screen, then Begin adventure); Help has no page (hints are
+on the HUD and the controls primer); Save is a pause entry the original only had at the savebot.
+*Tests:* `tests/save_slots_test.gd` (savebot at 1920x1080 through real choice input: empty profile reads "Slot N - Empty", a save into slot 3 leaves
+the others empty, `load_game(3)` restores its state, `load_game(5)` on empty loads nothing, a slot-5 save leaves slot 3 alone; legacy-shape control; latest slot
+preselected; pause Save/Load/Back; play minutes; `&buttoninfo` plain, remapped and through the real escape menu). Red on 638cec6 (every slot "0"); six mutants
+(slot ignored on `game_exist`, `save_game`, `load_game`; newest slot ignored; remap dropped; minutes dropped) each turn it red. Native sheets in the unit's evidence.
+
+**One roll per visit.** *Broke:* `neighbour_arrival_cache` keeps a neighbour's sandboxed startup (vision, sprites, random tape) under
+screen + a state signature, up to 256 entries, cleared only by a new game. A hit reuses the old roll, so with the story state unchanged FINDDUCK's
+`random(4,1)` on 440/441 gave the same answer on every re-entry (engine control, both builds: 20 same-state requests keep the first hit or miss).
+*Why:* a heuristic applied past its purpose: the cache exists so the preview equals the arrival (preview == arrival, `fps_neighbor_crossing.gd`),
+which is one visit's job; a signature that only varies with story state is not a visit boundary, and e6cf088's own plan said startup draws are for that
+visit. FreeDink loads a screen afresh on every entry (the startup scripts draw again). *Fix:* a roll lives exactly one visit: `_end_arrival_visits`
+(called from `load_map`) drops the entries of the screen being left, and every preview whose screen is outside the 5x5 block around the screen being
+entered (`PREVIEW_RADIUS`, one constant for the cache and `fp_world`'s block loops); loading a save clears them all. Entering a screen still consumes its
+own preview, so the preview and the arrival share one roll, and a neighbour that stays in view keeps its roll as the player crosses (nothing pops).
+*Tests:* `tests/arrival_visit_roll_test.gd`: 120 same-state re-entries of 441 with the private RNG seeded 0..119 (deterministic): each arrival must equal the
+sandbox's draw for its seed (oracle exact), ducks within 11..49 (mean 30, sd 4.74), zero preview/arrival mismatches, the live startup's vision agrees; an
+unseeded run of 60 sees both outcomes (a single outcome has probability 3e-8); a fixed seed is deterministic; a preview that left the block is rolled again.
+Red on 638cec6 (all 120 keep the first roll: 0 ducks, 95 of 120 follow their seed by coincidence of misses); each of the two prune rules removed alone turns it red.
+*Class:* `tests/arrival_visit_class_test.gd` finds every screen whose startup draws random() (the sandbox tape; 105 screens under the "duck_search" state) and
+requires, for each, that a second visit with a different seed carries its own roll. All 105 are enemy-spawn variants (`en-pill*`, `en-slim*`, `s7-pill`,
+`s7-slimb`, `s2-rand`/`s2-wand`, `s1-rand`), interior picks (`s1-h3-*`, `s3-*`, `s4-st*`, `s1-cave*`), `findduck` (440, 441) and a few singles (`lgold`, `s1-rob`,
+`s1-gate`/`s1-lg`, `s7-mom`, `s7-duck`, `s2-ca-o`); each now rolls per visit because the fix is in the one cache all of them use.
