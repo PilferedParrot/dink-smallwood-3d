@@ -79,7 +79,9 @@ func _run() -> void:
 	game.neighbour_seed_override = 5
 	game.load_map(NEIGHBOUR, true)
 	var before: int = int(game.fp_world.neighbour_states.get(DUCK_SCREEN, {}).get("vision", -1))
+	check(game.neighbour_arrival_cache.keys().any(func(k): return str(k).begins_with("%d:" % DUCK_SCREEN)), "fixture: 441 is previewed from its neighbour")
 	game.load_map(FAR, true)
+	check(not game.neighbour_arrival_cache.keys().any(func(k): return str(k).begins_with("%d:" % DUCK_SCREEN)), "walking out of the block drops 441's preview roll")
 	var other_seed := 6
 	while sandbox_duck(other_seed) == sandbox_duck(5): other_seed += 1
 	game.neighbour_seed_override = other_seed
