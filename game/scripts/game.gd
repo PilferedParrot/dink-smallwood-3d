@@ -2,6 +2,7 @@
 extends Node3D
 const VM = preload("res://scripts/dink_vm.gd")
 const INPUT_BINDINGS = preload("res://scripts/input_bindings.gd")
+const SAVE_SLOTS = preload("res://scripts/save_slots.gd")
 var bindings
 const UI = preload("res://scripts/game_ui.gd")
 const NEIGHBOUR_SANDBOX = preload("res://scripts/neighbour_script_sandbox.gd")
@@ -70,6 +71,9 @@ var screen_footprints: Array = [] # [PackedVector2Array]: kit buildings (tiles a
 var footprint_tiles: Dictionary = {} # tile index -> 0: no tile hardness, 1: the tile's default mask
 var asset_frames: Array = []
 var original_sequences: Dictionary = {}
+var save_game_info := "Level &level" # game_engine.cpp:73; set_save_game_info replaces it
+var play_minutes_base := 0 # play.minutes at the last load or new game (dinkc_bindings.cpp:580)
+var play_started_msec := 0
 var neighbour_arrival_cache: Dictionary = {} # screen and story/editor state -> sandbox arrival
 var neighbour_seed_override := -1 # deterministic probes; ordinary previews use their own RNG
 var _startup_random_tape: Array = []
@@ -119,7 +123,7 @@ func _ready() -> void:
 	_load_sound_slots()
 	_make_player()
 	load_map(400 if world.get("screens",{}).has("400") else 1, false)
-	ui.show_title(FileAccess.file_exists("user://adventure.json"))
+	ui.show_title(SAVE_SLOTS.any_exists())
 	for arg in OS.get_cmdline_user_args():
 		if arg == "--smoke-test":
 			test_mode = true
@@ -164,6 +168,9 @@ func _new_game() -> void:
 	dialogue_log.clear()
 	journal_log.clear()
 	next_entity = 2
+	save_game_info = "Level &level"
+	play_minutes_base = 0
+	play_started_msec = Time.get_ticks_msec()
 	_make_player()
 	await vm.run("main", "main", 1)
 	items.append({"script":"item-fst","name":"Fists","seq":438,"frame":1})
@@ -1162,6 +1169,27 @@ func _interpolate(value: Variant, context: Dictionary, strip_colour := true) -> 
 	regex.compile("`.")
 	return regex.sub(result,"",true)
 
+# FreeDink109.6 dinkc.cpp:740-779: while a choice line is deciphered its 1-based
+# number is decipher_savegame. "&buttoninfo" inside the line becomes the action of
+# that button (:744-764); a line that is exactly "&savegameinfo" becomes
+# "Slot %d - %d:%02d - %s" or "Slot %d - Empty" for that slot (:766-777).
+func _interpolate_choice(text: String, context: Dictionary, ordinal: int) -> String:
+	if text.strip_edges().to_lower() == "&savegameinfo": return SAVE_SLOTS.label(ordinal)
+	if text.to_lower().contains("&buttoninfo"):
+		var regex := RegEx.create_from_string("(?i)&buttoninfo")
+		text = regex.sub(text,_button_info(ordinal),true)
+	return _interpolate(text,context)
+
+# input.cpp:244-258 default button->action table, names from dinkc.cpp:747-762.
+# Where the original names an action we add the player's own key for it, because
+# bindings.gd lets him remap; the original had a fixed pad button per row.
+const BUTTON_INFO := [["Attack","attack"],["Talk/Examine","talk"],["Magic","magic"],["Item Screen","inventory"],["Main Menu","pause"],["Map","map"],["Unused",""],["Unused",""],["Unused",""],["Unused",""]]
+func _button_info(ordinal: int) -> String:
+	if ordinal < 1 or ordinal > BUTTON_INFO.size(): return "Error: not mapped"
+	var row: Array = BUTTON_INFO[ordinal-1]
+	if str(row[1]).is_empty() or bindings == null: return str(row[0])
+	return "%s (%s)" % [row[0],bindings.short_label(str(row[1]))]
+
 func _speech_name(speaker: int, _context: Dictionary) -> String:
 	return "Dink" if speaker == 1 else "Conversation"
 
@@ -1308,7 +1336,7 @@ func dink_call(command: String, args: Array, context: Dictionary) -> Variant:
 			if options.is_empty(): return 0
 			if test_mode: return options[0].get("value",1)
 			var labels: Array = []
-			for option in options: labels.append(_interpolate(option.text,context))
+			for i in options.size(): labels.append(_interpolate_choice(str(options[i].text),context,i+1))
 			ui.show_choices(_interpolate(a,context),labels)
 			var choice: int = await ui.dialogue_finished
 			return options[clampi(choice-1,0,options.size()-1)].get("value",choice)
@@ -1417,9 +1445,12 @@ func dink_call(command: String, args: Array, context: Dictionary) -> Variant:
 		"playsound": return _play_sound_hz(int(a),int(b),int(c))
 		"playmidi": _play_music(str(a))
 		"stopmidi", "stopcd": music.stop()
-		"save_game": return int(_save_game())
-		"load_game": return int(_load_game())
-		"game_exist": return int(FileAccess.file_exists("user://adventure.json"))
+		# FreeDink109.6 dinkc_bindings.cpp:1316-1348 pass the script's slot to
+		# save_game/load_game/game_exist; one file per slot (save_slots.gd).
+		"save_game": return int(int(a) >= 1 and _save_game(SAVE_SLOTS.path(int(a))))
+		"load_game": return int(int(a) >= 1 and _load_game(SAVE_SLOTS.path(int(a))))
+		"game_exist": return int(SAVE_SLOTS.exists(int(a)))
+		"set_save_game_info": save_game_info = str(a) # dinkc_bindings.cpp:1824-1827
 		"restart_game": _new_game.call_deferred()
 		"kill_game": get_tree().quit()
 		"set_mode": playing = int(a) == 2
@@ -1618,13 +1649,20 @@ func _location() -> String:
 func _ui_action(action: String, payload: Variant) -> void:
 	match action:
 		"new_game": _new_game()
-		"continue", "load": _load_game()
+		# Continue, Load and Save open the source's slot list (start-2 "load" and
+		# SAVEBOT choice lists show &savegameinfo); the newest slot is preselected.
+		"continue", "load": ui.show_slots("load",SAVE_SLOTS.labels(),SAVE_SLOTS.latest())
+		"save": ui.show_slots("save",SAVE_SLOTS.labels(),SAVE_SLOTS.latest())
+		"slot_load": _load_game(SAVE_SLOTS.path(int(payload)))
+		"slot_save":
+			var slot := int(payload)
+			if _save_game(SAVE_SLOTS.path(slot)):
+				ui.show_pause()
+				ui.notify("Adventure saved to slot %d." % slot)
+			else: ui.notify("Could not save the adventure.")
 		"resume":
 			if playing: ui.close_menu()
-			else: ui.show_title(FileAccess.file_exists("user://adventure.json"))
-		"save":
-			if _save_game(): ui.notify("Adventure saved.")
-			else: ui.notify("Could not save the adventure.")
+			else: ui.show_title(SAVE_SLOTS.any_exists())
 		"pause": ui.show_pause()
 		"inventory": ui.show_inventory(items,magic_items)
 		"map": _open_world_map()
@@ -1643,7 +1681,7 @@ func _ui_action(action: String, payload: Variant) -> void:
 		"title":
 			vm.cancel_all()
 			playing = false
-			ui.show_title(FileAccess.file_exists("user://adventure.json"))
+			ui.show_title(SAVE_SLOTS.any_exists())
 		"patreon": OS.shell_open("https://www.patreon.com/PilferedParrot")
 		"source": OS.shell_open("https://github.com/PilferedParrot/dink-smallwood-3d")
 		"quit": get_tree().quit()
@@ -1655,18 +1693,27 @@ func _write_json(path: String, data: Dictionary) -> bool:
 	file.close()
 	return DirAccess.rename_absolute(path+".tmp",path) == OK
 
-func _save_game(path: String = "user://adventure.json") -> bool:
+# dinkc_bindings.cpp:1756: play.minutes plus the minutes since this game started or loaded.
+func _play_minutes() -> int:
+	return play_minutes_base + (Time.get_ticks_msec() - play_started_msec) / 60000
+
+func _save_game(path: String = SAVE_SLOTS.LEGACY_PATH) -> bool:
 	# FreeDink109.6 dinkc_bindings.cpp:1316-1319 delegates unconditionally;
 	# savegame.cpp:348-490 checks file opening, not speech/freeze/choices.
 	if not playing or not entities.has(1): return false
-	return _write_json(path,{"version":1,"vm":vm.snapshot_state(),"screen":current_screen,"entities":entities,"editor_state":editor_state,"items":items,"magic_items":magic_items,"visited":visited,"dialogue_log":dialogue_log,"journal_log":journal_log,"next_entity":next_entity,"locked":locked})
+	# savegame.cpp:371-378 stores the deciphered save_game_info and :381 play.minutes;
+	# saved_at lets Continue offer the most recent slot.
+	var info := _interpolate(save_game_info,{}).substr(0,SAVE_SLOTS.INFO_BYTES)
+	return _write_json(path,{"version":1,"minutes":_play_minutes(),"info":info,"saved_at":int(Time.get_unix_time_from_system()),"vm":vm.snapshot_state(),"screen":current_screen,"entities":entities,"editor_state":editor_state,"items":items,"magic_items":magic_items,"visited":visited,"dialogue_log":dialogue_log,"journal_log":journal_log,"next_entity":next_entity,"locked":locked})
 
-func _load_game(path: String = "user://adventure.json") -> bool:
+func _load_game(path: String = SAVE_SLOTS.LEGACY_PATH) -> bool:
 	var data := _read_json(path)
 	if int(data.get("version",0)) != 1 or not world.screens.has(str(int(data.get("screen",0)))) or not data.get("entities",{}).has("1"):
 		ui.notify("No compatible saved adventure found.")
 		return false
 	vm.cancel_all()
+	play_minutes_base = int(data.get("minutes",0))
+	play_started_msec = Time.get_ticks_msec()
 	vm.restore_state(data.get("vm",{}))
 	editor_state = data.get("editor_state",{})
 	items = data.get("items",[])

@@ -44,6 +44,91 @@ func clean_saves() -> void:
 	for slot in range(1, 11):
 		for path in ["user://adventure.json", "user://adventure-slot-%d.json" % slot]:
 			if FileAccess.file_exists(path): DirAccess.remove_absolute(path)
+func rewrite(slot: int, edit: Callable) -> void:
+	var data: Dictionary = game._read_json(game.SAVE_SLOTS.path(slot))
+	edit.call(data)
+	game._write_json(game.SAVE_SLOTS.path(slot), data)
+func focused_text() -> String:
+	var owner = game.ui.get_viewport().gui_get_focus_owner()
+	return owner.text if owner is Button else "<none>"
+func legacy_and_continue() -> void:
+	clean_saves()
+	# A 0.3.3 save is today's save without the three keys slots add (638cec6 game.gd:1658-1662).
+	game.vm.globals["gold"] = 31
+	check(game._save_game(game.SAVE_SLOTS.path(1)), "fixture save writes")
+	rewrite(1, func(d): d.erase("minutes"); d.erase("info"); d.erase("saved_at"))
+	var legacy: Dictionary = game._read_json("user://adventure.json")
+	check(not legacy.has("minutes") and not legacy.has("info") and not legacy.has("saved_at") and int(legacy.version) == 1, "legacy control has the 0.3.3 shape")
+	check(int(await game.dink_call("game_exist", [1], {})) == 1, "legacy adventure.json is slot 1")
+	check(game.SAVE_SLOTS.label(1) == "Slot 1 - 0:00 - Level 3", "legacy save reads from its own level, got '%s'" % game.SAVE_SLOTS.label(1))
+	game.vm.globals["gold"] = 0
+	check(int(await game.dink_call("load_game", [1], {})) == 1 and int(game.vm.globals.gold) == 31, "legacy save loads through load_game(1)")
+	check(game.SAVE_SLOTS.latest() == 1, "legacy slot is the only and latest slot")
+	# Latest: slot 7 saved after slot 3 is preselected by Continue.
+	await game.dink_call("save_game", [3], {})
+	await game.dink_call("save_game", [7], {})
+	rewrite(3, func(d): d["saved_at"] = 1000)
+	rewrite(7, func(d): d["saved_at"] = 5000)
+	rewrite(1, func(d): d["saved_at"] = 2000)
+	check(game.SAVE_SLOTS.latest() == 7, "latest slot follows saved_at, got %d" % game.SAVE_SLOTS.latest())
+	game.ui.show_title(true)
+	game._ui_action("continue", null); await settle()
+	check(game.ui.page == "slots" and game.ui.return_page == "title", "title Continue opens the slot list over the title (page %s)" % game.ui.page)
+	var shown := choice_labels()
+	check(shown.size() == 10 and shown[6].begins_with("Slot 7 - ") and shown[4] == "Slot 5 - Empty", "slot list shows the ten slots: %s" % [shown])
+	check(focused_text() == shown[6], "Continue preselects the most recently saved slot (focus '%s')" % focused_text())
+	var empty_button: Button = null
+	for child in game.ui.column.get_children():
+		if child is Button and child.text == "Slot 5 - Empty": empty_button = child
+	check(empty_button != null and empty_button.disabled, "an empty slot cannot be loaded")
+	game.vm.globals["gold"] = 1
+	for child in game.ui.column.get_children():
+		if child is Button and child.text.begins_with("Slot 3 - "): child.pressed.emit()
+	await settle()
+	check(int(game.vm.globals.gold) == 31 and game.playing, "choosing slot 3 in the list loads slot 3")
+	game.ui.show_title(true); game.ui.request_back(); await settle()
+func minutes_and_pause_menu() -> void:
+	clean_saves()
+	game.play_minutes_base = 83
+	game.play_started_msec = Time.get_ticks_msec() - 125000 # two minutes of play since the base
+	game.vm.globals["level"] = 4
+	game.ui.show_pause()
+	game._ui_action("save", null); await settle()
+	check(game.ui.page == "slots" and game.ui.return_page == "pause", "pause Save opens the slot list over the pause menu")
+	var texts := choice_labels()
+	check(texts.size() == 10 and texts[3] == "Slot 4 - Empty", "pause Save lists all ten slots, empty ones saveable: %s" % [texts])
+	for child in game.ui.column.get_children():
+		if child is Button and child.text.begins_with("Slot 4 - "):
+			check(not child.disabled, "an empty slot can be saved into"); child.pressed.emit()
+	await settle()
+	check(game.SAVE_SLOTS.label(4) == "Slot 4 - 1:25 - Level 4", "slot 4 reads play time and level, got '%s'" % game.SAVE_SLOTS.label(4))
+	check(game.ui.page == "pause", "after saving the pause menu returns (page %s)" % game.ui.page)
+	check(not game.SAVE_SLOTS.exists(1) and not game.SAVE_SLOTS.exists(2), "pause Save into slot 4 left slots 1 and 2 empty")
+	game._ui_action("load", null); await settle()
+	game.ui.request_back(); await settle()
+	check(game.ui.page == "pause", "Back from the slot list returns to pause (page %s)" % game.ui.page)
+	game.play_minutes_base = 0; game.play_started_msec = Time.get_ticks_msec()
+	await game.dink_call("load_game", [4], {})
+	check(game._play_minutes() == 85, "load restores the saved play time, got %d" % game._play_minutes())
+	game.ui.close_menu()
+func button_info() -> void:
+	clean_saves()
+	game.bindings.reset_all()
+	var talk: String = game.bindings.short_label("talk")
+	check(game._interpolate_choice("Button 2 - &buttoninfo", {}, 2) == "Button 2 - Talk/Examine (%s)" % talk, "button 2 names Talk/Examine and its key, got '%s'" % game._interpolate_choice("Button 2 - &buttoninfo", {}, 2))
+	var result: Dictionary = game.bindings.set_bindings("talk", [game.INPUT_BINDINGS.key(KEY_F)])
+	check(result.ok, "remap fixture: Talk to F")
+	check(game._interpolate_choice("Button 2 - &buttoninfo", {}, 2) == "Button 2 - Talk/Examine (F)", "remapped Talk reads F, got '%s'" % game._interpolate_choice("Button 2 - &buttoninfo", {}, 2))
+	check(game._interpolate_choice("&buttoninfo", {}, 5).begins_with("Main Menu (") and game._interpolate_choice("&buttoninfo", {}, 7) == "Unused" and game._interpolate_choice("&buttoninfo", {}, 11) == "Error: not mapped", "other buttons: Main Menu, Unused, out of range")
+	# The source's own escape menu: "View/change gamepad buttons" lists Button 1..10 - &buttoninfo.
+	game.entities[1].frozen = false
+	var run := func(): await game.vm.run("escape", "main", 1)
+	run.call(); await settle()
+	for _i in 5: await tap(KEY_DOWN)
+	await tap(KEY_ENTER)
+	var rows := choice_labels()
+	check(rows.size() == 11 and rows[1] == "Button 2 - Talk/Examine (F)" and rows[9] == "Button 10 - Unused", "escape's button list names actions and the remapped key: %s" % [rows])
+	game.ui.close_menu(); game.vm.cancel_all(); game.bindings.reset_all(); await settle()
 func _run() -> void:
 	game = GAME.new(); game.test_mode = true
 	root.add_child(game); await process_frame
@@ -89,6 +174,9 @@ func _run() -> void:
 	game.vm.globals["gold"] = 5
 	await game.dink_call("load_game", [3], {})
 	check(int(game.vm.globals.get("gold", -1)) == 123, "slot 3 survives a later slot-5 save")
+	await legacy_and_continue()
+	await minutes_and_pause_menu()
+	await button_info()
 	print("SAVE SLOTS FAILURES ", JSON.stringify(failures))
 	print("SAVE SLOTS PASS" if failures.is_empty() else "SAVE SLOTS FAIL")
 	clean_saves()

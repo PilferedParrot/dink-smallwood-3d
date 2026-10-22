@@ -2,6 +2,7 @@
 extends CanvasLayer
 const INPUT_BINDINGS = preload("res://scripts/input_bindings.gd")
 const CONTROLS_MENU = preload("res://scripts/controls_menu.gd")
+const SAVE_SLOTS = preload("res://scripts/save_slots.gd")
 const PLAIN_FONT = preload("res://assets/fonts/AtkinsonHyperlegible-Regular.ttf")
 var controls_menu: VBoxContainer
 var bindings
@@ -612,7 +613,7 @@ func _keep_visible(control: Control, serial: int, interaction: bool) -> void:
 func _bindings_changed() -> void:
 	_update_hint()
 	# These are the only persistent labels whose text is built on page entry.
-	if page == "title": show_title(FileAccess.file_exists("user://adventure.json"))
+	if page == "title": show_title(SAVE_SLOTS.any_exists())
 	elif page == "settings": show_settings(bindings.settings)
 
 # A key and its action are one phrase: no-break spaces keep wrapping from splitting
@@ -937,6 +938,21 @@ func show_title(has_save: bool) -> void:
 	_button("Quit", "quit")
 	control_primer_label = _label(_control_primer(), 18)
 	_focus()
+
+# The source's slot list (one line per slot, dinkc.cpp:766-777). `mode` is "save" or
+# "load"; an empty slot cannot be loaded. `preselect` is the slot to focus (0 = first).
+func show_slots(mode: String, labels: Array, preselect: int = 0) -> void:
+	_clear("Save your adventure" if mode == "save" else "Load a saved adventure", "slots")
+	var focus_button: Button = null
+	for i in range(labels.size()):
+		var button := _button(str(labels[i]), "slot_" + mode, i + 1)
+		if mode == "load" and str(labels[i]).ends_with("- Empty"): button.disabled = true
+		if i + 1 == preselect: focus_button = button
+	menu_footer.text = "Back to paused adventure" if return_page == "pause" else "Back"
+	menu_footer.custom_minimum_size.y = roundi(48.0 * text_scale)
+	menu_footer.show()
+	_focus()
+	if focus_button != null: _grab_current_focus.call_deferred(focus_button, page_serial)
 
 func show_pause() -> void:
 	_clear("Adventure paused", "pause")
