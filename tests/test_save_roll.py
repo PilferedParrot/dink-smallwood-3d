@@ -26,3 +26,7 @@ def test_every_startup_draw_screen_rolls_per_visit(tmp_path):
 
 def test_a_previewed_screen_is_the_screen_met_beside_a_shared_startup_script(tmp_path):
     _run(tmp_path, "arrival_adjacent_test.gd", "ARRIVAL ADJACENT PASS", 600)
+
+
+def test_startup_state_is_not_reused_across_a_load_or_a_sandbox_run(tmp_path):
+    _run(tmp_path, "startup_state_reuse_test.gd", "STARTUP STATE REUSE PASS", 400)
