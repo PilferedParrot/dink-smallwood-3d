@@ -13,12 +13,19 @@ const INFO_BYTES := 77 # savegame.cpp:375-378 writes save_game_info into 77+1 by
 static func path(slot: int) -> String:
 	return LEGACY_PATH if slot == 1 else "user://adventure-slot-%d.json" % slot
 
+# Two meanings, kept apart. exists(): a file sits in the slot, which is all DinkC's game_exist asks (fopen,
+# dinkc_bindings.cpp:1350) and what Save's automatic pick must avoid overwriting, whoever wrote the file (a newer
+# build's version-2 save reads Empty here and is still somebody's save). readable(): the file parses as a version-1
+# save, which is when label() says it holds a game and so what Continue, Load and the title may offer.
 static func exists(slot: int) -> bool:
 	return slot >= 1 and FileAccess.file_exists(path(slot))
 
+static func readable(slot: int) -> bool:
+	return int(_read(slot).get("version", 0)) == 1
+
 static func any_exists() -> bool:
 	for slot in range(1, COUNT + 1):
-		if exists(slot): return true
+		if readable(slot): return true
 	return false
 
 static func _read(slot: int) -> Dictionary:
@@ -33,12 +40,12 @@ static func saved_at(slot: int, data: Dictionary = {}) -> int:
 	if d.has("saved_at"): return int(d.saved_at)
 	return int(FileAccess.get_modified_time(path(slot))) if exists(slot) else 0
 
-# Most recently saved slot, 0 when none exists.
+# Most recently saved readable slot (ties: the lower number), 0 when none is readable.
 static func latest() -> int:
 	var best := 0
 	var best_time := -1
 	for slot in range(1, COUNT + 1):
-		if not exists(slot): continue
+		if not readable(slot): continue
 		var at := saved_at(slot)
 		if at > best_time: best = slot; best_time = at
 	return best

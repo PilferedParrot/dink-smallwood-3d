@@ -1678,12 +1678,12 @@ func _ui_action(action: String, payload: Variant) -> void:
 		# SAVEBOT choice lists show &savegameinfo); the newest slot is preselected.
 		"continue", "load": ui.show_slots("load",SAVE_SLOTS.labels(),SAVE_SLOTS.latest())
 		"save":
-			# Preselect the first empty slot so a stray Enter cannot overwrite the newest save.
-			var names := SAVE_SLOTS.labels()
+			# Preselect the first slot with NO FILE so a stray Enter cannot overwrite a save. Absence, not the
+			# "- Empty" label: a file that reads Empty (a newer build's save) is still somebody's save.
 			var target := SAVE_SLOTS.latest()
-			for i in names.size():
-				if names[i].ends_with("- Empty"): target = i+1; break
-			ui.show_slots("save",names,target)
+			for slot in range(1,SAVE_SLOTS.COUNT+1):
+				if not SAVE_SLOTS.exists(slot): target = slot; break
+			ui.show_slots("save",SAVE_SLOTS.labels(),target)
 		"slot_load": _load_game(SAVE_SLOTS.path(int(payload)))
 		"slot_save":
 			var slot := int(payload)
