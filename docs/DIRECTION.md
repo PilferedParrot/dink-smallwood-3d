@@ -3458,3 +3458,18 @@ Red on 638cec6 (all 120 keep the first roll: 0 ducks, 95 of 120 follow their see
 requires, for each, that a second visit with a different seed carries its own roll. All 105 are enemy-spawn variants (`en-pill*`, `en-slim*`, `s7-pill`,
 `s7-slimb`, `s2-rand`/`s2-wand`, `s1-rand`), interior picks (`s1-h3-*`, `s3-*`, `s4-st*`, `s1-cave*`), `findduck` (440, 441) and a few singles (`lgold`, `s1-rob`,
 `s1-gate`/`s1-lg`, `s7-mom`, `s7-duck`, `s2-ca-o`); each now rolls per visit because the fix is in the one cache all of them use.
+
+### Save-roll fix round 1 (2026-10-22): preview == arrival beside a shared startup script; two review findings
+*F1 (blind review, high).* On 440 -> 441 (both `findduck`) the preview of 441 and its arrival keyed the arrival cache differently, so a duck the player SAW could be re-rolled
+on arrival. *What broke:* `neighbour_script_sandbox.gd` ran the screen main as a persistent-locals instance (`vm.run` default `new_instance=false`) and exported its
+`sprite_locals`; the live load runs it as a NEW instance whose locals die with the task (`game.gd` `load_map`; FreeDink 109.6 `game_engine.cpp:710-721` loads the screen
+script afresh with `load_script`). The signature hashes the target script's `<script>:0` locals, so the sandbox basis for 441 carried `findduck:0` that live 440 never leaves.
+*Why we made it:* oversight and a gate checked on the wrong route: the identity test used a blank-script neighbour (442 -> 441) and one shared seed for preview and arrival, which cannot
+see a key divergence. *Fix:* the sandbox runs a screen main, and `external`, as new instances (as `game.gd:230` and `:1381` do). *Test:* `tests/arrival_adjacent_test.gd` walks a changed-seed 439 -> 440 -> 441
+(both orders), live startup completing on each screen, and asserts the previewed 441 equals the arrival, then the class: every directed pair of adjacent screens (+-1, +-32) sharing a startup script.
+Census: 22 directed pairs (11 undirected: 98-99 s1-cave, 273-305-337-338-339-371 and 364-396-397-398 s2-rand, 405-406 s1-rand, 440-441 findduck); 20 compared, 98<->99 are interiors (no neighbour preview exists).
+Red on fa6daff (both walks and all 20 compared pairs), green after.
+*F2 (low).* The pause-Save sheets predated the first-empty default. Re-captured on the final build in a mixed profile (slots 1, 3, 7 filled; focus asserted: `Slot 2 - Empty`) in `tmp/save-roll-evidence/sheets-b`;
+`save_slots_test.gd` `pause_save_mixed_profile` is red (focus `Slot 7`) when Save picks the newest slot.
+*Found while building F2's fixture:* a loaded save returns globals as JSON floats, so a Load followed by a Save wrote `Level 4.0` into the label (and any `&var` in speech read `31.0`).
+*What broke:* `_interpolate` used `str()` on a float. *Why:* oversight; DinkC variables are integers and the round trip was never exercised before the next save. *Fix:* integral floats print as integers; `info_after_load` is red before, green after.
