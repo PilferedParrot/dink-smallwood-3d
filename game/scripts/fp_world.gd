@@ -1455,6 +1455,7 @@ func add_terrain_walls(screen: Dictionary) -> void:
 	# so a ragged rim's steps share one surface; the rest show their own tile picture, extruded by the original's camera.
 	if rock == null and str(ceilings.room(host.current_screen).get("ceiling",{}).get("mode","")) == "authored-tiles":
 		rock = wrapped_copy(ceilings.material(host.current_screen,"ceiling"))
+		rock.set_shader_parameter("rock_patch",terrain_rock_patch(ceilings.room(host.current_screen).ceiling.tiles))
 	if rock == null:
 		if terrain_face_shader == null:
 			terrain_face_shader = Shader.new()
@@ -1464,7 +1465,14 @@ func add_terrain_walls(screen: Dictionary) -> void:
 		faces.set_shader_parameter("art",terrain_face_texture(screen))
 		rock = faces
 	mesh.material = rock
-	var multi := terrain_multimesh(mesh,rectangles)
+	# The bodies the rims enclose (tools/terrain_fill.py): drawn so a ragged 1-3px rim reads as a wall, never collided.
+	var fill := terrain_fill_rects(host.current_screen)
+	var offsets := PackedFloat32Array()
+	if rock.shader.code.contains("face_offsets"):
+		var drawn: Array[Rect2i] = rectangles.duplicate()
+		drawn.append_array(fill)
+		offsets = terrain_outline_offsets(drawn)
+	var multi := terrain_multimesh(mesh,rectangles,offsets.slice(0,4*rectangles.size()) if not offsets.is_empty() else offsets)
 	var body := StaticBody3D.new()
 	body.name = "TerrainCollision"
 	body.collision_layer = 1
@@ -1482,12 +1490,10 @@ func add_terrain_walls(screen: Dictionary) -> void:
 	instance.multimesh = multi
 	host.scene_root.add_child(instance)
 	host.scene_root.add_child(body)
-	# The bodies the rims enclose (tools/terrain_fill.py): drawn so a ragged 1-3px rim reads as a wall, never collided.
-	var fill := terrain_fill_rects(host.current_screen)
 	if not fill.is_empty():
 		var fill_instance := MultiMeshInstance3D.new()
 		fill_instance.name = "SolidTerrainFill"
-		fill_instance.multimesh = terrain_multimesh(mesh,fill)
+		fill_instance.multimesh = terrain_multimesh(mesh,fill,offsets.slice(4*rectangles.size()) if not offsets.is_empty() else offsets)
 		host.scene_root.add_child(fill_instance)
 
 # The same donor with wrapped diffuse: a ragged 1-3px rim has steps facing every way, and burley striped them (light x faces, dark z faces).
@@ -1496,15 +1502,23 @@ func wrapped_copy(donor: ShaderMaterial) -> ShaderMaterial:
 	var key := "wrapped:"+str(donor.get_instance_id())
 	if materials.has(key): return materials[key]
 	var shader := Shader.new()
-	# A rim's steps face x and z in turn, and the donor's per-axis projections cut each step's picture from a different slice
-	# of the rock (comb stripes). Every vertical face of a box takes its box's RUN axis (its longer side, instance custom data):
-	# u follows the run, so the picture is continuous from step to step.
+	# A rim's steps face x and z in turn. The donor's per-axis projections cut each step's picture from a different slice of
+	# the rock (comb stripes); one projection axis per box left its END faces (x constant, or z) with a single texture column
+	# (rank 1). Every vertical face instead takes u = its distance along the rock's OUTLINE: terrain_outline_offsets walks the
+	# outline once, and each box carries the offset of its four faces (instance custom data: -x, +x, -z, +z), so u runs on
+	# along a tread, up its riser and on along the next tread, on every face, with no degenerate axis.
 	var code: String = donor.shader.code.replace("render_mode diffuse_burley;","render_mode diffuse_lambert_wrap;")
 	var axes := "else if (n.x > 0.5) { metres = p.zy; }\n else { metres = p.xy; }"
 	assert(axes in code,"ceiling shader's face projection changed")
-	code = code.replace(axes,"else { metres = run_along_x > 0.5 ? p.xy : p.zy; }")
-	code = code.replace("varying vec3 world_normal;","varying vec3 world_normal;\nvarying float run_along_x;")
-	code = code.replace("world_normal = normalize(MODEL_NORMAL_MATRIX * NORMAL);","world_normal = normalize(MODEL_NORMAL_MATRIX * NORMAL);\n run_along_x = INSTANCE_CUSTOM.x;")
+	code = code.replace(axes,"else if (n.x > 0.5) { metres = vec2(sign(world_normal.x) * world_position.z + (world_normal.x > 0.0 ? face_offsets.y : face_offsets.x), p.y); }\n else { metres = vec2(-sign(world_normal.z) * world_position.x + (world_normal.z > 0.0 ? face_offsets.w : face_offsets.z), p.y); }")
+	code = code.replace("varying vec3 world_normal;","varying vec3 world_normal;\nvarying vec4 face_offsets;")
+	# The room's picture is the whole screen's tile art (floor included): a face reads only the largest all-rock block of it
+	# (terrain_rock_patch), folded back and forth at its edges so the picture stays continuous.
+	var lookup := "vec2 uv = metres / (metres_per_pixel * tile_pixels);"
+	assert(lookup in code,"ceiling shader's uv lookup changed")
+	code = code.replace(lookup,lookup+"\n vec2 px = uv * tile_pixels - rock_patch.xy;\n vec2 span = rock_patch.zw;\n vec2 t = mod(px, 2.0 * span);\n uv = (rock_patch.xy + mix(t, 2.0 * span - t, step(span, t))) / tile_pixels;")
+	code = code.replace("uniform vec2 tile_pixels;","uniform vec2 tile_pixels;\nuniform vec4 rock_patch = vec4(0.0, 0.0, 600.0, 400.0);")
+	code = code.replace("world_normal = normalize(MODEL_NORMAL_MATRIX * NORMAL);","world_normal = normalize(MODEL_NORMAL_MATRIX * NORMAL);\n face_offsets = INSTANCE_CUSTOM;")
 	shader.code = code
 	var copy := ShaderMaterial.new()
 	copy.shader = shader
@@ -1513,7 +1527,107 @@ func wrapped_copy(donor: ShaderMaterial) -> ShaderMaterial:
 	materials[key] = copy
 	return copy
 
-func terrain_multimesh(mesh: BoxMesh, rectangles: Array) -> MultiMesh:
+# The largest block of raised-class tiles (rock) in a room's 12 x 8 tile arrangement, as (x, y, w, h) texture px; the whole
+# arrangement when it has none.
+func terrain_rock_patch(tiles: Array) -> Vector4:
+	var best := Vector4(0,0,600,400)
+	var area := 0
+	for y0 in 8:
+		for x0 in 12:
+			for y1 in range(y0+1,9):
+				for x1 in range(x0+1,13):
+					if (x1-x0)*(y1-y0) <= area: continue
+					var rock := true
+					for y in range(y0,y1):
+						for x in range(x0,x1):
+							if not terrain_tile_raised(int(tiles[y*12+x])): rock = false
+					if rock:
+						area = (x1-x0)*(y1-y0)
+						best = Vector4(x0*50,y0*50,(x1-x0)*50,(y1-y0)*50)
+	return best
+
+# Per box, the offset (metres) of u = a*c + offset along each of its four faces, for a picture that is continuous along the
+# rock's outline. rects are the drawn boxes in source px. The union's boundary is cut into unit edges, each with the rock on one
+# side; edges chain end to start into loops, u counts px along a loop; a face takes its first exposed edge's value. With the
+# normal (nx, nz) the walk's direction is (-nz, nx), so a = nx on x faces (c = z) and a = -nz on z faces (c = x). Slots
+# per box: 0 = -x, 1 = +x, 2 = -z, 3 = +z. Buried faces keep 0 (never seen).
+func terrain_outline_offsets(rects: Array[Rect2i]) -> PackedFloat32Array:
+	var out := PackedFloat32Array()
+	out.resize(rects.size()*4)
+	if rects.is_empty(): return out
+	var lo := rects[0].position
+	var hi := rects[0].end
+	for r in rects:
+		lo = Vector2i(mini(lo.x,r.position.x),mini(lo.y,r.position.y))
+		hi = Vector2i(maxi(hi.x,r.end.x),maxi(hi.y,r.end.y))
+	lo -= Vector2i.ONE
+	hi += Vector2i.ONE
+	var width := hi.x-lo.x
+	var rock := Image.create(width,hi.y-lo.y,false,Image.FORMAT_L8)
+	for r in rects: rock.fill_rect(Rect2i(r.position-lo,r.size),Color.WHITE)
+	var data := rock.get_data()
+	var sx := PackedInt32Array()
+	var sy := PackedInt32Array()
+	var ex := PackedInt32Array()
+	var ey := PackedInt32Array()
+	var owner := PackedInt32Array()
+	var slot := PackedInt32Array()
+	var seen := {}
+	for i in rects.size():
+		var r := rects[i]
+		var x0 := r.position.x
+		var y0 := r.position.y
+		var x1 := r.end.x
+		var y1 := r.end.y
+		for x in range(x0,x1):
+			if data[(y0-1-lo.y)*width+x-lo.x] == 0 and not seen.has(Vector3i(x,y0,2)): # -z: walks +x
+				seen[Vector3i(x,y0,2)] = true
+				sx.append(x); sy.append(y0); ex.append(x+1); ey.append(y0); owner.append(i); slot.append(2)
+			if data[(y1-lo.y)*width+x-lo.x] == 0 and not seen.has(Vector3i(x,y1,3)): # +z: walks -x
+				seen[Vector3i(x,y1,3)] = true
+				sx.append(x+1); sy.append(y1); ex.append(x); ey.append(y1); owner.append(i); slot.append(3)
+		for y in range(y0,y1):
+			if data[(y-lo.y)*width+x0-1-lo.x] == 0 and not seen.has(Vector3i(x0,y,0)): # -x: walks -z
+				seen[Vector3i(x0,y,0)] = true
+				sx.append(x0); sy.append(y+1); ex.append(x0); ey.append(y); owner.append(i); slot.append(0)
+			if data[(y-lo.y)*width+x1-lo.x] == 0 and not seen.has(Vector3i(x1,y,1)): # +x: walks +z
+				seen[Vector3i(x1,y,1)] = true
+				sx.append(x1); sy.append(y); ex.append(x1); ey.append(y+1); owner.append(i); slot.append(1)
+	var count := sx.size()
+	var first := {}
+	var second := {}
+	for e in count:
+		var key := Vector2i(sx[e],sy[e])
+		if not first.has(key): first[key] = e
+		else: second[key] = e
+	var arc := PackedFloat32Array()
+	arc.resize(count)
+	var visited := PackedByteArray()
+	visited.resize(count)
+	for e0 in count:
+		var u := 0.0
+		var e := e0
+		while e >= 0 and visited[e] == 0:
+			visited[e] = 1
+			arc[e] = u
+			u += 1.0
+			var key := Vector2i(ex[e],ey[e])
+			var next: int = first.get(key,-1)
+			if next >= 0 and visited[next] != 0: next = second.get(key,-1) # a pinch: two bodies meeting at a corner
+			e = next
+	var set := PackedByteArray()
+	set.resize(out.size())
+	for e in count:
+		var index := owner[e]*4+slot[e]
+		if set[index] != 0: continue
+		set[index] = 1
+		var a := 1.0 if slot[e] == 1 or slot[e] == 2 else -1.0
+		var along := float(sy[e]) if slot[e] < 2 else float(sx[e])
+		var centre := 200.0 if slot[e] < 2 else 320.0
+		out[index] = SCALE*(arc[e]-a*along+a*centre)
+	return out
+
+func terrain_multimesh(mesh: BoxMesh, rectangles: Array, face_offsets := PackedFloat32Array()) -> MultiMesh:
 	var multi := MultiMesh.new()
 	multi.transform_format = MultiMesh.TRANSFORM_3D
 	multi.mesh = mesh
@@ -1521,7 +1635,8 @@ func terrain_multimesh(mesh: BoxMesh, rectangles: Array) -> MultiMesh:
 	multi.instance_count = rectangles.size()
 	for i in rectangles.size():
 		var rect: Rect2i = rectangles[i]
-		multi.set_instance_custom_data(i,Color(1.0 if rect.size.x >= rect.size.y else 0.0,0,0,0)) # the run axis, for the cave faces
+		if not face_offsets.is_empty(): # the cave rock's picture offsets along the outline (terrain_outline_offsets)
+			multi.set_instance_custom_data(i,Color(face_offsets[4*i],face_offsets[4*i+1],face_offsets[4*i+2],face_offsets[4*i+3]))
 		var trans := Transform3D.IDENTITY
 		trans.basis = Basis.from_scale(Vector3(float(rect.size.x)/10.0,1.0,float(rect.size.y)/10.0))
 		var centre := Vector2(rect.position)+Vector2(rect.size)*0.5
