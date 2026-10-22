@@ -477,8 +477,8 @@ func build_ground(screen: Dictionary) -> void:
 		# Ground painting and house_plan also read neighbouring sprites. Compute
 		# each arrival once before any of those readers build the scene.
 		var column: int = (host.current_screen-1)%32
-		for dz in range(-2,3):
-			for dx in range(-2,3):
+		for dz in range(-host.PREVIEW_RADIUS,host.PREVIEW_RADIUS+1):
+			for dx in range(-host.PREVIEW_RADIUS,host.PREVIEW_RADIUS+1):
 				if dx == 0 and dz == 0: continue
 				if column+dx < 0 or column+dx >= 32: continue
 				var n: int = host.current_screen+dx+dz*32
@@ -496,8 +496,8 @@ func build_ground(screen: Dictionary) -> void:
 		# 5x5 screens, as the prototype builds it and as house_plan gathers: at 0.025 m/px a 3x3
 		# block ended the world 15 m from the player and left buildings two screens away undrawn.
 		var column: int = (host.current_screen-1)%32
-		for dz in range(-2,3):
-			for dx in range(-2,3):
+		for dz in range(-host.PREVIEW_RADIUS,host.PREVIEW_RADIUS+1):
+			for dx in range(-host.PREVIEW_RADIUS,host.PREVIEW_RADIUS+1):
 				if dx == 0 and dz == 0: continue
 				if column+dx < 0 or column+dx >= 32: continue
 				var n: int = host.current_screen+dx+dz*32
@@ -1470,8 +1470,8 @@ func house_plan() -> void:
 	var candidates: Array = []
 	var block: Dictionary = {} # the screens of the block
 	var column: int = (host.current_screen-1)%32
-	for dz in range(-2,3):
-		for dx in range(-2,3):
+	for dz in range(-host.PREVIEW_RADIUS,host.PREVIEW_RADIUS+1):
+		for dx in range(-host.PREVIEW_RADIUS,host.PREVIEW_RADIUS+1):
 			if column+dx < 0 or column+dx >= 32: continue
 			var n: int = host.current_screen+dx+dz*32
 			if not host.world.screens.has(str(n)) or is_inside(n): continue
@@ -1610,8 +1610,8 @@ func castle_pieces() -> Array:
 	if is_inside(host.current_screen): return castle_list
 	var seen := {}
 	var column: int = (host.current_screen-1)%32
-	for dz in range(-2,3):
-		for dx in range(-2,3):
+	for dz in range(-host.PREVIEW_RADIUS,host.PREVIEW_RADIUS+1):
+		for dx in range(-host.PREVIEW_RADIUS,host.PREVIEW_RADIUS+1):
 			if column+dx < 0 or column+dx >= 32: continue
 			var n: int = host.current_screen+dx+dz*32
 			if not host.world.screens.has(str(n)) or is_inside(n): continue

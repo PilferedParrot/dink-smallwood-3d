@@ -189,6 +189,7 @@ func load_map(number: int, run_scripts: bool = true) -> void:
 	# incoming story/editor state still matches the preview; later calls to random
 	# (after a blocking command) keep the live VM's normal behavior.
 	var arrival: Dictionary = neighbour_arrival_state(number) if run_scripts else {}
+	if run_scripts: _end_arrival_visits(current_screen,number)
 	_incoming_arrival_basis = arrival
 	_startup_random_tape = (arrival.get("random_tape", []) as Array).duplicate(true)
 	_startup_random_index = 0
@@ -267,6 +268,23 @@ func _neighbour_arrival_signature(number: int, base_state: Dictionary = {}) -> S
 	var locals_map: Dictionary = base_state.get("sprite_locals", vm._sprite_locals)
 	var screen_locals: Dictionary = locals_map.get("%s:0" % vm._script_name(script), {})
 	return JSON.stringify([globals, base_state.get("global_names", vm._global_names), screen_locals, state_map, availability, base_state.get("items", items), base_state.get("magic_items", magic_items)]).sha256_text()
+
+# Screens whose previews are built around the current one (fp_world.gd): a 5x5 block.
+const PREVIEW_RADIUS := 2
+
+func _in_preview_block(screen: int, centre: int) -> bool:
+	return absi((screen-1)%32-(centre-1)%32) <= PREVIEW_RADIUS and absi((screen-1)/32-(centre-1)/32) <= PREVIEW_RADIUS
+
+# A startup roll lives exactly one visit. FreeDink 109.6 loads a screen afresh on every
+# entry and its startup scripts draw again; our preview shows that draw early and the
+# arrival reuses it (so the screen the player sees is the screen he walks into), but
+# nothing may carry it past the visit. Entering `arriving` has just consumed its
+# preview; leaving `left` ends the roll that visit used, and a preview whose screen is no
+# longer around the player is stale. The next approach rolls afresh.
+func _end_arrival_visits(left: int, arriving: int) -> void:
+	for key in neighbour_arrival_cache.keys():
+		var screen := int(str(key).get_slice(":",0))
+		if screen == left or not _in_preview_block(screen,arriving): neighbour_arrival_cache.erase(key)
 
 func neighbour_arrival_state(number: int, base_state: Dictionary = {}) -> Dictionary:
 	if not world.get("screens", {}).has(str(number)):
@@ -1718,6 +1736,7 @@ func _load_game(path: String = SAVE_SLOTS.LEGACY_PATH) -> bool:
 		ui.notify("No compatible saved adventure found.")
 		return false
 	vm.cancel_all()
+	neighbour_arrival_cache.clear() # every preview belongs to the state just replaced
 	play_minutes_base = int(data.get("minutes",0))
 	play_started_msec = Time.get_ticks_msec()
 	vm.restore_state(data.get("vm",{}))
