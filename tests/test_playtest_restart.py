@@ -17,7 +17,7 @@ def test_cold_continue_uses_earned_isolated_save(tmp_path):
         earned.menu_key("enter") # slot list, first empty slot (1) focused
         saved = earned.menu_key("enter")["telemetry"]
         assert saved["save"]["adventure"] and saved["globals"]["story"] == 1
-        save = Path(earned.session_dir) / "xdg/data/godot/app_userdata/Dink Smallwood 3D/adventure.json"
+        save = earned.retained_save()  # from the XDG_DATA_HOME the session gave Godot
     result = continue_from_save(save, tmp_path / "cold")
     assert result["ok"], result
     assert result["title"]["save"]["adventure"]

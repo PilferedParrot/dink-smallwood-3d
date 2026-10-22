@@ -8,6 +8,16 @@ import pytest
 
 
 def pytest_configure(config):
+    # Every Godot launch of the suite goes through tests/godot_pinned (audio off, no unleased GPU, no real profile).
+    # Test modules read GODOT while they are imported, which is after this hook.
+    given = os.environ.get("GODOT")
+    if given and Path(given).name != "godot_pinned":
+        real = given
+    else:
+        real = os.environ.get("GODOT_REAL") or shutil.which("godot") or shutil.which("godot4") or str(
+            Path.home() / ".local/bin/Godot_v4.6.1-stable_linux.x86_64")
+    os.environ["GODOT_REAL"] = real
+    os.environ["GODOT"] = str(Path(__file__).resolve().parent / "godot_pinned")
     config.addinivalue_line("markers",
         "local_evidence(reason): checks locally generated evidence absent from fresh checkouts and CI")
 
@@ -15,8 +25,7 @@ def pytest_configure(config):
 def pytest_sessionstart(session):
     if os.environ.get("DINK_REQUIRE_GODOT") != "1":
         return
-    godot = os.environ.get("GODOT") or shutil.which("godot") or shutil.which("godot4") or str(
-        Path.home() / ".local/bin/Godot_v4.6.1-stable_linux.x86_64")
+    godot = os.environ["GODOT_REAL"]  # the engine behind tests/godot_pinned, as pytest_configure resolved it
     if not Path(godot).is_file() or not os.access(godot, os.X_OK):
         raise pytest.UsageError(f"DINK_REQUIRE_GODOT=1: executable Godot is missing: {godot}")
     if not shutil.which("xvfb-run"):

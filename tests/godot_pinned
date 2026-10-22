@@ -1,0 +1,95 @@
+#!/usr/bin/env python3
+"""Run the real Godot with the pins godot-scratch sets, so no test launch can play audio, reach a GPU card nobody leased,
+or write to the real Godot profile. conftest.py makes this the GODOT of every pytest run; `GODOT_REAL` names the engine.
+
+Pins (the same as ~/pilferedparrot-tools/tools/godot-scratch, whose notes carry the evidence):
+  audio   `--audio-driver Dummy` inserted right after the executable (a bare `--` ends Godot's own options, so a flag
+          after it is never read); another driver is refused; PULSE_SERVER and PIPEWIRE_REMOTE are cut.
+  vulkan  outside a `room gpu run` lease (ROOM_GPU_UUID and a room-gpu-run-*.scope in /proc/self/cgroup) lavapipe.
+  opengl  outside a lease Mesa software, no NVIDIA offload, no CUDA devices.
+  homes   XDG_DATA_HOME, XDG_CONFIG_HOME and XDG_CACHE_HOME must be absolute and outside the real Godot profile. Unlike
+          godot-scratch they are kept, not replaced: a test that reads back the save it made needs its own directory.
+Each launch appends one line to $DINK_GODOT_LAUNCH_LOG (when set) and says it on stderr. Exit 125 = refused.
+"""
+import os
+import re
+import sys
+from pathlib import Path
+
+REFUSED = 125
+LAVAPIPE_ICD = "/usr/share/vulkan/icd.d/lvp_icd.json"
+MESA_EGL_VENDOR = "/usr/share/glvnd/egl_vendor.d/50_mesa.json"
+XDG_VARS = ("XDG_DATA_HOME", "XDG_CONFIG_HOME", "XDG_CACHE_HOME")
+REAL_PROFILE = (".local/share/godot", ".config/godot", ".cache/godot")
+LEASE_SCOPE = re.compile(r"(?:^|/)room-gpu-run-[^/]+\.scope(?:/|$)")
+DEFAULT_GODOT = Path.home() / ".local/bin/Godot_v4.6.1-stable_linux.x86_64"
+
+
+def refuse(why):
+    sys.stderr.write(f"godot-pinned: REFUSED: {why}. Nothing was run.\n")
+    sys.exit(REFUSED)
+
+
+def in_lease(environ):
+    if not environ.get("ROOM_GPU_UUID"):
+        return False
+    try:
+        text = Path("/proc/self/cgroup").read_text()
+    except OSError:
+        return False
+    return any(len(p) == 3 and LEASE_SCOPE.search(p[2]) for p in (line.split(":", 2) for line in text.splitlines()))
+
+
+def under(path, parent):
+    path, parent = os.path.realpath(path), os.path.realpath(parent)
+    return path == parent or path.startswith(parent + os.sep)
+
+
+def pinned(argv, environ):
+    """(argv, env, note) for the launch `argv` (argv[0] is the real engine), or a refusal."""
+    args = list(argv)
+    engine_end = next((i for i, a in enumerate(args) if i and a in ("--", "++")), len(args))
+    drivers = [args[i + 1] if i + 1 < engine_end else None
+               for i in range(1, engine_end) if args[i] == "--audio-driver"]
+    if any(d != "Dummy" for d in drivers):
+        refuse(f"the launch asks for audio driver {drivers!r}; only Dummy is silent")
+    if not drivers:
+        args[1:1] = ["--audio-driver", "Dummy"]
+    env = dict(environ)
+    home = Path.home()
+    for var in XDG_VARS:
+        value = env.get(var)
+        if not value or not os.path.isabs(value):
+            refuse(f"{var} is {value!r}, so Godot would fall back to the real profile under $HOME")
+        for rel in REAL_PROFILE:
+            if under(os.path.join(value, "godot"), home / rel) or under(value, home / rel):
+                refuse(f"{var}={value} is at or under the real Godot profile {home / rel}")
+    env["PULSE_SERVER"], env["PIPEWIRE_REMOTE"] = "unix:/nonexistent", "nonexistent"
+    if in_lease(env):
+        gpu = f"leased {env['ROOM_GPU_UUID']}"
+    else:
+        env["VK_ICD_FILENAMES"] = env["VK_DRIVER_FILES"] = LAVAPIPE_ICD
+        env.update({"__GLX_VENDOR_LIBRARY_NAME": "mesa", "__EGL_VENDOR_LIBRARY_FILENAMES": MESA_EGL_VENDOR,
+                    "LIBGL_ALWAYS_SOFTWARE": "1", "CUDA_VISIBLE_DEVICES": ""})
+        for var in [v for v in env if v.startswith("__GLX_FORCE_VENDOR_LIBRARY_")] + [
+                "VK_ADD_DRIVER_FILES", "__NV_PRIME_RENDER_OFFLOAD", "__VK_LAYER_NV_optimus", "DRI_PRIME"]:
+            env.pop(var, None)
+        gpu = "vulkan lavapipe, opengl mesa software (no GPU lease)"
+    return args, env, f"audio Dummy; {gpu}; homes {env['XDG_DATA_HOME']}"
+
+
+def main():
+    real = os.environ.get("GODOT_REAL") or str(DEFAULT_GODOT)
+    if not (os.path.isfile(real) and os.access(real, os.X_OK)):
+        refuse(f"the real Godot {real!r} is not an executable file (GODOT_REAL)")
+    args, env, note = pinned([real] + sys.argv[1:], os.environ)
+    sys.stderr.write(f"godot-pinned: {note}\n")
+    log = env.get("DINK_GODOT_LAUNCH_LOG")
+    if log:
+        with open(log, "a") as f:
+            f.write(f"godot-pinned pid={os.getpid()} {note} argv={' '.join(args[1:6])}\n")
+    os.execve(real, args, env)
+
+
+if __name__ == "__main__":
+    main()

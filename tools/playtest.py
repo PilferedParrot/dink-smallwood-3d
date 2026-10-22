@@ -73,6 +73,7 @@ class PlaytestSession:
         self._xdg = Path(tempfile.mkdtemp(prefix="dink-playtest-xdg-"))
         env["XDG_DATA_HOME"] = str(self._xdg / "data")
         env["XDG_CONFIG_HOME"] = str(self._xdg / "config")
+        self._env = env
         if self.save_source is not None:
             isolated_user = self._xdg / "data" / "godot" / "app_userdata" / "Dink Smallwood 3D"
             isolated_user.mkdir(parents=True, exist_ok=True)
@@ -239,6 +240,13 @@ class PlaytestSession:
                 self._process.wait(timeout=3)
         self._closed = True
         self._retain_xdg()
+
+    def retained_save(self) -> Path:
+        """adventure.json as kept beside the report after close, located from the XDG_DATA_HOME this session's Godot was
+        given (not from a layout assumed here)."""
+        data_home = Path(self._env["XDG_DATA_HOME"])
+        return (self.session_dir / "xdg" / data_home.relative_to(self._xdg)
+                / "godot/app_userdata/Dink Smallwood 3D/adventure.json")
 
     def _retain_xdg(self) -> None:
         """Keep the isolated save/settings tree beside the session report."""
