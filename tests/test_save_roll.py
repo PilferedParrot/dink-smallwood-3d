@@ -18,3 +18,7 @@ def test_a_startup_roll_lives_one_visit(tmp_path):
 
 def test_every_startup_draw_screen_rolls_per_visit(tmp_path):
     _run(tmp_path, "arrival_visit_class_test.gd", "ARRIVAL CLASS PASS", 400)
+
+
+def test_a_previewed_screen_is_the_screen_met_beside_a_shared_startup_script(tmp_path):
+    _run(tmp_path, "arrival_adjacent_test.gd", "ARRIVAL ADJACENT PASS", 600)
