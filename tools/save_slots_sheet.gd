@@ -76,6 +76,8 @@ func _run() -> void:
 			await shot("start2-load-" + tag)
 			game.ui.close_menu(); game.vm.cancel_all(); await settle()
 			game.ui.show_pause(); game._ui_action("save", null); await shot("pause-save-" + tag)
+			var owner = game.ui.get_viewport().gui_get_focus_owner()
+			print("SHEET FOCUS pause-save-", tag, " -> ", owner.text if owner is Button else "<none>")
 			game._ui_action("load", null); await shot("pause-load-" + tag)
 			game.ui.show_title(true); game._ui_action("continue", null); await shot("title-continue-" + tag)
 			game.ui.close_menu()

@@ -1182,6 +1182,8 @@ func _interpolate(value: Variant, context: Dictionary, strip_colour := true) -> 
 		var name := found.get_string().substr(1)
 		var val: Variant = context.get("locals",{}).get(name,vm.globals.get(name,0))
 		if name == "current_sprite": val = context.get("sprite_id",0)
+		# DinkC variables are integers; a loaded save returns them as JSON floats (4.0).
+		if val is float and val == floorf(val): val = int(val)
 		result = result.substr(0,found.get_start())+str(val)+result.substr(found.get_end())
 	if not strip_colour: return result
 	regex.compile("`.")

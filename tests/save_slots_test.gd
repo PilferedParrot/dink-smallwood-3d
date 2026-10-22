@@ -112,6 +112,37 @@ func minutes_and_pause_menu() -> void:
 	await game.dink_call("load_game", [4], {})
 	check(game._play_minutes() == 85, "load restores the saved play time, got %d" % game._play_minutes())
 	game.ui.close_menu()
+# Found by the F2 fixture: a loaded save returns every global as a JSON float (4.0), and
+# _interpolate's str() wrote "Level 4.0" into the next save's label. DinkC variables are
+# integers (FreeDink 109.6 dinkc.cpp decipher prints %d), so a load-then-save label reads "Level 4".
+func info_after_load() -> void:
+	clean_saves()
+	game.vm.globals["level"] = 4
+	check(game._save_game(game.SAVE_SLOTS.path(3)), "round-trip fixture: slot 3 writes")
+	await game.dink_call("load_game", [3], {})
+	check(game.vm.globals["level"] is float, "round-trip fixture: a loaded global is a JSON float (instrument check), got %s" % type_string(typeof(game.vm.globals["level"])))
+	check(game._save_game(game.SAVE_SLOTS.path(5)), "round-trip fixture: slot 5 writes")
+	check(game.SAVE_SLOTS.label(5).ends_with(" - Level 4"), "load then save keeps an integer level in the label, got '%s'" % game.SAVE_SLOTS.label(5))
+	check(game._interpolate("&level gold &gold", {}) == "4 gold %d" % int(game.vm.globals.get("gold", 0)), "any loaded global interpolates as an integer, got '%s'" % game._interpolate("&level gold &gold", {}))
+	clean_saves()
+# F2 of fix round 1: the pause-Save default in a MIXED profile (slots 1, 3 and 7 filled,
+# 7 the newest), the fixture of tools/save_slots_sheet.gd. The first empty slot is 2;
+# the all-empty fixture above cannot tell it from "the newest slot" (7).
+func pause_save_mixed_profile() -> void:
+	clean_saves()
+	for row in [[1, 1700000000], [3, 1700000100], [7, 1700000200]]:
+		check(game._save_game(game.SAVE_SLOTS.path(row[0])), "mixed fixture: slot %d writes" % row[0])
+		rewrite(row[0], func(d): d["saved_at"] = row[1])
+	check(game.SAVE_SLOTS.latest() == 7, "mixed fixture: slot 7 is the newest (latest %d)" % game.SAVE_SLOTS.latest())
+	game.ui.show_pause()
+	game._ui_action("save", null); await settle()
+	var texts := choice_labels()
+	check(texts[1].ends_with("- Empty") and not texts[0].ends_with("- Empty") and not texts[6].ends_with("- Empty"), "mixed fixture: slots 1 and 7 filled, 2 empty: %s" % [texts])
+	check(focused_text() == "Slot 2 - Empty", "pause Save in a mixed profile focuses the first empty slot (2), not the newest (7), focus '%s'" % focused_text())
+	game._ui_action("load", null); await settle()
+	check(focused_text().begins_with("Slot 7 - "), "pause Load in the same profile preselects the newest slot (7), focus '%s'" % focused_text())
+	game.ui.close_menu()
+	clean_saves()
 func button_info() -> void:
 	clean_saves()
 	game.bindings.reset_all()
@@ -177,6 +208,8 @@ func _run() -> void:
 	check(int(game.vm.globals.get("gold", -1)) == 123, "slot 3 survives a later slot-5 save")
 	await legacy_and_continue()
 	await minutes_and_pause_menu()
+	await info_after_load()
+	await pause_save_mixed_profile()
 	await button_info()
 	print("SAVE SLOTS FAILURES ", JSON.stringify(failures))
 	print("SAVE SLOTS PASS" if failures.is_empty() else "SAVE SLOTS FAIL")
