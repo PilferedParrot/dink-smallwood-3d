@@ -31,6 +31,8 @@ SAVE_GLOBALS = (
 )
 
 
+SLOT_MENUS = {"Save adventure", "Load saved adventure", "Continue adventure"}
+
 class RouteFailure(RuntimeError):
     def __init__(self, message: str, kind: str = "bot/incomplete") -> None:
         super().__init__(message)
@@ -333,7 +335,28 @@ class Campaign:
         selected = state.get("ui", {}).get("buttons", [])
         if not any(button.get("text") == text and button.get("focused") for button in selected):
             raise RouteFailure("menu focus did not reach " + text, "harness")
-        return self._call("menu-enter-" + text, lambda: self.session.menu_key("enter"))
+        entered = self._call("menu-enter-" + text, lambda: self.session.menu_key("enter"))
+        if text in SLOT_MENUS:
+            # These open the slot list (save-roll unit); the route's earned save is always slot 1,
+            # which is user://adventure.json, the file the tools read.
+            return self._choose_slot(1)
+        return entered
+
+    def _choose_slot(self, slot: int) -> dict[str, Any]:
+        state = self.observe("slots-before-slot-%d" % slot)
+        buttons = state.get("ui", {}).get("buttons", [])
+        prefix = "Slot %d - " % slot
+        index = next((i for i, button in enumerate(buttons) if str(button.get("text", "")).startswith(prefix)), -1)
+        focused = next((i for i, button in enumerate(buttons) if button.get("focused")), -1)
+        if index < 0 or focused < 0:
+            raise RouteFailure("slot list is not open or has no slot %d" % slot, "harness")
+        direction = "down" if index >= focused else "up"
+        for _ in range(abs(index - focused)):
+            state = self._call("slot-" + direction, lambda direction=direction: self.session.menu_key(direction))
+        if not any(str(button.get("text", "")).startswith(prefix) and button.get("focused")
+                   for button in state.get("ui", {}).get("buttons", [])):
+            raise RouteFailure("slot list focus did not reach slot %d" % slot, "harness")
+        return self._call("slot-enter-%d" % slot, lambda: self.session.menu_key("enter"))
 
     def dialogue(self, limit: int = 80, require_release: bool = False, capture: str = "") -> dict[str, Any]:
         """Advance ordinary dialogue, allowing delayed VM lines to become live."""

@@ -1298,7 +1298,7 @@ func _fps_projectile_hit(id: int, source: int, amount: int) -> void:
 		_damage(id, amount)
 		fps_hit_timer = 0.15
 
-func _save_game(path: String = "user://adventure.json") -> bool:
+func _save_game(path: String = SAVE_SLOTS.LEGACY_PATH) -> bool:
 	var saved := super._save_game(path)
 	if saved:
 		var data := _read_json(path)
@@ -1306,14 +1306,14 @@ func _save_game(path: String = "user://adventure.json") -> bool:
 		return _write_json(path, data)
 	return saved
 
-func _load_game(path: String = "user://adventure.json") -> bool:
+func _load_game(path: String = SAVE_SLOTS.LEGACY_PATH) -> bool:
 	var loaded := super._load_game(path)
 	if loaded:
 		_restore_fps_camera(path)
 		_sync_fps_camera()
 	return loaded
 
-func _restore_fps_camera(path: String = "user://adventure.json") -> void:
+func _restore_fps_camera(path: String = SAVE_SLOTS.LEGACY_PATH) -> void:
 	var saved: Dictionary = _read_json(path).get("fps_camera", {})
 	fps_yaw = float(saved.get("yaw", fps_yaw))
 	fps_pitch = clampf(float(saved.get("pitch", fps_pitch)), -1.25, 1.25)

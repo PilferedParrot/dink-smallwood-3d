@@ -54,7 +54,12 @@ func run_startup() -> Dictionary:
 		if screen.is_empty():
 			uncertain.append("Missing screen %d" % current_screen)
 		else:
-			_run(str(screen.get("script", "")), "main", 0)
+			# The live load runs the screen main as a NEW instance whose locals die
+			# with it (game.gd load_map; FreeDink 109.6 game_engine.cpp:710-721 loads
+			# the screen script afresh). A persistent run would export findduck:0
+			# locals the live 440 never leaves, and the next preview's key would differ
+			# from its arrival's.
+			_run(str(screen.get("script", "")), "main", 0, true)
 			var editor_entities: Array[int] = []
 			for source in screen.get("sprites", []):
 				var e: Dictionary = _game.editor_entity(current_screen, source, true, int(vm.globals.get("vision", 0)), editor_state)
@@ -74,7 +79,7 @@ func run_startup() -> Dictionary:
 			sprites.append(entities[id].duplicate(true))
 	return {"vision": int(vm.globals.get("vision", 0)), "sprites": sprites, "random_tape": random_tape.duplicate(true), "uncertain": uncertain.duplicate(), "cuts": cuts.duplicate(), "globals": vm.globals.duplicate(true), "global_names": vm._global_names.duplicate(true), "sprite_locals": vm._sprite_locals.duplicate(true), "editor_state": editor_state.duplicate(true), "items": items.duplicate(true), "magic_items": magic_items.duplicate(true), "player": entities[1].duplicate(true), "next_entity": next_entity}
 
-func _run(script: String, procedure: String, sprite_id: int) -> Variant:
+func _run(script: String, procedure: String, sprite_id: int, new_instance: bool = false) -> Variant:
 	_last_run_cut = false
 	var name: String = vm._script_name(script)
 	if name.is_empty() or vm._procedure_code(name, procedure.to_lower()).is_empty(): return 0
@@ -86,7 +91,7 @@ func _run(script: String, procedure: String, sprite_id: int) -> Variant:
 	var task_id: int = vm._next_task_id
 	# VM's awaits complete immediately because this host is synchronous. No
 	# timer, scene signal or deferred callback can survive this call.
-	var value: Variant = vm.run(name, procedure, sprite_id)
+	var value: Variant = vm.run(name, procedure, sprite_id, new_instance)
 	_last_run_cut = _cut_tasks.has(task_id)
 	_nested_runs -= 1
 	if _nested_runs == 0: vm.host = null
@@ -175,7 +180,8 @@ func dink_call(command: String, args: Array, context: Dictionary) -> Variant:
 					e["seq"] = 0
 			if cmd == "move_stop": _stop(context)
 		"external":
-			var result: Variant = _run(str(a), str(b), sid)
+			# game.gd "external" loads a separate instance (vm.run(..., true)).
+			var result: Variant = _run(str(a), str(b), sid, true)
 			if _last_run_cut: _stop(context)
 			return result
 		"spawn", "load":

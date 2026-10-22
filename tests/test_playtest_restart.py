@@ -14,6 +14,7 @@ def test_cold_continue_uses_earned_isolated_save(tmp_path):
             if state["dialogue"]: earned.menu_key("enter")
         earned.pause()
         earned.menu_key("down")
+        earned.menu_key("enter") # slot list, first empty slot (1) focused
         saved = earned.menu_key("enter")["telemetry"]
         assert saved["save"]["adventure"] and saved["globals"]["story"] == 1
         save = Path(earned.session_dir) / "xdg/data/godot/app_userdata/Dink Smallwood 3D/adventure.json"
