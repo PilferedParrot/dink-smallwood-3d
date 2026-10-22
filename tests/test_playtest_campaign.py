@@ -576,6 +576,7 @@ class SaveLevelChoiceSession:
     """Earned combat level-up can replace a menu on the next input tick."""
     level_buttons = ['Increase Attack', 'Increase Defense', 'Increase Magic']
     pause_buttons = ['Return', 'Save adventure', 'Title screen']
+    slot_buttons = ['Slot %d - Empty' % n for n in range(1, 11)]
 
     def __init__(self, arrival, unknown=False, stale_hidden=False):
         self.arrival = arrival
@@ -588,7 +589,7 @@ class SaveLevelChoiceSession:
         self.selected = None
 
     def observe(self):
-        names = self.level_buttons if self.page == 'choice' else self.pause_buttons if self.page == 'pause' else []
+        names = self.level_buttons if self.page == 'choice' else self.pause_buttons if self.page == 'pause' else self.slot_buttons if self.page == 'slots' else []
         if self.unknown and self.page == 'choice':
             names = ['Accept mysterious offer', 'Leave']
         visible = True
@@ -596,7 +597,7 @@ class SaveLevelChoiceSession:
             # close_menu hides the column's parent; its button children survive.
             names, visible = self.level_buttons, False
         page = 'dialogue' if self.page == 'choice' else self.page
-        modal = self.page in {'choice', 'pause'}
+        modal = self.page in {'choice', 'pause', 'slots'}
         return {'ok': True, 'telemetry': {'page': page, 'modal': modal,
                 'dialogue': self.page == 'choice',
                 'ui': {'page': page, 'modal': modal, 'choice': self.page == 'choice',
@@ -621,8 +622,13 @@ class SaveLevelChoiceSession:
                 self.selected = self.level_buttons[self.focus]
                 self.page = 'game'
             else:
-                assert self.page == 'pause' and self.focus == 1
-                self.saved = True
+                if self.page == 'pause':
+                    assert self.focus == 1
+                    self.page, self.focus = 'slots', 0 # Save opens the slot list
+                else:
+                    assert self.page == 'slots' and self.focus == 0
+                    self.saved = True
+                    self.page, self.focus = 'pause', 1
         else:
             self.focus += 1 if key == 'down' else -1
         return self.observe()

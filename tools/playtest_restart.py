@@ -34,6 +34,7 @@ def continue_from_save(save_source: Path, session_dir: Path | None = None, *, re
     with PlaytestSession(session_dir=session_dir, rendered=rendered, mode="campaign",
                          save_source=save_source, timeout=20) as session:
         title = session.observe()["telemetry"]
+        session.menu_key("enter") # Continue opens the slot list, newest slot preselected
         continued = session.menu_key("enter")["telemetry"]
         # Allow the normal 0.15-second HUD refresh and renderer to settle, so
         # cold-start captures include equipment and health as well as geometry.

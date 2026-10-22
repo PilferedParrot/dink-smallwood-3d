@@ -100,6 +100,7 @@ def test_campaign_opening_dialogue_and_ui_save_reload(tmp_path):
 
         session.pause()
         session.menu_key("down")
+        session.menu_key("enter") # Save opens the slot list, first empty slot (1) focused
         saved = session.menu_key("enter")["telemetry"]
         assert saved["save"]["adventure"]
         saved_position = (saved["x"], saved["y"])
@@ -110,6 +111,7 @@ def test_campaign_opening_dialogue_and_ui_save_reload(tmp_path):
         session.pause()
         session.menu_key("down")
         session.menu_key("down")
+        session.menu_key("enter") # Load opens the slot list, newest slot preselected
         loaded = session.menu_key("enter")["telemetry"]
         assert (loaded["x"], loaded["y"]) == saved_position
         session_dir = session.session_dir
