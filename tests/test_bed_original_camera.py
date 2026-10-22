@@ -85,13 +85,23 @@ def test_bed_original_camera_changes_only_inside_committed_source_envelopes(tmp_
         before = FIXTURES / f"{n}-before.png"
         mask = FIXTURES / f"{n}-mask.png"
         after = tmp_path / f"{n}.png"
-        metrics = compare(before, after, mask)
-        changes += metrics["changed"]
-        assert metrics["outside_mask"] == 0, (n, metrics)
         allowed = np.asarray(Image.open(mask).convert("L")) != 0
         assert 0 < allowed.sum() < allowed.size // 5, (
             "A bed mask cannot bless the frame"
         )
+        # Where the terrain boxes themselves changed (a floor-class tile no longer stands as a column), those pixels are
+        # attributed to the terrain: the mask is the diff of the terrain ALONE on the two trees (geometry only), never
+        # of the frame. It joins the bed envelope for the check; the unrelated-pixel control below stays outside both.
+        delta = FIXTURES / f"{n}-terrain-delta.png"
+        if delta.exists():
+            terrain = np.asarray(Image.open(delta).convert("L")) != 0
+            assert 0 < terrain.sum() < terrain.size // 5, "A terrain delta cannot bless the frame"
+            allowed = allowed | terrain
+            Image.fromarray((allowed * 255).astype(np.uint8)).save(tmp_path / f"{n}-allowed.png")
+            mask = tmp_path / f"{n}-allowed.png"
+        metrics = compare(before, after, mask)
+        changes += metrics["changed"]
+        assert metrics["outside_mask"] == 0, (n, metrics)
         y, x = np.argwhere(~allowed)[0]
         altered = np.array(Image.open(after).convert("RGB"))
         altered[y, x, 0] ^= 255
