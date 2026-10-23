@@ -874,6 +874,7 @@ func _additional_solid_nearest(_best: Array, _pos: Vector2, _limit: float) -> vo
 # hitmap, Rect2.has_point), so it is a hair away from the box, never inside it (distance 0 means blocked).
 const EDGE_EPS := 0.001
 static func box_nearest(pos: Vector2, lo: Vector2, hi: Vector2) -> Vector2:
+	if pos.x >= lo.x and pos.x < hi.x and pos.y >= lo.y and pos.y < hi.y: return pos # inside: distance exactly 0
 	return pos.clamp(lo, Vector2(maxf(lo.x, hi.x - EDGE_EPS), maxf(lo.y, hi.y - EDGE_EPS)))
 
 static func _offer(best: Array, pos: Vector2, at: Vector2, limit: float) -> void:

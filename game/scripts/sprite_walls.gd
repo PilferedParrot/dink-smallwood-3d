@@ -120,7 +120,8 @@ func offer_nearest(best: Array, pos: Vector2, limit: float, screen: int) -> void
 			for y in range(maxi(0,floori(local.y-limit)),mini(HEIGHT-1,floori(local.y+limit))+1):
 				for x in range(maxi(20,floori(local.x-limit)),mini(619,floori(local.x+limit))+1):
 					if cells[y*WIDTH+x] == 0: continue
-					var at := local.clamp(Vector2(x,y),Vector2(x+1-0.001,y+1-0.001)) # half-open cell: a point on its far edge is outside
+					var inside_cell := local.x >= x and local.x < x+1 and local.y >= y and local.y < y+1
+					var at := local if inside_cell else local.clamp(Vector2(x,y),Vector2(x+1-0.001,y+1-0.001)) # half-open cell: a point on its far edge is outside
 					var d := local.distance_to(at)
 					if d <= limit and d < (best[0] as float):
 						best[0] = d

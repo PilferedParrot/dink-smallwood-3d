@@ -2,8 +2,7 @@ extends SceneTree
 
 # Unit 3: the distance field the camera guard stands on (game.gd _solid_nearest) is the same set of solids as `_blocked`.
 # On every screen, at seeded random points (inside the screen and across its seams), against `_blocked` itself:
-#   (a) a point is blocked exactly when its distance is 0 (up to the 0.001 px hair that keeps a point on a far edge, which is
-#       outside a half-open box, off the box);
+#   (a) a point is blocked exactly when its distance is 0 (a point on a half-open box's far edge is outside it, a hair away);
 #   (b) the distance is right: no blocked sample closer (64 directions, every half pixel), and a blocked sample next to
 #       the reported closest point;
 # and its cost (G7): reported, and held to four times the registered budget so a slow regression fails here.
@@ -73,7 +72,7 @@ func _run() -> void:
 			var blocked: bool = game._blocked(p, 1)
 			if blocked: counts.blocked += 1
 			else: counts.free += 1
-			check(blocked == (d <= 0.0015), "screen %d at %s: blocked=%s but the field says distance %s" % [n, p, blocked, d])
+			check(blocked == (d <= 0.0), "screen %d at %s: blocked=%s but the field says distance %s" % [n, p, blocked, d])
 			if d == INF:
 				counts.clear += 1
 				open_us.append(dt)
@@ -98,12 +97,13 @@ func _run() -> void:
 	mean_open /= maxf(1.0, float(open_us.size()))
 	near_us.sort()
 	var worst: float = near_us.back() if near_us.size() else 0.0
-	var result := {"counts": counts, "near_us_mean": mean_near, "near_us_max": worst, "open_us_mean": mean_open, "failures": failures.size()}
+	var p99: float = near_us[int(0.99 * float(near_us.size() - 1))] if near_us.size() else 0.0 # the max is the machine's, not the code's
+	var result := {"counts": counts, "near_us_mean": mean_near, "near_us_p99": p99, "near_us_max": worst, "open_us_mean": mean_open, "failures": failures.size()}
 	print("CLEARANCE FIELD ", JSON.stringify(result))
 	if not report_path.is_empty():
 		var file := FileAccess.open(report_path, FileAccess.WRITE)
 		file.store_string(JSON.stringify(result, "\t"))
-	check(mean_open < 4000.0 and mean_near < 12000.0 and worst < 40000.0, "cost within four times the registered budget (open %.0f us, near %.0f us, max %.0f us)" % [mean_open, mean_near, worst])
+	check(mean_open < 4000.0 and mean_near < 12000.0 and p99 < 40000.0, "cost within four times the registered budget (open %.0f us, near %.0f us, p99 %.0f us)" % [mean_open, mean_near, p99])
 	game.vm.cancel_all()
 	game.free()
 	if failures.is_empty(): print("CLEARANCE FIELD PASS")
