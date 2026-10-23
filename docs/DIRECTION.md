@@ -3477,7 +3477,7 @@ Red on fa6daff (both walks and all 20 compared pairs), green after.
 ## Movers are points; the camera keeps its own distance — October 23 (unit 3)
 
 Chris's 10-21 report (triage T4, T5): passages narrower than the original's, characters cut by walls. Evidence: `dink-triage` TRIAGE.md, `clearance-lineage.md`,
-`passages-summary.md`, `duck441-hardness.md`; plan and amendments `~/planning/dink/PLAN-unit3-clearance-20261023.md`.
+`passages-summary.md`, `duck441-hardness.md`.
 
 **What was wrong.** Five places grew every solid by 4 px for every mover (sprite hardboxes and fitted footprints in `game.gd`, RC5 stone walls, firs, closed door
 leaves), tile hardness not. FreeDink has no such thing: `check_if_move_is_legal` reads `get_hard` at the sprite's own pixel against a hitmap that holds the RAW hardbox
