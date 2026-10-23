@@ -107,7 +107,7 @@ func _feasible(foot: Vector2, guard: float) -> bool:
 	for dx in range(-reach, reach + 1):
 		for dy in range(-reach, reach + 1):
 			var c := foot + Vector2(dx, dy)
-			if c.distance_to(foot) > guard * FEASIBLE_REACH or game._blocked(c, 1, foot) or not _walkable_between(foot, c): continue
+			if not Rect2(20, 0, 600, 400).has_point(c) or c.distance_to(foot) > guard * FEASIBLE_REACH or game._blocked(c, 1, foot) or not _walkable_between(foot, c): continue
 			if _clearance(c, guard) >= guard - TOLERANCE: return true
 	return false
 

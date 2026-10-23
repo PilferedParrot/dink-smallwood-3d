@@ -10,6 +10,7 @@ extends RefCounted
 
 const PROP_OVERHANG_PX := 3.0 # a prop's depth cap is hardbox depth + 2 * this (fp_world.gd), each side
 const ITERATIONS := 3
+const SCREEN := Rect2(20, 0, 600, 400) # the camera stays on its own screen: past an edge is another room's space (or no space)
 const MAX_DISPLACEMENT := 2.0 # x guard: the camera stands this far from the feet at most; an inner corner of angle t needs 1 / sin(t / 2): sqrt(2) at a right angle, 2 at 60 degrees
 
 var _key := []
@@ -63,7 +64,7 @@ static func _search(foot: Vector2, local: Vector2, guard: float, nearest: Callab
 	for radius in [guard, guard * 1.25, guard * 1.5]:
 		for k in 24:
 			var candidate: Vector2 = foot + Vector2.RIGHT.rotated(TAU * float(k) / 24.0) * float(radius)
-			if (nearest.call(candidate, guard) as Array)[0] < guard: continue
+			if not SCREEN.has_point(candidate) or (nearest.call(candidate, guard) as Array)[0] < guard: continue
 			var free := true
 			for step in range(1, int(ceil(float(radius))) + 1):
 				if (nearest.call(foot.lerp(candidate, float(step) / ceil(float(radius))), 0.0001) as Array)[0] <= 0.0:
