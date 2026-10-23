@@ -15,6 +15,7 @@ const SCALE := 0.025
 const NEAR := 0.03
 const FOV := 80.0
 const ASPECT := 16.0 / 9.0 # no window in this test: the game falls back to 16:9
+const FEASIBLE_REACH := 1.5 # x guard: a pinch that only opens further away than this is a measured limit, not a failure
 const TOLERANCE := 0.75 # px: the guard's search is a ray fan; the oracle's resolution is 0.25 px
 const MAX_PER_CLASS_PER_SCREEN := 6
 
@@ -99,12 +100,12 @@ func _walkable_between(a: Vector2, b: Vector2) -> bool:
 	return true
 
 func _feasible(foot: Vector2, guard: float) -> bool:
-	# Is there any free camera position within 2 guards of the feet that has the full clearance?
-	var reach := int(ceil(guard * 2.0))
+	# Is there any free camera position within 1.5 guards of the feet, reachable by a free slide, with the full clearance?
+	var reach := int(ceil(guard * FEASIBLE_REACH))
 	for dx in range(-reach, reach + 1):
 		for dy in range(-reach, reach + 1):
 			var c := foot + Vector2(dx, dy)
-			if c.distance_to(foot) > guard * 2.0 or game._blocked(c, 1, foot) or not _walkable_between(foot, c): continue
+			if c.distance_to(foot) > guard * FEASIBLE_REACH or game._blocked(c, 1, foot) or not _walkable_between(foot, c): continue
 			if _clearance(c, guard) >= guard - TOLERANCE: return true
 	return false
 
