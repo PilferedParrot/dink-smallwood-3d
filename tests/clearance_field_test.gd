@@ -45,8 +45,26 @@ func _closer_blocked(p: Vector2, below: float) -> bool:
 			r += 0.5
 	return false
 
+# Review finding 4: a neighbour footprint that hangs over its screen's edge is solid only inside that screen. Injected valid
+# footprint on 440 spanning x 18..30 (its screen starts at 20): from 439's east edge the nearest solid is at x = 620.
+func _neighbour_footprint() -> void:
+	var saved = game.footprints.get("440")
+	game.footprints["440"] = {"polys": [{"pts": [[18, 180], [30, 180], [30, 220], [18, 220]], "owner": 0}]}
+	game.survey_states.erase(440)
+	game.load_map(439, false)
+	var p := Vector2(619.0, 200.0)
+	check(not game._blocked(p, 1), "the injected overhang does not block 439's own cell (619,200)")
+	var hit: Array = game._solid_nearest(p, LIMIT)
+	check(absf(float(hit[0]) - 1.0) < 0.01 and absf((hit[1] as Vector2).x - 620.0) < 0.01, "the field sees 440's solid only from x = 620 (got %s)" % [hit])
+	var far: Array = game._solid_nearest(Vector2(610.0, 200.0), 3.0)
+	check(far[0] == INF, "nothing within 3 px of (610,200): the overhang is not 439's solid")
+	if saved == null: game.footprints.erase("440")
+	else: game.footprints["440"] = saved
+	game.survey_states.erase(440)
+
 func _run() -> void:
 	_setup()
+	_neighbour_footprint()
 	var rng := RandomNumberGenerator.new()
 	rng.seed = 2026
 	var checked := 0

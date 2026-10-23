@@ -549,7 +549,7 @@ func _sync_fps_camera() -> void:
 func _camera_source_position(foot: Vector2) -> Vector2:
 	var size := get_viewport().get_visible_rect().size if is_inside_tree() else Vector2(16, 9)
 	var guard: float = CAMERA_GUARD.guard_px(camera.near, camera.fov, size.x / maxf(1.0, size.y), SCALE)
-	return camera_guard.position_for(foot, guard, [current_screen, Engine.get_physics_frames()],
+	return camera_guard.position_for(foot, guard, [current_screen, Engine.get_physics_frames() / 6],
 		func(q: Vector2, limit: float) -> Array: return _solid_nearest(q, limit))
 
 func _apply_settings() -> void:

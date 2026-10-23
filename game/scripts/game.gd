@@ -884,13 +884,16 @@ static func _offer(best: Array, pos: Vector2, at: Vector2, limit: float) -> void
 		best[1] = at
 
 func _offer_polygon(best: Array, pos: Vector2, poly: PackedVector2Array, limit: float, area: Rect2 = Rect2()) -> void:
+	if area.has_area():
+		# Only the part of a neighbour's footprint inside the neighbour's own screen is solid (as in `_blocked`): clip it.
+		var box := PackedVector2Array([area.position,Vector2(area.end.x,area.position.y),area.end,Vector2(area.position.x,area.end.y)])
+		for part in Geometry2D.intersect_polygons(poly,box): _offer_polygon(best,pos,part,limit)
+		return
 	if Geometry2D.is_point_in_polygon(pos,poly):
 		_offer(best,pos,pos,limit)
 		return
 	for i in poly.size():
-		var at := Geometry2D.get_closest_point_to_segment(pos,poly[i],poly[(i+1)%poly.size()])
-		if area.has_area() and not area.has_point(at): continue
-		_offer(best,pos,at,limit)
+		_offer(best,pos,Geometry2D.get_closest_point_to_segment(pos,poly[i],poly[(i+1)%poly.size()]),limit)
 
 # Hard.dat cells (closed unit squares) within `limit`, tile by tile: a tile with no mask costs one lookup.
 func _offer_tiles(best: Array, pos: Vector2, limit: float) -> void:

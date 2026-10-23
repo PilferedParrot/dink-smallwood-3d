@@ -26,6 +26,8 @@ var only_screens: Array[int] = []
 var classes := {}
 var deficits: Array = []
 var open_us: Array = []
+var max_calls := 0
+const MAX_FIELD_CALLS := 90 # one camera update, any authored case (review finding 3: the search was 50-77 calls every frame)
 var missed: Array = [] # pinches the guard's 24 x 3 slide search did not resolve although a position exists: a measured limit
 const MAX_MISSED := 3 # registered after the run found 1 of ~420 cases (screen 144, fir foot (284, 87))
 var near_us: Array = []
@@ -59,7 +61,7 @@ func _formula() -> void:
 	check(GUARD.reach_px(NEAR, 105.0, 21.0 / 9.0, SCALE) > NEAR / SCALE + 2.5, "the corner reach exceeds the face distance on an ultrawide")
 
 func _setup() -> void:
-	game = load("res://../tests/collision_survey_host.gd").new()
+	game = load("res://../tests/camera_cost_host.gd").new()
 	game.world = game._read_json("res://data/world.json")
 	game.sequences = game._read_json("res://data/sequences.json").sequences
 	game.footprints = game._read_json("res://data/footprints.json").screens
@@ -158,8 +160,12 @@ func _run() -> void:
 			for i in range(0, list.size(), step):
 				var foot: Vector2 = list[i]
 				var t0 := Time.get_ticks_usec()
+				game.field_calls = 0
 				var c: Vector2 = _camera_for(foot)
 				near_us.append(Time.get_ticks_usec() - t0)
+				max_calls = maxi(max_calls, game.field_calls)
+				check(Rect2(20, 0, 600, 400).has_point(c), "screen %d %s foot %s: the camera %s left its screen" % [n, cls, foot, c])
+				check(_walkable_between(foot, c), "screen %d %s foot %s: the camera %s is not a free slide from the feet" % [n, cls, foot, c])
 				classes[cls] = int(classes.get(cls, 0)) + 1
 				check(not game._blocked(c.snapped(Vector2(0.001, 0.001)), 1, foot), "screen %d %s foot %s: the camera %s stands inside a solid" % [n, cls, foot, c]) # the camera is a float32: a foot on an edge comes back 1e-5 px off it
 				check(c.distance_to(foot) <= guard * 2.0 + 0.001, "screen %d %s foot %s: the camera is %.2f px from the feet, more than 2 guards" % [n, cls, foot, c.distance_to(foot)])
@@ -179,7 +185,8 @@ func _run() -> void:
 			var c: Vector2 = _camera_for(probe)
 			open_us.append(Time.get_ticks_usec() - t0)
 			check(c == probe, "screen %d open ground %s: the camera moved to %s" % [n, probe, c])
-	print("G3 unresolved pinches: ", missed)
+	check(max_calls <= MAX_FIELD_CALLS, "one camera update makes at most %d field calls (max %d)" % [MAX_FIELD_CALLS, max_calls])
+	print("G3 unresolved pinches: ", missed, " max field calls per update: ", max_calls)
 	check(missed.size() <= MAX_MISSED, "at most %d unresolved pinches (%d): %s" % [MAX_MISSED, missed.size(), missed])
 	for needed in (["sprite", "footprint", "tile", "stone", "fir", "seam"] if only_screens.is_empty() else []):
 		check(int(classes.get(needed, 0)) >= 3, "G3 covers at least three cases of the %s class (has %d)" % [needed, int(classes.get(needed, 0))])
@@ -190,7 +197,7 @@ func _run() -> void:
 	for u in open_us: mean_open += float(u)
 	mean_open /= maxf(1.0, float(open_us.size()))
 	near_us.sort()
-	var result := {"guard_px": guard, "cases_by_class": classes, "narrow_infeasible": narrow, "unresolved_pinches": missed, "worst_deficit_px_in_tolerance": worst,
+	var result := {"guard_px": guard, "cases_by_class": classes, "narrow_infeasible": narrow, "unresolved_pinches": missed, "max_field_calls_per_update": max_calls, "worst_deficit_px_in_tolerance": worst,
 		"tolerance_px": TOLERANCE, "near_solid_us": {"n": near_us.size(), "mean": mean_near, "max": near_us.back() if near_us.size() else 0},
 		"open_ground_us": {"n": open_us.size(), "mean": mean_open}, "failures": failures}
 	print("CAMERA GUARD ", JSON.stringify(result))
