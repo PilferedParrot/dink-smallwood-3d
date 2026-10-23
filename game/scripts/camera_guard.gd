@@ -31,6 +31,7 @@ func position_for(foot: Vector2, guard: float, stamp: Variant, nearest: Callable
 	if key == _key: return _at
 	_key = key
 	_at = _solve(foot, guard, nearest)
+	if (nearest.call(_at, guard) as Array)[0] < guard: _at = _search(foot, _at, guard, nearest)
 	return _at
 
 # Stand `guard` from the nearest solid, directly away from its closest point. A second wall pushes again; two walls closer
@@ -54,3 +55,19 @@ static func _solve(foot: Vector2, guard: float, nearest: Callable) -> Vector2:
 		previous = at
 		c = moved
 	return c
+
+# Pinched in a notch or a slot, pushing away from the nearest wall runs into the next one. The camera may then slide out
+# of the pinch: the nearest of 24 directions x 3 distances (1, 1.25, 1.5 guards) that has the full clearance and a free
+# slide from the feet; none, and the local answer stands (the centre of the slot).
+static func _search(foot: Vector2, local: Vector2, guard: float, nearest: Callable) -> Vector2:
+	for radius in [guard, guard * 1.25, guard * 1.5]:
+		for k in 24:
+			var candidate: Vector2 = foot + Vector2.RIGHT.rotated(TAU * float(k) / 24.0) * float(radius)
+			if (nearest.call(candidate, guard) as Array)[0] < guard: continue
+			var free := true
+			for step in range(1, int(ceil(float(radius))) + 1):
+				if (nearest.call(foot.lerp(candidate, float(step) / ceil(float(radius))), 0.0001) as Array)[0] <= 0.0:
+					free = false
+					break
+			if free: return candidate
+	return local
