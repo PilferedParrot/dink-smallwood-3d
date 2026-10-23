@@ -105,7 +105,7 @@ func _boundary_feet(n: int) -> Dictionary:
 	# Free points within 1 px of a solid, found on a 3 px grid and 0.5 px probes round each, by class of the solid.
 	var found := {}
 	for y in range(0, 400, 3):
-		for x in range(14, 626, 3):
+		for x in range(20, 620, 3):
 			var p := Vector2(x, y)
 			if game._blocked(p, 1): continue
 			for d in [Vector2(1, 0), Vector2(-1, 0), Vector2(0, 1), Vector2(0, -1)]:

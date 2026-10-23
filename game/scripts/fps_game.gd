@@ -370,7 +370,7 @@ func _offer_doors(best: Array, pos: Vector2, limit: float) -> void:
 	for ex in fp_world.solids.exits(current_screen):
 		if _portal_can_warp(int(ex.editor_num)): continue
 		var leaf := Rect2(Vector2(float(ex.x0),float(ex.zinner)),Vector2(float(ex.x1)-float(ex.x0),DOOR_LEAF_DEPTH_PX))
-		var at := pos.clamp(leaf.position,leaf.end)
+		var at := box_nearest(pos,leaf.position,leaf.end)
 		var d := pos.distance_to(at)
 		if d <= limit and d < (best[0] as float):
 			best[0] = d

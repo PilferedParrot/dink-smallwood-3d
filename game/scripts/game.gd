@@ -856,7 +856,7 @@ func _solid_nearest_here(pos: Vector2, limit: float, area: Rect2 = Rect2()) -> A
 		if area.has_area():
 			rect = rect.intersection(area)
 			if not rect.has_area(): continue
-		_offer(best,pos,pos.clamp(rect.position,rect.end),limit)
+		_offer(best,pos,box_nearest(pos,rect.position,rect.end),limit)
 	for poly in screen_footprints: _offer_polygon(best,pos,poly,limit,area)
 	for id in entities:
 		if id == 1: continue
@@ -869,6 +869,12 @@ func _solid_nearest_here(pos: Vector2, limit: float, area: Rect2 = Rect2()) -> A
 
 func _additional_solid_nearest(_best: Array, _pos: Vector2, _limit: float) -> void:
 	pass
+
+# The nearest point of the half-open box [lo, hi) to `pos`: a point ON the far edge is outside the box (the original's
+# hitmap, Rect2.has_point), so it is a hair away from the box, never inside it (distance 0 means blocked).
+const EDGE_EPS := 0.001
+static func box_nearest(pos: Vector2, lo: Vector2, hi: Vector2) -> Vector2:
+	return pos.clamp(lo, Vector2(maxf(lo.x, hi.x - EDGE_EPS), maxf(lo.y, hi.y - EDGE_EPS)))
 
 static func _offer(best: Array, pos: Vector2, at: Vector2, limit: float) -> void:
 	var d := pos.distance_to(at)
@@ -900,7 +906,7 @@ func _offer_tiles(best: Array, pos: Vector2, limit: float) -> void:
 				for x in range(maxi(x0,20+tx*50),mini(x1,20+tx*50+49)+1):
 					var index := (x-20-tx*50)*51+(y-ty*50)
 					if index >= pixels.size() or pixels[index] == 0 or _tile_pixel_replaced(Vector2(x,y)): continue
-					_offer(best,pos,pos.clamp(Vector2(x,y),Vector2(x+1,y+1)),limit)
+					_offer(best,pos,box_nearest(pos,Vector2(x,y),Vector2(x+1,y+1)),limit)
 
 # The hard.dat mask number of tile (tx, ty) of the current screen; 0 = none.
 func _tile_mask_id(tx: int, ty: int) -> int:

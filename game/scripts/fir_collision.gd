@@ -43,7 +43,7 @@ func blocked(pos: Vector2, _from: Vector2, screen: int) -> bool:
 # The distance field of `blocked`: the nearest fir rectangle within `limit` of `pos` (see game.gd _solid_nearest_here).
 func offer_nearest(best: Array, pos: Vector2, limit: float, screen: int) -> void:
 	for rect: Rect2 in _rects.get(screen, []):
-		var at := pos.clamp(rect.position, rect.end)
+		var at := pos.clamp(rect.position, Vector2(maxf(rect.position.x, rect.end.x - 0.001), maxf(rect.position.y, rect.end.y - 0.001)))
 		var d := pos.distance_to(at)
 		if d <= limit and d < (best[0] as float):
 			best[0] = d

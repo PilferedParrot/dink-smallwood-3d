@@ -43,13 +43,13 @@ static func _solve(foot: Vector2, guard: float, nearest: Callable) -> Vector2:
 		var distance: float = hit[0]
 		if distance >= guard: break # includes INF: nothing within the guard
 		var at: Vector2 = hit[1]
-		if distance < 0.0001: break # inside a solid: the feet's own business, not the camera's
+		if distance <= 0.0: break # inside a solid: the feet's own business, not the camera's
 		var out := (c - at) / distance
 		if previous != Vector2.ZERO and out.dot((c - previous).normalized()) < -0.5:
 			return (at + previous) * 0.5
 		var moved := at + out * guard
 		if moved.distance_to(foot) > guard * MAX_DISPLACEMENT: break
-		if (nearest.call(moved, 0.0001) as Array)[0] < 0.0001: break
+		if (nearest.call(moved, 0.0001) as Array)[0] <= 0.0: break
 		previous = at
 		c = moved
 	return c
