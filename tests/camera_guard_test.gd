@@ -91,13 +91,20 @@ func _clearance(c: Vector2, limit: float) -> float:
 			r += 0.25
 	return best
 
+# A camera slides from the feet: a position behind a wall (the next room of a 1 px crack) is not a place it can go.
+func _walkable_between(a: Vector2, b: Vector2) -> bool:
+	var steps := int(ceil(a.distance_to(b) / 0.5))
+	for i in range(1, steps + 1):
+		if game._blocked(a.lerp(b, float(i) / float(steps)), 1): return false
+	return true
+
 func _feasible(foot: Vector2, guard: float) -> bool:
 	# Is there any free camera position within 2 guards of the feet that has the full clearance?
 	var reach := int(ceil(guard * 2.0))
 	for dx in range(-reach, reach + 1):
 		for dy in range(-reach, reach + 1):
 			var c := foot + Vector2(dx, dy)
-			if c.distance_to(foot) > guard * 2.0 or game._blocked(c, 1, foot): continue
+			if c.distance_to(foot) > guard * 2.0 or game._blocked(c, 1, foot) or not _walkable_between(foot, c): continue
 			if _clearance(c, guard) >= guard - TOLERANCE: return true
 	return false
 
