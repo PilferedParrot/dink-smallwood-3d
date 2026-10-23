@@ -393,9 +393,10 @@ func _solid_nearest(pos: Vector2, limit: float) -> Array:
 		if locked or not world.screens.has(str(target)) or (probe.x < 20.0 and column == 0) or (probe.x >= 620.0 and column == 31):
 			# Nothing beyond: the edge of the world is solid, as _blocked has it.
 			var wall := pos
-			if probe.x < 20.0: wall.x = 20.0
+			# (x < 20 and y < 0 are solid, 20 and 0 themselves free: a hair off, like the far edge of a box)
+			if probe.x < 20.0: wall.x = 20.0 - EDGE_EPS
 			elif probe.x >= 620.0: wall.x = 620.0
-			if probe.y < 0.0: wall.y = 0.0
+			if probe.y < 0.0: wall.y = -EDGE_EPS
 			elif probe.y >= 400.0: wall.y = 400.0
 			var d := pos.distance_to(wall)
 			if d <= limit and d < (best[0] as float):
