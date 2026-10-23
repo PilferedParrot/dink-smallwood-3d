@@ -19,3 +19,11 @@ def test_camera_guard_formula_clearance_and_cost(tmp_path):
     data = json.loads(report.read_text())
     assert not data["failures"]
     assert all(data["cases_by_class"].get(c, 0) >= 3 for c in ("sprite", "footprint", "tile", "stone", "fir", "seam"))
+
+
+def test_camera_guard_contracts_on_synthetic_worlds(tmp_path):
+    env = dict(os.environ, XDG_DATA_HOME=str(tmp_path / "data"), XDG_CONFIG_HOME=str(tmp_path / "config"),
+               XDG_CACHE_HOME=str(tmp_path / "cache"))
+    run = subprocess.run([GODOT, "--headless", "--audio-driver", "Dummy", "--path", "game", "--script",
+                          str(ROOT / "tests/camera_guard_unit_test.gd")], cwd=ROOT, env=env, capture_output=True, text=True, timeout=300)
+    assert run.returncode == 0 and "CAMERA GUARD UNIT PASS" in run.stdout and "SCRIPT ERROR" not in run.stderr, run.stdout + run.stderr

@@ -132,7 +132,7 @@ func _boundary_feet(n: int) -> Dictionary:
 func _screens() -> Array[int]:
 	if not only_screens.is_empty(): return only_screens
 	# Screens that carry each class: fitted stone walls, fir rectangles, and the village/cottage maps of the triage.
-	var picked: Array[int] = [408, 409, 439, 2, 3]
+	var picked: Array[int] = [408, 409, 439, 2, 3, 34]
 	for key in game.fir_collision.data.get("by_screen", {}):
 		if picked.size() >= 9: break
 		var n := int(key)

@@ -3488,7 +3488,7 @@ radius (`d6c9f38`, no reason stated; `b8cf665d` names the camera), and applied t
 near plane's corner reaches `near * sqrt(1 + tan_h^2 + tan_v^2) / SCALE` = 2.38 px at the default 80 degrees on 16:9, 3.41 at 105, 4.15 on 21:9 at 105, 5.9 on 32:9.
 Too much at the default, too little for an ultrawide at a wide field of view.
 
-**What it is now.** `ARRIVAL_INSET_PX` (4, where an arrival through a door lands) is the only 4 left, and it is a placement, not a band. Every mover is a point:
+**What it is now.** `ARRIVAL_INSET_PX` (4, where an arrival through a door lands) is the only 4 left in MOVEMENT, and it is a placement, not a band. The touch and hit ranges still carry their own margins (`game.gd` damage touch `grow(4)`, scripted touch `grow(8)`; FreeDink `freedink.cpp:731-758` uses the raw box plus 2): an inherited gap found by the unit's blind review, tracked as a separate follow-up. Every mover is a point:
 `_blocking_sprite`, `_in_footprint`, `sprite_walls.blocked`, `fir_collision.blocked` and `_closed_door_blocks` test the raw shape (a closed leaf is the door plane and
 `DOOR_LEAF_DEPTH_PX` = 4 of wall behind it). The "clearance band never traps" escape rules went with the band. The camera has its own distance, `camera_guard.gd`:
 `guard = near-plane corner reach + PROP_OVERHANG_PX (3)` (the 3 is the prop depth cap's overhang, one constant in `fp_world.gd` and the guard), and the camera position,
@@ -3508,4 +3508,5 @@ G3 the production camera's clearance against a dense oracle and an independently
 RC5 fir inventory authorises 228 roots (one fir's root lay only in a neighbour's band; the 92 older frame-9/10 records are byte-identical); the indoor physical seals of
 decision 20261019T194333 (5) were products of the band and are gone (`sealed` 5 -> 0, differences 77 -> 58, FPS-open/original-hard points 1336 -> 1460, listed in
 `tests/fixtures/indoor-physical-expected.json` for review); `rc5_hardness_census.py` and `rc5_structure_masks.py` model the game's collision and now agree with its raw probes.
+**Review round (review-20261023T214403-3d986137, Codex, blind):** five findings, all reproduced: the camera could leave its own screen and could be pushed through a thin second wall, float32 noise on an edge started a 50-77 call search every frame, a neighbour footprint hanging over its screen counted as solid. Fixed with tests red before (`camera_guard_unit_test.gd`, the injected footprint in `clearance_field_test.gd`, per-update call and screen/slide checks in `camera_guard_test.gd`): every answer is on the screen and a free slide away, a 0.01 px tolerance, a warm start from the last way out and a per-cell pinch cache, footprints clipped to the neighbour's screen. The touch-range gap is the fifth.
 **Open:** actor extent (T5): the card of an actor can still cross a wall; the mover must stay a point, so the card is clipped or offset in PRESENTATION: unit 3B, plan section 4.
