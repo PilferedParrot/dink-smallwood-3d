@@ -47,8 +47,8 @@ func _run() -> void:
 			check(not o["path"].ends_with("-16.png"), "%d arch deferred" % screen)
 			check(not o["path"].ends_with("-27.png"), "%d pier deferred" % screen)
 			check(not o["path"].ends_with("-28.png"), "%d pier deferred" % screen)
-	# Locate a floor edge with a clean normal approach. Exact floor cells block;
-	# band traversal from within the band permits escape and parallel motion.
+	# Locate a floor edge with a clean normal approach. Exact floor cells block and nothing else does:
+	# a mover is a point, so the cell next to the edge is free.
 	var mask := _mask(fit["floor_runs"])
 	var found := false
 	for y in range(15, 385):
@@ -57,12 +57,12 @@ func _run() -> void:
 			if mask[y * 640 + x] != 0 or mask[y * 640 + x + 1] == 0: continue
 			if x < 8 or mask[y * 640 + x - 6] != 0: continue
 			var solid := Vector2(x + 1.5, y + 0.5)
-			var band := Vector2(x - 0.5, y + 0.5)
+			var beside := Vector2(x + 0.5, y + 0.5)
 			var outside := Vector2(x - 4.5, y + 0.5)
 			check(walls.blocked(solid, Vector2.INF, 712), "occupied pixel cell blocks")
-			check(walls.blocked(band, Vector2.INF, 712), "4px clearance band blocks entry")
-			check(not walls.blocked(outside, band, 712), "band allows retreat")
-			check(walls.blocked(solid, band, 712), "band never permits deeper entry")
+			check(not walls.blocked(beside, Vector2.INF, 712), "the free cell beside the edge does not block (no clearance band)")
+			check(not walls.blocked(outside, beside, 712), "ground away from the edge is free")
+			check(walls.blocked(solid, beside, 712), "a step into the occupied cell is blocked")
 			found = true
 			break
 	check(found, "found independent edge approach")
@@ -100,8 +100,8 @@ func _run() -> void:
 	root_node.queue_free()
 	var seam_walls = WALLS.new()
 	seam_walls.data = {"screens":{"1":{"floor_runs":[[100,618,620]]}}}
-	check(seam_walls.blocked(Vector2(22,100.5),Vector2.INF,2),"neighbor wall clearance crosses source seam")
-	check(not seam_walls.blocked(Vector2(25,100.5),Vector2(22,100.5),2),"neighbor band allows retreat")
+	check(seam_walls.blocked(Vector2(19.5,100.5),Vector2.INF,2),"neighbor wall cell crosses the source seam")
+	check(not seam_walls.blocked(Vector2(22,100.5),Vector2.INF,2),"two pixels past the neighbor's wall is free (no clearance band)")
 	check(not seam_walls.blocked(Vector2(619,100.5),Vector2.INF,32),"world row never wraps to screen1")
 	# Exercise the integrated FPS construction for every structural screen with
 	# the real source dictionaries and the host's normalized editor entities.

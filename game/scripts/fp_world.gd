@@ -7,6 +7,7 @@ extends RefCounted
 const SCALE := 0.025
 const WIDTH := 600.0*SCALE # one screen
 const DEPTH := 400.0*SCALE
+const CAMERA_GUARD := preload("res://scripts/camera_guard.gd")
 const BUILDINGS := preload("res://scripts/sprite_buildings.gd")
 const RAILS := preload("res://scripts/bridge_rails.gd")
 const CASTLE_DOORS := preload("res://scripts/castle_doors.gd")
@@ -1989,13 +1990,14 @@ func build_prop(node: Node3D, e: Dictionary, id: int, collision: bool, path: Str
 	var span: Vector2 = props.footprint(path)
 	if span != Vector2.ZERO:
 		# A solid prop is as deep as it is wide, deeper than the source hardbox (a hardbox is the original's flattened
-		# footprint). It stands on the hardbox's middle, and is no deeper than the hardbox with the distance the player
-		# keeps from it (game.gd: grown by 4), less a margin for the camera's near plane: the camera never stands inside it.
+		# footprint). It stands on the hardbox's middle, and is no deeper than the hardbox plus the overhang the camera's
+		# guard allows for (camera_guard.gd PROP_OVERHANG_PX each side): the camera is held a guard's distance from the
+		# hardbox, so it never stands inside the prop.
 		# A barrel or a sack, whose hardbox is as deep as it is wide, is not squashed at all. The rule holds for props the
 		# player walks through too (hard 1): uncapped, the grain bags on 539, placed 11-31 px apart, stood 74 px deep each
 		# and ran together into one long shape (lead, 2026-10-08).
 		var rect: Rect2 = hard_rect(e)
-		var squash := clampf((rect.size.y+6.0*factor)/maxf(1.0,(span.y-span.x)*factor),0.2,1.0)
+		var squash := clampf((rect.size.y+2.0*CAMERA_GUARD.PROP_OVERHANG_PX*factor)/maxf(1.0,(span.y-span.x)*factor),0.2,1.0)
 		model.scale = Vector3(factor,factor,factor*squash)
 		model.position.z = (rect.get_center().y-float(e.get("y",0))-0.5*(span.x+span.y)*factor*squash)*SCALE
 		node.set_meta("prop_squash",squash)

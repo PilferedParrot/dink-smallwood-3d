@@ -110,7 +110,15 @@ func _walk_into_wall(screen: int, name: String) -> void:
 	var travelled := start.distance_to(stop)
 	print("WALL %d %s: start %s toward %s, stopped at %s, %.1f px from the drawn wall after %.1f px" % [screen,name,start,wall,stop,d,travelled])
 	check(game.current_screen == screen,"%d %s: stayed on the screen" % [screen,name])
-	check(d >= 3.9 and d <= 7.5,"%d %s: stops at the drawn wall (%.1f px from it)" % [screen,name,d])
+	check(d >= 0.0 and d <= 1.0,"%d %s: stops at the drawn wall (%.1f px from it)" % [screen,name,d])
+	# The feet stand at the wall; the camera does not: it is held the guard's distance from it (camera_guard.gd), the near
+	# plane's corner reach plus a prop's overhang, measured here from the near-plane corner built as a vector.
+	var cam := Vector2(game.camera.position.x/0.025+320.0,game.camera.position.z/0.025+200.0)
+	var half_h: float = game.camera.near*tan(deg_to_rad(game.camera.fov)*0.5)
+	var vp: Vector2 = game.get_viewport().get_visible_rect().size
+	var required: float = Vector3(half_h*vp.x/vp.y,half_h,game.camera.near).length()/0.025
+	var cam_d := _distance(cam,polys)
+	check(cam_d >= required-0.75,"%d %s: the camera stands %.1f px from the drawn wall, its near plane needs %.1f" % [screen,name,cam_d,required])
 
 func _enter_door(screen: int, inside: int) -> void:
 	game.load_map(screen,false)

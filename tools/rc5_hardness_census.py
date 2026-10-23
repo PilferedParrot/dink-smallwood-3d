@@ -132,7 +132,7 @@ def census_screen(world, seqs, footprints, inventory, n, vision, native=None, st
         assert e["index"] == inv["index"]
         if int(e.get("vision", 0)) not in (0, vision): continue
         hard = int(e.get("hard", 1)) == 0 and e.get("warp") is None
-        box = rect_mask([inv["hard_rect"]], 4) if hard else np.zeros_like(raw_tile)
+        box = rect_mask([inv["hard_rect"]], 0) if hard else np.zeros_like(raw_tile)
         box[:, :20] = False; box[:, 620:] = False
         raw_boxes |= box
         replaced = int(e["index"]) in rec.get("sprites", []) or int(e["index"]) in wall_fit.get("owner_indexes",[])
@@ -147,7 +147,7 @@ def census_screen(world, seqs, footprints, inventory, n, vision, native=None, st
                               "hardbox_px": int(box.sum()), "replaced_by_footprint": replaced,
                               "parts": inv["parts"]})
     # A fitted footprint is an actual floor solid, not the source-camera picture.
-    fitted = poly_mask([p["pts"] for p in rec.get("polys", [])], 4)
+    fitted = poly_mask([p["pts"] for p in rec.get("polys", [])], 0)
     if native is not None:
         fitted[:] = False
         for y,x0,x1 in native["footprint_layers"][str(n)][str(vision)]: fitted[y,x0:x1] = True
@@ -208,7 +208,7 @@ def census_screen(world, seqs, footprints, inventory, n, vision, native=None, st
         for e,inv in zip(sc["sprites"],inventory[str(n)],strict=True):
             if int(e.get("vision",0)) not in (0,vision) or effective_categories.get(int(e["index"])) not in categories: continue
             if int(e.get("hard",1)) != 0 or e.get("warp") is not None or int(e["index"]) in rec.get("sprites",[]): continue
-            boxes |= rect_mask([inv["hard_rect"]],4)
+            boxes |= rect_mask([inv["hard_rect"]],0)
         unowned_sources[group] = int((remainder & boxes).sum())
         remainder &= ~boxes
     tile_unowned = remainder & live_tile
@@ -271,7 +271,7 @@ def reachable_boundaries(world, screens, native):
     for n,record in native["indoor_collision"].items():
         rec=world["screens"][n];fp=json.loads((ROOT/"game/data/footprints.json").read_text())["screens"].get(n,{})
         hard,_=tile_mask(world,int(n),fp.get("revert",()),fp.get("clear",()))
-        hard |= rect_mask(record["hard_rects"],4)
+        hard |= rect_mask(record["hard_rects"],0)
         for y,a,b in record["footprint_runs"]:hard[y,a:b]=True
         mask=~hard;mask[:,:20]=False;mask[:,620:]=False
         local,num=ndimage.label(mask)

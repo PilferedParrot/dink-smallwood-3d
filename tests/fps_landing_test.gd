@@ -45,15 +45,15 @@ func _run() -> void:
 	var landed := Vector2(32.0,375.003753662109)
 	game.entities[1]["x"] = landed.x; game.entities[1]["y"] = landed.y
 
-	# The fixture's premise: the landing is in the tree's clearance band, not its own box.
+	# The fixture's premise: the landing lies just outside the tree's own box (it was inside the retired 4 px clearance band).
 	var tree: Dictionary = {}
 	for id in game.entities:
 		if int(game.entities[id].get("editor_num",0)) == 6 and id != 1: tree = game.entities[id]
 	check(not tree.is_empty(), "Screen 377 has editor sprite 6")
 	if not tree.is_empty():
 		var rect: Rect2 = game._hard_rect(tree)
-		check(rect.grow(4).has_point(landed) and not rect.has_point(landed), "Landing is inside the grown box but outside the tree's own box")
-		check(game._blocked(landed,1), "A plain point query still treats the clearance band as solid")
+		check(rect.grow(4).has_point(landed) and not rect.has_point(landed), "Landing is within 4 px of the tree's box but outside it")
+		check(not game._blocked(landed,1), "A plain point query is free there: a mover is a point, there is no clearance band")
 
 	# Every way that does not enter the tree is open; the tree itself still holds.
 	var open_dirs := 0
@@ -72,7 +72,7 @@ func _run() -> void:
 	game._move_entity(1, Vector2(3.0, 0.0))
 	check(game._position2(1).x < 33.0, "The tree's own box still stops an eastward step (x=%s)" % game._position2(1).x)
 
-	# Out the north side: slide along the band and clear the tree's grown box entirely.
+	# Out the north side: slide along the tree and clear its box entirely.
 	game.entities[1]["x"] = landed.x; game.entities[1]["y"] = landed.y
 	for _i in 60: game._move_entity(1, Vector2(0.0, -1.0))
 	check(game._position2(1).y < 357.0 and not game._blocked(game._position2(1),1), "Dink walks clear of the tree to the north")

@@ -23,7 +23,7 @@ func polygon_runs(host, polys: Array) -> Array:
 	for poly in polys:
 		var bounds := Rect2(poly[0],Vector2.ZERO)
 		for p in poly: bounds = bounds.expand(p)
-		bounds = bounds.grow(host.FOOTPRINT_GROW)
+		bounds = bounds.grow(4.0) # the retired 4 px mover band: this census reads the geometry it was written for
 		for y in range(maxi(0,ceili(bounds.position.y)),mini(400,floori(bounds.end.y)+1)):
 			for x in range(maxi(20,ceili(bounds.position.x)),mini(620,floori(bounds.end.x)+1)):
 				if host._in_footprint(Vector2(x,y),poly): mask[y*640+x] = 1
@@ -164,7 +164,7 @@ func _initialize() -> void:
 			var trigger: Rect2 = host._warp_trigger_rect(e)
 			var target := int(e.warp.map)
 			var position := Vector2(float(e.warp.x),float(e.warp.y))
-			if fw.is_inside(target): position = fw.solids.map_player_door_position(target,position,host.FOOTPRINT_GROW)
+			if fw.is_inside(target): position = fw.solids.map_player_door_position(target,position,host.ARRIVAL_INSET_PX)
 			warps.append({"screen":n,"index":int(e.editor_num),"target":target,
 				"trigger":[trigger.position.x,trigger.position.y,trigger.end.x,trigger.end.y],
 				"destination":[position.x,position.y],"source_destination":[e.warp.x,e.warp.y]})

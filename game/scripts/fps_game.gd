@@ -6,11 +6,14 @@ const SPRITE_WALLS := preload("res://scripts/sprite_walls.gd")
 var stone_walls = SPRITE_WALLS.new(null,self)
 const FIR_COLLISION := preload("res://scripts/fir_collision.gd")
 var fir_collision = FIR_COLLISION.new()
+const CAMERA_GUARD := preload("res://scripts/camera_guard.gd")
+var camera_guard = CAMERA_GUARD.new()
 const ENTITY_HIT_TARGETS := preload("res://scripts/entity_hit_targets.gd")
 var entity_hit_targets = ENTITY_HIT_TARGETS.new()
 
 const SCALE: float = preload("res://scripts/fp_world.gd").SCALE # metres per source pixel
 const EYE_HEIGHT := 1.65
+const DOOR_LEAF_DEPTH_PX := 4.0 # the wall behind a closed door leaf, what the old 4 px band covered on that side
 const PROJECTILE := preload("res://scripts/fps_projectile.gd")
 const TALK_ACQUIRE := preload("res://scripts/talk_acquire.gd")
 const BUG_RECORDER := preload("res://scripts/bug_report_recorder.gd")
@@ -162,7 +165,7 @@ func _update_visual(id: int) -> void:
 func _script_move_destination(id: int, dir: int, destination: float) -> float:
 	if id != 1 or dir not in [2, 8] or fp_world == null: return super._script_move_destination(id, dir, destination)
 	var position: Vector2 = _position2(1)
-	return fp_world.solids.map_player_door_position(current_screen, Vector2(position.x, destination), float(FOOTPRINT_GROW)).y
+	return fp_world.solids.map_player_door_position(current_screen, Vector2(position.x, destination), ARRIVAL_INSET_PX).y
 
 func _after_script_position_set(id: int, key: String) -> void:
 	if id != 1 or key not in ["x", "y"] or fp_world == null: return
@@ -170,7 +173,7 @@ func _after_script_position_set(id: int, key: String) -> void:
 	# not the current room (s2-bar sends Dink to outdoor screen 498 this way).
 	var target := int(vm.globals.get("player_map", current_screen))
 	if not world.screens.has(str(target)): return
-	var live: Vector2 = fp_world.solids.map_player_door_position(target, _position2(1), float(FOOTPRINT_GROW))
+	var live: Vector2 = fp_world.solids.map_player_door_position(target, _position2(1), ARRIVAL_INSET_PX)
 	entities[1]["x"] = live.x
 	entities[1]["y"] = live.y
 
@@ -181,7 +184,7 @@ func load_map(number: int, run_scripts: bool = true) -> void:
 	entity_hit_targets.reset()
 	_fps_restore_dialogue_camera()
 	if fp_world != null and entities.has(1) and world.screens.has(str(number)):
-		var live: Vector2 = fp_world.solids.map_player_door_position(number, _position2(1), float(FOOTPRINT_GROW))
+		var live: Vector2 = fp_world.solids.map_player_door_position(number, _position2(1), ARRIVAL_INSET_PX)
 		entities[1]["x"] = live.x
 		entities[1]["y"] = live.y
 	super.load_map(number, run_scripts)
@@ -332,33 +335,99 @@ func _portal_can_warp(editor_num: int) -> bool:
 			return true
 	return false
 
-func _door_distance(ex: Dictionary, pos: Vector2) -> float:
-	var nearest_x := clampf(pos.x, float(ex.x0), float(ex.x1))
-	return Vector2(pos.x - nearest_x, pos.y - float(ex.zinner)).length()
-
-func _closed_door_blocks(ex: Dictionary, pos: Vector2, from: Vector2, clearance: float) -> bool:
-	var distance := _door_distance(ex, pos)
-	if from == Vector2.INF: return distance < clearance - 0.0001
+# A closed leaf is the door plane and the wall it stands in: a solid from the plane (y = zinner, the room is at
+# y < zinner) to DOOR_LEAF_DEPTH_PX beyond it, spanning the aperture. A mover stands up to the plane and no further, whether
+# it walks or arrives from a seam; a step that jumps the whole leaf is caught by the crossing test.
+func _closed_door_blocks(ex: Dictionary, pos: Vector2, from: Vector2) -> bool:
 	var z := float(ex.zinner)
+	var in_span := pos.x >= float(ex.x0) and pos.x <= float(ex.x1)
+	if in_span and pos.y >= z and pos.y < z + DOOR_LEAF_DEPTH_PX:
+		# A mover that an overshoot or a seam landed inside the wall may leave it away from the room, never go deeper.
+		var from_inside := from != Vector2.INF and from.x >= float(ex.x0) and from.x <= float(ex.x1) and from.y >= z and from.y < z + DOOR_LEAF_DEPTH_PX
+		return not (from_inside and pos.y >= from.y)
+	if from == Vector2.INF: return false
 	var dy := pos.y - from.y
-	if absf(dy) > 0.0001:
-		var t := (z - from.y) / dy
-		if t > 0.0001 and t < 0.9999:
-			var crossing_x := lerpf(from.x, pos.x, t)
-			if crossing_x >= float(ex.x0) - clearance and crossing_x <= float(ex.x1) + clearance: return true
-	if distance >= clearance - 0.0001: return false
-	var old_distance := _door_distance(ex, from)
-	# A player already touching the four-pixel clearance band may back out or slide along it. The boundary itself is free.
-	if old_distance < clearance and (from.y - z) * (pos.y - z) >= 0.0 \
-			and distance >= old_distance - 0.0001: return false
-	return true
+	if absf(dy) <= 0.0001: return false
+	var t := (z - from.y) / dy
+	if t <= 0.0001 or t >= 0.9999: return false
+	var crossing_x := lerpf(from.x, pos.x, t)
+	return crossing_x >= float(ex.x0) and crossing_x <= float(ex.x1)
 
 func _inactive_door_blocks(pos: Vector2, from: Vector2) -> bool:
 	if fp_world == null or not fp_world.is_inside(current_screen) or not fp_world.solids.walls_fitted(current_screen): return false
 	for ex in fp_world.solids.exits(current_screen):
 		if _portal_can_warp(int(ex.editor_num)): continue
-		if _closed_door_blocks(ex, pos, from, float(FOOTPRINT_GROW)): return true
+		if _closed_door_blocks(ex, pos, from): return true
 	return false
+
+func _additional_solid_nearest(best: Array, pos: Vector2, limit: float) -> void:
+	stone_walls.offer_nearest(best,pos,limit,current_screen)
+	fir_collision.offer_nearest(best,pos,limit,current_screen)
+
+# Closed door leaves (the player's own solids, as in _blocked): the distance field of _closed_door_blocks' region.
+func _offer_doors(best: Array, pos: Vector2, limit: float) -> void:
+	if fp_world == null or not fp_world.is_inside(current_screen) or not fp_world.solids.walls_fitted(current_screen): return
+	for ex in fp_world.solids.exits(current_screen):
+		if _portal_can_warp(int(ex.editor_num)): continue
+		var leaf := Rect2(Vector2(float(ex.x0),float(ex.zinner)),Vector2(float(ex.x1)-float(ex.x0),DOOR_LEAF_DEPTH_PX))
+		var at := pos.clamp(leaf.position,leaf.end)
+		var d := pos.distance_to(at)
+		if d <= limit and d < (best[0] as float):
+			best[0] = d
+			best[1] = at
+
+# The nearest solid to the PLAYER at `pos` within `limit`: this screen's, the neighbours' across the seams, and the edge
+# of the world, exactly as `_blocked` reads them for mover 1. [distance, closest point] or [INF, pos].
+func _solid_nearest(pos: Vector2, limit: float) -> Array:
+	var best := _solid_nearest_here(pos,limit)
+	_offer_doors(best,pos,limit)
+	var seen := {current_screen: true}
+	var column := (current_screen-1)%32
+	for probe in [pos+Vector2(-limit,0),pos+Vector2(limit,0),pos+Vector2(0,-limit),pos+Vector2(0,limit),
+			pos+Vector2(-limit,-limit),pos+Vector2(limit,-limit),pos+Vector2(-limit,limit),pos+Vector2(limit,limit)]:
+		if probe.x >= 20.0 and probe.x < 620.0 and probe.y >= 0.0 and probe.y < 400.0: continue
+		var destination := _edge_destination(probe)
+		var target: int = destination.screen
+		if seen.has(target) and world.screens.has(str(target)) and not locked: continue
+		var shift: Vector2 = destination.position-probe
+		if locked or not world.screens.has(str(target)) or (probe.x < 20.0 and column == 0) or (probe.x >= 620.0 and column == 31):
+			# Nothing beyond: the edge of the world is solid, as _blocked has it.
+			var wall := pos
+			if probe.x < 20.0: wall.x = 20.0
+			elif probe.x >= 620.0: wall.x = 620.0
+			if probe.y < 0.0: wall.y = 0.0
+			elif probe.y >= 400.0: wall.y = 400.0
+			var d := pos.distance_to(wall)
+			if d <= limit and d < (best[0] as float):
+				best[0] = d
+				best[1] = wall
+			continue
+		seen[target] = true
+		var arrival := neighbour_arrival_state(target)
+		var saved_screen := current_screen
+		var saved_entities := entities
+		var saved_sprites := footprint_sprites
+		var saved_polys := screen_footprints
+		var saved_tiles := footprint_tiles
+		current_screen = target
+		entities = {1:saved_entities[1]}
+		var next := 2
+		for e in arrival.get("sprites",[]):
+			entities[next] = e
+			next += 1
+		footprint_sprites = {}; screen_footprints = []; footprint_tiles = {}
+		_load_footprints(target)
+		var there := _solid_nearest_here(pos+shift,limit,Rect2(20,0,600,400))
+		_offer_doors(there,pos+shift,limit)
+		current_screen = saved_screen
+		entities = saved_entities
+		footprint_sprites = saved_sprites
+		screen_footprints = saved_polys
+		footprint_tiles = saved_tiles
+		if (there[0] as float) < (best[0] as float):
+			best[0] = there[0]
+			best[1] = (there[1] as Vector2)-shift
+	return best
 
 func _blocked(pos: Vector2, mover: int, from: Vector2 = Vector2.INF) -> bool:
 	if mover == 1 and _inactive_door_blocks(pos, from): return true
@@ -468,8 +537,19 @@ func _sync_fps_camera() -> void:
 	camera.fov = clampf(float(settings.get("fov", 80.0)), 60.0, 105.0)
 	camera.near = 0.03
 	camera.far = 180.0
-	camera.position = fps_dialogue_camera_position if fps_dialogue_camera_active else Vector3((float(player.get("x", 320)) - 320.0) * SCALE, EYE_HEIGHT + fps_jump_height, (float(player.get("y", 200)) - 200.0) * SCALE)
+	if fps_dialogue_camera_active:
+		camera.position = fps_dialogue_camera_position
+	else:
+		var at := _camera_source_position(Vector2(float(player.get("x", 320)), float(player.get("y", 200))))
+		camera.position = Vector3((at.x - 320.0) * SCALE, EYE_HEIGHT + fps_jump_height, (at.y - 200.0) * SCALE)
 	camera.rotation = Vector3(fps_pitch, fps_yaw, 0.0)
+
+# The camera's distance from solids is its own (camera_guard.gd): the feet go to the raw edge, the camera is held back.
+func _camera_source_position(foot: Vector2) -> Vector2:
+	var size := get_viewport().get_visible_rect().size if is_inside_tree() else Vector2(16, 9)
+	var guard: float = CAMERA_GUARD.guard_px(camera.near, camera.fov, size.x / maxf(1.0, size.y), SCALE)
+	return camera_guard.position_for(foot, guard, [current_screen, Engine.get_physics_frames()],
+		func(q: Vector2, limit: float) -> Array: return _solid_nearest(q, limit))
 
 func _apply_settings() -> void:
 	AudioServer.set_bus_volume_db(0, linear_to_db(maxf(0.0001, float(settings.master))))

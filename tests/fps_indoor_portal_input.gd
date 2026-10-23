@@ -7,8 +7,8 @@ const GAME = preload("res://scripts/fps_game.gd")
 var game
 var failures: Array = []
 var report_path := ""
-var column_start := 311
-var column_stop := 336
+var column_start := 307
+var column_stop := 340
 func _initialize() -> void:
 	for arg in OS.get_cmdline_user_args():
 		if arg.begins_with("--column-start="): column_start = int(arg.trim_prefix("--column-start="))
@@ -43,8 +43,8 @@ func _run() -> void:
 	for id in game.entities:
 		if int(game.entities[id].get("editor_num",0)) == 3:
 			wall_face = game._hard_rect(game.entities[id]).position.y
-	var limit: float = wall_face-float(game.FOOTPRINT_GROW)
-	# Start1px outside the source wall's4px clearance; eight normal steps
+	var limit: float = wall_face
+	# Start 1 px outside the source wall's raw hardbox (a mover is a point); eight normal steps
 	# would enter it if movement ignored this wall, without waiting to PUSH.
 	# x50 intersects the left wall as well as the selected south wall. Use
 	# x100, and prove the approach/retreat free before driving any input.
@@ -78,8 +78,8 @@ func _run() -> void:
 		var p := Vector2(x,399)
 		if not game._blocked(p,1) and not game._blocked(Vector2(x,400),1,p): free_columns.append(x)
 	var expected_columns: Array = []
-	for x in range(311,336): expected_columns.append(x)
-	if free_columns != expected_columns: failures.append("bar exit must exercise exactly the25 pinned FPS-free columns311..335")
+	for x in range(307,340): expected_columns.append(x)
+	if free_columns != expected_columns: failures.append("bar exit must exercise exactly the 33 pinned FPS-free columns 307..339 (the whole aperture: a mover is a point; 311..335 under the retired 4 px band) (got %d: %s..%s)" % [free_columns.size(), str(free_columns.front()) if free_columns.size() else "-", str(free_columns.back()) if free_columns.size() else "-"])
 	var variants := [
 		{"name":"straight","side":0,"sprint":false},{"name":"straight-sprint","side":0,"sprint":true},
 		{"name":"diagonal-left","side":1,"sprint":false},{"name":"diagonal-right","side":-1,"sprint":false},
@@ -87,11 +87,15 @@ func _run() -> void:
 	var trial_columns: Array = []
 	for x in free_columns:
 		if int(x) >= column_start and int(x) < column_stop: trial_columns.append(x)
-	if column_start < 311 or column_stop > 336 or column_stop <= column_start: failures.append("invalid column batch")
+	if column_start < 307 or column_stop > 340 or column_stop <= column_start: failures.append("invalid column batch")
 	var trials: Array = []
 	var failed_trials := 0
 	for x in trial_columns:
 		for variant in variants:
+			# The columns 307..310 and 336..339 are the aperture's edge, free since a mover is a point (the retired 4 px
+			# band had left 311..335): a straight approach crosses there, a diagonal one runs into the jamb, as in the original.
+			var edge_column: bool = int(x) < 311 or int(x) >= 336
+			if edge_column and int(variant.side) != 0: continue
 			game.vm.cancel_all(); game.load_map(34,false)
 			# Two pixels before the fitted portal's normal tolerance begins.
 			# Diagonal approaches aim at the sampled column at that threshold.
@@ -112,7 +116,9 @@ func _run() -> void:
 			if failed_trials >= 2: break
 		if failed_trials >= 2: break
 		if int(x)%5 == 0: print("INDOOR PORTAL CLASS column%s completed%s" % [x,trials.size()])
-	if trials.size() != (column_stop-column_start)*6: failures.append("every requested column times6 approach/speed variants must run")
+	var expected_trials := 0
+	for x in range(column_start,column_stop): expected_trials += 2 if (x < 311 or x >= 336) else 6
+	if trials.size() != expected_trials: failures.append("every requested column times its approach/speed variants must run (%d of %d)" % [trials.size(),expected_trials])
 	print("INDOOR PORTAL DOOR CLASS RESULT trials=%s failed=%s" % [trials.size(),failed_trials])
 	var result := {"setup":"Injected source34 poses with startup/progression skipped; actual W/S events and normal runtime warp transition. Not earned campaign progress.","wall_preconditions":{"approach_free":approach_free,"retreat_free":retreat_free,"forward_blocked":forward_blocked},"wall_owners":wall_owners,"wall_start":[start.x,start.y],"wall_screen":wall_screen,"wall_stop":[wall_stop.x,wall_stop.y],"reverse_works":reverse,"door_columns":free_columns,"tested_columns":trial_columns,"batch_range":[column_start,column_stop],"door_trials":trials,"visited_screens":game.visited.duplicate(),"failures":failures}
 	if not report_path.is_empty():

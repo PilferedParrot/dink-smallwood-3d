@@ -19,7 +19,7 @@ func _run() -> void:
 	var counts: Dictionary = fir.data["counts"]
 	check(int(counts["source_placements"]) == 163 and int(counts["source_parts"]) == 406,
 		"source census")
-	check(int(counts["shown_union"]) == 312 and int(counts["authorized_roots"]) == 227,
+	check(int(counts["shown_union"]) == 312 and int(counts["authorized_roots"]) == 228,
 		"native selected roots")
 	var invalid: Array = fir.data["skipped_invalid"]
 	check(int(counts["skipped_invalid"]) == 3 and invalid.size() == 3 and
@@ -57,23 +57,20 @@ func _run() -> void:
 		if shown_here:
 			check(fir.blocked(Vector2(float(local[0]), float(local[1])), Vector2.INF, screen),
 				"physical root blocked %s" % id)
-	check(seen.size() == 227, "227 distinct source records")
+	check(seen.size() == 228, "228 distinct source records")
 	# This old test used a distant seam fallback and would have certified an
 	# invisible permanent body. Keep its negative ownership control explicitly.
 	check(fir.rectangles(237).any(func(entry):return entry.id=="237:0:1"),"edge fallback remains solid in the scene that shows it")
 	check(fir.rectangles(269).any(func(entry):return entry.id=="237:0:1"),"shown fallback spans the adjacent screen")
 	check(not fir.rectangles(299).any(func(entry):return entry.id=="237:0:1"),"no collider indexed beyond its footprint")
-	# Synthetic corners verify Rect2.grow(4), not a rounded 4px mask.
+	# A fir body is its raw rectangle (a mover is a point): no band, no rounded corner.
 	fir._rects[999] = [Rect2(0, 0, 10, 10)]
-	check(fir.blocked(Vector2(-3.5, -3.5), Vector2.INF, 999), "square grown corner blocks")
-	check(not fir.blocked(Vector2(-4.1, -3.5), Vector2.INF, 999), "outside grown corner clear")
-	check(not fir.blocked(Vector2(-3.5, 6), Vector2(-3.5, 5), 999),
-		"band parallel distance does not trap")
+	check(fir.blocked(Vector2(0.0, 0.0), Vector2.INF, 999) and fir.blocked(Vector2(9.5, 9.5), Vector2.INF, 999), "rectangle corners block")
+	check(not fir.blocked(Vector2(-0.5, -0.5), Vector2.INF, 999) and not fir.blocked(Vector2(-0.5, 5), Vector2.INF, 999), "outside the corner and the face is clear")
+	check(not fir.blocked(Vector2(10.0, 5), Vector2.INF, 999), "the far edge belongs to the outside, as Rect2 and the original's hitmap")
 	fir._rects[999] = [Rect2(0, 0, 10, 10), Rect2(13, 0, 10, 10)]
-	check(fir.blocked(Vector2(12.5, 5), Vector2(11.5, 5), 999),
-		"retreat from one rectangle cannot enter another band")
-	check(fir.blocked(Vector2(13.5, 5), Vector2(11.5, 5), 999),
-		"retreat from one rectangle cannot enter another body")
+	check(not fir.blocked(Vector2(11.5, 5), Vector2(10.5, 5), 999), "a 3 px gap between two bodies is walkable")
+	check(fir.blocked(Vector2(13.5, 5), Vector2(11.5, 5), 999), "the second body blocks")
 	if failures.is_empty():
 		print("FIR COLLISION PASS roots=%d touched_screens=%d cross_screen=%d" %
 			[seen.size(), int(counts["screens_touched"]), int(counts["multi_screen_roots"])])

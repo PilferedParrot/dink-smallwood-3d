@@ -3473,3 +3473,39 @@ Red on fa6daff (both walks and all 20 compared pairs), green after.
 `save_slots_test.gd` `pause_save_mixed_profile` is red (focus `Slot 7`) when Save picks the newest slot.
 *Found while building F2's fixture:* a loaded save returns globals as JSON floats, so a Load followed by a Save wrote `Level 4.0` into the label (and any `&var` in speech read `31.0`).
 *What broke:* `_interpolate` used `str()` on a float. *Why:* oversight; DinkC variables are integers and the round trip was never exercised before the next save. *Fix:* integral floats print as integers; `info_after_load` is red before, green after.
+
+## Movers are points; the camera keeps its own distance — October 23 (unit 3)
+
+Chris's 10-21 report (triage T4, T5): passages narrower than the original's, characters cut by walls. Evidence: `dink-triage` TRIAGE.md, `clearance-lineage.md`,
+`passages-summary.md`, `duck441-hardness.md`; plan and amendments `~/planning/dink/PLAN-unit3-clearance-20261023.md`.
+
+**What was wrong.** Five places grew every solid by 4 px for every mover (sprite hardboxes and fitted footprints in `game.gd`, RC5 stone walls, firs, closed door
+leaves), tile hardness not. FreeDink has no such thing: `check_if_move_is_legal` reads `get_hard` at the sprite's own pixel against a hitmap that holds the RAW hardbox
+(`freedink.cpp:75-100`, `live_screen.cpp:148-162`). Measured on five maps with a widest-path instrument (`tools/clearance_passages.py`, back-validated on the old build:
+37 of 42 edge passages narrower, 27 by exactly 8 px, min/median 48/81 against raw 52/85, ...), and the 441 duck, which starts inside the raw box of fence 13, was sealed:
+3,600 blocked ticks. *Why we made it (second root):* a heuristic used past its purpose. "The camera must not stand inside a solid" is right; it was built as a walking
+radius (`d6c9f38`, no reason stated; `b8cf665d` names the camera), and applied to every mover and every solid class, and its constant (4) was never derived: the
+near plane's corner reaches `near * sqrt(1 + tan_h^2 + tan_v^2) / SCALE` = 2.38 px at the default 80 degrees on 16:9, 3.41 at 105, 4.15 on 21:9 at 105, 5.9 on 32:9.
+Too much at the default, too little for an ultrawide at a wide field of view.
+
+**What it is now.** `ARRIVAL_INSET_PX` (4, where an arrival through a door lands) is the only 4 left, and it is a placement, not a band. Every mover is a point:
+`_blocking_sprite`, `_in_footprint`, `sprite_walls.blocked`, `fir_collision.blocked` and `_closed_door_blocks` test the raw shape (a closed leaf is the door plane and
+`DOOR_LEAF_DEPTH_PX` = 4 of wall behind it). The "clearance band never traps" escape rules went with the band. The camera has its own distance, `camera_guard.gd`:
+`guard = near-plane corner reach + PROP_OVERHANG_PX (3)` (the 3 is the prop depth cap's overhang, one constant in `fp_world.gd` and the guard), and the camera position,
+not the feet, is displaced out of solids: `_solid_nearest` (the distance field of the very solids `_blocked` reads: sprites, footprints, Hard.dat tiles, stone walls,
+firs, door leaves, the seams to the neighbour screens, the edge of the world) says how far the nearest is and where, the camera stands `guard` from it directly
+away, up to `MAX_DISPLACEMENT` (2 x guard: an inner corner of angle t needs 1/sin(t/2)); two walls closer than two guards (a slot) leave the camera on their midline,
+which is the best there is and is measured, not hidden. The feet are the hitbox for Talk, push and melee, so those reach the raw edge as in the original:
+`_dispatch_push` lost its "map the rejected centre onto the raw box" compensation (the foot scan reaches the blocker unaided; `_push_contact_direction` reads the face from the foot).
+
+**Evidence** (tests, each red on f07c7a1 or on its mutant): `clearance_class_test.gd` (G4: 644 screens, 20,414 outside probes and 3,718 inside probes over sprites, footprints,
+stone walls and firs, for the player and an NPC mover: 37,109 failures on f07c7a1, 0 now); `clearance_duck_test.gd` (G2: the 441 duck walks out in the production AI step,
+and every one of 177 actors' 8 one-pixel steps agrees with the raw boxes); `test_clearance.py::test_live_passages_are_the_raw_passages` (G1: narrower 37 -> 0, min/median equal
+raw on all five maps, screens 2, 3 and 408 live == raw pixel for pixel); `clearance_field_test.gd` (the distance field is the `_blocked` set at 7,728 points on all screens;
+mean cost open ground ~0.25 ms, near a solid ~0.4 ms; the first, sampled guard cost 19-36 ms and 38-81 ms: structural change, not polish); `camera_guard_test.gd` (G6 formula pins,
+G3 the production camera's clearance against a dense oracle and an independently built requirement, over every solid class).
+**Consequences found while moving the existing tests** (each is the band, not a regression): the bar door's free columns are the whole aperture 307..339 (were 311..335); the
+RC5 fir inventory authorises 228 roots (one fir's root lay only in a neighbour's band; the 92 older frame-9/10 records are byte-identical); the indoor physical seals of
+decision 20261019T194333 (5) were products of the band and are gone (`sealed` 5 -> 0, differences 77 -> 58, FPS-open/original-hard points 1336 -> 1460, listed in
+`tests/fixtures/indoor-physical-expected.json` for review); `rc5_hardness_census.py` and `rc5_structure_masks.py` model the game's collision and now agree with its raw probes.
+**Open:** actor extent (T5): the card of an actor can still cross a wall; the mover must stay a point, so the card is clipped or offset in PRESENTATION: unit 3B, plan section 4.

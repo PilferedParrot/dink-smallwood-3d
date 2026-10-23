@@ -55,7 +55,11 @@ var hardness_cache: Dictionary = {}
 # ring of tile hardness round each picture, which in 3D stood in the air in front of the
 # drawn walls (median 15 px) and 45-80 px out behind the houses, and was missing on the
 # inn's back (docs/DIRECTION.md, seventh pass).
-const FOOTPRINT_GROW := 4.0 # the player's radius in source pixels, as for every hardbox
+# Movers are points, as in FreeDink: check_if_move_is_legal reads get_hard at the sprite's own pixel, against a
+# hitmap that holds the RAW hardbox (live_screen.cpp:148-162). No solid is grown for any mover. What used to be a 4 px
+# "player radius" here was the camera's distance from solids, built as a walking radius (docs/DIRECTION.md, unit 3): the
+# camera keeps its own distance (camera_guard.gd) and the feet go to the raw edge.
+const ARRIVAL_INSET_PX := 4.0 # where a scripted arrival through a door leaf lands inside the room: not a walking band
 const PUSH_DELAY := 0.6 # FreeDink brain_keyboard.cpp:253 (seconds)
 const PUSH_BASE := 310 # FreeDink game_state.cpp:32
 const PUSH_TOLERANCE := 2.0 # original raw hardbox selection, not camera clearance
@@ -631,7 +635,8 @@ func _push_contact_direction(probe: Vector2, fallback: int) -> int:
 	var owner := _blocking_sprite(probe,1,_position2(1))
 	if owner == 0: return fallback # tile/footprint overlap retains the source-foot fallback
 	var raw := _hard_rect(entities[owner])
-	var contact := probe.clamp(raw.position,raw.end)
+	# The foot stands at most a pixel outside the raw box it pushes: the nearest point of the box is the face it pushes on.
+	var contact := _position2(1).clamp(raw.position,raw.end)
 	var west := contact.x == raw.position.x
 	var east := contact.x == raw.end.x
 	var north := contact.y == raw.position.y
@@ -644,15 +649,10 @@ func _push_contact_direction(probe: Vector2, fallback: int) -> int:
 	if south: return 8
 	return fallback
 
-func _dispatch_push(probe: Vector2) -> void:
+func _dispatch_push(_probe: Vector2) -> void:
+	# The foot stops on the raw hardbox edge (a mover is a point, moved a pixel at a time), so the original's
+	# CURRENT-foot scan reaches the blocker with no mapping.
 	var foot := _position2(1)
-	var owner := _blocking_sprite(probe,1,foot)
-	var contact := Vector2.INF
-	if owner:
-		var raw := _hard_rect(entities[owner])
-		# Map the native finite foot's rejected centre onto the raw source
-		# hardbox. This removes exactly our collision clearance, in both axes.
-		contact = probe.clamp(raw.position,raw.end)
 	var expected := generation
 	# FreeDink brain_keyboard.cpp:59-83 visits ALL matches in live-slot order.
 	for id in _push_dispatch_ids():
@@ -663,10 +663,8 @@ func _dispatch_push(probe: Vector2) -> void:
 		# Source background/editor-hidden sprites never retain a live slot.
 		if int(e.get("editor_num",0)) > 0 and int(e.get("type",1)) != 1: continue
 		var rect := _hard_rect(e).grow(PUSH_TOLERANCE)
-		# Preserve the original CURRENT-foot scan, even for non-hard scripted
-		# sprites beside tile collision. Only the actual blocker gains the
-		# finite-foot contact mapping. A sprite selected both ways runs once.
-		if _push_has_point(rect,foot) or (id == owner and _push_has_point(rect,contact)):
+		# Preserve the original CURRENT-foot scan, even for non-hard scripted sprites beside tile collision.
+		if _push_has_point(rect,foot):
 			_run_event(id,"push")
 
 func _push_has_point(rect: Rect2, point: Vector2) -> bool:
@@ -769,31 +767,20 @@ func _hard_rect(e: Dictionary) -> Rect2:
 	var factor := float(e.get("size",100))/100.0
 	return Rect2(Vector2(float(e.get("x",0)),float(e.get("y",0)))+Vector2(hb[0],hb[1])*factor,Vector2(hb[2]-hb[0],hb[3]-hb[1])*factor)
 
-# `from` is where a mover is stepping from (Vector2.INF for a plain "is this point solid" query).
-# The 4 px clearance band the game adds round every solid keeps the camera out of sprites; it
-# must never trap a mover that already stands in it (a screen transition can land there: 376 ->
-# 377 puts Dink at x=32 inside the grown box of a tree whose own box starts at x=33). A mover
-# already inside a band is held out of the solid itself and may not step closer to it, but may
-# step away or slide along it.
+# `from` is where a mover is stepping from (Vector2.INF for a plain "is this point solid" query). It is kept for
+# the callers: a solid is its raw shape, so a mover is blocked exactly where the original's hitmap is, and standing
+# anywhere free, however near a solid, it may step in any direction that stays free.
 func _blocked(pos: Vector2, mover: int, from: Vector2 = Vector2.INF) -> bool:
 	return _blocking_sprite(pos,mover,from) != 0 or _structure_blocked(pos,from)
 
-func _blocking_sprite(pos: Vector2, mover: int, from: Vector2 = Vector2.INF) -> int:
+func _blocking_sprite(pos: Vector2, mover: int, _from: Vector2 = Vector2.INF) -> int:
 	for id in entities:
 		if id == mover or id == 1: continue
 		var e: Dictionary = entities[id]
 		if int(e.get("active",1)) == 0 or int(e.get("hard",1)) != 0 or e.get("warp") != null: continue
 		if _sprite_hardbox_replaced(e): continue # its built footprint stands for it
-		var rect := _hard_rect(e)
-		if not rect.grow(FOOTPRINT_GROW).has_point(pos): continue
-		if from != Vector2.INF and not rect.has_point(pos) and rect.grow(FOOTPRINT_GROW).has_point(from) and not rect.has_point(from) \
-				and _rect_distance(rect,pos) >= _rect_distance(rect,from) - 0.0001: continue
-		return id
+		if _hard_rect(e).has_point(pos): return id
 	return 0
-
-func _rect_distance(rect: Rect2, p: Vector2) -> float:
-	var d := Vector2(maxf(maxf(rect.position.x-p.x,0.0),p.x-rect.end.x),maxf(maxf(rect.position.y-p.y,0.0),p.y-rect.end.y))
-	return d.length()
 
 # The anonymous structure of the screen: tile hardness and the buildings' footprints. Movers,
 # missiles and lines of fire all stop at it.
@@ -837,23 +824,9 @@ func _footprint_blocked(pos: Vector2, from: Vector2 = Vector2.INF) -> bool:
 			if _in_footprint(pos,poly,from): return true
 	return false
 
-# A point is in a footprint when it is inside the polygon or within the clearance band of its
-# edge. A mover that already stands in the band (not in the polygon itself) may leave it or
-# slide along it, but not step closer (see `_blocked`).
-func _in_footprint(pos: Vector2, poly: PackedVector2Array, from: Vector2 = Vector2.INF) -> bool:
-	if Geometry2D.is_point_in_polygon(pos,poly): return true
-	var edge := _edge_distance(pos,poly)
-	if edge > FOOTPRINT_GROW: return false
-	if from != Vector2.INF and not Geometry2D.is_point_in_polygon(from,poly):
-		var from_edge := _edge_distance(from,poly)
-		if from_edge <= FOOTPRINT_GROW and edge >= from_edge - 0.0001: return false
-	return true
-
-func _edge_distance(pos: Vector2, poly: PackedVector2Array) -> float:
-	var best := INF
-	for i in poly.size():
-		best = minf(best,Geometry2D.get_closest_point_to_segment(pos,poly[i],poly[(i+1)%poly.size()]).distance_to(pos))
-	return best
+# A point is in a footprint when it is inside the polygon: the fitted footprint is the building's base as drawn.
+func _in_footprint(pos: Vector2, poly: PackedVector2Array, _from: Vector2 = Vector2.INF) -> bool:
+	return Geometry2D.is_point_in_polygon(pos,poly)
 
 func _tile_blocked(pos: Vector2) -> bool:
 	return _tile_hardness(pos) != 0
@@ -866,6 +839,68 @@ func _tile_hardness(pos: Vector2) -> int:
 	var x := int(pos.x-20)%50
 	var y := int(pos.y)%50
 	return int(pixels[x*51+y]) if x*51+y < pixels.size() else 0
+
+# The distance field of the same solids (camera_guard.gd needs how far a solid is and where, which a yes/no `_blocked`
+# cannot say cheaply). `best` is [distance, closest point on a solid]: the nearest solid within `limit` of `pos`, or
+# [INF, pos]. Each class is the shape its predicate above reads, so a point is blocked exactly when its distance is 0:
+# tests/clearance_field_test.gd checks that, on every screen, against `_blocked` itself.
+# `area`, when it has area, is where solids count: a neighbour's solids only count inside the neighbour's own screen
+# (a hardbox hanging over its edge is not solid in ours, as in `_blocked`).
+func _solid_nearest_here(pos: Vector2, limit: float, area: Rect2 = Rect2()) -> Array:
+	var best := [INF, pos]
+	for id in entities:
+		if id == 1: continue
+		var e: Dictionary = entities[id]
+		if int(e.get("active",1)) == 0 or int(e.get("hard",1)) != 0 or e.get("warp") != null or _sprite_hardbox_replaced(e): continue
+		var rect := _hard_rect(e)
+		if area.has_area():
+			rect = rect.intersection(area)
+			if not rect.has_area(): continue
+		_offer(best,pos,pos.clamp(rect.position,rect.end),limit)
+	for poly in screen_footprints: _offer_polygon(best,pos,poly,limit,area)
+	for id in entities:
+		if id == 1: continue
+		var e: Dictionary = entities[id]
+		if int(e.get("active",1)) == 0: continue
+		for poly in footprint_sprites.get(int(e.get("editor_num",0)),[]): _offer_polygon(best,pos,poly,limit,area)
+	_offer_tiles(best,pos,limit)
+	_additional_solid_nearest(best,pos,limit)
+	return best
+
+func _additional_solid_nearest(_best: Array, _pos: Vector2, _limit: float) -> void:
+	pass
+
+static func _offer(best: Array, pos: Vector2, at: Vector2, limit: float) -> void:
+	var d := pos.distance_to(at)
+	if d <= limit and d < (best[0] as float):
+		best[0] = d
+		best[1] = at
+
+func _offer_polygon(best: Array, pos: Vector2, poly: PackedVector2Array, limit: float, area: Rect2 = Rect2()) -> void:
+	if Geometry2D.is_point_in_polygon(pos,poly):
+		_offer(best,pos,pos,limit)
+		return
+	for i in poly.size():
+		var at := Geometry2D.get_closest_point_to_segment(pos,poly[i],poly[(i+1)%poly.size()])
+		if area.has_area() and not area.has_point(at): continue
+		_offer(best,pos,at,limit)
+
+# Hard.dat cells (closed unit squares) within `limit`, tile by tile: a tile with no mask costs one lookup.
+func _offer_tiles(best: Array, pos: Vector2, limit: float) -> void:
+	var x0 := maxi(20,floori(pos.x-limit))
+	var x1 := mini(619,floori(pos.x+limit))
+	var y0 := maxi(0,floori(pos.y-limit))
+	var y1 := mini(399,floori(pos.y+limit))
+	if x0 > x1 or y0 > y1: return
+	for ty in range(y0/50,y1/50+1):
+		for tx in range((x0-20)/50,(x1-20)/50+1):
+			var pixels := _tile_mask_pixels(_tile_mask_id(tx,ty))
+			if pixels.is_empty(): continue
+			for y in range(maxi(y0,ty*50),mini(y1,ty*50+49)+1):
+				for x in range(maxi(x0,20+tx*50),mini(x1,20+tx*50+49)+1):
+					var index := (x-20-tx*50)*51+(y-ty*50)
+					if index >= pixels.size() or pixels[index] == 0 or _tile_pixel_replaced(Vector2(x,y)): continue
+					_offer(best,pos,pos.clamp(Vector2(x,y),Vector2(x+1,y+1)),limit)
 
 # The hard.dat mask number of tile (tx, ty) of the current screen; 0 = none.
 func _tile_mask_id(tx: int, ty: int) -> int:

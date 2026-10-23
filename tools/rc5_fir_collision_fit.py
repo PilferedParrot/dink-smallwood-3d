@@ -150,7 +150,6 @@ def compile_fit(inventory: dict, fit: dict, world: dict, sequences: dict, invent
                      "hardbox_from_original_frame_px": hb,
                      "hardbox_relative_to_measured_foot_xyxy": rel,
                      "crown_height_px": template["crown_height_px"]},
-        "band_px": 4.0,
         "counts": {"source_placements": counts["placements"], "source_parts": counts["source_parts"],
                    "shown_union": counts["shown_union"], "authorized_roots": len(records),
                    "skipped_invalid": len(skipped), "screen_entries": sum(map(len, by_screen.values())),

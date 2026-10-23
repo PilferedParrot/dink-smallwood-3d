@@ -1,6 +1,6 @@
 # Copyright 2026 PilferedParrot contributors. SPDX-License-Identifier: Apache-2.0
 # Original seq32/frame1 hardboxes rooted at source-fitted complete fir feet.
-# Movement uses each body's original Rect2 grow(4) escape rule. The source
+# Movement is blocked by each body's raw Rect2, as the original's hitmap would be. The source
 # entity/hardbox and tile masks are not changed.
 extends RefCounted
 
@@ -35,19 +35,16 @@ func _init() -> void:
 func rectangles(screen: int) -> Array:
 	return (data.get("by_screen", {}).get(str(screen), []) as Array).filter(func(entry):return screen in _visible.get(str(entry.id),[]))
 
-func _rect_distance(rect: Rect2, p: Vector2) -> float:
-	var d := Vector2(maxf(maxf(rect.position.x - p.x, 0.0), p.x - rect.end.x),
-		maxf(maxf(rect.position.y - p.y, 0.0), p.y - rect.end.y))
-	return d.length()
-
-func blocked(pos: Vector2, from: Vector2, screen: int) -> bool:
-	var band := float(data.get("band_px", 4.0))
+func blocked(pos: Vector2, _from: Vector2, screen: int) -> bool:
 	for rect: Rect2 in _rects.get(screen, []):
-		var grown := rect.grow(band)
-		if not grown.has_point(pos): continue
-		if from != Vector2.INF and not rect.has_point(pos) and grown.has_point(from) \
-				and not rect.has_point(from) \
-				and _rect_distance(rect, pos) >= _rect_distance(rect, from) - 0.0001:
-			continue
-		return true
+		if rect.has_point(pos): return true
 	return false
+
+# The distance field of `blocked`: the nearest fir rectangle within `limit` of `pos` (see game.gd _solid_nearest_here).
+func offer_nearest(best: Array, pos: Vector2, limit: float, screen: int) -> void:
+	for rect: Rect2 in _rects.get(screen, []):
+		var at := pos.clamp(rect.position, rect.end)
+		var d := pos.distance_to(at)
+		if d <= limit and d < (best[0] as float):
+			best[0] = d
+			best[1] = at

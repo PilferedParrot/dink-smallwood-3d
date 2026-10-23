@@ -167,7 +167,7 @@ func tile_with_script_control() -> void:
 func corner_case() -> void:
 	# North-west of the raw box, SE motion keeps pressure on both faces.
 	# NE motion would brush the corner and leave before the source delay.
-	await prepare(277);place(Vector2(232.25,168.25),-3.0*PI/4.0)
+	await prepare(277);place(Vector2(234.25,170.25),-3.0*PI/4.0)
 	var started: Vector2=game._position2(1)
 	await hold([KEY_W],60);record("fps-true-corner")
 	check(game._position2(1).is_equal_approx(started),"The corner control sustains blocked contact on both axes for60 ticks")
@@ -179,7 +179,7 @@ func review_cases() -> void:
 	for angle in [10,20,30,40]:
 		await prepare(277)
 		game.entities[1].speed=1
-		place(Vector2(230.25,194),-PI/2.0+deg_to_rad(float(angle)))
+		place(Vector2(234.25,194),-PI/2.0+deg_to_rad(float(angle)))
 		await hold([KEY_W],60);await ticks(180)
 		record("fps-face-%d-degrees" % angle)
 		check(game.pushes.size()==1 and game.pushes[0].dir==6 and int(game.vm.globals.rock_placement)==1,
@@ -187,7 +187,7 @@ func review_cases() -> void:
 	await corner_case()
 	# Composed DinkC fixture: real PUSH freezes, waits, marks completion and
 	# unfreezes without moving the blocker. It exposes repeat cadence directly.
-	await prepare(277);place(Vector2(230.25,181))
+	await prepare(277);place(Vector2(234.25,181))
 	game.vm.story.scripts["push-freeze-regression"]={"procedures":{"push":{"code":[
 		{"op":"call","name":"freeze","args":[{"kind":"literal","value":1}]},
 		{"op":"call","name":"wait","args":[{"kind":"literal","value":800}]},
@@ -235,17 +235,17 @@ func _run() -> void:
 		await prepare(277);place(Vector2(225,181))
 		game.entities[target("s1-roc")].script=""
 		await hold([KEY_D],120);record("hard-without-procedure")
-		check(game.pushes.is_empty() and game.entities[1].x<231.0,"Hard sprite without PUSH does nothing new")
+		check(game.pushes.is_empty() and game.entities[1].x<235.0,"Hard sprite without PUSH does nothing new")
 		var stopped: Vector2=game._position2(1)
 		await hold([KEY_A],12)
 		check(game._position2(1).x<stopped.x-10.0 and int(game.entities[1].nocontrol)==0,
 			"A wall without PUSH releases animation control and permits ordinary escape")
 		# Release is a reset: two short contacts must not add to600ms.
-		await prepare(277);place(Vector2(230.25,181))
+		await prepare(277);place(Vector2(234.25,181))
 		await hold([KEY_D],20);await ticks(20);await hold([KEY_D],20)
 		record("short-contact-release-reset")
 		check(game.pushes.is_empty(),"Contacts under600ms do not accumulate across release")
-		await prepare(277);place(Vector2(230.25,181))
+		await prepare(277);place(Vector2(234.25,181))
 		key(KEY_D,true);await ticks(37)
 		check(game.pushes.is_empty(),"Strict source delay does not dispatch at exactly600ms after first contact")
 		await ticks(2)

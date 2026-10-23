@@ -7,7 +7,6 @@ const WALL_DATA := "res://prototype/rc5_walls.json"
 const BUILDINGS := preload("res://scripts/sprite_buildings.gd")
 const WIDTH := 640
 const HEIGHT := 400
-const BAND := 4.0
 const SCALE := 0.025
 
 var fp_world
@@ -83,46 +82,49 @@ func clears_tile(pos: Vector2, screen: int, vision: int = 0) -> bool:
 	if pos.x < 20.0 or pos.x >= 620.0 or pos.y < 0.0 or pos.y >= 400.0: return false
 	return _cell(_mask(screen, "clear_tile_runs", _clear), int(pos.x), int(pos.y))
 
-func _distance(pos: Vector2, floor_mask: PackedByteArray) -> float:
-	var cx := floori(pos.x)
-	var cy := floori(pos.y)
-	if _cell(floor_mask, cx, cy): return 0.0
-	var best := INF
-	# Each cell is its literal closed [x,x+1] × [y,y+1] square. The
-	# 4-pixel neighbourhood suffices because farther cells cannot enter band.
-	for y in range(maxi(0, floori(pos.y - BAND) - 1), mini(HEIGHT, ceili(pos.y + BAND) + 1)):
-		for x in range(maxi(20, floori(pos.x - BAND) - 1), mini(620, ceili(pos.x + BAND) + 1)):
-			if not _cell(floor_mask, x, y): continue
-			var dx := maxf(maxf(float(x) - pos.x, 0.0), pos.x - float(x + 1))
-			var dy := maxf(maxf(float(y) - pos.y, 0.0), pos.y - float(y + 1))
-			best = minf(best, Vector2(dx, dy).length())
-	return best
+func _inside(pos: Vector2, floor_mask: PackedByteArray) -> bool:
+	return _cell(floor_mask, floori(pos.x), floori(pos.y))
 
-func _world_distance(pos: Vector2, screen: int) -> float:
-	var best := INF
+# A point is in the walls when it is in a cell of this screen's floor mask, or of the neighbour screen it has crossed into.
+func blocked(pos: Vector2, _from: Vector2, screen: int, vision: int = 0) -> bool:
+	var _layer: int = vision
 	var column := (screen-1)%32
 	for dz in range(-1,2):
-		if dz < 0 and pos.y > BAND+1.0: continue
-		if dz > 0 and pos.y < HEIGHT-BAND-1.0: continue
+		if dz < 0 and pos.y >= 0.0: continue
+		if dz > 0 and pos.y < HEIGHT: continue
 		for dx in range(-1,2):
 			if column+dx < 0 or column+dx >= 32: continue
-			if dx < 0 and pos.x > 20.0+BAND+1.0: continue
-			if dx > 0 and pos.x < 620.0-BAND-1.0: continue
+			if dx < 0 and pos.x >= 20.0: continue
+			if dx > 0 and pos.x < 620.0: continue
 			var n := screen+dx+32*dz
 			if get_fit(n).is_empty(): continue
-			best = minf(best,_distance(pos-Vector2(dx*600,dz*400),_mask(n,"floor_runs",_floor)))
-	return best
+			if _inside(pos-Vector2(dx*600,dz*400),_mask(n,"floor_runs",_floor)): return true
+	return false
 
-func blocked(pos: Vector2, from: Vector2, screen: int, vision: int = 0) -> bool:
-	var _layer: int = vision
-	var dest := _world_distance(pos,screen)
-	if dest > BAND: return false
-	if dest <= 0.0: return true
-	if from != Vector2.INF:
-		var prior := _world_distance(from,screen)
-		if prior > 0.0 and prior <= BAND and dest >= prior - 0.0001:
-			return false
-	return true
+# The wall cells within `limit` of `pos`, in this screen and the neighbours it overlaps: the distance field of `blocked`.
+# `best` is [distance, closest point]; see game.gd _solid_nearest_here.
+func offer_nearest(best: Array, pos: Vector2, limit: float, screen: int) -> void:
+	var column := (screen-1)%32
+	for dz in range(-1,2):
+		if dz < 0 and pos.y-limit >= 0.0: continue
+		if dz > 0 and pos.y+limit < HEIGHT: continue
+		for dx in range(-1,2):
+			if column+dx < 0 or column+dx >= 32: continue
+			if dx < 0 and pos.x-limit >= 20.0: continue
+			if dx > 0 and pos.x+limit < 620.0: continue
+			var n := screen+dx+32*dz
+			if get_fit(n).is_empty(): continue
+			var shift := Vector2(dx*600,dz*400)
+			var local := pos-shift
+			var cells := _mask(n,"floor_runs",_floor)
+			for y in range(maxi(0,floori(local.y-limit)),mini(HEIGHT-1,floori(local.y+limit))+1):
+				for x in range(maxi(20,floori(local.x-limit)),mini(619,floori(local.x+limit))+1):
+					if cells[y*WIDTH+x] == 0: continue
+					var at := local.clamp(Vector2(x,y),Vector2(x+1,y+1))
+					var d := local.distance_to(at)
+					if d <= limit and d < (best[0] as float):
+						best[0] = d
+						best[1] = at+shift
 
 func add(node: Node3D, e: Dictionary, screen: int, id: int, collision: bool) -> void:
 	var _id: int = id

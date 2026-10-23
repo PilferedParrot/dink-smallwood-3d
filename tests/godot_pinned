@@ -7,6 +7,10 @@ Pins (the same as ~/pilferedparrot-tools/tools/godot-scratch, whose notes carry 
           after it is never read); another driver is refused; PULSE_SERVER and PIPEWIRE_REMOTE are cut.
   vulkan  outside a `room gpu run` lease (ROOM_GPU_UUID and a room-gpu-run-*.scope in /proc/self/cgroup) lavapipe.
   opengl  outside a lease Mesa software, no NVIDIA offload, no CUDA devices.
+  display a launch that is not `--headless` / `--display-driver headless` may only run inside xvfb-run (its XAUTHORITY is
+          a /tmp/xvfb-run.* file); anything else would open a window on the user's own screen, so it is refused. WAYLAND_DISPLAY
+          is always dropped, and DISPLAY too when the launch is headless (unit 3, 2026-10-23: a suite run by systemd inherited
+          DISPLAY=:0 from the user manager and windowed tests drew on Chris's display).
   homes   XDG_DATA_HOME, XDG_CONFIG_HOME and XDG_CACHE_HOME must be absolute and outside the real Godot profile. Unlike
           godot-scratch they are kept, not replaced: a test that reads back the save it made needs its own directory.
 Each launch appends one line to $DINK_GODOT_LAUNCH_LOG (when set) and says it on stderr. Exit 125 = refused.
@@ -65,6 +69,18 @@ def pinned(argv, environ):
             if under(os.path.join(value, "godot"), home / rel) or under(value, home / rel):
                 refuse(f"{var}={value} is at or under the real Godot profile {home / rel}")
     env["PULSE_SERVER"], env["PIPEWIRE_REMOTE"] = "unix:/nonexistent", "nonexistent"
+    env.pop("WAYLAND_DISPLAY", None)
+    end = next((i for i, a in enumerate(args) if i and a in ("--", "++")), len(args))  # after the audio insertion
+    drivers_display = [args[i + 1] if i + 1 < end else None for i in range(1, end) if args[i] == "--display-driver"]
+    headless = "--headless" in args[1:end] or "headless" in drivers_display
+    if headless:
+        env.pop("DISPLAY", None)
+        display = "headless"
+    elif env.get("DISPLAY") and env["DISPLAY"] != ":0" and "/xvfb-run." in env.get("XAUTHORITY", ""):
+        display = f"xvfb {env['DISPLAY']}"
+    else:
+        refuse(f"a windowed launch (DISPLAY={env.get('DISPLAY')!r}, XAUTHORITY={env.get('XAUTHORITY')!r}) is not inside xvfb-run; "
+               "it would open a window on the user's screen")
     if in_lease(env):
         gpu = f"leased {env['ROOM_GPU_UUID']}"
     else:
@@ -75,7 +91,7 @@ def pinned(argv, environ):
                 "VK_ADD_DRIVER_FILES", "__NV_PRIME_RENDER_OFFLOAD", "__VK_LAYER_NV_optimus", "DRI_PRIME"]:
             env.pop(var, None)
         gpu = "vulkan lavapipe, opengl mesa software (no GPU lease)"
-    return args, env, f"audio Dummy; {gpu}; homes {env['XDG_DATA_HOME']}"
+    return args, env, f"audio Dummy; display {display}; {gpu}; homes {env['XDG_DATA_HOME']}"
 
 
 def main():

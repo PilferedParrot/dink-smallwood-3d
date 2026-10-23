@@ -3,16 +3,16 @@
     {
       "direction": "south",
       "fps_incoming_veto": 0,
-      "fps_open_original_hard": 23,
-      "fps_source_veto": 8,
+      "fps_open_original_hard": 31,
+      "fps_source_veto": 0,
       "source": 1,
       "target": 33
     },
     {
       "direction": "south",
-      "fps_incoming_veto": 162,
-      "fps_open_original_hard": 0,
-      "fps_source_veto": 17,
+      "fps_incoming_veto": 0,
+      "fps_open_original_hard": 39,
+      "fps_source_veto": 0,
       "source": 2,
       "target": 34
     },
@@ -23,22 +23,6 @@
       "fps_source_veto": 0,
       "source": 3,
       "target": 2
-    },
-    {
-      "direction": "south",
-      "fps_incoming_veto": 0,
-      "fps_open_original_hard": 0,
-      "fps_source_veto": 8,
-      "source": 3,
-      "target": 35
-    },
-    {
-      "direction": "south",
-      "fps_incoming_veto": 82,
-      "fps_open_original_hard": 0,
-      "fps_source_veto": 17,
-      "source": 4,
-      "target": 36
     },
     {
       "direction": "east",
@@ -57,40 +41,24 @@
       "target": 1
     },
     {
-      "direction": "west",
-      "fps_incoming_veto": 0,
-      "fps_open_original_hard": 0,
-      "fps_source_veto": 2,
-      "source": 34,
-      "target": 33
-    },
-    {
-      "direction": "east",
-      "fps_incoming_veto": 0,
-      "fps_open_original_hard": 0,
-      "fps_source_veto": 50,
-      "source": 34,
-      "target": 35
-    },
-    {
       "direction": "north",
-      "fps_incoming_veto": 0,
+      "fps_incoming_veto": 382,
       "fps_open_original_hard": 0,
-      "fps_source_veto": 600,
+      "fps_source_veto": 0,
       "source": 34,
       "target": 2
     },
     {
       "direction": "south",
       "fps_incoming_veto": 0,
-      "fps_open_original_hard": 25,
+      "fps_open_original_hard": 33,
       "fps_source_veto": 0,
       "source": 34,
       "target": 66
     },
     {
       "direction": "west",
-      "fps_incoming_veto": 400,
+      "fps_incoming_veto": 350,
       "fps_open_original_hard": 0,
       "fps_source_veto": 0,
       "source": 35,
@@ -106,33 +74,25 @@
     },
     {
       "direction": "north",
-      "fps_incoming_veto": 0,
-      "fps_open_original_hard": 0,
-      "fps_source_veto": 406,
+      "fps_incoming_veto": 344,
+      "fps_open_original_hard": 37,
+      "fps_source_veto": 0,
       "source": 36,
       "target": 4
     },
     {
       "direction": "south",
       "fps_incoming_veto": 0,
-      "fps_open_original_hard": 0,
-      "fps_source_veto": 17,
-      "source": 37,
-      "target": 69
-    },
-    {
-      "direction": "south",
-      "fps_incoming_veto": 0,
-      "fps_open_original_hard": 25,
-      "fps_source_veto": 12,
+      "fps_open_original_hard": 33,
+      "fps_source_veto": 0,
       "source": 38,
       "target": 70
     },
     {
       "direction": "south",
       "fps_incoming_veto": 0,
-      "fps_open_original_hard": 28,
-      "fps_source_veto": 12,
+      "fps_open_original_hard": 36,
+      "fps_source_veto": 0,
       "source": 65,
       "target": 97
     },
@@ -155,48 +115,24 @@
     {
       "direction": "south",
       "fps_incoming_veto": 0,
-      "fps_open_original_hard": 28,
-      "fps_source_veto": 12,
+      "fps_open_original_hard": 36,
+      "fps_source_veto": 0,
       "source": 66,
       "target": 98
     },
     {
       "direction": "west",
-      "fps_incoming_veto": 0,
+      "fps_incoming_veto": 91,
       "fps_open_original_hard": 0,
-      "fps_source_veto": 8,
-      "source": 67,
-      "target": 66
-    },
-    {
-      "direction": "east",
-      "fps_incoming_veto": 0,
-      "fps_open_original_hard": 0,
-      "fps_source_veto": 56,
-      "source": 67,
-      "target": 68
-    },
-    {
-      "direction": "west",
-      "fps_incoming_veto": 135,
-      "fps_open_original_hard": 0,
-      "fps_source_veto": 8,
+      "fps_source_veto": 0,
       "source": 68,
       "target": 67
     },
     {
-      "direction": "east",
-      "fps_incoming_veto": 0,
-      "fps_open_original_hard": 0,
-      "fps_source_veto": 8,
-      "source": 68,
-      "target": 69
-    },
-    {
       "direction": "south",
       "fps_incoming_veto": 0,
-      "fps_open_original_hard": 28,
-      "fps_source_veto": 8,
+      "fps_open_original_hard": 36,
+      "fps_source_veto": 0,
       "source": 68,
       "target": 100
     },
@@ -210,7 +146,7 @@
     },
     {
       "direction": "north",
-      "fps_incoming_veto": 438,
+      "fps_incoming_veto": 421,
       "fps_open_original_hard": 0,
       "fps_source_veto": 0,
       "source": 69,
@@ -226,19 +162,11 @@
     },
     {
       "direction": "north",
-      "fps_incoming_veto": 396,
+      "fps_incoming_veto": 388,
       "fps_open_original_hard": 0,
       "fps_source_veto": 0,
       "source": 70,
       "target": 38
-    },
-    {
-      "direction": "south",
-      "fps_incoming_veto": 0,
-      "fps_open_original_hard": 0,
-      "fps_source_veto": 19,
-      "source": 70,
-      "target": 102
     },
     {
       "direction": "south",
@@ -258,7 +186,7 @@
     },
     {
       "direction": "north",
-      "fps_incoming_veto": 393,
+      "fps_incoming_veto": 385,
       "fps_open_original_hard": 0,
       "fps_source_veto": 0,
       "source": 97,
@@ -266,7 +194,7 @@
     },
     {
       "direction": "north",
-      "fps_incoming_veto": 393,
+      "fps_incoming_veto": 385,
       "fps_open_original_hard": 0,
       "fps_source_veto": 0,
       "source": 98,
@@ -303,22 +231,6 @@
       "fps_source_veto": 0,
       "source": 101,
       "target": 133
-    },
-    {
-      "direction": "west",
-      "fps_incoming_veto": 0,
-      "fps_open_original_hard": 0,
-      "fps_source_veto": 8,
-      "source": 102,
-      "target": 101
-    },
-    {
-      "direction": "north",
-      "fps_incoming_veto": 0,
-      "fps_open_original_hard": 0,
-      "fps_source_veto": 19,
-      "source": 102,
-      "target": 70
     },
     {
       "direction": "south",
@@ -361,28 +273,12 @@
       "target": 101
     },
     {
-      "direction": "west",
-      "fps_incoming_veto": 0,
-      "fps_open_original_hard": 0,
-      "fps_source_veto": 20,
-      "source": 134,
-      "target": 133
-    },
-    {
       "direction": "north",
       "fps_incoming_veto": 75,
       "fps_open_original_hard": 0,
-      "fps_source_veto": 8,
+      "fps_source_veto": 0,
       "source": 134,
       "target": 102
-    },
-    {
-      "direction": "south",
-      "fps_incoming_veto": 0,
-      "fps_open_original_hard": 0,
-      "fps_source_veto": 50,
-      "source": 134,
-      "target": 166
     },
     {
       "direction": "north",
@@ -418,7 +314,7 @@
     },
     {
       "direction": "north",
-      "fps_incoming_veto": 387,
+      "fps_incoming_veto": 345,
       "fps_open_original_hard": 0,
       "fps_source_veto": 0,
       "source": 166,
@@ -505,36 +401,12 @@
       "target": 514
     },
     {
-      "direction": "south",
-      "fps_incoming_veto": 56,
+      "direction": "east",
+      "fps_incoming_veto": 1,
       "fps_open_original_hard": 0,
       "fps_source_veto": 0,
-      "source": 547,
-      "target": 579
-    },
-    {
-      "direction": "east",
-      "fps_incoming_veto": 0,
-      "fps_open_original_hard": 0,
-      "fps_source_veto": 4,
       "source": 577,
       "target": 578
-    },
-    {
-      "direction": "south",
-      "fps_incoming_veto": 0,
-      "fps_open_original_hard": 0,
-      "fps_source_veto": 8,
-      "source": 577,
-      "target": 609
-    },
-    {
-      "direction": "west",
-      "fps_incoming_veto": 0,
-      "fps_open_original_hard": 0,
-      "fps_source_veto": 4,
-      "source": 578,
-      "target": 577
     },
     {
       "direction": "east",
@@ -546,33 +418,17 @@
     },
     {
       "direction": "west",
-      "fps_incoming_veto": 17,
+      "fps_incoming_veto": 21,
       "fps_open_original_hard": 0,
-      "fps_source_veto": 16,
+      "fps_source_veto": 0,
       "source": 579,
       "target": 578
-    },
-    {
-      "direction": "east",
-      "fps_incoming_veto": 0,
-      "fps_open_original_hard": 0,
-      "fps_source_veto": 4,
-      "source": 579,
-      "target": 580
-    },
-    {
-      "direction": "north",
-      "fps_incoming_veto": 0,
-      "fps_open_original_hard": 0,
-      "fps_source_veto": 56,
-      "source": 579,
-      "target": 547
     },
     {
       "direction": "south",
       "fps_incoming_veto": 1,
       "fps_open_original_hard": 0,
-      "fps_source_veto": 4,
+      "fps_source_veto": 0,
       "source": 579,
       "target": 611
     },
@@ -583,14 +439,6 @@
       "fps_source_veto": 0,
       "source": 580,
       "target": 579
-    },
-    {
-      "direction": "north",
-      "fps_incoming_veto": 0,
-      "fps_open_original_hard": 0,
-      "fps_source_veto": 8,
-      "source": 609,
-      "target": 577
     },
     {
       "direction": "east",
@@ -618,6 +466,38 @@
     }
   ],
   "fps_open_original_hard_points": [
+    {
+      "point": [
+        308.0,
+        399.0
+      ],
+      "source": 1,
+      "target": 33
+    },
+    {
+      "point": [
+        309.0,
+        399.0
+      ],
+      "source": 1,
+      "target": 33
+    },
+    {
+      "point": [
+        310.0,
+        399.0
+      ],
+      "source": 1,
+      "target": 33
+    },
+    {
+      "point": [
+        311.0,
+        399.0
+      ],
+      "source": 1,
+      "target": 33
+    },
     {
       "point": [
         312.0,
@@ -801,6 +681,350 @@
       ],
       "source": 1,
       "target": 33
+    },
+    {
+      "point": [
+        335.0,
+        399.0
+      ],
+      "source": 1,
+      "target": 33
+    },
+    {
+      "point": [
+        336.0,
+        399.0
+      ],
+      "source": 1,
+      "target": 33
+    },
+    {
+      "point": [
+        337.0,
+        399.0
+      ],
+      "source": 1,
+      "target": 33
+    },
+    {
+      "point": [
+        338.0,
+        399.0
+      ],
+      "source": 1,
+      "target": 33
+    },
+    {
+      "point": [
+        295.0,
+        399.0
+      ],
+      "source": 2,
+      "target": 34
+    },
+    {
+      "point": [
+        296.0,
+        399.0
+      ],
+      "source": 2,
+      "target": 34
+    },
+    {
+      "point": [
+        297.0,
+        399.0
+      ],
+      "source": 2,
+      "target": 34
+    },
+    {
+      "point": [
+        298.0,
+        399.0
+      ],
+      "source": 2,
+      "target": 34
+    },
+    {
+      "point": [
+        299.0,
+        399.0
+      ],
+      "source": 2,
+      "target": 34
+    },
+    {
+      "point": [
+        300.0,
+        399.0
+      ],
+      "source": 2,
+      "target": 34
+    },
+    {
+      "point": [
+        301.0,
+        399.0
+      ],
+      "source": 2,
+      "target": 34
+    },
+    {
+      "point": [
+        302.0,
+        399.0
+      ],
+      "source": 2,
+      "target": 34
+    },
+    {
+      "point": [
+        303.0,
+        399.0
+      ],
+      "source": 2,
+      "target": 34
+    },
+    {
+      "point": [
+        304.0,
+        399.0
+      ],
+      "source": 2,
+      "target": 34
+    },
+    {
+      "point": [
+        305.0,
+        399.0
+      ],
+      "source": 2,
+      "target": 34
+    },
+    {
+      "point": [
+        306.0,
+        399.0
+      ],
+      "source": 2,
+      "target": 34
+    },
+    {
+      "point": [
+        307.0,
+        399.0
+      ],
+      "source": 2,
+      "target": 34
+    },
+    {
+      "point": [
+        308.0,
+        399.0
+      ],
+      "source": 2,
+      "target": 34
+    },
+    {
+      "point": [
+        309.0,
+        399.0
+      ],
+      "source": 2,
+      "target": 34
+    },
+    {
+      "point": [
+        310.0,
+        399.0
+      ],
+      "source": 2,
+      "target": 34
+    },
+    {
+      "point": [
+        311.0,
+        399.0
+      ],
+      "source": 2,
+      "target": 34
+    },
+    {
+      "point": [
+        312.0,
+        399.0
+      ],
+      "source": 2,
+      "target": 34
+    },
+    {
+      "point": [
+        313.0,
+        399.0
+      ],
+      "source": 2,
+      "target": 34
+    },
+    {
+      "point": [
+        314.0,
+        399.0
+      ],
+      "source": 2,
+      "target": 34
+    },
+    {
+      "point": [
+        315.0,
+        399.0
+      ],
+      "source": 2,
+      "target": 34
+    },
+    {
+      "point": [
+        316.0,
+        399.0
+      ],
+      "source": 2,
+      "target": 34
+    },
+    {
+      "point": [
+        317.0,
+        399.0
+      ],
+      "source": 2,
+      "target": 34
+    },
+    {
+      "point": [
+        318.0,
+        399.0
+      ],
+      "source": 2,
+      "target": 34
+    },
+    {
+      "point": [
+        319.0,
+        399.0
+      ],
+      "source": 2,
+      "target": 34
+    },
+    {
+      "point": [
+        320.0,
+        399.0
+      ],
+      "source": 2,
+      "target": 34
+    },
+    {
+      "point": [
+        321.0,
+        399.0
+      ],
+      "source": 2,
+      "target": 34
+    },
+    {
+      "point": [
+        322.0,
+        399.0
+      ],
+      "source": 2,
+      "target": 34
+    },
+    {
+      "point": [
+        323.0,
+        399.0
+      ],
+      "source": 2,
+      "target": 34
+    },
+    {
+      "point": [
+        324.0,
+        399.0
+      ],
+      "source": 2,
+      "target": 34
+    },
+    {
+      "point": [
+        325.0,
+        399.0
+      ],
+      "source": 2,
+      "target": 34
+    },
+    {
+      "point": [
+        326.0,
+        399.0
+      ],
+      "source": 2,
+      "target": 34
+    },
+    {
+      "point": [
+        327.0,
+        399.0
+      ],
+      "source": 2,
+      "target": 34
+    },
+    {
+      "point": [
+        328.0,
+        399.0
+      ],
+      "source": 2,
+      "target": 34
+    },
+    {
+      "point": [
+        329.0,
+        399.0
+      ],
+      "source": 2,
+      "target": 34
+    },
+    {
+      "point": [
+        330.0,
+        399.0
+      ],
+      "source": 2,
+      "target": 34
+    },
+    {
+      "point": [
+        331.0,
+        399.0
+      ],
+      "source": 2,
+      "target": 34
+    },
+    {
+      "point": [
+        332.0,
+        399.0
+      ],
+      "source": 2,
+      "target": 34
+    },
+    {
+      "point": [
+        333.0,
+        399.0
+      ],
+      "source": 2,
+      "target": 34
     },
     {
       "point": [
@@ -1220,6 +1444,38 @@
     },
     {
       "point": [
+        307.0,
+        399.0
+      ],
+      "source": 34,
+      "target": 66
+    },
+    {
+      "point": [
+        308.0,
+        399.0
+      ],
+      "source": 34,
+      "target": 66
+    },
+    {
+      "point": [
+        309.0,
+        399.0
+      ],
+      "source": 34,
+      "target": 66
+    },
+    {
+      "point": [
+        310.0,
+        399.0
+      ],
+      "source": 34,
+      "target": 66
+    },
+    {
+      "point": [
         311.0,
         399.0
       ],
@@ -1417,6 +1673,366 @@
       ],
       "source": 34,
       "target": 66
+    },
+    {
+      "point": [
+        336.0,
+        399.0
+      ],
+      "source": 34,
+      "target": 66
+    },
+    {
+      "point": [
+        337.0,
+        399.0
+      ],
+      "source": 34,
+      "target": 66
+    },
+    {
+      "point": [
+        338.0,
+        399.0
+      ],
+      "source": 34,
+      "target": 66
+    },
+    {
+      "point": [
+        339.0,
+        399.0
+      ],
+      "source": 34,
+      "target": 66
+    },
+    {
+      "point": [
+        531.0,
+        0.0
+      ],
+      "source": 36,
+      "target": 4
+    },
+    {
+      "point": [
+        532.0,
+        0.0
+      ],
+      "source": 36,
+      "target": 4
+    },
+    {
+      "point": [
+        533.0,
+        0.0
+      ],
+      "source": 36,
+      "target": 4
+    },
+    {
+      "point": [
+        534.0,
+        0.0
+      ],
+      "source": 36,
+      "target": 4
+    },
+    {
+      "point": [
+        535.0,
+        0.0
+      ],
+      "source": 36,
+      "target": 4
+    },
+    {
+      "point": [
+        536.0,
+        0.0
+      ],
+      "source": 36,
+      "target": 4
+    },
+    {
+      "point": [
+        537.0,
+        0.0
+      ],
+      "source": 36,
+      "target": 4
+    },
+    {
+      "point": [
+        538.0,
+        0.0
+      ],
+      "source": 36,
+      "target": 4
+    },
+    {
+      "point": [
+        539.0,
+        0.0
+      ],
+      "source": 36,
+      "target": 4
+    },
+    {
+      "point": [
+        540.0,
+        0.0
+      ],
+      "source": 36,
+      "target": 4
+    },
+    {
+      "point": [
+        541.0,
+        0.0
+      ],
+      "source": 36,
+      "target": 4
+    },
+    {
+      "point": [
+        542.0,
+        0.0
+      ],
+      "source": 36,
+      "target": 4
+    },
+    {
+      "point": [
+        543.0,
+        0.0
+      ],
+      "source": 36,
+      "target": 4
+    },
+    {
+      "point": [
+        544.0,
+        0.0
+      ],
+      "source": 36,
+      "target": 4
+    },
+    {
+      "point": [
+        545.0,
+        0.0
+      ],
+      "source": 36,
+      "target": 4
+    },
+    {
+      "point": [
+        546.0,
+        0.0
+      ],
+      "source": 36,
+      "target": 4
+    },
+    {
+      "point": [
+        547.0,
+        0.0
+      ],
+      "source": 36,
+      "target": 4
+    },
+    {
+      "point": [
+        548.0,
+        0.0
+      ],
+      "source": 36,
+      "target": 4
+    },
+    {
+      "point": [
+        549.0,
+        0.0
+      ],
+      "source": 36,
+      "target": 4
+    },
+    {
+      "point": [
+        550.0,
+        0.0
+      ],
+      "source": 36,
+      "target": 4
+    },
+    {
+      "point": [
+        551.0,
+        0.0
+      ],
+      "source": 36,
+      "target": 4
+    },
+    {
+      "point": [
+        552.0,
+        0.0
+      ],
+      "source": 36,
+      "target": 4
+    },
+    {
+      "point": [
+        553.0,
+        0.0
+      ],
+      "source": 36,
+      "target": 4
+    },
+    {
+      "point": [
+        554.0,
+        0.0
+      ],
+      "source": 36,
+      "target": 4
+    },
+    {
+      "point": [
+        555.0,
+        0.0
+      ],
+      "source": 36,
+      "target": 4
+    },
+    {
+      "point": [
+        556.0,
+        0.0
+      ],
+      "source": 36,
+      "target": 4
+    },
+    {
+      "point": [
+        557.0,
+        0.0
+      ],
+      "source": 36,
+      "target": 4
+    },
+    {
+      "point": [
+        558.0,
+        0.0
+      ],
+      "source": 36,
+      "target": 4
+    },
+    {
+      "point": [
+        559.0,
+        0.0
+      ],
+      "source": 36,
+      "target": 4
+    },
+    {
+      "point": [
+        560.0,
+        0.0
+      ],
+      "source": 36,
+      "target": 4
+    },
+    {
+      "point": [
+        561.0,
+        0.0
+      ],
+      "source": 36,
+      "target": 4
+    },
+    {
+      "point": [
+        562.0,
+        0.0
+      ],
+      "source": 36,
+      "target": 4
+    },
+    {
+      "point": [
+        563.0,
+        0.0
+      ],
+      "source": 36,
+      "target": 4
+    },
+    {
+      "point": [
+        564.0,
+        0.0
+      ],
+      "source": 36,
+      "target": 4
+    },
+    {
+      "point": [
+        565.0,
+        0.0
+      ],
+      "source": 36,
+      "target": 4
+    },
+    {
+      "point": [
+        566.0,
+        0.0
+      ],
+      "source": 36,
+      "target": 4
+    },
+    {
+      "point": [
+        567.0,
+        0.0
+      ],
+      "source": 36,
+      "target": 4
+    },
+    {
+      "point": [
+        244.0,
+        399.0
+      ],
+      "source": 38,
+      "target": 70
+    },
+    {
+      "point": [
+        245.0,
+        399.0
+      ],
+      "source": 38,
+      "target": 70
+    },
+    {
+      "point": [
+        246.0,
+        399.0
+      ],
+      "source": 38,
+      "target": 70
+    },
+    {
+      "point": [
+        247.0,
+        399.0
+      ],
+      "source": 38,
+      "target": 70
     },
     {
       "point": [
@@ -1620,6 +2236,70 @@
     },
     {
       "point": [
+        273.0,
+        399.0
+      ],
+      "source": 38,
+      "target": 70
+    },
+    {
+      "point": [
+        274.0,
+        399.0
+      ],
+      "source": 38,
+      "target": 70
+    },
+    {
+      "point": [
+        275.0,
+        399.0
+      ],
+      "source": 38,
+      "target": 70
+    },
+    {
+      "point": [
+        276.0,
+        399.0
+      ],
+      "source": 38,
+      "target": 70
+    },
+    {
+      "point": [
+        300.0,
+        399.0
+      ],
+      "source": 65,
+      "target": 97
+    },
+    {
+      "point": [
+        301.0,
+        399.0
+      ],
+      "source": 65,
+      "target": 97
+    },
+    {
+      "point": [
+        302.0,
+        399.0
+      ],
+      "source": 65,
+      "target": 97
+    },
+    {
+      "point": [
+        303.0,
+        399.0
+      ],
+      "source": 65,
+      "target": 97
+    },
+    {
+      "point": [
         304.0,
         399.0
       ],
@@ -1844,6 +2524,70 @@
     },
     {
       "point": [
+        332.0,
+        399.0
+      ],
+      "source": 65,
+      "target": 97
+    },
+    {
+      "point": [
+        333.0,
+        399.0
+      ],
+      "source": 65,
+      "target": 97
+    },
+    {
+      "point": [
+        334.0,
+        399.0
+      ],
+      "source": 65,
+      "target": 97
+    },
+    {
+      "point": [
+        335.0,
+        399.0
+      ],
+      "source": 65,
+      "target": 97
+    },
+    {
+      "point": [
+        300.0,
+        399.0
+      ],
+      "source": 66,
+      "target": 98
+    },
+    {
+      "point": [
+        301.0,
+        399.0
+      ],
+      "source": 66,
+      "target": 98
+    },
+    {
+      "point": [
+        302.0,
+        399.0
+      ],
+      "source": 66,
+      "target": 98
+    },
+    {
+      "point": [
+        303.0,
+        399.0
+      ],
+      "source": 66,
+      "target": 98
+    },
+    {
+      "point": [
         304.0,
         399.0
       ],
@@ -2068,6 +2812,70 @@
     },
     {
       "point": [
+        332.0,
+        399.0
+      ],
+      "source": 66,
+      "target": 98
+    },
+    {
+      "point": [
+        333.0,
+        399.0
+      ],
+      "source": 66,
+      "target": 98
+    },
+    {
+      "point": [
+        334.0,
+        399.0
+      ],
+      "source": 66,
+      "target": 98
+    },
+    {
+      "point": [
+        335.0,
+        399.0
+      ],
+      "source": 66,
+      "target": 98
+    },
+    {
+      "point": [
+        300.0,
+        399.0
+      ],
+      "source": 68,
+      "target": 100
+    },
+    {
+      "point": [
+        301.0,
+        399.0
+      ],
+      "source": 68,
+      "target": 100
+    },
+    {
+      "point": [
+        302.0,
+        399.0
+      ],
+      "source": 68,
+      "target": 100
+    },
+    {
+      "point": [
+        303.0,
+        399.0
+      ],
+      "source": 68,
+      "target": 100
+    },
+    {
+      "point": [
         304.0,
         399.0
       ],
@@ -2285,6 +3093,38 @@
     {
       "point": [
         331.0,
+        399.0
+      ],
+      "source": 68,
+      "target": 100
+    },
+    {
+      "point": [
+        332.0,
+        399.0
+      ],
+      "source": 68,
+      "target": 100
+    },
+    {
+      "point": [
+        333.0,
+        399.0
+      ],
+      "source": 68,
+      "target": 100
+    },
+    {
+      "point": [
+        334.0,
+        399.0
+      ],
+      "source": 68,
+      "target": 100
+    },
+    {
+      "point": [
+        335.0,
         399.0
       ],
       "source": 68,
@@ -11307,42 +12147,13 @@
       "target": 290
     }
   ],
-  "sealed": [
-    {
-      "direction": "south",
-      "original_open": 179,
-      "source": 2,
-      "target": 34
-    },
-    {
-      "direction": "west",
-      "original_open": 2,
-      "source": 34,
-      "target": 33
-    },
-    {
-      "direction": "east",
-      "original_open": 50,
-      "source": 34,
-      "target": 35
-    },
-    {
-      "direction": "north",
-      "original_open": 600,
-      "source": 34,
-      "target": 2
-    },
-    {
-      "direction": "west",
-      "original_open": 400,
-      "source": 35,
-      "target": 34
-    }
-  ],
   "provenance": {
     "baseline_candidate": "2ca1cdd42f1b0f0ca26eafc405aea0484dde3846",
-    "native_red_report_sha256": "fdeb86bdf21972b80467e93c89e15b7a279796aec587ec6bad15f0c2a12c6fe4",
     "decision": "Keep exactly the5 listed physical seals; screen/region graph from both home seeds and82 authored warp destinations loses0 regions, lead decision20261019T194333.408395Z-d61799b5131f488194b54c7212799619. Raw-hard/FPS-free points are pinned exceptions, not source-rule equivalence.",
-    "generation": "After deliberate empty-point expectation RED; old all-edge counts and5seal list were checked unchanged, full1336 source-coordinate points recorded. Any additional/missing/moved point or changed veto count fails."
-  }
+    "generation": "After deliberate empty-point expectation RED; old all-edge counts and5seal list were checked unchanged, full1336 source-coordinate points recorded. Any additional/missing/moved point or changed veto count fails.",
+    "native_red_report_sha256": "fdeb86bdf21972b80467e93c89e15b7a279796aec587ec6bad15f0c2a12c6fe4",
+    "supersedes_decision_note": "Keep exactly the 5 listed physical seals (old decision text kept above in \"decision\" for the record)",
+    "unit_3_regenerated": "2026-10-23, claude/dink-clearance: movers are points (no 4 px growth of sprite hardboxes, footprints, stone walls, firs or door leaves). The 5 physical seals of lead decision 20261019T194333 were products of that band (fps_source_veto counts 0 everywhere now); sealed 5 -> 0, differences 77 -> 58, fps_open_original_hard_points 1336 -> 1460 (fitted structures and door apertures no longer padded by the band; the extra points are listed for review). Region graph loses 0 regions trivially (fewer seals)."
+  },
+  "sealed": []
 }

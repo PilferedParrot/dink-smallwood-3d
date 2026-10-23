@@ -85,22 +85,22 @@ func _run() -> void:
 	check(absf(game._script_move_destination(1, 2, 398.0) - 348.0) < 0.001,
 		"Original evacuation goal 398 maps to the same source-derived doorway")
 
-	# A closed door remains solid while cooldown prevents a warp. Its exact
-	# four-pixel boundary must let the returned player reverse toward the room.
-	var at := Vector2(323.0, 348.0)
-	check(game._blocked(Vector2(323.0, 348.5), 1, at), "Inactive leaf stops movement toward the plane")
-	check(not game._blocked(Vector2(323.0, 347.5), 1, at), "Inactive leaf allows reverse movement from exact clearance")
+	# A closed door remains solid while cooldown prevents a warp. The leaf is the plane itself (a mover is a point): the
+	# player stands up to it and may reverse toward the room.
+	var at := Vector2(323.0, 351.0)
+	check(game._blocked(Vector2(323.0, 352.5), 1, at), "Inactive leaf stops movement toward the plane")
+	check(not game._blocked(Vector2(323.0, 350.5), 1, at), "Inactive leaf allows reverse movement from the plane")
 	game.fps_yaw = 0.0
 	game._sync_fps_camera()
 	await _hold(KEY_S, 5)
 	print("MAPPING INACTIVE S: position=", game._position2(1), " cooldown=", game.warp_cooldown, " portal=", game._portal_can_warp(25))
-	check(absf(float(game.entities[1].y) - 348.0) < 0.001, "Cooldown makes actual southward input stop at closed leaf")
+	check(float(game.entities[1].y) >= 351.0 and float(game.entities[1].y) < 352.0, "Cooldown makes actual southward input stop at closed leaf")
 	await _hold(KEY_W, 5)
-	check(float(game.entities[1].y) < 347.0, "Actual northward input backs out without a zero-motion trap")
+	check(float(game.entities[1].y) < 350.0, "Actual northward input backs out without a zero-motion trap")
 	game.warp_cooldown = 0.0
 	check(game._portal_can_warp(25), "An available live portal is active after cooldown")
 	game.locked = true
-	check(not game._portal_can_warp(25) and game._blocked(Vector2(323.0, 348.5), 1, at),
+	check(not game._portal_can_warp(25) and game._blocked(Vector2(323.0, 352.5), 1, at),
 		"Screen lock makes the closed leaf solid")
 	game.locked = false
 	game.entities[1]["frozen"] = true
@@ -131,7 +131,7 @@ func _run() -> void:
 		game.entities[1]["x"] = float(incoming.warp.x)
 		game.entities[1]["y"] = float(incoming.warp.y)
 		game.load_map(screen, false)
-		check(absf(float(game.entities[1].y) - (float(ex.zinner) - float(game.FOOTPRINT_GROW))) < 0.001,
+		check(absf(float(game.entities[1].y) - (float(ex.zinner) - float(game.ARRIVAL_INSET_PX))) < 0.001,
 			"Screen %d maps its actual incoming warp into its fitted doorway" % screen)
 	check(others == 2, "Two other fitted south exits exercise the same mapping")
 	# Screen 65's real inbound y=343 is already on the room side; it stays 343.
