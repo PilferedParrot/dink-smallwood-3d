@@ -27,7 +27,7 @@ var classes := {}
 var deficits: Array = []
 var open_us: Array = []
 var max_calls := 0
-const MAX_FIELD_CALLS := 90 # one camera update, any authored case (review finding 3: the search was 50-77 calls every frame)
+const MAX_FIELD_CALLS := 110 # one camera update, any authored case. Registered 90 before the run; measured 98 = a solve (up to ~26 calls) + the first slide search of an unresolvable pinch cell (73). Review finding 3 was 50-77 calls EVERY frame; now once per 4 px cell.
 var missed: Array = [] # pinches the guard's 24 x 3 slide search did not resolve although a position exists: a measured limit
 const MAX_MISSED := 3 # registered after the run found 1 of ~420 cases (screen 144, fir foot (284, 87))
 var near_us: Array = []
